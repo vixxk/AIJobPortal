@@ -8,11 +8,6 @@ const MobileNavbar = () => {
     const [isVisible, setIsVisible] = useState(true);
     const lastScrollY = useRef(0);
 
-    // Hide bottom navbar on Job Details page
-    if (location.pathname.startsWith('/app/job')) {
-        return null;
-    }
-
     useEffect(() => {
         const scrollContainer = document.getElementById('main-scroll-container');
         if (!scrollContainer) return;
@@ -35,6 +30,11 @@ const MobileNavbar = () => {
         scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
         return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // Hide bottom navbar on Job Details page
+    if (location.pathname.startsWith('/app/job')) {
+        return null;
+    }
 
     const bottomNavItems = [
         { name: 'Home', path: '/app', icon: Home },

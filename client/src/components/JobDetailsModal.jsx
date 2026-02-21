@@ -4,11 +4,15 @@ import { useEffect } from 'react';
 const JobDetailsModal = ({ job, onClose }) => {
     // Prevent scrolling when modal is open
     useEffect(() => {
-        document.body.style.overflow = 'hidden';
+        if (job) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
         return () => {
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = '';
         };
-    }, []);
+    }, [job]);
 
     if (!job) return null;
 
