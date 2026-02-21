@@ -40,21 +40,27 @@ const JobDetailsModal = ({ job, onClose }) => {
                 </div>
 
                 {/* Content */}
-                <div className="pt-12 px-8 pb-8 overflow-y-auto no-scrollbar flex-1">
-                    <div className="mb-6">
-                        <h2 className="text-2xl font-extrabold text-slate-900 leading-tight mb-2">{job.title}</h2>
-                        <div className="flex flex-wrap items-center gap-4 text-slate-500 font-medium text-sm">
-                            <div className="flex items-center gap-1.5">
-                                <Building className="w-4 h-4 text-blue-500" />
+                <div className="pt-14 px-8 pb-8 overflow-y-auto no-scrollbar flex-1">
+                    <div className="mb-8">
+                        <h2 className="text-[22px] md:text-[26px] font-black text-slate-900 leading-tight mb-3 tracking-tight">{job.title}</h2>
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-slate-500 font-semibold text-[13px] md:text-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 px-1.5 bg-blue-50 rounded-md">
+                                    <Building className="w-3.5 h-3.5 text-blue-600" />
+                                </div>
                                 <span>{job.company}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <MapPin className="w-4 h-4 text-blue-500" />
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 px-1.5 bg-blue-50 rounded-md">
+                                    <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                                </div>
                                 <span>{job.location || 'Remote Options'}</span>
                             </div>
                             {job.salary && (
-                                <div className="flex items-center gap-1.5">
-                                    <DollarSign className="w-4 h-4 text-emerald-500" />
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1 px-1.5 bg-emerald-50 rounded-md">
+                                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                                    </div>
                                     <span className="text-emerald-600">{job.salary}</span>
                                 </div>
                             )}
@@ -95,11 +101,11 @@ const JobDetailsModal = ({ job, onClose }) => {
                     </div>
                 </div>
 
-                {/* Footer / CTA */}
-                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex gap-4 shrink-0">
+                {/* Compact Footer / CTA */}
+                <div className="p-4 md:p-5 border-t border-slate-100 bg-white flex gap-3 shrink-0">
                     <button
                         onClick={onClose}
-                        className="flex-1 bg-white border border-slate-200 text-slate-600 font-extrabold py-4 px-6 rounded-2xl hover:bg-slate-50 transition-all shadow-sm"
+                        className="flex-1 bg-slate-50 text-slate-700 font-bold py-3 px-4 rounded-xl text-sm whitespace-nowrap hover:bg-slate-100 transition-all"
                     >
                         Save for later
                     </button>
@@ -107,9 +113,9 @@ const JobDetailsModal = ({ job, onClose }) => {
                         href={job.link || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 bg-blue-600 text-white font-extrabold py-4 px-6 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+                        className="flex-[1.2] bg-[#1a56f0] text-white font-bold py-3 px-4 rounded-xl text-sm whitespace-nowrap hover:bg-[#1546c7] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10"
                     >
-                        Apply Now <ExternalLink className="w-4 h-4" />
+                        Apply Now <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                 </div>
             </div>
