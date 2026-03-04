@@ -1,4 +1,5 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import api from '../utils/axios';
 
 const AuthContext = createContext();
 
@@ -8,38 +9,203 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // ─── Bootstrap: restore session from localStorage ──────────────────
     useEffect(() => {
-        // Check local storage for mock session on load
-        const storedUser = localStorage.getItem('gradnex_user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
+        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+
+        if (storedToken && storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            }
         }
         setLoading(false);
     }, []);
 
-    const login = (email, password) => {
-        // Hardcoded demo credentials
-        if (email === 'demo@user.com' && password === 'password123') {
-            const mockUser = {
-                name: 'Alex Johnson',
-                role: 'Student',
-                email: 'demo@user.com',
-                avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d'
-            };
-            setUser(mockUser);
-            localStorage.setItem('gradnex_user', JSON.stringify(mockUser));
-            return true;
-        }
-        return false;
+    const persistUser = (token, userData) => {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
     };
 
-    const logout = () => {
+    // ─── Google OAuth ──────────────────────────────────────────────────
+    const loginWithGoogle = useCallback(async (idToken) => {
+        try {
+            const response = await api.post('/auth/google', { idToken });
+            const { token, data } = response.data;
+            persistUser(token, data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Google login failed'
+            };
+        }
+    }, []);
+
+    // ─── Email OTP: Send ───────────────────────────────────────────────
+    const sendOTP = useCallback(async (email, name) => {
+        try {
+            await api.post('/auth/send-otp', { email, name });
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to send OTP'
+            };
+        }
+    }, []);
+
+    // ─── Email OTP: Verify ─────────────────────────────────────────────
+    const verifyOTP = useCallback(async (email, otp) => {
+        try {
+            const response = await api.post('/auth/verify-otp', { email, otp });
+            const { token, data } = response.data;
+            persistUser(token, data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Invalid OTP'
+            };
+        }
+    }, []);
+
+    // ─── Traditional Email/Password ────────────────────────────────────
+    const login = useCallback(async (email, password) => {
+        try {
+            const response = await api.post('/auth/login', { email, password });
+            const { token, data } = response.data;
+            persistUser(token, data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Login failed'
+            };
+        }
+    }, []);
+
+    // ─── Register ──────────────────────────────────────────────────────
+    const register = useCallback(async (name, email, password, role) => {
+        try {
+            const response = await api.post('/auth/register', { name, email, password, role });
+            return { success: true, message: response.data.message };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Registration failed'
+            };
+        }
+    }, []);
+
+    // ─── Assign Role (post-login) ──────────────────────────────────────
+    const assignRole = useCallback(async (role) => {
+        try {
+            const response = await api.post('/auth/assign-role', { role });
+            const { token, data } = response.data;
+            persistUser(token, data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Role assignment failed'
+            };
+        }
+    }, []);
+
+    // ─── Admin Login ───────────────────────────────────────────────────
+    const adminLogin = useCallback(async (email, password) => {
+        try {
+            const response = await api.post('/auth/admin/login', { email, password });
+            const { token, data } = response.data;
+            persistUser(token, data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Admin login failed'
+            };
+        }
+    }, []);
+
+    // ─── Update Profile ────────────────────────────────────────────────
+    const updateProfile = useCallback(async (profileData) => {
+        try {
+            const response = await api.post('/auth/update-profile', profileData);
+            const { data } = response.data;
+            persistUser(localStorage.getItem('token'), data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to update profile'
+            };
+        }
+    }, [persistUser]);
+
+    // ─── Upload Avatar ───────────────────────────────────────────────────
+    const uploadAvatar = useCallback(async (file) => {
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await api.post('/auth/upload-avatar', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const avatarUrl = response.data.data.avatarUrl;
+            // Update local user state with new avatar
+            const updatedUser = { ...JSON.parse(localStorage.getItem('user') || '{}'), avatar: avatarUrl };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            return { success: true, avatarUrl };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to upload avatar'
+            };
+        }
+    }, []);
+
+    // ─── Logout ────────────────────────────────────────────────────────
+    const logout = useCallback(() => {
         setUser(null);
-        localStorage.removeItem('gradnex_user');
-    };
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+    }, []);
+
+    // ─── Refresh user from server ──────────────────────────────────────
+    const refreshUser = useCallback(async () => {
+        try {
+            const response = await api.get('/auth/me');
+            const userData = response.data.data.user;
+            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
+            return userData;
+        } catch {
+            return null;
+        }
+    }, []);
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            login,
+            loginWithGoogle,
+            sendOTP,
+            verifyOTP,
+            register,
+            assignRole,
+            adminLogin,
+            updateProfile,
+            uploadAvatar,
+            logout,
+            refreshUser
+        }}>
             {!loading && children}
         </AuthContext.Provider>
     );

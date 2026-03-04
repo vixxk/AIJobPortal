@@ -1,0 +1,18 @@
+const express = require('express');
+const applicationController = require('./application.controller');
+const authMiddleware = require('../../middleware/auth');
+const roleMiddleware = require('../../middleware/role');
+
+const router = express.Router();
+
+router.use(authMiddleware.protect);
+
+// Student routes
+router.post('/', roleMiddleware.restrictTo('STUDENT'), applicationController.applyToJob);
+router.get('/me', roleMiddleware.restrictTo('STUDENT'), applicationController.getMyApplications);
+
+// Recruiter routes
+router.get('/job/:jobId', roleMiddleware.restrictTo('RECRUITER'), applicationController.getJobApplicants);
+router.patch('/:id', roleMiddleware.restrictTo('RECRUITER'), applicationController.updateApplicationStatus);
+
+module.exports = router;

@@ -14,6 +14,91 @@ import {
 
 import JobDetailsModal from '../components/JobDetailsModal';
 
+const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
+    const [saved, setSaved] = useState(initiallySaved);
+
+    const handleSave = async (e) => {
+        e.stopPropagation();
+        try {
+            const token = localStorage.getItem('token');
+            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+
+            if (saved) {
+                await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/unsave`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    data: { jobId }
+                });
+                setSaved(false);
+                if (onToggleSave) onToggleSave(jobId, false);
+            } else {
+                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/save`,
+                    { job },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                setSaved(true);
+                if (onToggleSave) onToggleSave(jobId, true);
+            }
+        } catch (err) {
+            console.error('Failed to toggle save job', err);
+        }
+    };
+
+    return (
+        <div onClick={() => onClick(job)} className="bg-white rounded-[16px] md:rounded-[24px] p-4 md:p-5 border border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] cursor-pointer hover:shadow-[0_8px_30px_-10px_rgba(37,99,235,0.15)] hover:border-blue-100 transition-all mb-4 relative">
+            <div className="flex justify-between items-start mb-2 md:mb-3">
+                <div className="flex gap-3 md:gap-4">
+                    <div className="w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center bg-white shadow-sm overflow-hidden shrink-0 relative">
+                        {job.logo && (
+                            <img
+                                src={job.logo}
+                                alt={job.company}
+                                className="w-8 h-8 object-contain"
+                                crossOrigin="anonymous"
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'block';
+                                }}
+                            />
+                        )}
+                        <span
+                            className="font-bold text-slate-700"
+                            style={{ display: job.logo ? 'none' : 'block' }}
+                        >
+                            {(job.company || '?').charAt(0)}
+                        </span>
+                    </div>
+                    <div>
+                        <h4 className="font-extrabold text-slate-900 tracking-tight text-[16px] leading-tight mb-1">{job.title}</h4>
+                        <p className="text-[13px] font-medium text-slate-500 leading-none">{job.company}</p>
+                    </div>
+                </div>
+                <button onClick={handleSave} className={`${saved ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-blue-600 hover:bg-blue-50'} p-1 md:p-1.5 rounded-lg -mt-1 -mr-1 md:mt-0 md:mr-0 z-10 transition-colors`}>
+                    <Bookmark className="w-5 h-5" strokeWidth={2.5} fill={saved ? 'currentColor' : 'none'} />
+                </button>
+            </div>
+
+            <div className="mt-3 flex flex-col justify-end">
+                {job.salary && job.salary !== 'Not specified' && job.salary !== 'Salary Undisclosed' && (
+                    <p className="text-[13px] font-bold text-blue-600 tracking-tight self-end mb-2">{job.salary}</p>
+                )}
+                <div className="flex justify-between items-center w-full gap-2 mt-auto">
+                    <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                        <span className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-md text-[11px] font-semibold text-slate-600 flex items-center justify-center whitespace-nowrap shrink-0">
+                            {job.type === 'contract' ? 'Contract' : job.type === 'internship' ? 'Intern' : 'Full Time'}
+                        </span>
+                        <span className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-md text-[11px] font-semibold text-slate-600 flex items-center justify-center whitespace-nowrap shrink-0">
+                            {job.location?.toLowerCase().includes('remote') ? 'Remote' : 'Onsite'}
+                        </span>
+                    </div>
+                    <span className="text-[11px] md:text-[12px] font-medium text-slate-500 truncate text-right">
+                        {job.location || 'Remote Options'}
+                    </span>
+                </div>
+            </div>
+        </div>
+    )
+};
 const Dashboard = () => {
     const { user } = useAuth();
     const { toggleSidebar } = useOutletContext() || {};
@@ -26,35 +111,75 @@ const Dashboard = () => {
     };
     const greeting = getGreeting();
 
-    const [recommendedJobs, setRecommendedJobs] = useState([]);
-    const [loadingJobs, setLoadingJobs] = useState(true);
     const [selectedJob, setSelectedJob] = useState(null);
+    const [recentJobs, setRecentJobs] = useState([]);
+    const [savedJobsIds, setSavedJobsIds] = useState(new Set());
+    const [loadingJobs, setLoadingJobs] = useState(false);
+    const [activeCategory, setActiveCategory] = useState('All');
 
     useEffect(() => {
-        const fetchRecommended = async () => {
+        const fetchSavedData = async () => {
             try {
-                // Fetch real jobs, defaulting to intern/entry level roles to fit the "Student" dash context
-                const rawUrl = import.meta.env.VITE_API_BASE_URL;
-                const apiBaseUrl = (rawUrl && rawUrl !== 'undefined' && rawUrl.length > 5)
-                    ? rawUrl.trim()
-                    : 'http://localhost:5000';
+                const token = localStorage.getItem('token');
+                const savedRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/saved`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).catch(() => ({ data: { jobs: [] } }));
 
-                const res = await axios.get(`${apiBaseUrl}/api/jobs/search?role=Intern&location=Remote&type=Internship`);
-                if (res.data.success && res.data.jobs) {
-                    setRecommendedJobs(res.data.jobs.slice(0, 3));
+                const savedIds = new Set(
+                    (savedRes.data.jobs || []).map(sj =>
+                        sj.link || `${sj.title}-${sj.company}`.replace(/\s+/g, '-').toLowerCase()
+                    )
+                );
+                setSavedJobsIds(savedIds);
+            } catch (err) { }
+        };
+        fetchSavedData();
+    }, []);
+
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchRecentData = async () => {
+            setLoadingJobs(true);
+            setError(null);
+            try {
+                const cacheKey = `dashboard_recent_jobs_${activeCategory}`;
+                const cachedJobs = sessionStorage.getItem(cacheKey);
+                if (cachedJobs) {
+                    setRecentJobs(JSON.parse(cachedJobs));
+                } else {
+                    const roleQuery = activeCategory === 'All' ? '' : activeCategory;
+                    try {
+                        const jobsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/search`, {
+                            params: { role: roleQuery }
+                        });
+
+                        const fetchedJobs = jobsRes.data.jobs?.slice(0, 3) || [];
+                        setRecentJobs(fetchedJobs);
+                        if (fetchedJobs.length > 0) {
+                            sessionStorage.setItem(cacheKey, JSON.stringify(fetchedJobs));
+                        }
+                    } catch (apiErr) {
+                        if (apiErr.response && apiErr.response.status === 429) {
+                            setError("Too many requests to the job board. Please try again in a few moments.");
+                        } else {
+                            setError("Could not load jobs at this time.");
+                        }
+                        setRecentJobs([]);
+                    }
                 }
-            } catch (error) {
-                console.error("Failed to load recommended jobs", error);
+            } catch (err) {
+                console.error('Failed to fetch recent jobs', err);
+                setError("An unexpected error occurred.");
             } finally {
                 setLoadingJobs(false);
             }
         };
-        fetchRecommended();
-    }, []);
-
+        fetchRecentData();
+    }, [activeCategory]);
     const features = [
-        { title: 'AI Job Search', desc: 'Find Best Matches', icon: Search, color: 'text-blue-600', bg: 'bg-blue-50', link: '/app/jobs' },
-        { title: 'AI Resume Builder', desc: 'Optimized for ATS', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', link: '/app/resume' },
+        { title: 'Job Search', desc: 'Find Best Matches', icon: Search, color: 'text-blue-600', bg: 'bg-blue-50', link: '/app/jobs' },
+        { title: 'Resume Builder', desc: 'Optimized for ATS', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', link: '/app/resume' },
         { title: 'Mock Interviews', desc: 'Practice with AI', icon: MonitorPlay, color: 'text-orange-600', bg: 'bg-orange-50', link: '/app/interview' },
         { title: 'Skill Learning', desc: 'Browse Courses', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
     ];
@@ -128,84 +253,33 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Recommended Internships/Jobs */}
-                <div>
-                    <div className="flex items-center justify-between mb-4 gap-2">
-                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                            {/* <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 rounded-sm bg-purple-500 rotate-45"></span> */}
-                            <h3 className="text-lg font-bold text-slate-900 truncate">Recommended Internships</h3>
+                {/* Recent Jobs Desktop */}
+                <div className="mb-10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
+                        <Link to="/app/jobs" className="text-sm font-bold text-blue-600 hover:text-blue-700">See All</Link>
+                    </div>
+                    {loadingJobs ? (
+                        <div className="flex justify-center p-6"><span className="animate-pulse text-blue-500 font-semibold">Loading jobs...</span></div>
+                    ) : error ? (
+                        <div className="text-red-500 bg-red-50 p-4 rounded-2xl font-semibold text-center mt-2 border border-red-100 text-sm">
+                            {error}
                         </div>
-                        <Link to="/app/jobs" className="text-[11px] min-[360px]:text-xs sm:text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors shrink-0 whitespace-nowrap">
-                            Explore More
-                        </Link>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {/* Mock data for Recommendation */}
-                        {[
-                            {
-                                id: 1,
-                                title: 'Software Engineer Intern',
-                                company: 'Amazon',
-                                location: 'Seattle, WA',
-                                type: 'Internship',
-                                initial: 'A',
-                                bgColor: 'bg-yellow-100',
-                                textColor: 'text-amber-600',
-                                logo: 'https://upload.wikimedia.org/wikipedia/commons/4/4a/Amazon_icon.svg'
-                            },
-                            {
-                                id: 2,
-                                title: 'UI/UX Designer',
-                                company: 'Google LLC',
-                                location: 'California, US',
-                                type: 'Internship',
-                                initial: 'G',
-                                bgColor: 'bg-blue-100',
-                                textColor: 'text-blue-600',
-                                logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg'
-                            },
-                            {
-                                id: 4,
-                                title: 'Data Scientist Intern',
-                                company: 'Microsoft',
-                                location: 'Remote',
-                                type: 'Internship',
-                                initial: 'M',
-                                bgColor: 'bg-blue-100',
-                                textColor: 'text-blue-600',
-                                logo: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg'
-                            }
-                        ].map((job) => (
-                            <div key={job.id} onClick={() => setSelectedJob(job)} className="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200 flex items-start sm:items-center justify-between hover:border-blue-300 hover:shadow-md transition-all group gap-4">
-                                <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
-                                    <div className="w-12 h-12 rounded-xl border border-slate-200 flex items-center justify-center shadow-sm overflow-hidden shrink-0 bg-white p-2 text-xl font-bold">
-                                        {job.logo ? (
-                                            <img src={job.logo} alt={job.company} className="w-full h-full object-contain" />
-                                        ) : (
-                                            <div className={`w - full h - full rounded - md ${job.bgColor} ${job.textColor} flex items - center justify - center`}>{job.initial}</div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors leading-snug">{job.title}</h4>
-                                        <div className="flex items-center flex-wrap gap-2 text-xs text-slate-500 mt-1.5">
-                                            <span className="font-medium">{job.company}</span>
-                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                            <span>{job.location}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 shrink-0">
-                                    <span className="hidden sm:inline-flex px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">{job.type}</span>
-                                    <div className="p-1.5 text-slate-400 group-hover:text-blue-500 transition-colors">
-                                        <Bookmark className="w-5 h-5" strokeWidth={1.5} />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {recentJobs.map((job, idx) => (
+                                <JobCard
+                                    key={idx}
+                                    job={job}
+                                    onClick={setSelectedJob}
+                                    initiallySaved={savedJobsIds.has(job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase())}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
+
+
             </div>
 
 
@@ -235,20 +309,7 @@ const Dashboard = () => {
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative mb-6 px-5">
-                    <div className="absolute inset-y-0 left-0 pl-9 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-slate-400" strokeWidth={2} />
-                    </div>
-                    <input
-                        type="text"
-                        className="w-full bg-[#f8fafc] border border-slate-100 rounded-2xl py-3 pl-12 pr-12 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 text-[13px] font-medium transition-all"
-                        placeholder="Search for a job or company"
-                    />
-                    <button className="absolute inset-y-0 right-0 pr-9 flex items-center">
-                        <SlidersHorizontal className="h-[18px] w-[18px] text-blue-500" strokeWidth={2} />
-                    </button>
-                </div>
+
 
                 {/* Featured Hero Card */}
                 <div className="px-5 mb-7">
@@ -279,76 +340,7 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Recommendation Section */}
-                <div className="mb-7 pl-5">
-                    <div className="flex items-center justify-between mb-4 pr-5">
-                        <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Recommendation</h3>
-                        <Link to="/app/jobs" className="text-[13px] font-bold text-blue-600">See All</Link>
-                    </div>
 
-                    <div className="flex overflow-x-auto gap-4 no-scrollbar pb-2 snap-x pr-5">
-                        {[
-                            {
-                                id: 1,
-                                title: 'Software Engineer Intern',
-                                company: 'Amazon',
-                                location: 'Seattle, WA',
-                                salary: '$4k - $6k',
-                                types: ['Full-time and internship', 'Remote'],
-                                initial: 'A',
-                                bgColor: 'bg-yellow-100',
-                                textColor: 'text-amber-600',
-                                logo: 'https://upload.wikimedia.org/wikipedia/commons/4/4a/Amazon_icon.svg'
-                            },
-                            {
-                                id: 2,
-                                title: 'UI/UX Designer',
-                                company: 'Google LLC',
-                                location: 'California, US',
-                                salary: '$4k - $6k',
-                                types: ['Internship', 'Remote'],
-                                initial: 'G',
-                                bgColor: 'bg-blue-100',
-                                textColor: 'text-blue-600',
-                                logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg'
-                            },
-                        ].map((job) => (
-                            <div key={job.id} onClick={() => setSelectedJob(job)} className="min-w-[270px] bg-white rounded-[24px] p-5 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.06)] border border-slate-100 flex-shrink-0 snap-center overflow-hidden block cursor-pointer">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-[48px] h-[48px] rounded-xl bg-white border border-slate-100 shadow-sm shadow-slate-200/50 flex items-center justify-center p-2.5 shrink-0 overflow-hidden text-[18px] font-bold">
-                                            {job.logo ? (
-                                                <img src={job.logo} alt={job.company} className="w-full h-full object-contain" />
-                                            ) : (
-                                                <div className={`w - full h - full rounded - md ${job.bgColor} ${job.textColor} flex items - center justify - center`}>{job.initial}</div>
-                                            )}
-                                        </div>
-                                        <div className="pt-0.5">
-                                            <h4 className="font-bold text-slate-800 text-[15px] leading-tight mb-0.5 truncate max-w-[130px]">{job.title}</h4>
-                                            <p className="text-[12px] text-slate-500 font-medium truncate max-w-[130px]">{job.company}</p>
-                                        </div>
-                                    </div>
-                                    <button className="text-slate-300 hover:text-blue-500 transition-colors">
-                                        <Bookmark className="w-5 h-5" strokeWidth={1.5} />
-                                    </button>
-                                </div>
-
-                                <div className="h-px bg-slate-100 w-full mb-3.5 mt-2"></div>
-
-                                <div className="flex flex-col gap-2 mb-4">
-                                    <p className="text-[13px] font-medium text-slate-600 truncate">{job.location}</p>
-                                    <p className="text-[14px] font-semibold text-blue-600">{job.salary} <span className="text-blue-500 text-[12px] font-medium">/month</span></p>
-                                </div>
-
-                                <div className="flex gap-2">
-                                    {job.types.map((type, i) => (
-                                        <span key={i} className="px-3 py-1 rounded-md border border-slate-200 text-slate-500 text-[10px] font-semibold">{type}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
 
                 {/* AI Career Tools */}
                 <div className="mb-8 px-5">
@@ -381,18 +373,50 @@ const Dashboard = () => {
                     </div>
 
                     <div className="flex overflow-x-auto gap-2.5 no-scrollbar pb-2 snap-x pr-5">
-                        <button className="px-5 py-2 rounded-full bg-[#1855f4] text-white text-[12px] font-medium flex-shrink-0 shadow-sm shadow-blue-500/20">All</button>
-                        <button className="px-5 py-2 rounded-full border border-blue-500/30 text-[#1855f4] hover:bg-blue-50 text-[12px] font-medium flex-shrink-0 transition-colors">Design</button>
-                        <button className="px-5 py-2 rounded-full border border-blue-500/30 text-[#1855f4] hover:bg-blue-50 text-[12px] font-medium flex-shrink-0 transition-colors">Technology</button>
-                        <button className="px-5 py-2 rounded-full border border-blue-500/30 text-[#1855f4] hover:bg-blue-50 text-[12px] font-medium flex-shrink-0 transition-colors">Finance</button>
+                        {['All', 'Design', 'Technology', 'Finance'].map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                disabled={loadingJobs}
+                                className={`px-5 py-2 rounded-full text-[12px] font-medium flex-shrink-0 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${activeCategory === cat ? 'bg-[#1855f4] text-white shadow-blue-500/20' : 'border border-blue-500/30 text-[#1855f4] hover:bg-blue-50'}`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
+                <div className="mt-4 pr-5 pl-5 mb-10">
+                    {loadingJobs ? (
+                        <div className="flex justify-center p-6"><span className="animate-pulse text-blue-500 text-sm font-semibold">Loading jobs...</span></div>
+                    ) : error ? (
+                        <div className="text-red-500 bg-red-50 p-4 rounded-2xl font-semibold text-center mt-2 border border-red-100 text-[13px]">
+                            {error}
+                        </div>
+                    ) : (
+                        recentJobs.map((job, idx) => (
+                            <JobCard
+                                key={idx}
+                                job={job}
+                                onClick={setSelectedJob}
+                                initiallySaved={savedJobsIds.has(job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase())}
+                            />
+                        ))
+                    )}
+                </div>
             </div>
+
             {/* Job Details Modal */}
             <JobDetailsModal
                 job={selectedJob}
                 onClose={() => setSelectedJob(null)}
+                initiallySaved={selectedJob ? savedJobsIds.has(selectedJob.link || `${selectedJob.title}-${selectedJob.company}`.replace(/\s+/g, '-').toLowerCase()) : false}
+                onToggleSave={(jobId, isSaved) => {
+                    const newIds = new Set(savedJobsIds);
+                    if (isSaved) newIds.add(jobId);
+                    else newIds.delete(jobId);
+                    setSavedJobsIds(newIds);
+                }}
             />
         </>
     );

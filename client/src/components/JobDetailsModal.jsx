@@ -1,7 +1,27 @@
-import { X, MapPin, Briefcase, Building, DollarSign, ExternalLink, Calendar, Users, Globe } from 'lucide-react';
-import { useEffect } from 'react';
+import { X, MapPin, Briefcase, Building, DollarSign, ExternalLink, Calendar, Users, Globe, Copy, Check } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
-const JobDetailsModal = ({ job, onClose }) => {
+const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave }) => {
+    const [didSave, setDidSave] = useState(initiallySaved || false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyLink = () => {
+        if (job?.link) {
+            navigator.clipboard.writeText(job.link);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    // Reset saved state when job changes
+    useEffect(() => {
+        if (job) {
+            setDidSave(initiallySaved || false);
+        }
+    }, [job, initiallySaved]);
+
     // Prevent scrolling when modal is open
     useEffect(() => {
         if (job) {
@@ -106,12 +126,46 @@ const JobDetailsModal = ({ job, onClose }) => {
                 </div>
 
                 {/* Compact Footer / CTA */}
-                <div className="p-4 md:p-5 border-t border-slate-100 bg-white flex gap-3 shrink-0">
+                <div className="p-4 md:p-5 border-t border-slate-100 bg-white flex gap-2 sm:gap-3 shrink-0">
                     <button
-                        onClick={onClose}
-                        className="flex-1 bg-slate-50 text-slate-700 font-bold py-3 px-4 rounded-xl text-sm whitespace-nowrap hover:bg-slate-100 transition-all"
+                        onClick={handleCopyLink}
+                        className="p-3.5 sm:p-3 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-blue-600 transition-colors flex items-center justify-center shrink-0"
+                        title="Copy Job Link"
                     >
-                        Save for later
+                        {copied ? <Check className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-emerald-500" /> : <Copy className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
+                    </button>
+                    <button
+                        onClick={async () => {
+                            setIsSaving(true);
+                            try {
+                                const token = localStorage.getItem('token');
+                                const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+
+                                if (didSave) {
+                                    await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/unsave`, {
+                                        headers: { Authorization: `Bearer ${token}` },
+                                        data: { jobId }
+                                    });
+                                    setDidSave(false);
+                                    if (onToggleSave) onToggleSave(jobId, false);
+                                } else {
+                                    await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/save`,
+                                        { job },
+                                        { headers: { Authorization: `Bearer ${token}` } }
+                                    );
+                                    setDidSave(true);
+                                    if (onToggleSave) onToggleSave(jobId, true);
+                                }
+                            } catch (err) {
+                                console.error('Failed to toggle save job', err);
+                            } finally {
+                                setIsSaving(false);
+                            }
+                        }}
+                        disabled={isSaving}
+                        className={`flex-1 font-bold py-3 px-4 rounded-xl text-[13px] sm:text-sm whitespace-nowrap transition-all ${didSave ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
+                    >
+                        {isSaving ? 'Processing...' : didSave ? 'Remove from saved' : 'Save for later'}
                     </button>
                     <a
                         href={job.link || '#'}
