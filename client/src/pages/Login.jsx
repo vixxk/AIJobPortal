@@ -102,6 +102,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [otpTimer, setOtpTimer] = useState(0);
     const [googleLoading, setGoogleLoading] = useState(false);
+    const [isRegistrationFlow, setIsRegistrationFlow] = useState(false);
 
     const { login, loginWithGoogle, sendOTP, verifyOTP, user } = useAuth();
     const navigate = useNavigate();
@@ -117,6 +118,7 @@ const Login = () => {
             if (location.state.fromRegister) {
                 setSuccess(`Verification code sent to ${location.state.email}`);
                 setOtpTimer(60);
+                setIsRegistrationFlow(true);
 
                 // Clear the state so it doesn't trigger on refresh
                 window.history.replaceState({}, document.title)
@@ -146,11 +148,13 @@ const Login = () => {
         return () => clearInterval(t);
     }, [otpTimer]);
 
-    const afterAuth = (userData) => {
+    const afterAuth = (userData, isRegistration) => {
         if (userData.needsRole) {
-            navigate('/select-role', { replace: true });
+            navigate('/select-role', { state: { isRegistration }, replace: true });
         } else if (userData.pendingApproval) {
             navigate('/pending-approval', { replace: true });
+        } else if (isRegistration && !userData.profileCompleted) {
+            navigate('/profile-setup', { replace: true });
         } else {
             navigate('/app', { replace: true });
         }
@@ -168,7 +172,7 @@ const Login = () => {
         setIsLoading(false);
 
         if (result.success) {
-            afterAuth(result.user);
+            afterAuth(result.user, false);
         } else {
             setError(result.message);
         }
@@ -195,7 +199,7 @@ const Login = () => {
                     if (response.credential) {
                         const result = await loginWithGoogle(response.credential);
                         if (result.success) {
-                            afterAuth(result.user);
+                            afterAuth(result.user, result.isNewUser);
                         } else {
                             setError(result.message);
                         }
@@ -230,6 +234,7 @@ const Login = () => {
             setView('otp-verify');
             setSuccess(`OTP sent to ${otpEmail}`);
             setOtpTimer(60);
+            if (result.isNewUser) setIsRegistrationFlow(true);
         } else {
             setError(result.message);
         }
@@ -249,7 +254,7 @@ const Login = () => {
         setIsLoading(false);
 
         if (result.success) {
-            afterAuth(result.user);
+            afterAuth(result.user, isRegistrationFlow);
         } else {
             setError(result.message);
             setOtp('');

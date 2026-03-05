@@ -21,7 +21,7 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
     }, []);
 
     // Hide Topbar on mobile Dashboard and Job Details since they have custom headers
-    if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/'))) {
+    if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/help' || location.pathname === '/app/contact')) {
         return null;
     }
 
@@ -31,9 +31,11 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
     else if (location.pathname === '/app/resume') pageTitle = "AI Resume Builder";
     else if (location.pathname === '/app/saved') pageTitle = "Saved Jobs";
     else if (location.pathname === '/app/profile') pageTitle = "Profile";
+    else if (location.pathname === '/app/help') pageTitle = "Help Center";
+    else if (location.pathname === '/app/contact') pageTitle = "Customer Service";
     else if (location.pathname !== '/app') pageTitle = "Feature Details";
 
-    const showBackButton = customBack || (!['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/profile'].includes(location.pathname));
+    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
 
     return (
         <div className={`h-16 md:h-20 px-4 md:px-8 flex items-center justify-between z-10 sticky top-0 transition-all duration-300 ${customTitle && isMobile ? 'bg-white' : 'bg-white/80 md:bg-background/80 backdrop-blur-md border-b border-slate-100 md:border-none shadow-sm md:shadow-none'}`}>

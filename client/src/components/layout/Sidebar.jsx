@@ -4,7 +4,7 @@ import {
     Home, Briefcase, BookOpen, Trophy,
     Users, Settings, LogOut, Bell,
     MessageSquare, FileText, CheckCircle, Orbit,
-    PanelLeftClose, PanelLeft, PlusCircle, ClipboardList, Shield, User
+    PanelLeftClose, PanelLeft, PlusCircle, ClipboardList, Shield, User, HelpCircle
 } from 'lucide-react';
 import clsx from 'clsx';
 import Logo from '../Logo';
@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
 
     const bottomLinks = [
         { name: 'Notifications', path: '/app/notifications', icon: Bell, badge: 1 },
-        { name: 'Messages', path: '/app/messages', icon: MessageSquare },
+        { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
     ];
 

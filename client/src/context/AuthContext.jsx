@@ -11,18 +11,34 @@ export const AuthProvider = ({ children }) => {
 
     // ─── Bootstrap: restore session from localStorage ──────────────────
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
+        const initAuth = async () => {
+            const storedToken = localStorage.getItem('token');
+            const storedUser = localStorage.getItem('user');
 
-        if (storedToken && storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch {
+            if (storedToken && storedUser) {
+                try {
+                    setUser(JSON.parse(storedUser));
+
+                    // Verify with server in background
+                    const response = await api.get('/auth/me');
+                    const userData = response.data.data.user;
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    setUser(userData);
+                } catch (error) {
+                    if (error.response?.status === 401 || error.response?.status === 403 || error.response?.status === 404) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        setUser(null);
+                    }
+                }
+            } else {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+
+        initAuth();
     }, []);
 
     const persistUser = (token, userData) => {
@@ -37,7 +53,7 @@ export const AuthProvider = ({ children }) => {
             const response = await api.post('/auth/google', { idToken });
             const { token, data } = response.data;
             persistUser(token, data.user);
-            return { success: true, user: data.user };
+            return { success: true, user: data.user, isNewUser: data.isNewUser };
         } catch (error) {
             return {
                 success: false,
@@ -49,8 +65,8 @@ export const AuthProvider = ({ children }) => {
     // ─── Email OTP: Send ───────────────────────────────────────────────
     const sendOTP = useCallback(async (email, name) => {
         try {
-            await api.post('/auth/send-otp', { email, name });
-            return { success: true };
+            const response = await api.post('/auth/send-otp', { email, name });
+            return { success: true, isNewUser: response.data.data?.isNewUser };
         } catch (error) {
             return {
                 success: false,
@@ -185,7 +201,12 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('user', JSON.stringify(userData));
             setUser(userData);
             return userData;
-        } catch {
+        } catch (error) {
+            if (error.response?.status === 401 || error.response?.status === 403 || error.response?.status === 404) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                setUser(null);
+            }
             return null;
         }
     }, []);

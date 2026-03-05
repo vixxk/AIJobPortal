@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -91,14 +92,14 @@ const Checkbox = ({ label, checked, onChange }) => (
 );
 
 const DatePicker = ({ label, value, onChange }) => (
-    <div className="mb-3 flex-1">
-        {label && <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">{label}</label>}
+    <div className="mb-3 flex-1 min-w-0">
+        {label && <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1 truncate">{label}</label>}
         <div className="relative">
             <input
                 type="date"
                 value={value ? value.substring(0, 10) : ''}
                 onChange={onChange}
-                className="w-full py-2 px-3 pr-10 bg-white border border-slate-200 rounded-2xl text-[13px] font-medium text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]"
+                className="w-full py-2 px-2 sm:px-3 bg-white border border-slate-200 rounded-2xl text-[12px] sm:text-[13px] font-medium text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] min-w-0"
             />
         </div>
     </div>
@@ -107,33 +108,36 @@ const DatePicker = ({ label, value, onChange }) => (
 
 const StudentProfile = () => {
     const { user } = useAuth();
+    const { section } = useParams();
+    const navigate = useNavigate();
+    const currentView = section ? section.toUpperCase() : 'MAIN';
+
     const [profile, setProfile] = useState({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [currentView, setCurrentView] = useState('MAIN');
     const [editIndex, setEditIndex] = useState(-1);
     const [localItem, setLocalItem] = useState({});
 
     useEffect(() => {
         fetchProfile();
         const handleOpenSettings = () => {
-            setCurrentView(prev => prev === 'SETTINGS' ? 'MAIN' : 'SETTINGS');
+            navigate('/app/profile/settings');
         };
         window.addEventListener('open-settings', handleOpenSettings);
         return () => window.removeEventListener('open-settings', handleOpenSettings);
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         const handleBack = () => {
             if (editIndex !== -1) {
                 setEditIndex(-1);
             } else {
-                setCurrentView('MAIN');
+                navigate('/app/profile');
             }
         };
         window.addEventListener('back-to-profile-main', handleBack);
         return () => window.removeEventListener('back-to-profile-main', handleBack);
-    }, [editIndex]);
+    }, [editIndex, navigate]);
 
     useEffect(() => {
         let title = null;
@@ -166,7 +170,9 @@ const StudentProfile = () => {
                 // If in Edit mode for a list, prepend Edit or Add
                 // We'll just keep the main title for simplicity as per requirement
             }
-            backEvent = 'back-to-profile-main';
+            if (window.innerWidth < 1024) {
+                backEvent = 'back-to-profile-main';
+            }
         }
 
         window.dispatchEvent(new CustomEvent('set-custom-header', {
@@ -212,7 +218,7 @@ const StudentProfile = () => {
     const NavButton = ({ sectionKey, label }) => (
         <div
             onClick={() => {
-                setCurrentView(sectionKey);
+                navigate(`/app/profile/${sectionKey.toLowerCase()}`);
                 setEditIndex(-1);
             }}
             className="flex items-center justify-between p-3 mb-2 border border-slate-200 bg-white rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] cursor-pointer hover:border-blue-200 hover:shadow-md active:scale-95 transition-all"
@@ -231,7 +237,7 @@ const StudentProfile = () => {
     const NavButtonDesktop = ({ sectionKey, label }) => (
         <div
             onClick={() => {
-                setCurrentView(sectionKey);
+                navigate(`/app/profile/${sectionKey.toLowerCase()}`);
                 setEditIndex(-1);
             }}
             className={`flex items-center justify-between p-3.5 mb-1.5 rounded-2xl cursor-pointer transition-all ${currentView === sectionKey ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20' : 'hover:bg-slate-50 text-slate-700 font-medium'}`}
@@ -409,7 +415,7 @@ const StudentProfile = () => {
                     <>
                         <Input label="Title" value={localItem.title} onChange={e => handleUpdateItem('title', e.target.value)} />
                         <Input label="Publishing Organization" value={localItem.publishingOrganization} onChange={e => handleUpdateItem('publishingOrganization', e.target.value)} />
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="Date of Issue" value={localItem.dateOfIssue} onChange={e => handleUpdateItem('dateOfIssue', e.target.value)} />
                             <DatePicker label="Expiration Date" value={localItem.expirationDate} onChange={e => handleUpdateItem('expirationDate', e.target.value)} />
                         </div>
@@ -441,7 +447,7 @@ const StudentProfile = () => {
                     <>
                         <Input label="Topic" value={localItem.topic} onChange={e => handleUpdateItem('topic', e.target.value)} />
                         <Input label="Organizer" value={localItem.organizer} onChange={e => handleUpdateItem('organizer', e.target.value)} />
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="From" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="To" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
                         </div>
@@ -454,7 +460,7 @@ const StudentProfile = () => {
                     <>
                         <Input label="Organization" value={localItem.organization} onChange={e => handleUpdateItem('organization', e.target.value)} />
                         <Input label="Role" value={localItem.role} onChange={e => handleUpdateItem('role', e.target.value)} />
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="From" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="To" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
                         </div>
@@ -474,7 +480,7 @@ const StudentProfile = () => {
                     <>
                         <Input label="Organization" value={localItem.organization} onChange={e => handleUpdateItem('organization', e.target.value)} />
                         <Input label="Role" value={localItem.role} onChange={e => handleUpdateItem('role', e.target.value)} />
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="From" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="To" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
                         </div>
@@ -497,7 +503,7 @@ const StudentProfile = () => {
                     <>
                         <Input label="Title" value={localItem.position} onChange={e => handleUpdateItem('position', e.target.value)} />
                         <Input label="Company" value={localItem.company} onChange={e => handleUpdateItem('company', e.target.value)} />
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="From" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="To" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
                         </div>
@@ -511,7 +517,7 @@ const StudentProfile = () => {
                         <Input label="Institution" value={localItem.institution} onChange={e => handleUpdateItem('institution', e.target.value)} />
                         <Input label="Degree" value={localItem.degree} onChange={e => handleUpdateItem('degree', e.target.value)} />
                         <Input label="Field of Study" value={localItem.fieldOfStudy} onChange={e => handleUpdateItem('fieldOfStudy', e.target.value)} />
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="From" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="To" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
                         </div>
@@ -522,7 +528,7 @@ const StudentProfile = () => {
                     <>
                         <Input label="Title" value={localItem.title} onChange={e => handleUpdateItem('title', e.target.value)} />
                         <Input label="URL" value={localItem.url} onChange={e => handleUpdateItem('url', e.target.value)} />
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="Start Date" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="End Date" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
                         </div>
@@ -614,7 +620,8 @@ const StudentProfile = () => {
                                 </div>
                             )}
                         </div>
-                        <button onClick={() => { if (window.innerWidth < 1024) setCurrentView('MAIN'); }} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Done</button>
+                        <button onClick={() => { if (window.innerWidth < 1024) navigate('/app/profile'); }} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Done</button>
+
                     </div>
                 );
             case 'SETTINGS':
@@ -629,7 +636,7 @@ const StudentProfile = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-3xl p-2 cursor-pointer shadow-sm" onClick={() => setCurrentView('STATUS')}>
+                            <div className="bg-white rounded-3xl p-2 cursor-pointer shadow-sm" onClick={() => navigate('/app/profile/status')}>
                                 <div className="flex justify-between items-center p-3">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 border border-slate-100 rounded-full flex items-center justify-center"><User className="w-5 h-5 text-slate-700" /></div>
@@ -669,7 +676,11 @@ const StudentProfile = () => {
                                         { l: 'Dark Mode', i: <Star className="w-5 h-5" />, toggle: true },
                                         { l: 'Help Center', i: <User className="w-5 h-5" /> }
                                     ].map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-50 rounded-2xl">
+                                        <div key={idx} className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-50 rounded-2xl" onClick={() => {
+                                            if (item.l === 'Help Center') {
+                                                navigate('/app/help');
+                                            }
+                                        }}>
                                             <div className="flex items-center gap-3">
                                                 <div className="text-slate-500 p-1">{item.i}</div>
                                                 <span className="font-bold text-slate-800 text-[15px]">{item.l}</span>
@@ -700,9 +711,9 @@ const StudentProfile = () => {
     // Ensure desktop opens something if MAIN is visited directly
     useEffect(() => {
         if (window.innerWidth >= 1024 && currentView === 'MAIN') {
-            setCurrentView('BASIC');
+            navigate('/app/profile/basic', { replace: true });
         }
-    }, [currentView]);
+    }, [currentView, navigate]);
 
     const currentViewRender = () => {
         return (
@@ -721,7 +732,7 @@ const StudentProfile = () => {
                                                 <p className="text-slate-500 text-sm mt-0.5">{profile.currentPosition || 'Job Hunter @ Application'}</p>
                                             </div>
                                         </div>
-                                        <button onClick={() => setCurrentView('BASIC')} className="w-9 h-9 flex items-center justify-center border border-blue-200 bg-white rounded-full shrink-0 shadow-sm hover:bg-slate-50 transition-colors">
+                                        <button onClick={() => navigate('/app/profile/basic')} className="w-9 h-9 flex items-center justify-center border border-blue-200 bg-white rounded-full shrink-0 shadow-sm hover:bg-slate-50 transition-colors">
                                             <Edit2 className="w-4 h-4 text-blue-500" />
                                         </button>
                                     </div>

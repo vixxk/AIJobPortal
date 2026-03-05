@@ -7,17 +7,6 @@ import notFoundImg from '../assets/404.png';
 
 const PAGE_SIZE = 10;
 
-const CategoryPill = ({ label, active, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`px-4 py-1.5 rounded-[20px] text-[13px] font-semibold whitespace-nowrap transition-colors border ${active
-            ? 'bg-blue-600 text-white border-blue-600'
-            : 'bg-white text-blue-500 border-blue-400 hover:bg-blue-50'
-            }`}
-    >
-        {label}
-    </button>
-);
 
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
@@ -239,12 +228,6 @@ const AiJobSearch = () => {
         return [...pages].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b);
     };
 
-    const handleCategoryClick = (catName) => {
-        setRole(catName);
-        handleSearch();
-    };
-
-    const categories = ['All', 'Design', 'Technology', 'Finance'];
 
     return (
         <div className="h-full bg-slate-50 md:bg-white flex flex-col font-sans relative md:py-6 md:px-4">
@@ -293,18 +276,7 @@ const AiJobSearch = () => {
                     </form>
                 </div>
 
-                {!(role || location) && (
-                    <div className="flex gap-2.5 overflow-x-auto no-scrollbar py-3 -mx-5 px-5 animate-in fade-in duration-300">
-                        {categories.map((c) => (
-                            <CategoryPill
-                                key={c}
-                                label={c}
-                                active={c === 'All' ? role === '' : role === c}
-                                onClick={() => c === 'All' ? setRole('') : handleCategoryClick(c)}
-                            />
-                        ))}
-                    </div>
-                )}
+
             </div>
 
             <div className="flex-1 overflow-auto bg-slate-50 px-5 pt-4 pb-20 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">

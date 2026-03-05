@@ -1,5 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
-import { Home, Bookmark, Briefcase, MessageSquare, User } from 'lucide-react';
+import { Home, Bookmark, User, HelpCircle } from 'lucide-react';
 import clsx from 'clsx';
 
 const MobileNavbar = () => {
@@ -19,8 +19,7 @@ const MobileNavbar = () => {
     const bottomNavItems = [
         { name: 'Home', path: '/app', icon: Home },
         { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
-        { name: 'Applications', path: '/app/applications', icon: Briefcase },
-        { name: 'Message', path: '/app/messages', icon: MessageSquare },
+        { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
     ];
 

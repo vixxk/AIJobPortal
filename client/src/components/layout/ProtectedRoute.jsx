@@ -24,11 +24,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
         return <Navigate to="/select-role" replace />;
     }
 
-    // Check if profile is completed
-    if (!user.profileCompleted) {
-        return <Navigate to="/profile-setup" replace />;
-    }
-
     // Recruiter/College awaiting admin approval
     if (user.pendingApproval || user.approvalStatus === 'PENDING') {
         return <Navigate to="/pending-approval" replace />;

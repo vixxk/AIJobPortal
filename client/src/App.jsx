@@ -9,6 +9,8 @@ import AiJobSearch from './pages/AiJobSearch';
 import AiResumeBuilder from './pages/AiResumeBuilder';
 import JobDetails from './pages/JobDetails';
 import SavedJobs from './pages/SavedJobs';
+import HelpCenter from './pages/HelpCenter';
+import CustomerService from './pages/CustomerService';
 import ComingSoon from './pages/ComingSoon';
 import MainLayout from './components/layout/MainLayout';
 
@@ -57,6 +59,7 @@ function App() {
             <Route path="job/:id" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER']}><JobDetails /></ProtectedRoute>} />
             <Route path="resume" element={<ProtectedRoute allowedRoles={['STUDENT']}><AiResumeBuilder /></ProtectedRoute>} />
             <Route path="profile" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER', 'COLLEGE_ADMIN']}><StudentProfile /></ProtectedRoute>} />
+            <Route path="profile/:section" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER', 'COLLEGE_ADMIN']}><StudentProfile /></ProtectedRoute>} />
             <Route path="applications" element={<ProtectedRoute allowedRoles={['STUDENT']}><MyApplications /></ProtectedRoute>} />
 
             {/* ── RECRUITER ROUTES ── */}
@@ -75,6 +78,8 @@ function App() {
             <Route path="competitions" element={<ComingSoon feature="Competitions" />} />
             <Route path="notifications" element={<ComingSoon feature="Notifications" />} />
             <Route path="messages" element={<ComingSoon feature="Messages" />} />
+            <Route path="help" element={<HelpCenter />} />
+            <Route path="contact" element={<CustomerService />} />
             <Route path="settings" element={<ComingSoon feature="Settings" />} />
           </Route>
 

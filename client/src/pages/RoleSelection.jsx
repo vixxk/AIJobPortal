@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GraduationCap, Briefcase, Building2, ArrowRight, Loader2, CheckCircle2, Clock } from 'lucide-react';
 import Logo from '../components/Logo';
@@ -59,6 +59,9 @@ const RoleSelection = () => {
 
     const { assignRole, user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isRegistration = location.state?.isRegistration;
 
     const handleConfirm = async () => {
         if (!selectedRole) return;
@@ -72,6 +75,8 @@ const RoleSelection = () => {
             const roleData = result.user;
             if (roleData.pendingApproval) {
                 navigate('/pending-approval', { replace: true });
+            } else if (isRegistration && !roleData.profileCompleted) {
+                navigate('/profile-setup', { replace: true });
             } else {
                 navigate('/app', { replace: true });
             }

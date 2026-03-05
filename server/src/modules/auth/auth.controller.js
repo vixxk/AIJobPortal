@@ -81,11 +81,12 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   const payload = ticket.getPayload();
   const { sub: googleId, email, name, picture } = payload;
 
-  // Find or create user
+  let isNewUser = false;
   let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
   if (!user) {
     // New user via Google – create without a role (role assigned next step)
+    isNewUser = true;
     user = await User.create({
       name,
       email,
@@ -116,7 +117,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     token,
-    data: { user: buildUserPayload(user) }
+    data: { user: buildUserPayload(user), isNewUser }
   });
 });
 
@@ -131,9 +132,11 @@ exports.sendOTP = catchAsync(async (req, res, next) => {
   }
 
   // Find or create a placeholder user for email OTP flow
+  let isNewUser = false;
   let user = await User.findOne({ email });
   if (!user) {
     // New user – create entry, role assigned later
+    isNewUser = true;
     user = await User.create({
       name: name || email.split('@')[0],
       email,
@@ -156,7 +159,8 @@ exports.sendOTP = catchAsync(async (req, res, next) => {
     await sendOTPEmail(email, otp, user.name);
     res.status(200).json({
       status: 'success',
-      message: `OTP sent to ${email}`
+      message: `OTP sent to ${email}`,
+      data: { isNewUser }
     });
   } catch (err) {
     user.otpCode = undefined;

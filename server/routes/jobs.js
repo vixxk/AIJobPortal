@@ -134,10 +134,17 @@ router.get('/search', async (req, res) => {
         const cacheKey = getCacheKey(role, location, type);
         const cached   = cache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-            logDivider();
-            console.log(`  📦 CACHE HIT — "${role}" → ${cached.jobs.length} jobs  (no API calls)`);
-            logDivider();
-            return res.json({ success: true, count: cached.jobs.length, jobs: cached.jobs, fromCache: true });
+            if (cached.jobs && cached.jobs.length > 0) {
+                logDivider();
+                console.log(`  📦 CACHE HIT — "${role}" → ${cached.jobs.length} jobs  (no API calls)`);
+                logDivider();
+                return res.json({ success: true, count: cached.jobs.length, jobs: cached.jobs, fromCache: true });
+            } else {
+                logDivider();
+                console.log(`  📦 CACHE HIT BUT 0 JOBS — "${role}" → fetching fresh data`);
+                logDivider();
+                // Fall through to fetch fresh data below
+            }
         }
 
         const isRemote = !location || location.toLowerCase() === 'remote';
