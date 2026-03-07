@@ -2,34 +2,25 @@ const express = require('express');
 const router  = express.Router();
 const axios   = require('axios');
 const https   = require('https');
-
-// ─── ENV ──────────────────────────────────────────────────────────────────────
 const ADZUNA_APP_ID  = process.env.ADZUNA_APP_ID;
 const ADZUNA_API_KEY = process.env.ADZUNA_API_KEY;
 const RAPIDAPI_KEY   = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST  = process.env.RAPIDAPI_HOST || 'jsearch.p.rapidapi.com';
 const FINDWORK_KEY   = process.env.FINDWORK_API_KEY;
 const JOOBLE_KEY     = process.env.JOOBLE_API_KEY;
-const CAREERJET_KEY  = process.env.CAREERJET_API_KEY;  // careerjet.com/partners/index.php
+const CAREERJET_KEY  = process.env.CAREERJET_API_KEY;  
 const MUSE_KEY       = process.env.MUSE_API_KEY;
-const USAJOBS_KEY    = process.env.USAJOBS_API_KEY;    // usajobs.gov/developer
-const USAJOBS_EMAIL  = process.env.USAJOBS_EMAIL;      // your registered email for USAJobs
-const SERPAPI_KEY    = process.env.SERPAPI_KEY;         // serpapi.com — 100 free/month
-
-// ─── In-memory cache (15-min TTL) ────────────────────────────────────────────
+const USAJOBS_KEY    = process.env.USAJOBS_API_KEY;    
+const USAJOBS_EMAIL  = process.env.USAJOBS_EMAIL;      
+const SERPAPI_KEY    = process.env.SERPAPI_KEY;         
 const cache        = new Map();
 const CACHE_TTL_MS = 15 * 60 * 1000;
-
 function getCacheKey(role, location, type) {
     return `${(role||'').toLowerCase()}|${(location||'').toLowerCase()}|${(type||'')}`;
 }
-
-// ─── Source health tracker ────────────────────────────────────────────────────
-// After 3 consecutive failures a source is skipped for 5 min (auto-cooldown).
 const healthMap       = {};
 const FAIL_THRESHOLD  = 3;
 const COOLDOWN_MS     = 5 * 60 * 1000;
-
 function isHealthy(name) {
     const h = healthMap[name];
     if (!h || h.failures < FAIL_THRESHOLD) return true;
@@ -45,32 +36,21 @@ function markFailed(name) {
     healthMap[name].lastFail = Date.now();
 }
 function markOk(name) { if (healthMap[name]) healthMap[name].failures = 0; }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function stripHtml(s = '') {
-    // 1. Decode entities FIRST (so &lt;img&gt; becomes <img> before we strip tags)
     let out = s
         .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
         .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
         .replace(/&quot;/g, '"').replace(/&#x2F;/g, '/').replace(/&#39;/g, "'");
-    // 2. Strip all HTML tags (including any that were entity-encoded above)
     out = out.replace(/<[^>]*>/g, ' ');
-    // 3. Collapse whitespace
     return out.replace(/\s+/g, ' ').trim();
 }
-
 function snippet(s = '') { return stripHtml(s).slice(0, 200) + '...'; }
-
-// Returns true if the job title contains the search role keywords.
-// Requires the FIRST keyword (main role word) to match the title.
-// This prevents description-only matches from polluting results.
 function titleMatchesRole(title = '', role = '') {
+    if (!role || role.trim().length === 0) return true;
     const words  = role.toLowerCase().split(/\s+/).filter(w => w.length > 2);
     const tLower = title.toLowerCase();
-    // Must have at least the first/main keyword in the title
     return words.length > 0 && words.some(w => tLower.includes(w));
 }
-
 function deduplicate(jobs) {
     const seen = new Set();
     return jobs.filter(j => {
@@ -80,12 +60,9 @@ function deduplicate(jobs) {
         return true;
     });
 }
-
 function pickRandom(arr, n) {
     return [...arr].sort(() => Math.random() - 0.5).slice(0, Math.min(n, arr.length));
 }
-
-// ─── Minimal RSS/XML parser (no extra deps) ───────────────────────────────────
 function parseRSS(xml) {
     const items = [];
     const itemRx = /<item>([\s\S]*?)<\/item>/g;
@@ -103,8 +80,6 @@ function parseRSS(xml) {
     }
     return items;
 }
-
-// ─── Fetch wrapper with 1 automatic retry ────────────────────────────────────
 async function safeFetch(name, fn) {
     for (let i = 0; i <= 1; i++) {
         try { const jobs = await fn(); markOk(name); return jobs; }
@@ -114,23 +89,15 @@ async function safeFetch(name, fn) {
         }
     }
 }
-
-// ─── Terminal helpers ──────────────────────────────────────────────────────────
 const DIV = '─'.repeat(60);
 function logDivider() { console.log(DIV); }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET /api/jobs/search?role=...&location=...&type=...
-//
-// Picks 3 India-focused + 2 global sources randomly per call.
-// ═══════════════════════════════════════════════════════════════════════════════
 router.get('/search', async (req, res) => {
     try {
         let { role, location, type } = req.query;
         const isRecent = (!role && !location);
-        if (!role) role = 'Developer'; // Default to Developer jobs to show "Recent Jobs" when empty
-
-        // ── Cache ────────────────────────────────────────────────────────
+        // If no role is provided, we keep it empty to fetch a diverse feed from free APIs
+        // instead of forcing a specific category like 'Developer'.
+        if (!role) role = ''; 
         const cacheKey = getCacheKey(role, location, type);
         const cached   = cache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -143,21 +110,11 @@ router.get('/search', async (req, res) => {
                 logDivider();
                 console.log(`  📦 CACHE HIT BUT 0 JOBS — "${role}" → fetching fresh data`);
                 logDivider();
-                // Fall through to fetch fresh data below
             }
         }
-
         const isRemote = !location || location.toLowerCase() === 'remote';
         const indiaLoc = !isRemote && location ? `${location}, India` : 'India';
-
-        // ── API Pool ─────────────────────────────────────────────────────
-        // region IN  = India-focused source
-        // region GLB = global / remote-only source
         const pool = [];
-
-        // ────────────────────── INDIA-FOCUSED ────────────────────────────
-
-        // 🇮🇳 1. Adzuna India  (india endpoint, key: ADZUNA_APP_ID + ADZUNA_API_KEY)
         if (ADZUNA_APP_ID && ADZUNA_API_KEY && !isRecent) {
             pool.push({
                 name: 'Adzuna', region: 'IN',
@@ -187,8 +144,6 @@ router.get('/search', async (req, res) => {
                 }),
             });
         }
-
-        // 🇮🇳 2. Jooble  (India location, key: jooble.org/api-index.php)
         if (JOOBLE_KEY && !isRecent) {
             pool.push({
                 name: 'Jooble', region: 'IN',
@@ -211,8 +166,6 @@ router.get('/search', async (req, res) => {
                 }),
             });
         }
-
-        // 🇮🇳 3. Careerjet India  (key: careerjet.com/partners/index.php)
         if (CAREERJET_KEY && !isRecent) {
             pool.push({
                 name: 'Careerjet', region: 'IN',
@@ -241,8 +194,6 @@ router.get('/search', async (req, res) => {
                 }),
             });
         }
-
-        // 🇮🇳 4. FindWork.dev  (tech/dev, India-compatible, key: findwork.dev/api-auth/registration)
         if (FINDWORK_KEY && !isRecent) {
             pool.push({
                 name: 'FindWork', region: 'IN',
@@ -264,8 +215,6 @@ router.get('/search', async (req, res) => {
                 }),
             });
         }
-
-        // 🇮🇳 5. JSearch via RapidAPI  (India-biased query, 200/mo free)
         if (RAPIDAPI_KEY && !isRecent) {
             pool.push({
                 name: 'JSearch', region: 'IN',
@@ -289,8 +238,6 @@ router.get('/search', async (req, res) => {
                 }),
             });
         }
-
-        // 🇮🇳 6. The Muse  (strong MNC/India listings, no key required)
         pool.push({
             name: 'The Muse', region: 'IN',
             fetch: () => {
@@ -299,7 +246,6 @@ router.get('/search', async (req, res) => {
                 return axios.get('https://www.themuse.com/api/public/jobs', { params }).then(r => {
                     if (!r.data?.results?.length) return [];
                     return r.data.results
-                        // Filter by TITLE only — prevents off-topic jobs slipping through
                         .filter(item => titleMatchesRole(item.name, role))
                         .slice(0, 15)
                         .map(item => ({
@@ -315,8 +261,6 @@ router.get('/search', async (req, res) => {
                 });
             },
         });
-
-        // 🇮🇳 7. Arbeitnow  (no key, no limit — always returns India tech roles)
         pool.push({
             name: 'Arbeitnow', region: 'IN',
             fetch: () => axios.get('https://www.arbeitnow.com/api/job-board-api', {
@@ -335,8 +279,6 @@ router.get('/search', async (req, res) => {
                 }));
             }),
         });
-
-        // 🇮🇳 8. Google Jobs via SerpApi  (100 free/mo — sign up at serpapi.com)
         if (SERPAPI_KEY && !isRecent) {
             pool.push({
                 name: 'Google Jobs', region: 'IN',
@@ -363,30 +305,6 @@ router.get('/search', async (req, res) => {
                 }),
             });
         }
-
-        // ────────────────────── GLOBAL / REMOTE ──────────────────────────
-
-        // 🌍 9. Remotive  (global remote jobs, disabled to avoid CORS/RateLimits on images)
-        /* pool.push({
-            name: 'Remotive', region: 'GLB',
-            fetch: () => axios.get('https://remotive.com/api/remote-jobs', {
-                params: { search: role, limit: 10 },
-            }).then(r => {
-                if (!r.data?.jobs?.length) return [];
-                return r.data.jobs.slice(0, 10).map(item => ({
-                    title:    item.title,
-                    company:  item.company_name,
-                    location: item.candidate_required_location || 'Worldwide',
-                    type:     item.job_type || 'Full-time',
-                    salary:   item.salary || 'Not specified',
-                    link:     item.url,
-                    snippet:  snippet(item.description),
-                    source: 'Remotive', logo: null, // Don't use their company_logo to prevent client-side CORS blocked by response issues
-                }));
-            }),
-        }); */
-
-        // 🌍 10. RemoteOK  (global remote jobs, no key needed)
         pool.push({
             name: 'RemoteOK', region: 'GLB',
             fetch: () => axios.get(`https://remoteok.com/api?tags=${encodeURIComponent(role)}`).then(r => {
@@ -403,8 +321,6 @@ router.get('/search', async (req, res) => {
                 }));
             }),
         });
-
-        // 🌍 11. We Work Remotely  (RSS feed, no key, lots of dev jobs)
         pool.push({
             name: 'WeWorkRemotely', region: 'GLB',
             fetch: () => axios.get('https://weworkremotely.com/remote-jobs.rss', {
@@ -415,13 +331,11 @@ router.get('/search', async (req, res) => {
                 if (!items.length) return [];
                 return items
                     .map(item => {
-                        // WWR title format: "Company Name: Job Title at Company"
                         const parts = (item.title || '').split(':');
                         const company = parts[0]?.trim() || 'Unknown';
                         const title   = parts.slice(1).join(':').trim() || item.title;
                         return { rawTitle: title, company, item };
                     })
-                    // Filter by parsed job title — not the full description
                     .filter(({ rawTitle }) => titleMatchesRole(rawTitle, role))
                     .slice(0, 20)
                     .map(({ rawTitle, company, item }) => ({
@@ -436,8 +350,6 @@ router.get('/search', async (req, res) => {
                     }));
             }),
         });
-
-        // 🌍 12. Jobicy  (global remote jobs, no key needed)
         pool.push({
             name: 'Jobicy', region: 'GLB',
             fetch: () => axios.get('https://jobicy.com/api/v2/remote-jobs', {
@@ -458,8 +370,6 @@ router.get('/search', async (req, res) => {
                 }));
             }),
         });
-
-        // 🌍 13. USAJobs  (US gov jobs, key: usajobs.gov/developer/vacancy/search)
         if (USAJOBS_KEY && USAJOBS_EMAIL && !isRecent) {
             pool.push({
                 name: 'USAJobs', region: 'GLB',
@@ -491,21 +401,14 @@ router.get('/search', async (req, res) => {
                 }),
             });
         }
-
-        // ── Filter healthy sources ────────────────────────────────────────
         const healthyPool  = pool.filter(api => isHealthy(api.name));
         const skippedNames = pool.filter(api => !isHealthy(api.name)).map(a => a.name);
-
-        // ── Smart pick: 3 Indian + 2 Global per call ──────────────────────
         const indianPool = healthyPool.filter(a => a.region === 'IN');
         const globalPool = healthyPool.filter(a => a.region === 'GLB');
-
         const picked = [
             ...pickRandom(indianPool, 3),
             ...pickRandom(globalPool, 2),
         ].sort(() => Math.random() - 0.5);
-
-        // ── Terminal log ──────────────────────────────────────────────────
         logDivider();
         console.log(`  🔍 JOB SEARCH`);
         console.log(`     Role     : "${role}"`);
@@ -519,8 +422,6 @@ router.get('/search', async (req, res) => {
         });
         if (skippedNames.length) console.log(`  ⚠️  Cooling down: ${skippedNames.join(', ')}`);
         console.log('');
-
-        // ── Fire all concurrently ─────────────────────────────────────────
         const t0      = Date.now();
         const results = await Promise.allSettled(
             picked.map(api =>
@@ -529,16 +430,12 @@ router.get('/search', async (req, res) => {
                     .catch(err  => { console.error(`  ❌ ${api.name.padEnd(18)} → ${err.message}`); return []; })
             )
         );
-
         let allJobs = [];
         results.forEach(r => {
             if (r.status === 'fulfilled' && Array.isArray(r.value)) allJobs = allJobs.concat(r.value);
         });
-
         const raw     = allJobs.length;
         allJobs       = deduplicate(allJobs);
-
-        // Strict location filtering
         if (location && location.trim().toLowerCase() !== 'remote') {
             const locLower = location.toLowerCase().trim();
             const locMain = locLower.split(',')[0].trim();
@@ -547,42 +444,31 @@ router.get('/search', async (req, res) => {
                 return jobLoc.includes(locLower) || locLower.includes(jobLoc) || (locMain && jobLoc.includes(locMain));
             });
         } else {
-            // Default to Remote or India if no specific location provided
             allJobs = allJobs.filter(job => {
                 const jobLoc = (job.location || '').toLowerCase();
                 const jobType = (job.type ? String(job.type) : '').toLowerCase();
                 return jobLoc.includes('remote') || jobLoc.includes('india') || jobLoc.includes('worldwide') || jobType.includes('remote');
             });
         }
-
         allJobs = allJobs.sort(() => Math.random() - 0.5);
         const elapsed = Date.now() - t0;
-
         console.log('');
         console.log(`  📊 ${raw} raw  →  ${allJobs.length} unique  (removed ${raw - allJobs.length} dupes)  ⏱ ${elapsed}ms`);
         logDivider();
         console.log('');
-
-        // ── Cache all results, paginate on response ───────────────────────
         cache.set(cacheKey, { jobs: allJobs, timestamp: Date.now() });
-
-        // Return ALL jobs — frontend paginates client-side (no extra requests needed)
         res.json({
             success:    true,
             totalCount: allJobs.length,
             jobs:       allJobs,
         });
-
     } catch (error) {
         console.error('Job Search Error:', error);
         res.status(500).json({ message: 'Server Error fetching jobs', error: error.message });
     }
 });
-
 const auth = require('../src/middleware/auth');
 const SavedJob = require('../src/modules/job/savedJob.model');
-
-// ── GET Saved Jobs ──────────────────────────────────────────────────────────
 router.get('/saved', auth.protect, async (req, res) => {
     try {
         const savedJobs = await SavedJob.find({ userId: req.user._id }).sort({ createdAt: -1 });
@@ -596,40 +482,29 @@ router.get('/saved', auth.protect, async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
-// ── POST Save Job ───────────────────────────────────────────────────────────
 router.post('/save', auth.protect, async (req, res) => {
     try {
         const { job } = req.body;
         if (!job) return res.status(400).json({ success: false, message: 'Job data required' });
-        
-        // Use link as unique jobId, or create a hash consisting of title and company if it is missing
         const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
-
         const newSavedJob = await SavedJob.findOneAndUpdate(
             { userId: req.user._id, jobId },
             { jobData: job },
             { upsert: true, new: true }
         );
-
         res.status(200).json({ success: true, savedJob: newSavedJob });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
-// ── DELETE Unsave Job ────────────────────────────────────────────────────────
 router.delete('/unsave', auth.protect, async (req, res) => {
     try {
         const { jobId } = req.body;
         if (!jobId) return res.status(400).json({ success: false, message: 'jobId is required' });
-
         await SavedJob.findOneAndDelete({ userId: req.user._id, jobId });
-
         res.status(200).json({ success: true, message: 'Job removed from saved list' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
 module.exports = router;

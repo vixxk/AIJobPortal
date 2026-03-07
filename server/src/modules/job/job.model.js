@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const jobSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -30,11 +29,9 @@ const jobSchema = new mongoose.Schema({
     default: 'OPEN'
   }
 }, { timestamps: true });
-
 jobSchema.index({ skillsRequired: 1 });
 jobSchema.index({ location: 1 });
 jobSchema.index({ recruiterId: 1 });
 jobSchema.index({ status: 1 });
-
 const Job = mongoose.model('Job', jobSchema);
 module.exports = Job;

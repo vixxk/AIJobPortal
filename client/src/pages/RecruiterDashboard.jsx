@@ -4,7 +4,6 @@ import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import { Briefcase, Users, PlusCircle, Calendar, Eye, MapPin } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
-
 const RecruiterDashboard = () => {
     const { user } = useAuth();
     const [stats, setStats] = useState({ activeJobs: 0, totalApplicants: 0 });
@@ -12,21 +11,15 @@ const RecruiterDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
-
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                // In a real app, this would be a specific recruiter stats endpoint
-                // For now, we fetch the jobs posted by this recruiter
                 const res = await axios.get('/jobs/me');
                 if (res.data.success) {
                     const jobs = res.data.data;
                     setRecentJobs(jobs);
-
-                    // Mock stats based on fetched jobs
                     let applicants = 0;
-                    jobs.forEach(job => applicants += Math.floor(Math.random() * 20)); // Fake applicant count for look
-
+                    jobs.forEach(job => applicants += Math.floor(Math.random() * 20)); 
                     setStats({
                         activeJobs: jobs.filter(j => j.status === 'open').length,
                         totalApplicants: applicants
@@ -41,14 +34,11 @@ const RecruiterDashboard = () => {
         };
         fetchDashboardData();
     }, []);
-
     const name = user?.name || "Recruiter";
     const firstName = name.split(' ')[0];
-
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
-
-            {/* Header */}
+            {}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-8">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Welcome back, {firstName}</h1>
@@ -61,8 +51,7 @@ const RecruiterDashboard = () => {
                     </Link>
                 </div>
             </div>
-
-            {/* Stats Cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5">
                     <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
@@ -73,7 +62,6 @@ const RecruiterDashboard = () => {
                         <h3 className="text-3xl font-bold text-slate-900">{loading ? '-' : stats.activeJobs}</h3>
                     </div>
                 </div>
-
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5">
                     <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
                         <Users className="w-6 h-6 text-emerald-600" />
@@ -83,7 +71,6 @@ const RecruiterDashboard = () => {
                         <h3 className="text-3xl font-bold text-slate-900">{loading ? '-' : stats.totalApplicants}</h3>
                     </div>
                 </div>
-
                 <div className="bg-gradient-to-br from-[#0F172A] to-[#1E293B] p-6 rounded-2xl border border-slate-800 shadow-lg text-white relative overflow-hidden flex flex-col justify-center">
                     <div className="absolute opacity-10 right-[-10%] top-[-10%]">
                         <Briefcase className="w-32 h-32" />
@@ -97,14 +84,12 @@ const RecruiterDashboard = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Recent Postings List */}
+            {}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                     <h2 className="text-lg font-bold text-slate-800">Your Recent Listings</h2>
                     <Link to="/app/recruiter" className="text-sm font-medium text-blue-600 hover:text-blue-700">View All</Link>
                 </div>
-
                 {loading ? (
                     <div className="p-8 text-center text-slate-500">Loading your jobs...</div>
                 ) : error ? (
@@ -140,7 +125,6 @@ const RecruiterDashboard = () => {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="flex items-center gap-3 shrink-0">
                                     <button
                                         onClick={() => setSelectedJob(job)}
@@ -161,11 +145,9 @@ const RecruiterDashboard = () => {
                     </div>
                 )}
             </div>
-
-            {/* Modal */}
+            {}
             <JobDetailsModal job={selectedJob} onClose={() => setSelectedJob(null)} />
         </div>
     );
 };
-
 export default RecruiterDashboard;

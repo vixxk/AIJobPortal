@@ -4,16 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import JobDetailsModal from '../components/JobDetailsModal';
 import notFoundImg from '../assets/404.png';
-
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
-
     const handleSave = async (e) => {
         e.stopPropagation();
         try {
             const token = localStorage.getItem('token');
             const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
-
             if (saved) {
                 await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/unsave`, {
                     headers: { Authorization: `Bearer ${token}` },
@@ -33,7 +30,6 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
             console.error('Failed to toggle save job', err);
         }
     };
-
     return (
         <div onClick={() => onClick(job)} className="bg-white rounded-[16px] md:rounded-[24px] p-3.5 md:p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-lg hover:border-blue-100 transition-all relative">
             <div className="flex justify-between items-start">
@@ -89,14 +85,12 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
         </div>
     );
 };
-
 const SavedJobs = () => {
     const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
-
     const fetchSavedJobs = async () => {
         try {
             setLoading(true);
@@ -112,11 +106,9 @@ const SavedJobs = () => {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         fetchSavedJobs();
     }, []);
-
     const handleToggleSave = (jobId, isSaved) => {
         if (!isSaved) {
             setJobs(jobs.filter(job => {
@@ -125,16 +117,14 @@ const SavedJobs = () => {
             }));
         }
     };
-
     return (
-        <div className="h-full bg-slate-50 md:bg-white flex flex-col font-sans relative md:py-6 md:px-4">
-            <div className="flex-1 overflow-auto bg-slate-50 px-5 pt-6 pb-24 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">
-                {/* Desktop Header */}
+        <div className="bg-slate-50 md:bg-white flex flex-col font-sans relative">
+            <div className="flex-1 bg-slate-50 px-5 pt-6 pb-6 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">
+                { }
                 <div className="hidden md:block mb-8 mt-2">
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Saved Jobs</h1>
                     <p className="text-slate-500 font-medium">Manage and keep track of your bookmarked job opportunities.</p>
                 </div>
-
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 text-blue-500">
                         <div className="relative flex justify-center items-center">
@@ -166,10 +156,8 @@ const SavedJobs = () => {
                     </div>
                 )}
             </div>
-
             <JobDetailsModal job={selectedJob} onClose={() => setSelectedJob(null)} initiallySaved={true} onToggleSave={handleToggleSave} />
         </div>
     );
 };
-
 export default SavedJobs;

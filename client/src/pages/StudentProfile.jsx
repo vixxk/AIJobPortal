@@ -7,7 +7,6 @@ import {
     Settings, ChevronLeft, Trash2, Edit2, ChevronDown, Check,
     Award, FileBadge, Globe, Link, Heart, Phone, BookOpen, Star, DollarSign, Home
 } from 'lucide-react';
-
 const icons = {
     BASIC: <User className="w-5 h-5 text-blue-500" />,
     CONTACT: <User className="w-5 h-5 text-blue-500" />,
@@ -29,7 +28,6 @@ const icons = {
     SETTINGS: <Settings className="w-5 h-5 text-blue-500" />,
     STATUS: <User className="w-5 h-5 text-blue-500" />,
 };
-
 const Input = ({ label, type = 'text', value, onChange, placeholder, disabled, icon, onKeyDown }) => (
     <div className="mb-3">
         {label && <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">{label}</label>}
@@ -47,7 +45,6 @@ const Input = ({ label, type = 'text', value, onChange, placeholder, disabled, i
         </div>
     </div>
 );
-
 const Select = ({ label, value, onChange, options }) => (
     <div className="mb-3 relative">
         {label && <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">{label}</label>}
@@ -66,7 +63,6 @@ const Select = ({ label, value, onChange, options }) => (
         </div>
     </div>
 );
-
 const Textarea = ({ label, value, onChange, placeholder, rows = 4, maxLength }) => (
     <div className="mb-3 relative">
         {label && <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">{label}</label>}
@@ -80,7 +76,6 @@ const Textarea = ({ label, value, onChange, placeholder, rows = 4, maxLength }) 
         />
     </div>
 );
-
 const Checkbox = ({ label, checked, onChange }) => (
     <label className="flex items-center gap-3 cursor-pointer mb-3 p-1">
         <div className={`w-5 h-5 rounded flex justify-center items-center transition-all ${checked ? 'bg-blue-600 border-blue-600 shadow-md shadow-blue-500/30' : 'bg-white border-2 border-slate-300'}`}>
@@ -90,7 +85,6 @@ const Checkbox = ({ label, checked, onChange }) => (
         <input type="checkbox" checked={checked || false} onChange={(e) => onChange(e.target.checked)} className="hidden" />
     </label>
 );
-
 const DatePicker = ({ label, value, onChange }) => (
     <div className="mb-3 flex-1 min-w-0">
         {label && <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1 truncate">{label}</label>}
@@ -104,20 +98,16 @@ const DatePicker = ({ label, value, onChange }) => (
         </div>
     </div>
 );
-
-
 const StudentProfile = () => {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { section } = useParams();
     const navigate = useNavigate();
     const currentView = section ? section.toUpperCase() : 'MAIN';
-
     const [profile, setProfile] = useState({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editIndex, setEditIndex] = useState(-1);
     const [localItem, setLocalItem] = useState({});
-
     useEffect(() => {
         fetchProfile();
         const handleOpenSettings = () => {
@@ -126,7 +116,6 @@ const StudentProfile = () => {
         window.addEventListener('open-settings', handleOpenSettings);
         return () => window.removeEventListener('open-settings', handleOpenSettings);
     }, [navigate]);
-
     useEffect(() => {
         const handleBack = () => {
             if (editIndex !== -1) {
@@ -138,11 +127,9 @@ const StudentProfile = () => {
         window.addEventListener('back-to-profile-main', handleBack);
         return () => window.removeEventListener('back-to-profile-main', handleBack);
     }, [editIndex, navigate]);
-
     useEffect(() => {
         let title = null;
         let backEvent = null;
-
         if (currentView !== 'MAIN') {
             const titles = {
                 'BASIC': 'Edit Profile',
@@ -167,25 +154,20 @@ const StudentProfile = () => {
             };
             title = titles[currentView];
             if (editIndex !== -1 && title !== 'Settings' && title !== 'Edit Profile') {
-                // If in Edit mode for a list, prepend Edit or Add
-                // We'll just keep the main title for simplicity as per requirement
             }
             if (window.innerWidth < 1024) {
                 backEvent = 'back-to-profile-main';
             }
         }
-
         window.dispatchEvent(new CustomEvent('set-custom-header', {
             detail: { title, backEvent }
         }));
-
         return () => {
             window.dispatchEvent(new CustomEvent('set-custom-header', {
                 detail: { title: null, backEvent: null }
             }));
         };
     }, [currentView, editIndex]);
-
     const fetchProfile = async () => {
         try {
             const res = await axios.get('/student/me');
@@ -200,7 +182,6 @@ const StudentProfile = () => {
             setLoading(false);
         }
     };
-
     const saveProfile = async (updates) => {
         setSaving(true);
         try {
@@ -214,7 +195,6 @@ const StudentProfile = () => {
             setSaving(false);
         }
     };
-
     const NavButton = ({ sectionKey, label }) => (
         <div
             onClick={() => {
@@ -232,8 +212,6 @@ const StudentProfile = () => {
             <Plus className="w-5 h-5 text-blue-500" />
         </div>
     );
-
-
     const NavButtonDesktop = ({ sectionKey, label }) => (
         <div
             onClick={() => {
@@ -251,7 +229,6 @@ const StudentProfile = () => {
             <ChevronLeft className={`w-4 h-4 rotate-180 transition-opacity ${currentView === sectionKey ? 'text-white/70 opacity-100' : 'text-slate-400 opacity-0 group-hover:opacity-100'}`} />
         </div>
     );
-
     const calculateCompletion = () => {
         let score = 0;
         if (profile.firstName && profile.lastName) score += 10;
@@ -267,15 +244,12 @@ const StudentProfile = () => {
         if (profile.jobSeekingStatus) score += 10;
         return Math.min(100, score);
     };
-
     const handleUpdateField = (field, value) => {
         setProfile({ ...profile, [field]: value });
     };
-
     const handleUpdateItem = (field, value) => {
         setLocalItem({ ...localItem, [field]: value });
     };
-
     const saveItemToList = async (listName) => {
         const list = [...(profile[listName] || [])];
         if (editIndex >= 0 && editIndex < list.length) {
@@ -284,18 +258,16 @@ const StudentProfile = () => {
             list.push(localItem);
         }
         await saveProfile({ [listName]: list });
-        setEditIndex(-1); // Go back to list, not to MAIN
+        setEditIndex(-1); 
     };
-
     const deleteItemFromList = async (listName) => {
         const list = [...(profile[listName] || [])];
         if (editIndex >= 0 && editIndex < list.length) {
             list.splice(editIndex, 1);
             await saveProfile({ [listName]: list });
-            setEditIndex(-1); // Go back to list
+            setEditIndex(-1); 
         }
     };
-
     const renderBasicEdit = () => (
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex justify-center mb-6">
@@ -312,6 +284,7 @@ const StudentProfile = () => {
                                     const res = await axios.patch('/student/profile/image', fm);
                                     if (res.data.status === 'success') {
                                         setProfile({ ...profile, profileImage: res.data.data.profileImage });
+                                        if (refreshUser) await refreshUser();
                                     }
                                 } catch (error) {
                                     console.error("Image upload error", error);
@@ -331,7 +304,6 @@ const StudentProfile = () => {
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
         </div>
     );
-
     const renderContact = () => (
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
@@ -342,7 +314,6 @@ const StudentProfile = () => {
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
         </div>
     );
-
     const renderSummary = () => (
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
@@ -351,7 +322,6 @@ const StudentProfile = () => {
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
         </div>
     );
-
     const renderSalary = () => (
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
@@ -363,7 +333,6 @@ const StudentProfile = () => {
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
         </div>
     );
-
     const renderListOrForm = (listName, title, renderFormFields) => {
         const list = profile[listName] || [];
         if (editIndex === -1) {
@@ -384,7 +353,6 @@ const StudentProfile = () => {
                 </div>
             );
         }
-
         return (
             <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                 <div className="flex-1 mt-1 overflow-y-auto hide-scrollbar pr-2 space-y-2 pb-4">
@@ -403,7 +371,6 @@ const StudentProfile = () => {
             </div>
         );
     };
-
     const renderActiveForm = () => {
         switch (currentView) {
             case 'BASIC': return renderBasicEdit();
@@ -621,7 +588,6 @@ const StudentProfile = () => {
                             )}
                         </div>
                         <button onClick={() => { if (window.innerWidth < 1024) navigate('/app/profile'); }} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Done</button>
-
                     </div>
                 );
             case 'SETTINGS':
@@ -635,7 +601,6 @@ const StudentProfile = () => {
                                     <p className="text-xs text-white/80 leading-tight">A complete profile increases the chances of a recruiter being more interested in recruiting you.</p>
                                 </div>
                             </div>
-
                             <div className="bg-white rounded-3xl p-2 cursor-pointer shadow-sm" onClick={() => navigate('/app/profile/status')}>
                                 <div className="flex justify-between items-center p-3">
                                     <div className="flex items-center gap-3">
@@ -645,7 +610,6 @@ const StudentProfile = () => {
                                     <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
                                 </div>
                             </div>
-
                             <div>
                                 <h4 className="font-semibold text-slate-400 mb-2 pl-2 text-sm uppercase">Account</h4>
                                 <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1">
@@ -663,12 +627,11 @@ const StudentProfile = () => {
                                     ))}
                                 </div>
                             </div>
-
                             <div>
                                 <h4 className="font-semibold text-slate-400 mb-2 pl-2 text-sm uppercase">General</h4>
                                 <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1">
                                     {[
-                                        { l: 'Notification', i: <Award className="w-5 h-5" /> }, // Bell icon alternative
+                                        { l: 'Notification', i: <Award className="w-5 h-5" /> }, 
                                         { l: 'Application Issues', i: <Award className="w-5 h-5" /> },
                                         { l: 'Timezone', i: <Globe className="w-5 h-5" /> },
                                         { l: 'Security', i: <Award className="w-5 h-5" /> },
@@ -701,24 +664,19 @@ const StudentProfile = () => {
                     </div>
                 );
             default:
-                // MAIN view
                 break;
         }
-        return null; // Add fallback return
+        return null; 
     };
-
-
-    // Ensure desktop opens something if MAIN is visited directly
     useEffect(() => {
         if (window.innerWidth >= 1024 && currentView === 'MAIN') {
             navigate('/app/profile/basic', { replace: true });
         }
     }, [currentView, navigate]);
-
     const currentViewRender = () => {
         return (
             <div className="w-full h-full lg:bg-slate-50 lg:h-full">
-                {/* Mobile View */}
+                {}
                 <div className="lg:hidden h-full">
                     {currentView === 'MAIN' ? (
                         <div className="bg-slate-50 flex flex-col h-[calc(100dvh-140px)] overflow-hidden">
@@ -736,7 +694,6 @@ const StudentProfile = () => {
                                             <Edit2 className="w-4 h-4 text-blue-500" />
                                         </button>
                                     </div>
-
                                     <NavButton sectionKey="CONTACT" label="Contact Information" />
                                     <NavButton sectionKey="SUMMARY" label="Summary" />
                                     <NavButton sectionKey="SALARY" label="Expected Salary" />
@@ -762,10 +719,9 @@ const StudentProfile = () => {
                         renderActiveForm()
                     )}
                 </div>
-
-                {/* Desktop Split Layout */}
+                {}
                 <div className="hidden lg:flex max-w-[1400px] mx-auto w-full p-6 xl:p-8 gap-6 xl:gap-8 h-full shrink-0 min-h-0">
-                    {/* Sidebar */}
+                    {}
                     <div className="w-[340px] shrink-0 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
                         <div className="p-8 border-b border-slate-100 flex flex-col items-center gap-4 bg-gradient-to-b from-blue-50/50 to-white text-center">
                             <div className="relative">
@@ -782,33 +738,28 @@ const StudentProfile = () => {
                             <NavButtonDesktop sectionKey="CONTACT" label="Contact Information" />
                             <NavButtonDesktop sectionKey="SUMMARY" label="Summary" />
                             <NavButtonDesktop sectionKey="SALARY" label="Expected Salary" />
-
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Experience & Education</h4>
                             <NavButtonDesktop sectionKey="EXPERIENCE" label="Work Experience" />
                             <NavButtonDesktop sectionKey="EDUCATION" label="Education" />
                             <NavButtonDesktop sectionKey="PROJECTS" label="Projects" />
-
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Qualifications</h4>
                             <NavButtonDesktop sectionKey="CERTIFICATIONS" label="Certification & Licenses" />
                             <NavButtonDesktop sectionKey="EXAMS" label="Professional Exams" />
                             <NavButtonDesktop sectionKey="AWARDS" label="Awards & Achievements" />
                             <NavButtonDesktop sectionKey="SEMINARS" label="Seminars & Trainings" />
                             <NavButtonDesktop sectionKey="ORGANIZATIONS" label="Organization Activities" />
-
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Other Information</h4>
                             <NavButtonDesktop sectionKey="LANGUAGES" label="Languages" />
                             <NavButtonDesktop sectionKey="SKILLS" label="Skills" />
                             <NavButtonDesktop sectionKey="AFFILIATIONS" label="Affiliations" />
                             <NavButtonDesktop sectionKey="REFERENCES" label="References" />
-
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">System</h4>
                             <NavButtonDesktop sectionKey="RESUME" label="CV/Resume" />
                             <NavButtonDesktop sectionKey="STATUS" label="Job Seeking Status" />
                             <NavButtonDesktop sectionKey="SETTINGS" label="Settings" />
                         </div>
                     </div>
-
-                    {/* Active Form Area */}
+                    {}
                     <div className="flex-1 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col relative overflow-hidden">
                         <div className="p-6 xl:p-8 border-b border-slate-100 bg-white z-10 flex justify-between items-center">
                             <h2 className="text-[22px] font-bold text-slate-800 tracking-tight">
@@ -833,10 +784,7 @@ const StudentProfile = () => {
             </div>
         );
     };
-
     if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
-
     return currentViewRender();
 };
-
 export default StudentProfile;

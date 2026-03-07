@@ -3,31 +3,23 @@ import { useAuth } from '../context/AuthContext';
 import { Clock, Mail, LogOut, RefreshCw, Shield, CheckCircle } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useState } from 'react';
-
 const PendingApproval = () => {
     const { user, logout, refreshUser } = useAuth();
     const navigate = useNavigate();
     const [checking, setChecking] = useState(false);
     const [checkMsg, setCheckMsg] = useState('');
-
     const handleLogout = () => {
         logout();
-        // Since logout() now does a window.location.href = '/', 
-        // we don't need a navigate call here, but keeping it as a fallback doesn't hurt.
-        // The page unloads regardless.
     };
-
     const handleCheckStatus = async () => {
         setChecking(true);
         setCheckMsg('');
         const updatedUser = await refreshUser();
         setChecking(false);
-
         if (!updatedUser) {
             setCheckMsg('Could not connect to server. Please try again.');
             return;
         }
-
         if (updatedUser.approvalStatus === 'APPROVED') {
             navigate('/app', { replace: true });
         } else if (updatedUser.approvalStatus === 'REJECTED') {
@@ -36,27 +28,22 @@ const PendingApproval = () => {
             setCheckMsg('⏳ Still pending. Our team typically reviews within 24–48 hours.');
         }
     };
-
     const roleLabel = user?.role === 'RECRUITER' ? 'Recruiter' : 'College';
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950/30 flex flex-col items-center justify-center p-4">
-            {/* Background blobs */}
+            {}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-5%] right-[-5%] w-[35%] h-[35%] bg-amber-600/10 rounded-full blur-3xl" />
                 <div className="absolute bottom-[-5%] left-[-5%] w-[35%] h-[35%] bg-orange-500/10 rounded-full blur-3xl" />
             </div>
-
             <div className="relative z-10 w-full max-w-md">
-                {/* Logo */}
+                {}
                 <div className="flex justify-center mb-8">
                     <Logo iconSize="w-10 h-10" textClassName="text-2xl text-white" />
                 </div>
-
-                {/* Card */}
+                {}
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl text-center">
-
-                    {/* Animated clock icon */}
+                    {}
                     <div className="flex items-center justify-center mb-6">
                         <div className="relative">
                             <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center">
@@ -64,11 +51,10 @@ const PendingApproval = () => {
                                     <Clock className="w-10 h-10 text-amber-400" strokeWidth={1.5} />
                                 </div>
                             </div>
-                            {/* Pulse ring */}
+                            {}
                             <div className="absolute inset-0 rounded-full border-2 border-amber-400/30 animate-ping" />
                         </div>
                     </div>
-
                     <h1 className="text-2xl font-bold text-white mb-3 tracking-tight">
                         Verification Pending
                     </h1>
@@ -77,8 +63,7 @@ const PendingApproval = () => {
                         Our admin team will verify your details and approve your account within{' '}
                         <span className="text-white font-medium">24–48 hours</span>.
                     </p>
-
-                    {/* Steps */}
+                    {}
                     <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6 text-left space-y-3">
                         {[
                             { icon: CheckCircle, text: 'Account created successfully', done: true },
@@ -102,21 +87,18 @@ const PendingApproval = () => {
                             </div>
                         ))}
                     </div>
-
-                    {/* Email notification note */}
+                    {}
                     <div className="flex items-center gap-2 justify-center text-xs text-slate-500 mb-6">
                         <Mail className="w-3.5 h-3.5" />
                         <span>We'll notify you at <span className="text-slate-300">{user?.email}</span> when approved</span>
                     </div>
-
-                    {/* Status message */}
+                    {}
                     {checkMsg && (
                         <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-300">
                             {checkMsg}
                         </div>
                     )}
-
-                    {/* Actions */}
+                    {}
                     <div className="space-y-3">
                         <button
                             onClick={handleCheckStatus}
@@ -135,7 +117,6 @@ const PendingApproval = () => {
                                 </>
                             )}
                         </button>
-
                         <button
                             onClick={handleLogout}
                             className="w-full py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-slate-200 font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -145,7 +126,6 @@ const PendingApproval = () => {
                         </button>
                     </div>
                 </div>
-
                 <p className="text-center text-xs text-slate-600 mt-6">
                     Questions? Contact us at{' '}
                     <a href="mailto:support@jobportal.com" className="text-slate-400 hover:text-slate-200 transition-colors">
@@ -156,5 +136,4 @@ const PendingApproval = () => {
         </div>
     );
 };
-
 export default PendingApproval;

@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-// ─── Country phone codes ──────────────────────────────────────────────────────
 const PHONE_CODES = [
     { code: 'AF', name: 'Afghanistan', dial: '+93', flag: '🇦🇫' },
     { code: 'AL', name: 'Albania', dial: '+355', flag: '🇦🇱' },
@@ -68,7 +66,6 @@ const PHONE_CODES = [
     { code: 'US', name: 'United States', dial: '+1', flag: '🇺🇸' },
     { code: 'VN', name: 'Vietnam', dial: '+84', flag: '🇻🇳' },
 ];
-
 const COUNTRIES = [
     'Afghanistan', 'Albania', 'Algeria', 'Angola', 'Argentina', 'Armenia', 'Australia', 'Austria',
     'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belarus', 'Belgium', 'Brazil', 'Canada', 'China',
@@ -80,7 +77,6 @@ const COUNTRIES = [
     'Switzerland', 'Taiwan', 'Thailand', 'Turkey', 'UAE', 'Ukraine', 'United Kingdom',
     'United States', 'Vietnam',
 ];
-
 const EXPERTISES = [
     'Accounting and Finance',
     'Architecture and Engineering',
@@ -90,8 +86,6 @@ const EXPERTISES = [
     'Sales and Marketing',
     'Writing and Content',
 ];
-
-// ─── Toast notification ───────────────────────────────────────────────────────
 const Toast = ({ message, type = 'error', onClose }) => (
     <div
         style={{
@@ -112,29 +106,21 @@ const Toast = ({ message, type = 'error', onClose }) => (
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#6b7280', padding: 0 }}>✕</button>
     </div>
 );
-
-// ─── Component ────────────────────────────────────────────────────────────────
 const ProfileSetup = () => {
     const { user, updateProfile, uploadAvatar } = useAuth();
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
-
     const [step, setStep] = useState(1);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [avatarLoading, setAvatarLoading] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar || null);
-    const [toast, setToast] = useState(null); // { message, type }
-
-    // ── Phone country picker state
+    const [toast, setToast] = useState(null); 
     const [phonePickerOpen, setPhonePickerOpen] = useState(false);
     const [phoneSearch, setPhoneSearch] = useState('');
     const [selectedDialCode, setSelectedDialCode] = useState(
         PHONE_CODES.find(p => p.code === 'US')
     );
-
-    // ── Country search (step 3)
     const [searchCountry, setSearchCountry] = useState('');
-
     const [formData, setFormData] = useState({
         fullName: user?.name || '',
         nickname: '',
@@ -145,26 +131,19 @@ const ProfileSetup = () => {
         expertise: [],
         country: '',
     });
-
     const showToast = (message, type = 'error') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 4000);
     };
-
-    // ── Handle basic field changes
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
-
-    // ── Avatar upload
     const handleAvatarClick = () => {
         fileInputRef.current?.click();
     };
-
     const handleAvatarChange = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (!validTypes.includes(file.type)) {
             showToast('Please select a valid image file (JPEG, PNG, WebP, GIF).');
@@ -174,25 +153,19 @@ const ProfileSetup = () => {
             showToast('Image size must be less than 5 MB.');
             return;
         }
-
-        // Instant local preview
         const reader = new FileReader();
         reader.onload = (ev) => setAvatarPreview(ev.target.result);
         reader.readAsDataURL(file);
-
         setAvatarLoading(true);
         const res = await uploadAvatar(file);
         setAvatarLoading(false);
-
         if (!res.success) {
             showToast(res.message || 'Failed to upload avatar.');
-            setAvatarPreview(user?.avatar || null); // Revert on failure
+            setAvatarPreview(user?.avatar || null); 
         } else {
             showToast('Profile photo updated!', 'success');
         }
     };
-
-    // ── Expertise toggle
     const handleExpertiseToggle = (exp) => {
         const isSelected = formData.expertise.includes(exp);
         if (isSelected) {
@@ -205,8 +178,6 @@ const ProfileSetup = () => {
             }
         }
     };
-
-    // ── Step 1 validation
     const handleStep1Continue = () => {
         if (!formData.nickname.trim()) {
             showToast('Please enter your nickname.');
@@ -216,7 +187,6 @@ const ProfileSetup = () => {
             showToast('Please enter your date of birth.');
             return;
         }
-        // Validate age ≥ 13
         const dob = new Date(formData.dateOfBirth);
         const age = (new Date() - dob) / (365.25 * 24 * 3600 * 1000);
         if (age < 13) {
@@ -229,8 +199,6 @@ const ProfileSetup = () => {
         }
         setStep(2);
     };
-
-    // ── Step 2 validation
     const handleStep2Continue = () => {
         if (formData.expertise.length === 0) {
             showToast('Please select at least one area of expertise.');
@@ -238,19 +206,15 @@ const ProfileSetup = () => {
         }
         setStep(3);
     };
-
-    // ── Final submit
     const handleFinalSubmit = async () => {
         if (!formData.country) {
             showToast('Please select your country.');
             return;
         }
-
         setSubmitLoading(true);
         const phoneNum = formData.phoneNumber
             ? `${selectedDialCode.dial} ${formData.phoneNumber}`
             : '';
-
         const res = await updateProfile({
             nickname: formData.nickname,
             dateOfBirth: formData.dateOfBirth,
@@ -260,7 +224,6 @@ const ProfileSetup = () => {
             expertise: formData.expertise,
         });
         setSubmitLoading(false);
-
         if (res.success) {
             if (res.user.pendingApproval || res.user.approvalStatus === 'PENDING') {
                 navigate('/pending-approval');
@@ -271,8 +234,6 @@ const ProfileSetup = () => {
             showToast(res.message || 'Something went wrong. Please try again.');
         }
     };
-
-    // ── Filtered data for pickers
     const filteredPhoneCodes = PHONE_CODES.filter(p =>
         p.name.toLowerCase().includes(phoneSearch.toLowerCase()) ||
         p.dial.includes(phoneSearch)
@@ -280,11 +241,9 @@ const ProfileSetup = () => {
     const filteredCountries = COUNTRIES.filter(c =>
         c.toLowerCase().includes(searchCountry.toLowerCase())
     );
-
-    // ────────────────────────────────────────────────── STEP 1 UI ──
     const renderStep1 = () => (
         <div className="flex flex-col animate-fadeIn min-h-screen bg-white">
-            {/* Header */}
+            {}
             <div className="flex items-center p-6 pb-2">
                 <button className="mr-4 p-1" onClick={() => navigate('/login')} id="back-to-login-btn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -293,9 +252,8 @@ const ProfileSetup = () => {
                 </button>
                 <h1 className="text-[22px] font-bold text-gray-900">Fill Your Profile</h1>
             </div>
-
             <div className="flex-1 overflow-y-auto px-6 pb-32">
-                {/* Avatar */}
+                {}
                 <div className="flex justify-center mt-6 mb-8 relative">
                     <div
                         className="w-[120px] h-[120px] bg-gray-100 rounded-full flex items-center justify-center overflow-hidden cursor-pointer relative"
@@ -338,10 +296,9 @@ const ProfileSetup = () => {
                         id="avatar-file-input"
                     />
                 </div>
-
-                {/* Form */}
+                {}
                 <div className="space-y-4 text-[14px]">
-                    {/* Full Name (read-only if from auth) */}
+                    {}
                     <div className="relative">
                         <input
                             type="text"
@@ -359,7 +316,6 @@ const ProfileSetup = () => {
                             </svg>
                         )}
                     </div>
-
                     <input
                         type="text"
                         name="nickname"
@@ -369,8 +325,7 @@ const ProfileSetup = () => {
                         className="w-full bg-gray-50 text-gray-800 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100"
                         id="nickname-input"
                     />
-
-                    {/* Date of Birth */}
+                    {}
                     <div className="relative">
                         <label className="absolute left-5 top-[10px] text-[10px] text-gray-400 font-medium uppercase tracking-wide">Date of Birth *</label>
                         <input
@@ -383,8 +338,7 @@ const ProfileSetup = () => {
                             id="dob-input"
                         />
                     </div>
-
-                    {/* Email */}
+                    {}
                     <div className="relative">
                         <input
                             type="email"
@@ -401,8 +355,7 @@ const ProfileSetup = () => {
                             <polyline points="22,6 12,13 2,6" />
                         </svg>
                     </div>
-
-                    {/* Phone with country picker */}
+                    {}
                     <div className="relative">
                         <div className="flex items-center bg-gray-50 rounded-2xl px-3 focus-within:ring-2 ring-blue-100">
                             <button
@@ -427,8 +380,7 @@ const ProfileSetup = () => {
                                 id="phone-input"
                             />
                         </div>
-
-                        {/* Country code dropdown */}
+                        {}
                         {phonePickerOpen && (
                             <div
                                 className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden"
@@ -470,8 +422,7 @@ const ProfileSetup = () => {
                             </div>
                         )}
                     </div>
-
-                    {/* Gender */}
+                    {}
                     <div className="relative">
                         <select
                             name="gender"
@@ -492,12 +443,10 @@ const ProfileSetup = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Overlay to close phone picker */}
+            {}
             {phonePickerOpen && (
                 <div className="fixed inset-0 z-40" onClick={() => setPhonePickerOpen(false)} />
             )}
-
             <div className="fixed bottom-0 w-full p-6 bg-white border-t border-gray-100 max-w-[480px] mx-auto left-0 right-0 z-10">
                 <button
                     id="step1-continue-btn"
@@ -509,8 +458,6 @@ const ProfileSetup = () => {
             </div>
         </div>
     );
-
-    // ────────────────────────────────────────────────── STEP 2 UI ──
     const renderStep2 = () => (
         <div className="flex flex-col animate-fadeIn min-h-screen bg-white">
             <div className="flex items-center p-6 pb-2">
@@ -520,7 +467,6 @@ const ProfileSetup = () => {
                     </svg>
                 </button>
             </div>
-
             <div className="flex-1 overflow-y-auto px-6 pb-32">
                 <h1 className="text-[28px] font-bold text-gray-900 mb-1">What is Your Expertise?</h1>
                 <p className="text-gray-500 mb-8 text-[15px]">
@@ -529,7 +475,6 @@ const ProfileSetup = () => {
                         ({formData.expertise.length}/5)
                     </span>
                 </p>
-
                 <div className="space-y-3">
                     {EXPERTISES.map((exp, idx) => {
                         const isSelected = formData.expertise.includes(exp);
@@ -562,7 +507,6 @@ const ProfileSetup = () => {
                     })}
                 </div>
             </div>
-
             <div className="fixed bottom-0 w-full p-6 bg-white border-t border-gray-100 max-w-[480px] mx-auto left-0 right-0 z-10">
                 <button
                     id="step2-continue-btn"
@@ -574,8 +518,6 @@ const ProfileSetup = () => {
             </div>
         </div>
     );
-
-    // ────────────────────────────────────────────────── STEP 3 UI ──
     const renderStep3 = () => (
         <div className="flex flex-col animate-fadeIn min-h-screen bg-white">
             <div className="flex items-center p-6 pb-2">
@@ -586,9 +528,8 @@ const ProfileSetup = () => {
                 </button>
                 <h1 className="text-[22px] font-bold text-gray-900">Your Country</h1>
             </div>
-
             <div className="flex-1 overflow-y-auto px-6 pb-32">
-                {/* Search */}
+                {}
                 <div className="relative mb-6">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
@@ -604,8 +545,7 @@ const ProfileSetup = () => {
                         id="country-search-input"
                     />
                 </div>
-
-                {/* Country list */}
+                {}
                 <div className="space-y-5">
                     {filteredCountries.length === 0 ? (
                         <p className="text-center text-gray-400 text-[14px] py-8">No countries found</p>
@@ -629,7 +569,6 @@ const ProfileSetup = () => {
                     })}
                 </div>
             </div>
-
             <div className="fixed bottom-0 w-full p-6 bg-white border-t border-gray-100 max-w-[480px] mx-auto left-0 right-0 z-10">
                 <button
                     id="complete-profile-btn"
@@ -650,7 +589,6 @@ const ProfileSetup = () => {
             </div>
         </div>
     );
-
     return (
         <>
             {toast && (
@@ -668,5 +606,4 @@ const ProfileSetup = () => {
         </>
     );
 };
-
 export default ProfileSetup;

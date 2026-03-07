@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react';
 import { FileText, Sparkles, Download, Loader2, Briefcase, Code, User, BookOpen, Layers, Award } from 'lucide-react';
 import axios from 'axios';
-
 const AiResumeBuilder = () => {
     const [loading, setLoading] = useState(false);
     const [loadingSummary, setLoadingSummary] = useState(false);
-    const [loadingExp, setLoadingExp] = useState(null); // stores index of currently loading experience
+    const [loadingExp, setLoadingExp] = useState(null);
     const [resumeData, setResumeData] = useState({
         personal: { name: '', email: '', phone: '', linkedin: '', github: '', leetcode: '', gfg: '', location: '' },
         summary: '',
@@ -15,53 +14,41 @@ const AiResumeBuilder = () => {
         certifications: [{ name: '', link: '' }],
         skills: [{ category: '', items: '' }]
     });
-
     const printRef = useRef(null);
-
-    // --- State Handlers ---
     const handlePersonalChange = (e) => {
         setResumeData({
             ...resumeData,
             personal: { ...resumeData.personal, [e.target.name]: e.target.value }
         });
     };
-
     const handleArrayChange = (group, index, field, value) => {
         const newArr = [...resumeData[group]];
         newArr[index][field] = value;
         setResumeData({ ...resumeData, [group]: newArr });
     };
-
     const removeArrayItem = (group, index) => {
         const newArr = resumeData[group].filter((_, i) => i !== index);
         setResumeData({ ...resumeData, [group]: newArr });
     };
-
     const addArrayItem = (group, template) => {
         setResumeData({
             ...resumeData,
             [group]: [...resumeData[group], template]
         });
     };
-
-    // --- AI Optimization ---
     const handleAiOptimize = async () => {
         const hasExp = resumeData.experience.some(e => e.description.trim().length > 10);
         const hasProj = resumeData.projects.some(p => p.description.trim().length > 10);
-
         if (!hasExp && !hasProj) {
             alert("Please write some rough experience or project notes first before using AI formatting.");
             return;
         }
-
         setLoading(true);
         try {
             const payload = {};
             if (hasExp) payload.experiences = resumeData.experience;
             if (hasProj) payload.projects = resumeData.projects;
-
             const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/resume/optimize`, payload);
-
             if (res.data.success) {
                 const updates = {};
                 if (res.data.optimizedExperiences) updates.experience = res.data.optimizedExperiences;
@@ -75,7 +62,6 @@ const AiResumeBuilder = () => {
             setLoading(false);
         }
     };
-
     const handleOptimizeSummary = async () => {
         if (!resumeData.summary || resumeData.summary.trim().length < 10) {
             alert("Please write a rough career objective first.");
@@ -92,10 +78,9 @@ const AiResumeBuilder = () => {
             alert("Failed to connect to AI for summary optimization.");
         } finally {
             setLoadingSummary(true);
-            setLoadingSummary(false); // Quick fix to clear loading state
+            setLoadingSummary(false);
         }
     };
-
     const handleOptimizeExperience = async (index, type = 'experience') => {
         const item = resumeData[type][index];
         if (!item.description || item.description.trim().length < 10) {
@@ -115,16 +100,14 @@ const AiResumeBuilder = () => {
             setLoadingExp(null);
         }
     };
-
     const handleDownload = () => {
         const originalTitle = document.title;
-        document.title = "Vivek_Anand_Resume"; // Sets default filename for PDF save
+        document.title = "Vivek_Anand_Resume";
         window.print();
         document.title = originalTitle;
     };
-
     return (
-        <div className="max-w-[1400px] mx-auto animate-in fade-in duration-500 xl:h-[calc(100vh-100px)] flex flex-col xl:flex-row gap-6 pb-6 print:h-auto print:block print:pb-0 print:w-full">
+        <div className="max-w-[1400px] mx-auto animate-in fade-in duration-500 xl:h-[calc(100vh-140px)] flex flex-col xl:flex-row gap-6 print:h-auto print:block print:pb-0 print:w-full">
             <style>
                 {`
                     @media print {
@@ -132,8 +115,8 @@ const AiResumeBuilder = () => {
                     }
                 `}
             </style>
-            {/* Scrollable Form Section */}
-            <div className="w-full xl:w-[45%] bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 overflow-y-auto scrollbar-hide print:hidden">
+            { }
+            <div className="w-full xl:w-[45%] bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 overflow-y-auto scrollbar-hide max-h-full print:hidden">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div className="flex-1 flex flex-col items-center text-center">
                         <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center justify-center gap-2 mb-1">
@@ -150,8 +133,7 @@ const AiResumeBuilder = () => {
                         Preview PDF Template
                     </button>
                 </div>
-
-                {/* 1. Personal details */}
+                { }
                 <section className="mb-8">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs">1</span>
@@ -192,8 +174,7 @@ const AiResumeBuilder = () => {
                         </div>
                     </div>
                 </section>
-
-                {/* 2. Objective */}
+                { }
                 <section className="mb-8">
                     <div className="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
@@ -218,8 +199,7 @@ const AiResumeBuilder = () => {
                         </button>
                     </div>
                 </section>
-
-                {/* 3. Education */}
+                { }
                 <section className="mb-8">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs">3</span>
@@ -238,8 +218,7 @@ const AiResumeBuilder = () => {
                     ))}
                     <button onClick={() => addArrayItem('education', { institution: '', degree: '', duration: '', location: '', cgpa: '' })} className="text-sm text-emerald-600 font-semibold hover:underline">+ Add Education</button>
                 </section>
-
-                {/* 4. Experience */}
+                { }
                 <section className="mb-8">
                     <div className="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
@@ -276,8 +255,7 @@ const AiResumeBuilder = () => {
                     ))}
                     <button onClick={() => addArrayItem('experience', { title: '', company: '', techStack: '', duration: '', location: '', description: '' })} className="text-sm text-purple-600 font-semibold hover:underline">+ Add Experience</button>
                 </section>
-
-                {/* 5. Projects */}
+                { }
                 <section className="mb-8">
                     <div className="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
@@ -313,11 +291,8 @@ const AiResumeBuilder = () => {
                         </div>
                     ))}
                     <button onClick={() => addArrayItem('projects', { name: '', github: '', liveLink: '', techStack: '', duration: '', description: '' })} className="text-sm text-orange-600 font-semibold hover:underline">+ Add Project</button>
-
-
                 </section>
-
-                {/* 6. Certifications */}
+                { }
                 <section className="mb-8">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 text-xs">6</span>
@@ -345,8 +320,7 @@ const AiResumeBuilder = () => {
                     </div>
                     <button onClick={() => addArrayItem('certifications', { name: '', link: '' })} className="text-sm text-yellow-600 font-semibold hover:underline">+ Add Certification</button>
                 </section>
-
-                {/* 7. Skills */}
+                { }
                 <section className="mb-4">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs">7</span>
@@ -382,11 +356,9 @@ const AiResumeBuilder = () => {
                     </div>
                     <button onClick={() => addArrayItem('skills', { category: '', items: '' })} className="text-sm text-pink-600 font-semibold hover:underline">+ Add Skill Category</button>
                 </section>
-
             </div>
-
-            {/* Live Preview & PDF Output Section */}
-            <div className="w-full xl:w-[55%] flex flex-col bg-slate-200 md:rounded-3xl overflow-hidden print:w-full print:bg-white print:block">
+            { }
+            <div className="w-full xl:w-[55%] flex flex-col bg-slate-200 md:rounded-3xl overflow-hidden max-h-full print:w-full print:bg-white print:block">
                 <div className="flex items-center justify-between bg-slate-800 p-4 print:hidden shrink-0">
                     <h3 className="text-white font-semibold flex items-center gap-2">
                         <FileText className="w-5 h-5 text-slate-300" /> Print Preview
@@ -398,20 +370,17 @@ const AiResumeBuilder = () => {
                         <Download className="w-4 h-4" /> Download PDF
                     </button>
                 </div>
-
-                {/* Live ATS Document Wrapper */}
+                { }
                 <div className="flex-1 overflow-x-auto overflow-y-auto w-full bg-slate-200 print:bg-white flex justify-center p-4 md:p-8 print:p-0">
-
-                    {/* Scaling container for mobile */}
+                    { }
                     <div className="origin-top transform scale-[0.4] sm:scale-50 md:scale-75 xl:scale-100 transition-transform h-[450px] sm:h-[550px] md:h-[800px] xl:h-auto print:scale-100 print:h-auto mx-auto print:mx-0">
-
-                        {/* Strict ATS Resume Template (Exact layout requirements from prompt) */}
+                        { }
                         <div
                             ref={printRef}
                             className="bg-white shadow-2xl print:shadow-none min-h-[1056px] w-[794px] pt-[12mm] pb-[25.4mm] px-[25.4mm] text-black"
                             style={{ fontFamily: "'Times New Roman', serif", lineHeight: "1.15", fontSize: "10.5px" }}
                         >
-                            {/* Header */}
+                            { }
                             <header className="text-center mb-3">
                                 <h1 className="font-bold uppercase mb-0.5" style={{ fontSize: "18px" }}>{resumeData.personal.name || 'YOUR NAME'}</h1>
                                 <div className="flex flex-col items-center justify-center" style={{ fontSize: "10.5px", lineHeight: "1.15" }}>
@@ -430,16 +399,14 @@ const AiResumeBuilder = () => {
                                     )}
                                 </div>
                             </header>
-
-                            {/* Objective */}
+                            { }
                             {resumeData.summary && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Career Objective</h2>
                                     <p className="text-justify" style={{ fontSize: "10.5px", lineHeight: "1.15" }}>{resumeData.summary}</p>
                                 </div>
                             )}
-
-                            {/* Education */}
+                            { }
                             {resumeData.education.some(e => e.institution || e.degree) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Education</h2>
@@ -462,8 +429,7 @@ const AiResumeBuilder = () => {
                                     ))}
                                 </div>
                             )}
-
-                            {/* Experience */}
+                            { }
                             {resumeData.experience.some(e => e.company || e.title) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Experience</h2>
@@ -489,8 +455,7 @@ const AiResumeBuilder = () => {
                                     ))}
                                 </div>
                             )}
-
-                            {/* Projects */}
+                            { }
                             {resumeData.projects.some(p => p.name) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Projects</h2>
@@ -532,8 +497,7 @@ const AiResumeBuilder = () => {
                                     ))}
                                 </div>
                             )}
-
-                            {/* Certifications */}
+                            { }
                             {resumeData.certifications.some(c => c.name) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Certifications</h2>
@@ -553,8 +517,7 @@ const AiResumeBuilder = () => {
                                     </ul>
                                 </div>
                             )}
-
-                            {/* Skills */}
+                            { }
                             {resumeData.skills.some(s => s.category || s.items) && (
                                 <div className="mb-0">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Skills</h2>
@@ -567,7 +530,6 @@ const AiResumeBuilder = () => {
                                     </div>
                                 </div>
                             )}
-
                         </div>
                     </div>
                 </div>
@@ -575,5 +537,4 @@ const AiResumeBuilder = () => {
         </div>
     );
 };
-
 export default AiResumeBuilder;

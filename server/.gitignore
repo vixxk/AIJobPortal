@@ -97,3 +97,8 @@ typings/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Uploads
+uploads/
+node_modules/
+.env

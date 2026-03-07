@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const questionSchema = new mongoose.Schema({
   question: {
     type: String,
@@ -11,7 +10,7 @@ const questionSchema = new mongoose.Schema({
     validate: [v => v.length >= 2, 'At least 2 options required']
   },
   correctAnswer: {
-    type: Number, // Index of the options array
+    type: Number, 
     required: true
   },
   marks: {
@@ -19,7 +18,6 @@ const questionSchema = new mongoose.Schema({
     default: 1
   }
 });
-
 const sectionSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -31,14 +29,13 @@ const sectionSchema = new mongoose.Schema({
   },
   questions: [questionSchema]
 });
-
 const mockTestSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, 'Mock test title is required']
   },
   duration: {
-    type: Number, // duration in minutes
+    type: Number, 
     required: true
   },
   sections: [sectionSchema],
@@ -47,6 +44,5 @@ const mockTestSchema = new mongoose.Schema({
     default: 'SUPER_ADMIN'
   }
 }, { timestamps: true });
-
 const MockTest = mongoose.model('MockTest', mockTestSchema);
 module.exports = MockTest;

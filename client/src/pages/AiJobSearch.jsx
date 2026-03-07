@@ -4,19 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import JobDetailsModal from '../components/JobDetailsModal';
 import notFoundImg from '../assets/404.png';
-
 const PAGE_SIZE = 10;
-
-
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
-
     const handleSave = async (e) => {
         e.stopPropagation();
         try {
             const token = localStorage.getItem('token');
             const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
-
             if (saved) {
                 await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/unsave`, {
                     headers: { Authorization: `Bearer ${token}` },
@@ -36,13 +31,12 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
             console.error('Failed to toggle save job', err);
         }
     };
-
     return (
         <div onClick={() => onClick(job)} className="bg-white rounded-[16px] md:rounded-[24px] p-3.5 md:p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-lg hover:border-blue-100 transition-all relative">
-            {/* Top Header */}
+            { }
             <div className="flex justify-between items-start">
                 <div className="flex gap-3 md:gap-4">
-                    {/* Image Box */}
+                    { }
                     <div className="w-[42px] h-[42px] md:w-[52px] md:h-[52px] rounded-xl md:rounded-2xl border border-slate-100 flex items-center justify-center bg-white shadow-sm shrink-0 overflow-hidden relative">
                         {job.logo && (
                             <img
@@ -64,7 +58,7 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
                             {(job.company || '?').charAt(0).toUpperCase()}
                         </span>
                     </div>
-                    {/* Text Next to Image */}
+                    { }
                     <div className="max-w-[200px] md:max-w-xs pt-0 md:pt-0.5">
                         <h4 className="font-bold text-slate-900 tracking-tight text-[15px] md:text-[16px] leading-tight mb-1 truncate">{job.title}</h4>
                         <p className="text-[12px] md:text-[13px] font-semibold text-slate-500 leading-none truncate">{job.company}</p>
@@ -74,8 +68,7 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
                     <Bookmark className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" strokeWidth={2.5} fill={saved ? 'currentColor' : 'none'} />
                 </button>
             </div>
-
-            {/* Bottom Details - Clean and compact without separator */}
+            { }
             <div className="mt-3 flex flex-col justify-end">
                 {job.salary && job.salary !== 'Not specified' && job.salary !== 'Salary Undisclosed' && (
                     <p className="text-[12px] md:text-[13px] font-bold text-blue-600 tracking-tight self-end mb-2">{job.salary}</p>
@@ -97,7 +90,6 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
         </div>
     );
 };
-
 const AiJobSearch = () => {
     const navigate = useNavigate();
     const [role, setRole] = useState('');
@@ -108,19 +100,14 @@ const AiJobSearch = () => {
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
     const [hasSearched, setHasSearched] = useState(false);
-
-    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [allJobs, setAllJobs] = useState([]);
     const [savedJobsIds, setSavedJobsIds] = useState(new Set());
-
-    // Sort & Mobile Search state
     const [showMobileSearch, setShowMobileSearch] = useState(false);
     const [sortBy, setSortBy] = useState('');
     const [showSortMenu, setShowSortMenu] = useState(false);
-
     const sortAllJobs = (jobsArray, sortType) => {
         let sorted = [...jobsArray];
         if (sortType === 'name-asc') {
@@ -134,9 +121,7 @@ const AiJobSearch = () => {
         }
         return sorted;
     };
-
     const resultsRef = useRef(null);
-
     const scrollToResults = () => {
         setTimeout(() => {
             if (resultsRef.current && hasSearched) {
@@ -145,32 +130,24 @@ const AiJobSearch = () => {
             }
         }, 80);
     };
-
     const handleSearch = async (e, isInitial = false) => {
         if (e) e.preventDefault();
-
-        // Don't alert if both are empty on explicit search? Actually we want it to just fetch all!
-        // We will remove the restriction so clicking search without parameters just returns all jobs.
-
         setLoading(true);
         setError(null);
         setCurrentPage(1);
         if (!isInitial) setHasSearched(true);
-
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/search`, {
                 params: { role, location, type }
             });
-
             const fetched = res.data.jobs || [];
             if (isInitial && fetched.length > 0) {
-                setHasSearched(true); // Treat initial successful fetch as a search to show jobs
+                setHasSearched(true);
             }
             setAllJobs(fetched);
             setJobs(fetched.slice(0, PAGE_SIZE));
             setTotalCount(res.data.totalCount || fetched.length);
             setTotalPages(Math.ceil((res.data.totalCount || fetched.length) / PAGE_SIZE));
-
             if (!isInitial && fetched.length > 0) {
                 scrollToResults();
             }
@@ -181,7 +158,6 @@ const AiJobSearch = () => {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -196,15 +172,11 @@ const AiJobSearch = () => {
                 );
                 setSavedJobsIds(savedIds);
             } catch (err) {
-                // Ignore if unauthed
             }
-            // Fetch initially without scrolling
             handleSearch(null, true);
         };
         fetchInitialData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
     const goToPage = (page) => {
         const p = Math.max(1, Math.min(page, totalPages));
         setCurrentPage(p);
@@ -212,7 +184,6 @@ const AiJobSearch = () => {
         setJobs(sorted.slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE));
         scrollToResults();
     };
-
     const handleSort = (type) => {
         setSortBy(type);
         setCurrentPage(1);
@@ -221,18 +192,13 @@ const AiJobSearch = () => {
         setJobs(sorted.slice(0, PAGE_SIZE));
         setShowSortMenu(false);
     };
-
     const pageNumbers = () => {
         if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
         const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
         return [...pages].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b);
     };
-
-
     return (
-        <div className="h-full bg-slate-50 md:bg-white flex flex-col font-sans relative md:py-6 md:px-4">
-
-            {/* ── MOBILE HEADER w/ Pills ── */}
+        <div className="bg-slate-50 md:bg-white flex flex-col font-sans relative">
             <div className="md:hidden bg-white px-5 pt-6 pb-2 sticky top-0 z-20 border-b border-slate-100 shadow-sm">
                 <div className="flex items-start gap-3 w-full mb-2">
                     <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-slate-700 mt-1.5 shrink-0">
@@ -275,25 +241,19 @@ const AiJobSearch = () => {
                         <button type="submit" className="hidden">Search</button>
                     </form>
                 </div>
-
-
             </div>
-
-            <div className="flex-1 overflow-auto bg-slate-50 px-5 pt-4 pb-20 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">
-
-                {/* ── DESKTOP HEADER (Hero Search Banner) ── */}
+            <div className="flex-1 bg-slate-50 px-5 pt-6 pb-12 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">
+                { }
                 <div className="hidden md:flex bg-[linear-gradient(135deg,#2563eb,#4f46e5)] rounded-3xl p-10 text-white relative flex-col items-center text-center overflow-hidden mb-12 shadow-xl shadow-blue-900/10">
                     <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
                         <svg width="240" height="240" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
                         </svg>
                     </div>
-
                     <h2 className="text-4xl font-extrabold mb-4 tracking-tight relative z-10">AI-Powered Job Search</h2>
                     <p className="text-blue-100 max-w-xl mx-auto mb-10 text-base relative z-10 font-medium">
                         Connect with top employers. Our intelligent scanner finds the best roles matching your profile across the web.
                     </p>
-
                     <form onSubmit={handleSearch} className="w-full max-w-4xl bg-white p-2.5 rounded-2xl flex gap-2 shadow-2xl relative z-10 mx-auto">
                         <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
                             <Search className="w-5 h-5 text-slate-400 shrink-0 mr-3" />
@@ -306,7 +266,6 @@ const AiJobSearch = () => {
                                 required
                             />
                         </div>
-
                         <div className="w-[300px] flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
                             <MapPin className="w-5 h-5 text-slate-400 shrink-0 mr-3" />
                             <input
@@ -317,7 +276,6 @@ const AiJobSearch = () => {
                                 className="bg-transparent border-none w-full text-slate-800 placeholder-slate-400 focus:outline-none text-[15px] font-semibold"
                             />
                         </div>
-
                         <button
                             type="submit"
                             disabled={loading}
@@ -326,7 +284,6 @@ const AiJobSearch = () => {
                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Find Jobs'}
                         </button>
                     </form>
-
                     <div className="flex gap-4 mt-8 flex-wrap justify-center text-sm font-semibold z-10 relative w-full">
                         {['any', 'fulltime', 'contract', 'internship'].map((v) => (
                             <label
@@ -342,8 +299,7 @@ const AiJobSearch = () => {
                         ))}
                     </div>
                 </div>
-
-                {/* ── RESULTS AREA ── */}
+                { }
                 <div ref={resultsRef}>
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-24 text-blue-500">
@@ -353,11 +309,9 @@ const AiJobSearch = () => {
                             </div>
                         </div>
                     )}
-
                     {!loading && error && (
                         <div className="text-red-500 p-4 font-semibold text-center mt-10">{error}</div>
                     )}
-
                     {!loading && hasSearched && allJobs.length === 0 && !error && (
                         <div className="flex flex-col items-center justify-center py-12 md:py-20 animate-in fade-in duration-500">
                             <img src={notFoundImg} alt="Not Found" className="w-[280px] md:w-[350px] h-auto object-contain mix-blend-multiply" />
@@ -367,10 +321,9 @@ const AiJobSearch = () => {
                             </p>
                         </div>
                     )}
-
                     {!loading && allJobs.length > 0 && (
                         <>
-                            {/* Stats header */}
+                            { }
                             <div className="hidden md:flex justify-between items-center mb-6 mt-4 relative">
                                 <span className="text-lg font-bold text-slate-900 tracking-tight">{totalCount.toLocaleString()} <span className="text-slate-500 font-semibold text-base">found</span></span>
                                 <div>
@@ -388,7 +341,6 @@ const AiJobSearch = () => {
                                     )}
                                 </div>
                             </div>
-
                             <div className="md:hidden flex justify-between items-center mb-4 mt-2 relative">
                                 <span className="text-[15px] font-bold text-slate-800 tracking-tight">{totalCount.toLocaleString()} <span className="text-slate-500 font-semibold text-[13px]">found</span></span>
                                 <div>
@@ -405,7 +357,6 @@ const AiJobSearch = () => {
                                     )}
                                 </div>
                             </div>
-
                             <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6">
                                 {jobs.map((job, idx) => {
                                     const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
@@ -419,8 +370,7 @@ const AiJobSearch = () => {
                                     )
                                 })}
                             </div>
-
-                            {/* Pagination */}
+                            { }
                             {!loading && totalPages > 1 && (
                                 <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2 mt-8 mb-8 pb-4">
                                     <button
@@ -430,7 +380,6 @@ const AiJobSearch = () => {
                                     >
                                         <ChevronLeft className="w-5 h-5 md:w-5 md:h-5" />
                                     </button>
-
                                     {pageNumbers().map((p, i, arr) => (
                                         <div key={p} className="flex items-center gap-1.5 md:gap-2">
                                             {i > 0 && arr[i - 1] !== p - 1 && (
@@ -447,7 +396,6 @@ const AiJobSearch = () => {
                                             </button>
                                         </div>
                                     ))}
-
                                     <button
                                         onClick={() => goToPage(currentPage + 1)}
                                         disabled={currentPage === totalPages}
@@ -461,7 +409,6 @@ const AiJobSearch = () => {
                     )}
                 </div>
             </div>
-
             <JobDetailsModal
                 job={selectedJob}
                 onClose={() => setSelectedJob(null)}
@@ -476,5 +423,4 @@ const AiJobSearch = () => {
         </div>
     );
 };
-
 export default AiJobSearch;

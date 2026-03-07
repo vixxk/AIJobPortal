@@ -1,28 +1,17 @@
 import { useLocation, Link } from 'react-router-dom';
 import { Home, Bookmark, User, HelpCircle } from 'lucide-react';
 import clsx from 'clsx';
-
 const MobileNavbar = () => {
     const location = useLocation();
-
-    // Hide bottom navbar only on specific Job Details sub-pages if really needed,
-    // but the user requested it on "all pages", so we will show it everywhere
-    // except if it heavily conflits. We'll leave it visible everywhere for now.
-
-    // Some routes actually have a custom bottom bar (like job details), 
-    // we can exclude strictly `/app/job/` with a trailing slash if needed, 
-    // but the request said "all the pages".
-    if (location.pathname.startsWith('/app/job/')) {
+    if (location.pathname.startsWith('/app/job/') || location.pathname === '/app/interview') {
         return null;
     }
-
     const bottomNavItems = [
         { name: 'Home', path: '/app', icon: Home },
         { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
         { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
     ];
-
     return (
         <div
             className="fixed bottom-0 left-0 right-0 h-[80px] bg-white z-50 flex items-center justify-around px-2 pb-safe shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.05)] border-t border-slate-100"
@@ -30,7 +19,6 @@ const MobileNavbar = () => {
         >
             {bottomNavItems.map((item) => {
                 const isActive = location.pathname === item.path || (item.path !== '/app' && location.pathname.startsWith(item.path));
-
                 return (
                     <Link
                         key={item.name}
@@ -51,6 +39,4 @@ const MobileNavbar = () => {
         </div>
     );
 };
-
 export default MobileNavbar;
-

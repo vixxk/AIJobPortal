@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { Briefcase, MapPin, DollarSign, List, Building } from 'lucide-react';
-
 const PostJob = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -16,23 +15,18 @@ const PostJob = () => {
         skills: '',
         experienceLevel: 'Entry Level'
     });
-
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-
         try {
-            // Split skills by comma
             const payload = {
                 ...formData,
                 skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
             };
-
             const res = await axios.post('/jobs', payload);
             if (res.data.success) {
                 navigate('/app/recruiter');
@@ -43,25 +37,21 @@ const PostJob = () => {
             setLoading(false);
         }
     };
-
     return (
         <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Post a New Job</h1>
                 <p className="text-slate-500 mt-1">Fill out the details below to publish an opening to students.</p>
             </div>
-
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 md:p-8">
                 {error && (
                     <div className="p-4 mb-6 bg-red-50 text-red-700 text-sm font-medium rounded-xl border border-red-200">
                         {error}
                     </div>
                 )}
-
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-4">
                         <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4">Core Details</h3>
-
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Job Title</label>
                             <div className="relative">
@@ -77,7 +67,6 @@ const PostJob = () => {
                                 />
                             </div>
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Location</label>
@@ -109,7 +98,6 @@ const PostJob = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Job Type</label>
@@ -141,10 +129,8 @@ const PostJob = () => {
                             </div>
                         </div>
                     </div>
-
                     <div className="space-y-4 pt-4">
                         <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4">Requirements & Description</h3>
-
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Required Skills (Comma separated)</label>
                             <div className="relative">
@@ -160,7 +146,6 @@ const PostJob = () => {
                                 />
                             </div>
                         </div>
-
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Job Description</label>
                             <textarea
@@ -174,7 +159,6 @@ const PostJob = () => {
                             ></textarea>
                         </div>
                     </div>
-
                     <div className="pt-4 flex items-center justify-end gap-3">
                         <button type="button" onClick={() => navigate('/app/recruiter')} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                             Cancel
@@ -188,5 +172,4 @@ const PostJob = () => {
         </div>
     );
 };
-
 export default PostJob;

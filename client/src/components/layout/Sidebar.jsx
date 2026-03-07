@@ -4,31 +4,26 @@ import {
     Home, Briefcase, BookOpen, Trophy,
     Users, Settings, LogOut, Bell,
     MessageSquare, FileText, CheckCircle, Orbit,
-    PanelLeftClose, PanelLeft, PlusCircle, ClipboardList, Shield, User, HelpCircle
+    PanelLeftClose, PanelLeft, PlusCircle, ClipboardList, Shield, User, HelpCircle, Bookmark
 } from 'lucide-react';
 import clsx from 'clsx';
 import Logo from '../Logo';
-
 const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     const location = useLocation();
     const { user, logout } = useAuth();
-
     const isCollapsed = !isMobile && !isOpen;
     const role = user?.role || 'STUDENT';
-
     let mainLinks = [];
     let toolLinks = [];
-
     if (role === 'STUDENT') {
         mainLinks = [
             { name: 'Dashboard', path: '/app', icon: Home },
             { name: 'Jobs & Internships', path: '/app/jobs', icon: Briefcase },
-            { name: 'My Applications', path: '/app/applications', icon: ClipboardList },
+            { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
         ];
         toolLinks = [
             { name: 'Resume Builder', path: '/app/resume', icon: FileText, highlight: true },
-            { name: 'Mock Tests', path: '/app/mock-tests', icon: CheckCircle },
             { name: 'Interview Prep', path: '/app/interview', icon: Orbit },
         ];
     } else if (role === 'RECRUITER') {
@@ -49,28 +44,22 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
             { name: 'Manage Mock Tests', path: '/app/mock-tests', icon: CheckCircle },
         ];
     } else {
-        // Default Fallback
         mainLinks = [{ name: 'Dashboard', path: '/app', icon: Home }];
     }
-
     const bottomLinks = [
         { name: 'Notifications', path: '/app/notifications', icon: Bell, badge: 1 },
         { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
     ];
-
-    // Rest of component rendering identical functionality but dynamically applying these maps
     return (
         <div className={clsx(
             "h-full flex flex-col bg-[#0F172A] text-slate-300 transition-all duration-300 ease-in-out border-r border-[#1E293B]",
             isCollapsed ? "w-[80px]" : "w-[280px]"
         )}>
-
             <div className={clsx("flex items-center h-20 border-b border-[#1E293B]", isCollapsed ? "justify-center px-0" : "justify-between px-6")}>
                 {!isCollapsed && (
                     <Logo withText={true} textClassName="text-xl text-white" iconSize="w-8 h-8" to="/app" />
                 )}
-
                 {isMobile ? (
                     <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-md hover:bg-[#1E293B] text-slate-400">
                         <PanelLeftClose className="w-5 h-5" />
@@ -81,7 +70,6 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                     </button>
                 )}
             </div>
-
             <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-8 py-6 px-4">
                 <div>
                     {!isCollapsed && <p className="text-xs font-semibold text-slate-500 mb-3 px-3 uppercase">Main</p>}
@@ -100,7 +88,6 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                         })}
                     </ul>
                 </div>
-
                 {toolLinks.length > 0 && (
                     <div>
                         {!isCollapsed && <p className="text-xs font-semibold text-slate-500 mb-3 px-3 uppercase">Tools & Config</p>}
@@ -119,7 +106,6 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                         </ul>
                     </div>
                 )}
-
                 <div>
                     {!isCollapsed && <p className="text-xs font-semibold text-slate-500 mb-3 px-3 uppercase">Others</p>}
                     <ul className="space-y-1">
@@ -139,7 +125,6 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                     </ul>
                 </div>
             </div>
-
             <div className={clsx("p-4 border-t border-[#1E293B]", isCollapsed ? "flex justify-center" : "")}>
                 <div className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30", isCollapsed ? "p-2" : "p-3")}>
                     <img src={user?.avatar || "https://i.pravatar.cc/150"} alt="User" className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover shrink-0" />
@@ -150,7 +135,6 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                         </div>
                     )}
                 </div>
-
                 {!isCollapsed && (
                     <button onClick={logout} className="w-full mt-3 flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white font-medium">
                         <LogOut className="w-4 h-4 mt-0.5" /> Sign Out
@@ -160,5 +144,4 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         </div>
     );
 };
-
 export default Sidebar;

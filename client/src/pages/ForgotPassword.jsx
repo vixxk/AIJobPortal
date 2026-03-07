@@ -4,8 +4,6 @@ import { ArrowLeft, Mail, Eye, EyeOff, Loader2, ShieldCheck, RefreshCw, Lock } f
 import api from '../utils/axios';
 import forgotIllustration from '../assets/forgot_password.png';
 import Logo from '../components/Logo';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const maskEmail = (email) => {
     if (!email) return '';
     const [local, domain] = email.split('@');
@@ -14,16 +12,12 @@ const maskEmail = (email) => {
     const masked = '*'.repeat(Math.max(local.length - 3, 3));
     return `${visible}${masked}@${domain}`;
 };
-
-// ─── OTP 6-digit input — defined OUTSIDE parent to avoid remount on state change
 const OTPInput = ({ value, onChange, disabled, idPrefix = 'fp-otp' }) => {
     const [inputs, setInputs] = useState(Array(6).fill(''));
-
     useEffect(() => {
         const filled = value.split('').slice(0, 6);
         setInputs([...filled, ...Array(6 - filled.length).fill('')]);
     }, [value]);
-
     const handleInput = (e, idx) => {
         const val = e.target.value.replace(/\D/g, '').slice(-1);
         const next = [...inputs];
@@ -32,12 +26,10 @@ const OTPInput = ({ value, onChange, disabled, idPrefix = 'fp-otp' }) => {
         onChange(next.join(''));
         if (val && idx < 5) document.getElementById(`${idPrefix}-${idx + 1}`)?.focus();
     };
-
     const handleKeyDown = (e, idx) => {
         if (e.key === 'Backspace' && !inputs[idx] && idx > 0)
             document.getElementById(`${idPrefix}-${idx - 1}`)?.focus();
     };
-
     const handlePaste = (e) => {
         const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
         const arr = [...pasted.split(''), ...Array(6 - pasted.length).fill('')];
@@ -45,7 +37,6 @@ const OTPInput = ({ value, onChange, disabled, idPrefix = 'fp-otp' }) => {
         onChange(pasted);
         document.getElementById(`${idPrefix}-${Math.min(pasted.length, 5)}`)?.focus();
     };
-
     return (
         <div className="flex gap-2 sm:gap-3 justify-center" onPaste={handlePaste}>
             {inputs.map((digit, idx) => (
@@ -69,8 +60,6 @@ const OTPInput = ({ value, onChange, disabled, idPrefix = 'fp-otp' }) => {
         </div>
     );
 };
-
-// ─── Password strength bar ─────────────────────────────────────────────────────
 const StrengthBar = ({ password }) => {
     if (!password) return null;
     const strength =
@@ -86,11 +75,8 @@ const StrengthBar = ({ password }) => {
         </div>
     );
 };
-
-// ─── Main Component ────────────────────────────────────────────────────────────
 const ForgotPassword = () => {
     const navigate = useNavigate();
-
     const [step, setStep] = useState('method');
     const [selectedMethod] = useState('email');
     const [email, setEmail] = useState('');
@@ -104,15 +90,12 @@ const ForgotPassword = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [timer, setTimer] = useState(0);
-
     useEffect(() => {
         if (timer <= 0) return;
         const t = setInterval(() => setTimer(p => p - 1), 1000);
         return () => clearInterval(t);
     }, [timer]);
-
     const clearMessages = useCallback(() => { setError(''); setSuccess(''); }, []);
-
     const handleSendOTP = async () => {
         if (!emailInput.trim()) { setError('Please enter your email address.'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.trim())) { setError('Please enter a valid email address.'); return; }
@@ -127,7 +110,6 @@ const ForgotPassword = () => {
         }
         setLoading(false);
     };
-
     const handleVerifyOTP = async () => {
         if (otp.length !== 6) { setError('Please enter the complete 6-digit code.'); return; }
         setLoading(true); clearMessages();
@@ -139,7 +121,6 @@ const ForgotPassword = () => {
         }
         setLoading(false);
     };
-
     const handleResend = async () => {
         if (timer > 0) return;
         setLoading(true); clearMessages();
@@ -153,7 +134,6 @@ const ForgotPassword = () => {
         }
         setLoading(false);
     };
-
     const handleResetPassword = async () => {
         if (!newPassword || newPassword.length < 8) { setError('Password must be at least 8 characters.'); return; }
         if (newPassword !== confirmPassword) { setError('Passwords do not match.'); return; }
@@ -167,7 +147,6 @@ const ForgotPassword = () => {
         }
         setLoading(false);
     };
-
     const handleBack = () => {
         clearMessages();
         if (step === 'method') navigate('/login');
@@ -175,20 +154,12 @@ const ForgotPassword = () => {
         else if (step === 'reset') setStep('otp');
         else navigate('/login');
     };
-
     const stepMeta = {
         method: 'Forgot Password',
         otp: 'Verification',
         reset: 'New Password',
         done: 'All Done!',
     };
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // NOTE: these are RENDER FUNCTIONS (called directly), NOT React components.
-    // Defining them as components inside ForgotPassword causes React to treat
-    // them as new component types on every render → unmount/remount → focus lost.
-    // ─────────────────────────────────────────────────────────────────────────
-
     const renderMethod = (isMobile) => (
         <div className="flex flex-col">
             {isMobile && (
@@ -196,12 +167,10 @@ const ForgotPassword = () => {
                     <img src={forgotIllustration} alt="Forgot password" className="w-[210px] h-[210px] object-contain" />
                 </div>
             )}
-
             <p className="text-slate-500 text-[14px] mb-6">
                 Select which contact details we should use to reset your password
             </p>
-
-            {/* Method tile */}
+            {}
             <div
                 id="fp-email-option"
                 onClick={() => { }}
@@ -220,8 +189,7 @@ const ForgotPassword = () => {
                     <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
                 </div>
             </div>
-
-            {/* Email input */}
+            {}
             <div className="relative mb-4">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail className="h-4 w-4 text-slate-400" />
@@ -237,9 +205,7 @@ const ForgotPassword = () => {
                     autoComplete="email"
                 />
             </div>
-
             {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-[13px] rounded-xl border border-red-100">{error}</div>}
-
             <button
                 id="fp-continue-btn"
                 onClick={handleSendOTP}
@@ -250,7 +216,6 @@ const ForgotPassword = () => {
             </button>
         </div>
     );
-
     const renderOTP = (isMobile) => (
         <div>
             {isMobile && (
@@ -262,14 +227,11 @@ const ForgotPassword = () => {
             )}
             <p className="text-slate-500 text-[14px] mb-1">We sent a 6-digit code to</p>
             <p className="text-slate-800 font-semibold text-[15px] mb-7">{maskEmail(email)}</p>
-
             {success && <div className="mb-4 p-3 bg-green-50 text-green-700 text-[13px] rounded-xl border border-green-100 text-center">{success}</div>}
             {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-[13px] rounded-xl border border-red-100">{error}</div>}
-
             <div className="mb-7">
                 <OTPInput value={otp} onChange={setOtp} disabled={loading} idPrefix={isMobile ? 'fp-otp-mobile' : 'fp-otp-desktop'} />
             </div>
-
             <button
                 id="fp-verify-btn"
                 onClick={handleVerifyOTP}
@@ -278,7 +240,6 @@ const ForgotPassword = () => {
             >
                 {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</> : <><ShieldCheck className="w-5 h-5" /> Verify Code</>}
             </button>
-
             <div className="flex justify-between items-center text-[13px] font-semibold px-1">
                 <button
                     id="fp-resend-btn"
@@ -296,7 +257,6 @@ const ForgotPassword = () => {
             </div>
         </div>
     );
-
     const renderReset = (isMobile) => (
         <div>
             {isMobile && (
@@ -307,9 +267,7 @@ const ForgotPassword = () => {
                 </div>
             )}
             <p className="text-slate-500 text-[14px] mb-6">Create a new strong password for your account</p>
-
             {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-[13px] rounded-xl border border-red-100">{error}</div>}
-
             <div className="space-y-3 mb-6">
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -329,7 +287,6 @@ const ForgotPassword = () => {
                         {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 </div>
-
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Lock className="h-4 w-4 text-slate-400" />
@@ -352,10 +309,8 @@ const ForgotPassword = () => {
                         {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 </div>
-
                 <StrengthBar password={newPassword} />
             </div>
-
             <button
                 id="fp-reset-btn"
                 onClick={handleResetPassword}
@@ -366,7 +321,6 @@ const ForgotPassword = () => {
             </button>
         </div>
     );
-
     const renderDone = () => (
         <div className="flex flex-col items-center text-center pt-4">
             <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mb-6">
@@ -385,15 +339,12 @@ const ForgotPassword = () => {
             </button>
         </div>
     );
-
     const renderContent = (isMobile) => {
         if (step === 'method') return renderMethod(isMobile);
         if (step === 'otp') return renderOTP(isMobile);
         if (step === 'reset') return renderReset(isMobile);
         return renderDone();
     };
-
-    // ─── Step icon for desktop
     const stepIcon = {
         method: <Mail className="w-7 h-7 text-blue-600" />,
         otp: <ShieldCheck className="w-7 h-7 text-blue-600" />,
@@ -401,11 +352,9 @@ const ForgotPassword = () => {
         done: <ShieldCheck className="w-7 h-7 text-green-600" />,
     };
     const stepIconBg = step === 'done' ? 'bg-green-50' : 'bg-blue-50';
-
-    // ─────────────────────────────────────────────────────────────────────────
     return (
         <>
-            {/* ══════════════════ MOBILE VIEW ══════════════════ */}
+            {}
             <div className="md:hidden w-full min-h-[100dvh] bg-white flex flex-col font-sans">
                 <div className="flex items-center px-5 pt-6 pb-2 flex-shrink-0">
                     <button id="fp-back-btn-mobile" onClick={handleBack}
@@ -418,29 +367,25 @@ const ForgotPassword = () => {
                     {renderContent(true)}
                 </div>
             </div>
-
-            {/* ══════════════════ DESKTOP VIEW ══════════════════ */}
+            {}
             <div className="hidden md:flex min-h-screen overflow-hidden">
-
-                {/* ── LEFT PANEL — gradient ─────────────────────── */}
+                {}
                 <div
                     className="hidden lg:flex w-[48%] xl:w-[52%] flex-col relative overflow-hidden"
                     style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 45%, #4f46e5 100%)' }}
                 >
-                    {/* Decorative glow circles */}
+                    {}
                     <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-[0.12]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
                     <div className="absolute -bottom-32 -right-16 w-[500px] h-[500px] rounded-full opacity-[0.08]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
-
-                    {/* Logo — top left only */}
+                    {}
                     <div className="relative z-10 pt-10 pl-12">
                         <Logo iconSize="w-9 h-9" textClassName="text-2xl text-white" />
                     </div>
-
-                    {/* Illustration + copy */}
+                    {}
                     <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-12 pb-16">
-                        {/* mix-blend-mode: multiply makes the white PNG background transparent on the colored panel */}
+                        {}
                         <div className="w-full max-w-[380px] xl:max-w-[420px] mb-10">
                             <img
                                 src={forgotIllustration}
@@ -449,14 +394,12 @@ const ForgotPassword = () => {
                                 style={{ mixBlendMode: 'multiply', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.2))' }}
                             />
                         </div>
-
                         <h2 className="text-3xl xl:text-4xl font-extrabold text-white text-center leading-tight mb-4">
                             Account Recovery
                         </h2>
                         <p className="text-blue-200 text-center text-[15px] leading-relaxed max-w-[300px]">
                             Don't worry — it happens to everyone. We'll get you back in a few quick steps.
                         </p>
-
                         <div className="flex gap-3 mt-8 flex-wrap justify-center">
                             {[{ icon: '🔐', label: 'OTP Verified' }, { icon: '⚡', label: 'Quick Reset' }, { icon: '🛡️', label: 'Secure' }]
                                 .map(({ icon, label }) => (
@@ -468,22 +411,19 @@ const ForgotPassword = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* ── RIGHT PANEL — form ────────────────────────── */}
+                {}
                 <div className="flex-1 bg-white flex flex-col">
-                    {/* Top bar */}
+                    {}
                     <div className="flex justify-end px-10 pt-8">
                         <p className="text-[13px] text-slate-400 font-medium">
                             Remember it?{' '}
                             <Link to="/login" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">Sign in</Link>
                         </p>
                     </div>
-
-                    {/* Centered form */}
+                    {}
                     <div className="flex-1 flex items-center justify-center px-8 xl:px-16 pb-10">
                         <div className="w-full max-w-[420px]">
-
-                            {/* Back + step pills */}
+                            {}
                             <div className="flex items-center justify-between mb-8">
                                 <button
                                     id="fp-back-btn-desktop"
@@ -495,7 +435,6 @@ const ForgotPassword = () => {
                                     </div>
                                     <span className="text-[13px] font-semibold">Back</span>
                                 </button>
-
                                 <div className="flex items-center gap-1.5">
                                     {['method', 'otp', 'reset', 'done'].map((s) => {
                                         const steps = ['method', 'otp', 'reset', 'done'];
@@ -509,8 +448,7 @@ const ForgotPassword = () => {
                                     })}
                                 </div>
                             </div>
-
-                            {/* Icon + Title */}
+                            {}
                             <div className="mb-6">
                                 <div className={`w-14 h-14 rounded-2xl ${stepIconBg} flex items-center justify-center mb-5`}>
                                     {stepIcon[step]}
@@ -519,7 +457,6 @@ const ForgotPassword = () => {
                                     {stepMeta[step]}
                                 </h2>
                             </div>
-
                             {renderContent(false)}
                         </div>
                     </div>
@@ -528,5 +465,4 @@ const ForgotPassword = () => {
         </>
     );
 };
-
 export default ForgotPassword;

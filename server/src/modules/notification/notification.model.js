@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const notificationSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
@@ -24,8 +23,6 @@ const notificationSchema = new mongoose.Schema({
     default: false
   }
 }, { timestamps: true });
-
 notificationSchema.index({ userId: 1, read: 1 });
-
 const Notification = mongoose.model('Notification', notificationSchema);
 module.exports = Notification;

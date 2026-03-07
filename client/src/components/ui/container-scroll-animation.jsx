@@ -1,6 +1,5 @@
 import React, { useRef } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
-
 export const ContainerScroll = ({
     titleComponent,
     children,
@@ -10,7 +9,6 @@ export const ContainerScroll = ({
         target: containerRef,
     });
     const [isMobile, setIsMobile] = React.useState(false);
-
     React.useEffect(() => {
         const checkMobile = () => {
             setIsMobile(window.innerWidth <= 768);
@@ -21,15 +19,12 @@ export const ContainerScroll = ({
             window.removeEventListener("resize", checkMobile);
         };
     }, []);
-
     const scaleDimensions = () => {
         return isMobile ? [0.7, 0.9] : [1.05, 1];
     };
-
     const rotate = useTransform(scrollYProgress, [0, 1], [20, 0]);
     const scale = useTransform(scrollYProgress, [0, 1], scaleDimensions());
     const translate = useTransform(scrollYProgress, [0, 1], [0, -100]);
-
     return (
         <div
             className="h-[60rem] md:h-[80rem] flex items-center justify-center relative p-2 md:p-20"
@@ -49,7 +44,6 @@ export const ContainerScroll = ({
         </div>
     );
 };
-
 export const Header = ({ translate, titleComponent }) => {
     return (
         <motion.div
@@ -62,7 +56,6 @@ export const Header = ({ translate, titleComponent }) => {
         </motion.div>
     );
 };
-
 export const Card = ({
     rotate,
     scale,

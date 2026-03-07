@@ -1,19 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Smile, Paperclip, Camera, Mic, Send, Square } from 'lucide-react';
-
 const emojis = ['😀', '😂', '🥰', '😎', '🤔', '🙌', '👍', '🙏', '🔥', '✨'];
-
 const CustomerService = () => {
     const navigate = useNavigate();
     const chatEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const cameraInputRef = useRef(null);
-
     const [inputValue, setInputValue] = useState("");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-
     const [messages, setMessages] = useState([
         { id: 1, text: "Hello, good morning.", isCustomerService: true, time: "09:41" },
         { id: 2, text: "I am a Customer Service, is there anything I can help you with? 😁", isCustomerService: true, time: "09:41" },
@@ -22,29 +18,23 @@ const CustomerService = () => {
         { id: 5, text: "Of course...", isCustomerService: true, time: "09:41" },
         { id: 6, text: "Can you tell me the problem you are having? so I can help solve it 😁", isCustomerService: true, time: "09:41" }
     ]);
-
     const scrollToBottom = () => {
         setTimeout(() => {
             chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
     };
-
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-
     const addMessage = (text) => {
         const now = new Date();
         const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
         setMessages(prev => [...prev, {
             id: Date.now(),
             text: text,
             isCustomerService: false,
             time: timeString
         }]);
-
-        // Simulate auto-reply
         setTimeout(() => {
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
@@ -54,34 +44,29 @@ const CustomerService = () => {
             }]);
         }, 1500);
     }
-
     const handleSendMessage = () => {
         if (!inputValue.trim()) return;
         addMessage(inputValue);
         setInputValue("");
         setShowEmojiPicker(false);
     };
-
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             handleSendMessage();
         }
     };
-
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             addMessage(`📎 Attachment: ${file.name}`);
         }
     };
-
     const handleCameraChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             addMessage(`📷 Photo: ${file.name}`);
         }
     };
-
     const toggleRecording = () => {
         if (isRecording) {
             setIsRecording(false);
@@ -90,16 +75,13 @@ const CustomerService = () => {
             setIsRecording(true);
         }
     };
-
     const handleEmojiClick = (emoji) => {
         setInputValue(prev => prev + emoji);
     };
-
     return (
         <div className="bg-[#F8F9FA] h-[100dvh] overflow-hidden text-slate-800 flex flex-col md:p-6 lg:p-8">
             <div className="max-w-[1000px] w-full mx-auto md:bg-white md:rounded-[36px] md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:border md:border-slate-100 flex flex-col overflow-hidden relative h-full">
-
-                {/* Header Area */}
+                {}
                 <div className="bg-white px-5 md:px-8 pt-safe md:pt-8 pb-0 flex flex-col z-10 md:rounded-t-[36px] relative shrink-0 shadow-sm">
                     <div className="flex items-center justify-between py-4 md:py-2 pb-4">
                         <div className="flex items-center gap-3">
@@ -120,7 +102,6 @@ const CustomerService = () => {
                         </div>
                     </div>
                 </div>
-
                 <div className="flex-1 relative overflow-hidden bg-white md:bg-slate-50/50 flex flex-col">
                     <div className="flex justify-center mb-6 mt-4 md:mt-6 shrink-0">
                         <span className="bg-slate-100 text-slate-500 text-[11px] font-bold px-3 py-1 rounded-lg uppercase tracking-wider">Today</span>
@@ -128,7 +109,6 @@ const CustomerService = () => {
                     <div className="flex-1 overflow-y-auto space-y-2 px-2 md:px-6 hide-scrollbar pb-4">
                         {messages.map((msg, idx) => {
                             const showMarginTop = idx > 0 && messages[idx - 1].isCustomerService !== msg.isCustomerService;
-
                             if (msg.isCustomerService) {
                                 return (
                                     <div key={msg.id} className={`flex ${showMarginTop ? 'mt-4' : ''}`}>
@@ -154,11 +134,10 @@ const CustomerService = () => {
                         })}
                         <div ref={chatEndRef} />
                     </div>
-
-                    {/* Chat Input */}
+                    {}
                     <div className="bg-white border-t border-slate-100 px-4 md:px-8 py-3 md:py-4 pb-[100px] md:pb-6 flex items-center gap-2 md:gap-3 shrink-0">
                         <div className="flex-1 bg-slate-50/50 rounded-full flex items-center px-4 py-3 min-h-[52px] border border-slate-100 relative">
-                            {/* Emoji Picker Popover */}
+                            {}
                             {showEmojiPicker && (
                                 <div className="absolute bottom-[65px] left-0 bg-white border border-slate-100 shadow-lg rounded-2xl p-3 flex gap-2 flex-wrap w-[220px] z-50">
                                     {emojis.map((em, i) => (
@@ -172,7 +151,6 @@ const CustomerService = () => {
                                     ))}
                                 </div>
                             )}
-
                             <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                 className={`transition-colors mr-3 shrink-0 ${showEmojiPicker ? 'text-[#2D68FE]' : 'text-slate-400 hover:text-slate-600'}`}
@@ -189,7 +167,7 @@ const CustomerService = () => {
                                 className="bg-transparent border-none outline-none text-[15px] w-full text-slate-800 placeholder:text-slate-400 disabled:opacity-50"
                             />
                             <div className="flex gap-4 ml-2 shrink-0 items-center">
-                                {/* Hidden Inputs */}
+                                {}
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -204,7 +182,6 @@ const CustomerService = () => {
                                     className="hidden"
                                     onChange={handleCameraChange}
                                 />
-
                                 <button
                                     onClick={() => fileInputRef.current?.click()}
                                     className="text-slate-400 hover:text-slate-600 transition-colors"
@@ -234,10 +211,8 @@ const CustomerService = () => {
                         </button>
                     </div>
                 </div>
-
             </div>
         </div>
     );
 };
-
 export default CustomerService;

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const collegeProfileSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
@@ -22,8 +21,5 @@ const collegeProfileSchema = new mongoose.Schema({
     default: false
   }
 }, { timestamps: true });
-
-// unique: true on userId already creates an index
-
 const CollegeProfile = mongoose.model('CollegeProfile', collegeProfileSchema);
 module.exports = CollegeProfile;

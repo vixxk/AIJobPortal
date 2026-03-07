@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const competitionSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -26,6 +25,5 @@ const competitionSchema = new mongoose.Schema({
     default: 'SUPER_ADMIN'
   }
 }, { timestamps: true });
-
 const Competition = mongoose.model('Competition', competitionSchema);
 module.exports = Competition;

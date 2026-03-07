@@ -7,8 +7,6 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import letInImg from '../assets/let_in.png';
-
-// ─── Google Identity Services loader ─────────────────────────────────────────
 const loadGoogleGSI = () => {
     return new Promise((resolve, reject) => {
         if (window.google?.accounts?.id) {
@@ -24,19 +22,15 @@ const loadGoogleGSI = () => {
         document.head.appendChild(script);
     });
 };
-
-// ─── OTP Input ────────────────────────────────────────────────────────────────
 const OTPInput = ({ value, onChange, disabled, idPrefix = 'otp' }) => {
     const digits = Array(6).fill('');
     const chars = value.split('');
     const [inputs, setInputs] = useState(Array(6).fill(''));
-
     useEffect(() => {
         const filled = value.split('').slice(0, 6);
         const arr = [...filled, ...Array(6 - filled.length).fill('')];
         setInputs(arr);
     }, [value]);
-
     const handleInput = (e, idx) => {
         const val = e.target.value.replace(/\D/g, '').slice(-1);
         const next = [...inputs];
@@ -47,13 +41,11 @@ const OTPInput = ({ value, onChange, disabled, idPrefix = 'otp' }) => {
             document.getElementById(`${idPrefix}-${idx + 1}`)?.focus();
         }
     };
-
     const handleKeyDown = (e, idx) => {
         if (e.key === 'Backspace' && !inputs[idx] && idx > 0) {
             document.getElementById(`${idPrefix}-${idx - 1}`)?.focus();
         }
     };
-
     const handlePaste = (e) => {
         const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
         const arr = pasted.split('');
@@ -62,7 +54,6 @@ const OTPInput = ({ value, onChange, disabled, idPrefix = 'otp' }) => {
         onChange(pasted);
         document.getElementById(`${idPrefix}-${Math.min(pasted.length, 5)}`)?.focus();
     };
-
     return (
         <div className="flex gap-2 justify-center" onPaste={handlePaste}>
             {inputs.map((digit, idx) => (
@@ -88,8 +79,6 @@ const OTPInput = ({ value, onChange, disabled, idPrefix = 'otp' }) => {
         </div>
     );
 };
-
-// ─── Main Login Component ─────────────────────────────────────────────────────
 const Login = () => {
     const [view, setView] = useState('social');
     const [email, setEmail] = useState('');
@@ -103,12 +92,9 @@ const Login = () => {
     const [otpTimer, setOtpTimer] = useState(0);
     const [googleLoading, setGoogleLoading] = useState(false);
     const [isRegistrationFlow, setIsRegistrationFlow] = useState(false);
-
     const { login, loginWithGoogle, sendOTP, verifyOTP, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-
-    // Handle redirected state from Register
     useEffect(() => {
         if (location.state && location.state.view) {
             setView(location.state.view);
@@ -119,18 +105,12 @@ const Login = () => {
                 setSuccess(`Verification code sent to ${location.state.email}`);
                 setOtpTimer(60);
                 setIsRegistrationFlow(true);
-
-                // Clear the state so it doesn't trigger on refresh
                 window.history.replaceState({}, document.title)
             }
         }
     }, [location.state]);
-
-    // Check auth status early
     useEffect(() => {
         if (user) {
-            // ONLY execute navigations if the component is mounted AND we have a valid logged in user state
-            // that is NOT explicitly unverified (caught by backend anyway)
             if (user.needsRole) {
                 navigate('/select-role', { replace: true });
             } else if (user.pendingApproval) {
@@ -140,14 +120,11 @@ const Login = () => {
             }
         }
     }, [user, navigate]);
-
-    // OTP countdown timer
     useEffect(() => {
         if (otpTimer <= 0) return;
         const t = setInterval(() => setOtpTimer(p => p - 1), 1000);
         return () => clearInterval(t);
     }, [otpTimer]);
-
     const afterAuth = (userData, isRegistration) => {
         if (userData.needsRole) {
             navigate('/select-role', { state: { isRegistration }, replace: true });
@@ -159,40 +136,30 @@ const Login = () => {
             navigate('/app', { replace: true });
         }
     };
-
     if (user) return null;
-
-    // ── Password Login
     const handlePasswordLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
-
         const result = await login(email, password);
         setIsLoading(false);
-
         if (result.success) {
             afterAuth(result.user, false);
         } else {
             setError(result.message);
         }
     };
-
-    // ── Google Login
     const handleGoogleLogin = async () => {
         setGoogleLoading(true);
         setError('');
         try {
             const gsi = await loadGoogleGSI();
             const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
             if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-                // Fallback: show it's not configured yet
                 setError('Google login is not configured yet. Please use Email OTP or password login.');
                 setGoogleLoading(false);
                 return;
             }
-
             gsi.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: async (response) => {
@@ -212,24 +179,19 @@ const Login = () => {
                 cancel_on_tap_outside: true,
                 ux_mode: 'popup'
             });
-
             gsi.prompt();
         } catch (err) {
             setError('Google sign-in is not available. Use Email OTP instead.');
             setGoogleLoading(false);
         }
     };
-
-    // ── Send OTP
     const handleSendOTP = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
         setSuccess('');
-
         const result = await sendOTP(otpEmail);
         setIsLoading(false);
-
         if (result.success) {
             setView('otp-verify');
             setSuccess(`OTP sent to ${otpEmail}`);
@@ -239,8 +201,6 @@ const Login = () => {
             setError(result.message);
         }
     };
-
-    // ── Verify OTP
     const handleVerifyOTP = async (e) => {
         e.preventDefault();
         if (otp.length !== 6) {
@@ -249,10 +209,8 @@ const Login = () => {
         }
         setIsLoading(true);
         setError('');
-
         const result = await verifyOTP(otpEmail, otp);
         setIsLoading(false);
-
         if (result.success) {
             afterAuth(result.user, isRegistrationFlow);
         } else {
@@ -260,8 +218,6 @@ const Login = () => {
             setOtp('');
         }
     };
-
-    // ── Resend OTP
     const handleResend = async () => {
         if (otpTimer > 0) return;
         setIsLoading(true);
@@ -276,9 +232,6 @@ const Login = () => {
             setError(result.message);
         }
     };
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Google SVG (DRY)
     const GoogleIcon = () => (
         <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -287,45 +240,36 @@ const Login = () => {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
     );
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Error Display (shared)
     const ErrorBanner = () => error ? (
         <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             {error}
         </div>
     ) : null;
-
     const SuccessBanner = () => success ? (
         <div className="p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100">
             {success}
         </div>
     ) : null;
-
-    // ─────────────────────────────────────────────────────────────────────────
     return (
         <>
-            {/* ════════════════════ DESKTOP VIEW ════════════════════ */}
+            {}
             <div className="hidden md:flex min-h-screen overflow-hidden">
-
-                {/* ── LEFT PANEL — gradient ─────────────────────────── */}
+                {}
                 <div
                     className="hidden lg:flex w-[48%] xl:w-[52%] flex-col relative overflow-hidden"
                     style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 45%, #4f46e5 100%)' }}
                 >
-                    {/* Decorative glow circles */}
+                    {}
                     <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-[0.12]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
                     <div className="absolute -bottom-32 -right-16 w-[500px] h-[500px] rounded-full opacity-[0.08]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
-
-                    {/* Logo */}
+                    {}
                     <div className="relative z-10 pt-10 pl-12">
                         <Logo iconSize="w-9 h-9" textClassName="text-2xl text-white" />
                     </div>
-
-                    {/* Illustration + copy */}
+                    {}
                     <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-12 pb-16">
                         <div className="w-full max-w-[380px] xl:max-w-[420px] mb-10">
                             <img
@@ -352,22 +296,19 @@ const Login = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* ── RIGHT PANEL — form ────────────────────────────── */}
+                {}
                 <div className="flex-1 bg-white flex flex-col">
-                    {/* Top bar */}
+                    {}
                     <div className="flex justify-end px-10 pt-8">
                         <p className="text-[13px] text-slate-400 font-medium">
                             No account?{' '}
                             <Link to="/register" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">Sign up</Link>
                         </p>
                     </div>
-
-                    {/* Centered form */}
+                    {}
                     <div className="flex-1 flex items-center justify-center px-8 xl:px-16 pb-10">
                         <div className="w-full max-w-[420px]">
-
-                            {/* Back button (when not on main view) */}
+                            {}
                             {view !== 'social' && (
                                 <button
                                     onClick={() => {
@@ -383,8 +324,7 @@ const Login = () => {
                                     <span className="text-[13px] font-semibold">Back</span>
                                 </button>
                             )}
-
-                            {/* Step icon + title */}
+                            {}
                             <div className="mb-6 flex flex-col items-center text-center">
                                 {view === 'social' && (
                                     <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-5">
@@ -419,8 +359,7 @@ const Login = () => {
                                     <p className="text-slate-500 text-[14px] mt-2 mb-2">We'll send a secure 6-digit code to your inbox</p>
                                 )}
                             </div>
-
-                            {/* ── SOCIAL / MAIN ENTRY ── */}
+                            {}
                             {view === 'social' && (
                                 <div className="space-y-4">
                                     <ErrorBanner />
@@ -432,13 +371,11 @@ const Login = () => {
                                         {googleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <GoogleIcon />}
                                         {googleLoading ? 'Connecting...' : 'Continue with Google'}
                                     </button>
-
                                     <div className="flex items-center w-full py-2">
                                         <div className="flex-1 h-px bg-slate-200" />
                                         <span className="px-4 text-slate-400 font-bold text-[11px] uppercase tracking-widest">or</span>
                                         <div className="flex-1 h-px bg-slate-200" />
                                     </div>
-
                                     <button
                                         onClick={() => { setView('otp-email'); setError(''); }}
                                         className="w-full py-4 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold text-[15px] shadow-[0_8px_20px_-6px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2"
@@ -446,7 +383,6 @@ const Login = () => {
                                         <KeyRound className="w-5 h-5" />
                                         Sign in with Email OTP
                                     </button>
-
                                     <div className="text-center pt-2">
                                         <button
                                             onClick={() => { setView('password'); setError(''); }}
@@ -457,8 +393,7 @@ const Login = () => {
                                     </div>
                                 </div>
                             )}
-
-                            {/* ── PASSWORD LOGIN ── */}
+                            {}
                             {view === 'password' && (
                                 <form className="space-y-4" onSubmit={handlePasswordLogin}>
                                     <ErrorBanner />
@@ -504,8 +439,7 @@ const Login = () => {
                                     </div>
                                 </form>
                             )}
-
-                            {/* ── OTP EMAIL ENTRY ── */}
+                            {}
                             {view === 'otp-email' && (
                                 <form className="space-y-4" onSubmit={handleSendOTP}>
                                     <ErrorBanner />
@@ -526,8 +460,7 @@ const Login = () => {
                                     </button>
                                 </form>
                             )}
-
-                            {/* ── OTP VERIFY ── */}
+                            {}
                             {view === 'otp-verify' && (
                                 <form className="space-y-6" onSubmit={handleVerifyOTP}>
                                     <SuccessBanner />
@@ -554,10 +487,9 @@ const Login = () => {
                     </div>
                 </div>
             </div>
-
-            {/* ════════════════════ MOBILE VIEW ════════════════════ */}
+            {}
             <div className="md:hidden w-full min-h-[100dvh] bg-white flex flex-col font-sans relative overflow-hidden">
-                {/* Back button */}
+                {}
                 <div className="pt-6 pb-0 px-6 flex items-center">
                     <button
                         onClick={() => {
@@ -572,23 +504,19 @@ const Login = () => {
                         <ArrowLeft className="w-6 h-6" strokeWidth={2.5} />
                     </button>
                 </div>
-
-                {/* ── MAIN SOCIAL VIEW ── */}
+                {}
                 {view === 'social' && (
                     <div className="flex-1 flex flex-col items-center px-6 animate-in slide-in-from-left-4 fade-in duration-300">
                         <div className="w-56 h-56 mt-2 mb-8 relative flex items-center justify-center">
                             <img src={letInImg} alt="Let you in" className="w-[110%] h-[110%] object-contain scale-110" />
                         </div>
-
                         <h1 className="text-3xl leading-tight font-[700] text-slate-800 mb-8 tracking-tight relative z-10">Let's you in</h1>
-
                         {error && (
                             <div className="w-full mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-start gap-2">
                                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                                 {error}
                             </div>
                         )}
-
                         <div className="w-full space-y-3">
                             <button
                                 onClick={handleGoogleLogin}
@@ -598,7 +526,6 @@ const Login = () => {
                                 {googleLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <GoogleIcon />}
                                 {googleLoading ? 'Connecting...' : 'Continue with Google'}
                             </button>
-
                             <button
                                 onClick={() => { setView('otp-email'); setError(''); }}
                                 className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-all text-slate-700 font-semibold shadow-sm text-[15px]"
@@ -607,28 +534,24 @@ const Login = () => {
                                 Sign in with Email OTP
                             </button>
                         </div>
-
                         <div className="flex items-center w-full my-5">
                             <div className="flex-1 h-px bg-slate-200" />
                             <span className="px-4 text-slate-400 font-medium text-sm">or</span>
                             <div className="flex-1 h-px bg-slate-200" />
                         </div>
-
                         <button
                             onClick={() => { setView('password'); setError(''); }}
                             className="w-full py-4 px-4 rounded-full bg-[#2F6FF7] hover:bg-blue-700 text-white font-semibold shadow-[0_8px_20px_-6px_rgba(47,111,247,0.4)] transition-all active:scale-95 text-[15px]"
                         >
                             Sign in with password
                         </button>
-
                         <div className="mt-6 mb-2 text-[13px] font-medium text-slate-400">
                             Don't have an account?{' '}
                             <Link to="/register" className="text-blue-600 font-semibold ml-1">Sign up</Link>
                         </div>
                     </div>
                 )}
-
-                {/* ── PASSWORD FORM ── */}
+                {}
                 {view === 'password' && (
                     <div className="flex-1 flex flex-col px-8 pb-8 animate-in slide-in-from-right-4 fade-in duration-300">
                         <div className="flex-1 flex flex-col pt-8">
@@ -639,7 +562,6 @@ const Login = () => {
                                 </div>
                             </div>
                             <h1 className="text-2xl font-bold text-slate-900 mb-6 text-center tracking-tight">Login to Account</h1>
-
                             <form className="w-full space-y-4" onSubmit={handlePasswordLogin}>
                                 {error && (
                                     <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{error}</div>
@@ -669,14 +591,12 @@ const Login = () => {
                                     className="w-full py-4 px-4 rounded-full bg-[#2F6FF7] hover:bg-blue-700 text-white font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 text-[15px] shadow-[0_8px_20px_-6px_rgba(47,111,247,0.4)] disabled:opacity-60">
                                     {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in...</> : 'Sign in'}
                                 </button>
-
                                 <div className="text-right">
                                     <Link to="/forgot-password" className="text-[13px] font-semibold text-blue-600">
                                         Forgot password?
                                     </Link>
                                 </div>
                             </form>
-
                             <div className="mt-4 text-center">
                                 <button onClick={() => { setView('otp-email'); setOtpEmail(email); setError(''); }}
                                     className="text-[14px] font-semibold text-blue-600">
@@ -690,8 +610,7 @@ const Login = () => {
                         </div>
                     </div>
                 )}
-
-                {/* ── OTP EMAIL ENTRY ── */}
+                {}
                 {view === 'otp-email' && (
                     <div className="flex-1 flex flex-col px-8 pb-8 animate-in slide-in-from-right-4 fade-in duration-300">
                         <div className="flex-1 flex flex-col pt-8">
@@ -702,7 +621,6 @@ const Login = () => {
                             </div>
                             <h1 className="text-2xl font-bold text-slate-900 mb-2 text-center tracking-tight">Email OTP Login</h1>
                             <p className="text-sm text-slate-500 text-center mb-6">We'll send a one-time password to your email</p>
-
                             <form className="w-full space-y-4" onSubmit={handleSendOTP}>
                                 {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{error}</div>}
                                 <div className="relative">
@@ -721,8 +639,7 @@ const Login = () => {
                         </div>
                     </div>
                 )}
-
-                {/* ── OTP VERIFY ── */}
+                {}
                 {view === 'otp-verify' && (
                     <div className="flex-1 flex flex-col px-8 pb-8 animate-in slide-in-from-right-4 fade-in duration-300">
                         <div className="flex-1 flex flex-col pt-8">
@@ -736,17 +653,13 @@ const Login = () => {
                                 Sent to <span className="text-slate-700 font-medium">{otpEmail}</span>
                             </p>
                             {success && <div className="mb-3 p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100 text-center">{success}</div>}
-
                             <form className="w-full space-y-5" onSubmit={handleVerifyOTP}>
                                 {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">{error}</div>}
-
                                 <OTPInput value={otp} onChange={setOtp} disabled={isLoading} idPrefix="otp-mobile" />
-
                                 <button type="submit" disabled={isLoading || otp.length < 6}
                                     className="w-full py-4 rounded-full bg-[#2F6FF7] hover:bg-blue-700 disabled:opacity-60 text-white font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 text-[15px] shadow-[0_8px_20px_-6px_rgba(47,111,247,0.4)]">
                                     {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</> : <><ShieldCheck className="w-4 h-4" /> Verify & Sign In</>}
                                 </button>
-
                                 <div className="flex justify-between items-center text-sm mt-1">
                                     <button type="button" onClick={handleResend} disabled={otpTimer > 0}
                                         className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 disabled:text-slate-400 disabled:cursor-not-allowed font-medium transition-colors">
@@ -766,5 +679,4 @@ const Login = () => {
         </>
     );
 };
-
 export default Login;

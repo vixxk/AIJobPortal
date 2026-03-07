@@ -3,14 +3,10 @@ const recruiterController = require('./recruiter.controller');
 const authMiddleware = require('../../middleware/auth');
 const roleMiddleware = require('../../middleware/role');
 const { uploadLogo } = require('../../middleware/upload');
-
 const router = express.Router();
-
 router.use(authMiddleware.protect);
 router.use(roleMiddleware.restrictTo('RECRUITER'));
-
 router.get('/me', recruiterController.getMe);
 router.post('/profile', recruiterController.createOrUpdateProfile);
 router.patch('/profile/logo', uploadLogo, recruiterController.uploadLogo);
-
 module.exports = router;

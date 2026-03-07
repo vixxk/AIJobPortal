@@ -6,15 +6,12 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
 const sendEmail = require('../../config/mailer');
-
-// ─── Analytics ───────────────────────────────────────────────────────────────
 exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
   const totalUsers = await User.countDocuments();
   const totalJobs = await Job.countDocuments();
   const totalApplications = await Application.countDocuments();
   const totalMockTests = await MockTest.countDocuments();
   const pendingApprovals = await User.countDocuments({ approvalStatus: 'PENDING' });
-
   res.status(200).json({
     status: 'success',
     data: {
@@ -28,43 +25,32 @@ exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
     }
   });
 });
-
-// ─── Get Pending Users ────────────────────────────────────────────────────────
 exports.getPendingUsers = catchAsync(async (req, res, next) => {
   const pendingUsers = await User.find({ approvalStatus: 'PENDING' })
     .select('name email role approvalStatus avatar createdAt')
     .sort({ createdAt: -1 });
-
   res.status(200).json({
     status: 'success',
     results: pendingUsers.length,
     data: { users: pendingUsers }
   });
 });
-
-// ─── Approve / Reject User ────────────────────────────────────────────────────
 exports.updateUserApproval = catchAsync(async (req, res, next) => {
-  const { action } = req.body; // 'approve' | 'reject'
+  const { action } = req.body; 
   const { userId } = req.params;
-
   if (!['approve', 'reject'].includes(action)) {
     return next(new AppError('Action must be "approve" or "reject"', 400));
   }
-
   const user = await User.findById(userId);
   if (!user) {
     return next(new AppError('User not found', 404));
   }
-
   if (user.approvalStatus !== 'PENDING') {
     return next(new AppError('User is not in pending state', 400));
   }
-
   if (action === 'approve') {
     user.approvalStatus = 'APPROVED';
     await user.save({ validateBeforeSave: false });
-
-    // Notify user
     try {
       await Notification.create({
         userId: user._id,
@@ -72,9 +58,7 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
         message: `Your ${user.role === 'RECRUITER' ? 'recruiter' : 'college'} account has been approved. You can now access all features.`,
         type: 'ACCOUNT_APPROVAL'
       });
-    } catch (e) { /* ignore notification errors */ }
-
-    // Send approval email
+    } catch (e) {  }
     try {
       await sendEmail({
         email: user.email,
@@ -90,8 +74,7 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
           </div>
         `
       });
-    } catch (e) { /* ignore email errors */ }
-
+    } catch (e) {  }
     res.status(200).json({
       status: 'success',
       message: `User approved successfully`,
@@ -100,8 +83,6 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
   } else {
     user.approvalStatus = 'REJECTED';
     await user.save({ validateBeforeSave: false });
-
-    // Send rejection email
     try {
       await sendEmail({
         email: user.email,
@@ -116,8 +97,7 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
           </div>
         `
       });
-    } catch (e) { /* ignore email errors */ }
-
+    } catch (e) {  }
     res.status(200).json({
       status: 'success',
       message: `User rejected`,
@@ -125,23 +105,17 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
     });
   }
 });
-
-// ─── List All Users ───────────────────────────────────────────────────────────
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const { role, status, page = 1, limit = 20 } = req.query;
-
   const filter = {};
   if (role) filter.role = role;
   if (status) filter.approvalStatus = status;
-
   const users = await User.find(filter)
     .select('name email role approvalStatus isVerified isActive avatar createdAt')
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
-
   const total = await User.countDocuments(filter);
-
   res.status(200).json({
     status: 'success',
     results: users.length,
@@ -149,32 +123,23 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     data: { users }
   });
 });
-
-// ─── Ban User ────────────────────────────────────────────────────────────────
 exports.banUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.userId);
-
   if (!user) {
     return next(new AppError('User not found', 404));
   }
-
   user.isActive = false;
   await user.save({ validateBeforeSave: false });
-
   res.status(200).json({
     status: 'success',
     message: 'User banned successfully'
   });
 });
-
-// ─── Delete Job ───────────────────────────────────────────────────────────────
 exports.deleteJob = catchAsync(async (req, res, next) => {
   const job = await Job.findByIdAndDelete(req.params.jobId);
-
   if (!job) {
     return next(new AppError('Job not found', 404));
   }
-
   res.status(204).json({
     status: 'success',
     data: null

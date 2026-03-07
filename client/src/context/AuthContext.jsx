@@ -1,25 +1,17 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import api from '../utils/axios';
-
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
-
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // ─── Bootstrap: restore session from localStorage ──────────────────
     useEffect(() => {
         const initAuth = async () => {
             const storedToken = localStorage.getItem('token');
             const storedUser = localStorage.getItem('user');
-
             if (storedToken && storedUser) {
                 try {
                     setUser(JSON.parse(storedUser));
-
-                    // Verify with server in background
                     const response = await api.get('/auth/me');
                     const userData = response.data.data.user;
                     localStorage.setItem('user', JSON.stringify(userData));
@@ -37,17 +29,13 @@ export const AuthProvider = ({ children }) => {
             }
             setLoading(false);
         };
-
         initAuth();
     }, []);
-
     const persistUser = (token, userData) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
     };
-
-    // ─── Google OAuth ──────────────────────────────────────────────────
     const loginWithGoogle = useCallback(async (idToken) => {
         try {
             const response = await api.post('/auth/google', { idToken });
@@ -61,8 +49,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Email OTP: Send ───────────────────────────────────────────────
     const sendOTP = useCallback(async (email, name) => {
         try {
             const response = await api.post('/auth/send-otp', { email, name });
@@ -74,8 +60,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Email OTP: Verify ─────────────────────────────────────────────
     const verifyOTP = useCallback(async (email, otp) => {
         try {
             const response = await api.post('/auth/verify-otp', { email, otp });
@@ -89,8 +73,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Traditional Email/Password ────────────────────────────────────
     const login = useCallback(async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
@@ -104,8 +86,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Register ──────────────────────────────────────────────────────
     const register = useCallback(async (name, email, password, role) => {
         try {
             const response = await api.post('/auth/register', { name, email, password, role });
@@ -117,8 +97,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Assign Role (post-login) ──────────────────────────────────────
     const assignRole = useCallback(async (role) => {
         try {
             const response = await api.post('/auth/assign-role', { role });
@@ -132,8 +110,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Admin Login ───────────────────────────────────────────────────
     const adminLogin = useCallback(async (email, password) => {
         try {
             const response = await api.post('/auth/admin/login', { email, password });
@@ -147,8 +123,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Update Profile ────────────────────────────────────────────────
     const updateProfile = useCallback(async (profileData) => {
         try {
             const response = await api.post('/auth/update-profile', profileData);
@@ -162,8 +136,6 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, [persistUser]);
-
-    // ─── Upload Avatar ───────────────────────────────────────────────────
     const uploadAvatar = useCallback(async (file) => {
         try {
             const formData = new FormData();
@@ -172,7 +144,6 @@ export const AuthProvider = ({ children }) => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const avatarUrl = response.data.data.avatarUrl;
-            // Update local user state with new avatar
             const updatedUser = { ...JSON.parse(localStorage.getItem('user') || '{}'), avatar: avatarUrl };
             localStorage.setItem('user', JSON.stringify(updatedUser));
             setUser(updatedUser);
@@ -184,16 +155,12 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
-
-    // ─── Logout ────────────────────────────────────────────────────────
     const logout = useCallback(() => {
         setUser(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/';
     }, []);
-
-    // ─── Refresh user from server ──────────────────────────────────────
     const refreshUser = useCallback(async () => {
         try {
             const response = await api.get('/auth/me');
@@ -210,7 +177,6 @@ export const AuthProvider = ({ children }) => {
             return null;
         }
     }, []);
-
     return (
         <AuthContext.Provider value={{
             user,

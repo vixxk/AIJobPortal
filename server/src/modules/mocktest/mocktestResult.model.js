@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const mockTestResultSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.ObjectId,
@@ -24,9 +23,7 @@ const mockTestResultSchema = new mongoose.Schema({
     default: Date.now
   }
 }, { timestamps: true });
-
 mockTestResultSchema.index({ studentId: 1, mockTestId: 1 });
-mockTestResultSchema.index({ totalScore: -1 }); // For leaderboard
-
+mockTestResultSchema.index({ totalScore: -1 }); 
 const MockTestResult = mongoose.model('MockTestResult', mockTestResultSchema);
 module.exports = MockTestResult;

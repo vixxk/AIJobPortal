@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../utils/axios';
 import { User, Mail, Link as LinkIcon, CheckCircle, XCircle, ArrowLeft, Download } from 'lucide-react';
-
 const ManageApplicants = () => {
     const { jobId } = useParams();
     const [job, setJob] = useState(null);
@@ -10,17 +9,13 @@ const ManageApplicants = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [statusUpdating, setStatusUpdating] = useState(null);
-
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // In a real flow, fetch job details AND applicants. 
-                // We're simulating here based on the endpoints established.
                 const jobRes = await axios.get(`/jobs/${jobId}`);
                 if (jobRes.data.success) {
                     setJob(jobRes.data.data);
                 }
-
                 const appRes = await axios.get(`/applications/job/${jobId}`);
                 if (appRes.data.success) {
                     setApplications(appRes.data.data);
@@ -34,7 +29,6 @@ const ManageApplicants = () => {
         };
         fetchData();
     }, [jobId]);
-
     const updateStatus = async (appId, newStatus) => {
         setStatusUpdating(appId);
         try {
@@ -51,22 +45,17 @@ const ManageApplicants = () => {
             setStatusUpdating(null);
         }
     };
-
     if (loading) {
         return <div className="p-8 text-center text-slate-500">Loading applicant data...</div>;
     }
-
     if (error) {
         return <div className="p-8 text-center text-red-500 font-medium">{error}</div>;
     }
-
     if (!job) {
         return <div className="p-8 text-center text-red-500 font-medium">Job not found</div>;
     }
-
     return (
         <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-
             <div className="flex items-center gap-3 mb-2">
                 <Link to="/app/recruiter" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
                     <ArrowLeft className="w-5 h-5" />
@@ -76,7 +65,6 @@ const ManageApplicants = () => {
                     <p className="text-sm text-slate-500 mt-0.5">{applications.length} total applications</p>
                 </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {applications.length === 0 ? (
                     <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200">
@@ -87,7 +75,6 @@ const ManageApplicants = () => {
                 ) : (
                     applications.map((app) => (
                         <div key={app._id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-
                             <div className="p-5 flex-1">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
@@ -103,7 +90,6 @@ const ManageApplicants = () => {
                                             <p className="text-xs font-medium text-slate-500">{app.student.email}</p>
                                         </div>
                                     </div>
-
                                     <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${app.status === 'APPLIED' ? 'bg-blue-50 text-blue-600' :
                                         app.status === 'SHORTLISTED' ? 'bg-orange-50 text-orange-600' :
                                             app.status === 'ACCEPTED' ? 'bg-green-50 text-green-600' :
@@ -112,7 +98,6 @@ const ManageApplicants = () => {
                                         {app.status}
                                     </span>
                                 </div>
-
                                 <div className="space-y-3 mb-4">
                                     <div>
                                         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Top Skills</p>
@@ -125,7 +110,6 @@ const ManageApplicants = () => {
                                             )}
                                         </div>
                                     </div>
-
                                     {app.student.studentProfile?.resume && (
                                         <a href={app.student.studentProfile.resume} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline mt-2">
                                             <Download className="w-4 h-4" /> View Resume
@@ -133,7 +117,6 @@ const ManageApplicants = () => {
                                     )}
                                 </div>
                             </div>
-
                             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex gap-2">
                                 {app.status === 'APPLIED' && (
                                     <>
@@ -184,5 +167,4 @@ const ManageApplicants = () => {
         </div>
     );
 };
-
 export default ManageApplicants;

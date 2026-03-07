@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const applicationSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.ObjectId,
@@ -31,19 +30,14 @@ const applicationSchema = new mongoose.Schema({
     default: ''
   }
 }, { timestamps: true });
-
-// Prevent duplicate applications
 applicationSchema.index({ studentId: 1, jobId: 1 }, { unique: true });
 applicationSchema.index({ studentId: 1 });
 applicationSchema.index({ jobId: 1 });
-
-// Pre save hook for initial timeline
 applicationSchema.pre('save', function(next) {
   if (this.isNew) {
     this.timeline.push({ status: 'APPLIED' });
   }
   next();
 });
-
 const Application = mongoose.model('Application', applicationSchema);
 module.exports = Application;

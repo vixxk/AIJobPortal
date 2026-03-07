@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const studentProfileSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
@@ -121,9 +120,6 @@ const studentProfileSchema = new mongoose.Schema({
     default: ''
   }
 }, { timestamps: true });
-
-// Text index for skills
 studentProfileSchema.index({ skills: 'text' });
-
 const StudentProfile = mongoose.model('StudentProfile', studentProfileSchema);
 module.exports = StudentProfile;

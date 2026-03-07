@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GraduationCap, Briefcase, Building2, ArrowRight, Loader2, CheckCircle2, Clock } from 'lucide-react';
 import Logo from '../components/Logo';
-
 const roles = [
     {
         id: 'STUDENT',
@@ -51,26 +50,20 @@ const roles = [
         instant: false
     }
 ];
-
 const RoleSelection = () => {
     const [selectedRole, setSelectedRole] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-
     const { assignRole, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-
     const isRegistration = location.state?.isRegistration;
-
     const handleConfirm = async () => {
         if (!selectedRole) return;
         setIsLoading(true);
         setError('');
-
         const result = await assignRole(selectedRole);
         setIsLoading(false);
-
         if (result.success) {
             const roleData = result.user;
             if (roleData.pendingApproval) {
@@ -84,27 +77,22 @@ const RoleSelection = () => {
             setError(result.message || 'Failed to assign role. Please try again.');
         }
     };
-
     const selectedRoleData = roles.find(r => r.id === selectedRole);
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 flex flex-col items-center justify-center p-4">
-            {/* Background blobs */}
+            {}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-3xl" />
                 <div className="absolute bottom-[-5%] right-[-5%] w-[40%] h-[40%] bg-violet-600/10 rounded-full blur-3xl" />
             </div>
-
             <div className="relative z-10 w-full max-w-lg">
-                {/* Logo */}
+                {}
                 <div className="flex justify-center mb-8">
                     <Logo iconSize="w-10 h-10" textClassName="text-2xl text-white" />
                 </div>
-
-                {/* Card */}
+                {}
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-
-                    {/* Header */}
+                    {}
                     <div className="text-center mb-8">
                         <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
                             Welcome, {user?.name?.split(' ')[0] || 'there'}! 👋
@@ -113,13 +101,11 @@ const RoleSelection = () => {
                             Select your role to personalize your experience.
                         </p>
                     </div>
-
-                    {/* Role Cards */}
+                    {}
                     <div className="space-y-3 mb-6">
                         {roles.map((role) => {
                             const Icon = role.icon;
                             const isSelected = selectedRole === role.id;
-
                             return (
                                 <button
                                     key={role.id}
@@ -130,20 +116,18 @@ const RoleSelection = () => {
                                             : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
                                         }`}
                                 >
-                                    {/* Selection indicator */}
+                                    {}
                                     {isSelected && (
                                         <div className="absolute top-3 right-3">
                                             <CheckCircle2 className="w-5 h-5 text-white" />
                                         </div>
                                     )}
-
                                     <div className="flex items-start gap-4">
-                                        {/* Icon */}
+                                        {}
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br ${role.gradient}`}>
                                             <Icon className="w-6 h-6 text-white" />
                                         </div>
-
-                                        {/* Content */}
+                                        {}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
                                                 <span className={`font-bold text-base ${isSelected ? 'text-white' : 'text-slate-200'}`}>
@@ -165,8 +149,7 @@ const RoleSelection = () => {
                             );
                         })}
                     </div>
-
-                    {/* Info banner for recruiter/college */}
+                    {}
                     {selectedRoleData && !selectedRoleData.instant && (
                         <div className="mb-5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5">
                             <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
@@ -175,15 +158,13 @@ const RoleSelection = () => {
                             </p>
                         </div>
                     )}
-
-                    {/* Error */}
+                    {}
                     {error && (
                         <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                             {error}
                         </div>
                     )}
-
-                    {/* Confirm Button */}
+                    {}
                     <button
                         onClick={handleConfirm}
                         disabled={!selectedRole || isLoading}
@@ -205,7 +186,6 @@ const RoleSelection = () => {
                             </>
                         )}
                     </button>
-
                     <p className="text-center text-xs text-slate-500 mt-4">
                         Your role cannot be changed after selection.
                     </p>
@@ -214,5 +194,4 @@ const RoleSelection = () => {
         </div>
     );
 };
-
 export default RoleSelection;

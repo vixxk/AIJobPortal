@@ -1,0 +1,13 @@
+const express = require('express');
+const interviewController = require('./interview.controller');
+const upload = require('../../utils/audioUpload');
+const multer = require('multer');
+const router = express.Router();
+const path = require('path');
+const uploadPdf = multer({ dest: path.join(__dirname, '../../../uploads/resumes') });
+router.post('/start', uploadPdf.single('resume'), interviewController.startInterview);
+router.post('/evaluate', upload.single('audio'), interviewController.processAnswer);
+router.post('/transcribe', upload.single('audio'), interviewController.transcribeAudio);
+router.post('/report', interviewController.generateReport);
+router.post('/speak', interviewController.speakText);
+module.exports = router;

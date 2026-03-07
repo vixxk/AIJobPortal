@@ -1,32 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from '../utils/axios';
 import { Bell, Check, Trash2, X } from 'lucide-react';
-
 const NotificationsDropdown = () => {
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
-
     useEffect(() => {
         fetchNotifications();
-
-        // Polling or listener could be added here
-        const interval = setInterval(fetchNotifications, 60000); // Poll every minute
-
+        const interval = setInterval(fetchNotifications, 60000); 
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-
         return () => {
             clearInterval(interval);
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
-
     const fetchNotifications = async () => {
         try {
             const res = await axios.get('/notifications');
@@ -38,7 +31,6 @@ const NotificationsDropdown = () => {
             console.error('Failed to fetch notifications', error);
         }
     };
-
     const markAsRead = async (id) => {
         try {
             await axios.patch(`/notifications/${id}/read`);
@@ -48,7 +40,6 @@ const NotificationsDropdown = () => {
             console.error('Failed to mark notification as read', error);
         }
     };
-
     const deleteNotification = async (id, e) => {
         e.stopPropagation();
         try {
@@ -60,7 +51,6 @@ const NotificationsDropdown = () => {
             console.error('Failed to delete notification', error);
         }
     };
-
     return (
         <div className="relative" ref={dropdownRef}>
             <button
@@ -72,15 +62,13 @@ const NotificationsDropdown = () => {
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                 )}
             </button>
-
-            {/* Dropdown Panel */}
+            {}
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
                     <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                         <h3 className="font-bold text-slate-800">Notifications</h3>
                         <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">{unreadCount} New</span>
                     </div>
-
                     <div className="max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
                             <div className="p-8 text-center text-slate-500 flex flex-col items-center">
@@ -118,5 +106,4 @@ const NotificationsDropdown = () => {
         </div>
     );
 };
-
 export default NotificationsDropdown;

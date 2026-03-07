@@ -2,14 +2,11 @@ import { useState, useEffect } from 'react';
 import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import { CheckCircle, Clock, Trophy, PlayCircle, Plus } from 'lucide-react';
-
 const MockTestsList = () => {
     const { user } = useAuth();
     const [tests, setTests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    // We assume backend has a public mock tests endpoint
     useEffect(() => {
         const fetchTests = async () => {
             try {
@@ -26,13 +23,10 @@ const MockTestsList = () => {
         };
         fetchTests();
     }, []);
-
     const isAdmin = user?.role === 'SUPER_ADMIN';
-
     if (loading) {
         return <div className="p-10 text-center animate-pulse">Loading assessments...</div>;
     }
-
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center py-20 animate-in fade-in">
@@ -47,7 +41,6 @@ const MockTestsList = () => {
             </div>
         );
     }
-
     return (
         <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -60,14 +53,12 @@ const MockTestsList = () => {
                         <p className="text-slate-500 mt-1">Test your skills under timed conditions and compete on leaderboards.</p>
                     </div>
                 </div>
-
                 {isAdmin && (
                     <button className="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm">
                         <Plus className="w-5 h-5" /> Create Test
                     </button>
                 )}
             </div>
-
             {tests.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center flex flex-col items-center">
                     <Trophy className="w-16 h-16 text-slate-300 mb-4" />
@@ -88,7 +79,6 @@ const MockTestsList = () => {
                                 <p className="text-sm text-slate-500 line-clamp-2 mb-4">
                                     {test.description || 'Test your proficiency with standardized questions and timed constraints to prepare for technical rounds.'}
                                 </p>
-
                                 <div className="flex items-center gap-4 text-xs font-semibold text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <div className="flex items-center gap-1.5">
                                         <Clock className="w-4 h-4 text-indigo-500" /> {test.durationMinutes} Mins
@@ -99,7 +89,6 @@ const MockTestsList = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="p-4 bg-slate-50/50 flex gap-3">
                                 <button className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm">
                                     <PlayCircle className="w-4 h-4" /> Attempt Now
@@ -115,5 +104,4 @@ const MockTestsList = () => {
         </div>
     );
 };
-
 export default MockTestsList;

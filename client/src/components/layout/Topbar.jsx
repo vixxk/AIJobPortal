@@ -3,14 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { Search, Menu, ArrowLeft, Settings as SettingsIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationsDropdown from '../NotificationsDropdown';
-
 const Topbar = ({ toggleSidebar, isMobile }) => {
     const { user } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
     const [customTitle, setCustomTitle] = useState(null);
     const [customBack, setCustomBack] = useState(null);
-
     useEffect(() => {
         const handleCustomHeader = (e) => {
             setCustomTitle(e.detail?.title || null);
@@ -19,12 +17,13 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
         window.addEventListener('set-custom-header', handleCustomHeader);
         return () => window.removeEventListener('set-custom-header', handleCustomHeader);
     }, []);
-
-    // Hide Topbar on mobile Dashboard and Job Details since they have custom headers
-    if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/help' || location.pathname === '/app/contact')) {
+    if (location.pathname === '/app/interview') {
         return null;
     }
 
+    if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/help' || location.pathname === '/app/contact')) {
+        return null;
+    }
     let pageTitle = "Student Dashboard";
     if (customTitle) pageTitle = customTitle;
     else if (location.pathname === '/app/jobs') pageTitle = "Job Search";
@@ -34,12 +33,10 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
     else if (location.pathname === '/app/help') pageTitle = "Help Center";
     else if (location.pathname === '/app/contact') pageTitle = "Customer Service";
     else if (location.pathname !== '/app') pageTitle = "Feature Details";
-
     const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
-
     return (
         <div className={`h-16 md:h-20 px-4 md:px-8 flex items-center justify-between z-10 sticky top-0 transition-all duration-300 ${customTitle && isMobile ? 'bg-white' : 'bg-white/80 md:bg-background/80 backdrop-blur-md border-b border-slate-100 md:border-none shadow-sm md:shadow-none'}`}>
-            {/* Mobile Left: Back Button or Menu */}
+            { }
             {isMobile && (
                 <div className="flex items-center gap-1 min-w-0 flex-1 h-10">
                     {showBackButton ? (
@@ -60,8 +57,7 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
                     <h1 className={`font-bold text-slate-900 tracking-tight leading-none pt-0.5 truncate pl-1 ${customTitle ? 'text-xl' : 'text-[18px]'}`}>{pageTitle}</h1>
                 </div>
             )}
-
-            {/* Desktop Left */}
+            { }
             {!isMobile && (
                 <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -77,21 +73,11 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
                     </div>
                 </div>
             )}
-
-            {/* Right Side Options */}
+            { }
             {(!customTitle || !isMobile) && (
                 <div className="flex items-center gap-4 md:gap-6">
-                    <div className="relative hidden md:block">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search for jobs..."
-                            className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-64 transition-all"
-                        />
-                    </div>
-
+                    {/* Removed search box as requested */}
                     {!customTitle && <NotificationsDropdown />}
-
                     {(!customTitle && location.pathname === '/app/profile') ? (
                         <SettingsIcon
                             className="w-6 h-6 text-slate-700 cursor-pointer hover:text-blue-500 active:text-blue-500"
@@ -109,5 +95,4 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
         </div>
     );
 };
-
 export default Topbar;

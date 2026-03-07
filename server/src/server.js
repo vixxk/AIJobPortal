@@ -4,14 +4,10 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const path = require('path');
 require('dotenv').config();
-
 const connectDB = require('./config/db');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./middleware/errorHandler');
-
 const { apiLimiter } = require('./middleware/rateLimiter');
-
-// Import new modular routes
 const authRoutes = require('./modules/auth/auth.routes');
 const studentRoutes = require('./modules/student/student.routes');
 const recruiterRoutes = require('./modules/recruiter/recruiter.routes');
@@ -22,49 +18,31 @@ const mockTestRoutes = require('./modules/mocktest/mocktest.routes');
 const competitionRoutes = require('./modules/competition/competition.routes');
 const notificationRoutes = require('./modules/notification/notification.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
-
-// Keep existing AI routes
+const interviewRoutes = require('./modules/interview/interview.routes');
 const legacyJobsRouter = require('../routes/jobs');
 const legacyResumeRouter = require('../routes/resume');
-
 const app = express();
-
-// Security Middlewares
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' } // allow serving local images to frontend
+  crossOriginResourcePolicy: { policy: 'cross-origin' } 
 }));
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true
 }));
-
-// Serve uploaded files (avatars, logos) as static assets
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Limit requests from same API
 app.use('/api', apiLimiter);
-
-// Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-
-// Development logging
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
-
-// Connect Database
 connectDB();
-
 app.get('/', (req, res) => {
   res.send('Job Portal API is running... Modular Version.');
 });
-
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
-
-// Modular Routes Routing
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/recruiter', recruiterRoutes);
@@ -75,21 +53,14 @@ app.use('/api/v1/mocktests', mockTestRoutes);
 app.use('/api/v1/competitions', competitionRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/admin', adminRoutes);
-
-// Legacy Application Routes (AI Features) - keeping API path same to avoid breaking old frontend
+app.use('/api/v1/interview', interviewRoutes);
 app.use('/api/jobs', legacyJobsRouter);
 app.use('/api/resume', legacyResumeRouter);
-
-// Handle unhandled routes
 app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
-
-// Global Error Handling Middleware
 app.use(globalErrorHandler);
-
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
 });

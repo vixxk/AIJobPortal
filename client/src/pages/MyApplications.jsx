@@ -3,18 +3,15 @@ import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import { ClipboardList, Briefcase, MapPin, Search } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
-
 const MyApplications = () => {
     const { user } = useAuth();
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
-
     useEffect(() => {
         const fetchApps = async () => {
             try {
-                // Assuming a generic student applications endpoint
                 const res = await axios.get('/applications/student');
                 if (res.data.success) {
                     setApplications(res.data.data);
@@ -28,7 +25,6 @@ const MyApplications = () => {
         };
         fetchApps();
     }, []);
-
     const getStatusColor = (status) => {
         switch (status) {
             case 'APPLIED': return 'bg-blue-50 text-blue-600 border-blue-200';
@@ -38,7 +34,6 @@ const MyApplications = () => {
             default: return 'bg-slate-50 text-slate-600 border-slate-200';
         }
     };
-
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-20 animate-in fade-in">
@@ -47,7 +42,6 @@ const MyApplications = () => {
             </div>
         );
     }
-
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center py-20 animate-in fade-in">
@@ -62,10 +56,8 @@ const MyApplications = () => {
             </div>
         );
     }
-
     return (
         <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-
             <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
                     <ClipboardList className="w-6 h-6 text-indigo-700" />
@@ -75,7 +67,6 @@ const MyApplications = () => {
                     <p className="text-slate-500 mt-1">Track the status of roles you have applied for.</p>
                 </div>
             </div>
-
             {applications.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center flex flex-col items-center shadow-sm">
                     <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
@@ -106,9 +97,7 @@ const MyApplications = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="h-px bg-slate-100 my-4" />
-
                             <div className="flex items-center justify-between">
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getStatusColor(app.status)}`}>
                                     {app.status}
@@ -117,7 +106,6 @@ const MyApplications = () => {
                                     <MapPin className="w-3.5 h-3.5" /> {app.job?.location || 'Location'}
                                 </div>
                             </div>
-
                             <div className="mt-4 pt-3 border-t border-slate-50 flex justify-between text-[11px] text-slate-400 font-medium">
                                 <span>Applied: {new Date(app.createdAt).toLocaleDateString()}</span>
                                 <span>Updated: {new Date(app.updatedAt).toLocaleDateString()}</span>
@@ -126,10 +114,8 @@ const MyApplications = () => {
                     ))}
                 </div>
             )}
-
             <JobDetailsModal job={selectedJob} onClose={() => setSelectedJob(null)} />
         </div>
     );
 };
-
 export default MyApplications;

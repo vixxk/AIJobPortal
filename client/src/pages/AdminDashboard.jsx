@@ -6,12 +6,10 @@ import {
     AlertTriangle, Activity, Clock, RefreshCw, GraduationCap, UserX,
     BarChart3, TrendingUp
 } from 'lucide-react';
-
 const ROLE_CONFIG = {
     RECRUITER: { label: 'Recruiter', icon: Briefcase, color: 'violet', gradient: 'from-violet-500 to-purple-600' },
     COLLEGE_ADMIN: { label: 'College', icon: Building2, color: 'emerald', gradient: 'from-emerald-500 to-teal-600' }
 };
-
 const StatusBadge = ({ status }) => {
     const map = {
         PENDING: { label: 'Pending', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
@@ -26,22 +24,19 @@ const StatusBadge = ({ status }) => {
         </span>
     );
 };
-
 const AdminDashboard = () => {
     const { user } = useAuth();
     const [stats, setStats] = useState(null);
     const [pendingUsers, setPendingUsers] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
-    const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'all'
+    const [activeTab, setActiveTab] = useState('pending'); 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [actionLoading, setActionLoading] = useState(null); // userId being processed
+    const [actionLoading, setActionLoading] = useState(null); 
     const [successMsg, setSuccessMsg] = useState('');
-
     useEffect(() => {
         fetchAdminData();
     }, []);
-
     const fetchAdminData = async () => {
         setLoading(true);
         setError(null);
@@ -50,7 +45,6 @@ const AdminDashboard = () => {
                 axios.get('/admin/analytics'),
                 axios.get('/admin/users/pending')
             ]);
-
             if (analyticsRes.data.status === 'success') {
                 setStats(analyticsRes.data.data.analytics);
             }
@@ -64,7 +58,6 @@ const AdminDashboard = () => {
             setLoading(false);
         }
     };
-
     const fetchAllUsers = async () => {
         try {
             const res = await axios.get('/admin/users');
@@ -75,14 +68,12 @@ const AdminDashboard = () => {
             console.error('Failed to load users', err);
         }
     };
-
     const handleTabChange = (tab) => {
         setActiveTab(tab);
         if (tab === 'all' && allUsers.length === 0) {
             fetchAllUsers();
         }
     };
-
     const handleApproval = async (userId, action) => {
         setActionLoading(userId);
         setSuccessMsg('');
@@ -90,7 +81,6 @@ const AdminDashboard = () => {
             const res = await axios.patch(`/admin/users/${userId}/approval`, { action });
             if (res.data.status === 'success') {
                 setSuccessMsg(action === 'approve' ? '✅ User approved successfully!' : '❌ User rejected.');
-                // Reload data
                 fetchAdminData();
                 if (activeTab === 'all') fetchAllUsers();
                 setTimeout(() => setSuccessMsg(''), 4000);
@@ -102,7 +92,6 @@ const AdminDashboard = () => {
             setActionLoading(null);
         }
     };
-
     const handleBan = async (userId) => {
         if (!confirm('Are you sure you want to ban this user?')) return;
         setActionLoading(userId);
@@ -118,7 +107,6 @@ const AdminDashboard = () => {
             setActionLoading(null);
         }
     };
-
     if (loading) {
         return (
             <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-3">
@@ -127,7 +115,6 @@ const AdminDashboard = () => {
             </div>
         );
     }
-
     if (error) {
         return (
             <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-3">
@@ -139,11 +126,9 @@ const AdminDashboard = () => {
             </div>
         );
     }
-
     return (
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
-
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
@@ -159,15 +144,13 @@ const AdminDashboard = () => {
                     <RefreshCw className="w-4 h-4" /> Refresh
                 </button>
             </div>
-
-            {/* Success message */}
+            {}
             {successMsg && (
                 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium text-sm animate-in fade-in zoom-in duration-300">
                     {successMsg}
                 </div>
             )}
-
-            {/* Analytics Cards */}
+            {}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 {[
                     { label: 'Total Users', value: stats?.totalUsers || 0, icon: Users, color: 'blue' },
@@ -193,8 +176,7 @@ const AdminDashboard = () => {
                     </div>
                 ))}
             </div>
-
-            {/* User Management Tabs */}
+            {}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
                     <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
@@ -219,8 +201,7 @@ const AdminDashboard = () => {
                         </button>
                     </div>
                 </div>
-
-                {/* Pending Tab */}
+                {}
                 {activeTab === 'pending' && (
                     <>
                         {pendingUsers.length === 0 ? (
@@ -303,8 +284,7 @@ const AdminDashboard = () => {
                         )}
                     </>
                 )}
-
-                {/* All Users Tab */}
+                {}
                 {activeTab === 'all' && (
                     <div className="overflow-x-auto">
                         {allUsers.length === 0 ? (
@@ -396,5 +376,4 @@ const AdminDashboard = () => {
         </div>
     );
 };
-
 export default AdminDashboard;

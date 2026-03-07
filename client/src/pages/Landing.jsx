@@ -5,20 +5,15 @@ import landing1Img from '../assets/landing_1.png';
 import landing2Img from '../assets/landing_2.png';
 import landing3Img from '../assets/landing_3.png';
 import { useAuth } from '../context/AuthContext';
-
 const Landing = () => {
     const [step, setStep] = useState(0);
     const navigate = useNavigate();
     const { user } = useAuth();
-
-    // Skip onboarding if logged in and at the final step
     useEffect(() => {
         if (user && step === 3) {
             navigate('/app');
         }
     }, [user, step, navigate]);
-
-    // Splash screen and onboarding auto-slide timer
     useEffect(() => {
         if (step === 0) {
             const timer = setTimeout(() => {
@@ -32,11 +27,9 @@ const Landing = () => {
             return () => clearTimeout(timer);
         }
     }, [step]);
-
     const handleGetStarted = () => {
         navigate(user ? '/app' : '/login');
     };
-
     const onboardingData = [
         {
             title: "We are the best job\nportal platform",
@@ -54,27 +47,24 @@ const Landing = () => {
             image: landing3Img
         }
     ];
-
     const activeIndex = step === 0 ? 0 : step - 1;
-
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col font-sans">
-            {/* MOBILE VIEW (Unchanged) */}
+            {}
             <div className="md:hidden w-full h-[100dvh]">
                 {step === 0 ? (
                     <div
                         className="w-full h-full relative cursor-pointer overflow-hidden shadow-2xl bg-[#030712] mx-auto max-w-md"
                         onClick={() => setStep(1)}
                     >
-                        {/* Background Image */}
+                        {}
                         <img
                             src={splashImg}
                             alt="Splash Background"
                             className="absolute inset-0 w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-black/60" />
-
-                        {/* Content */}
+                        {}
                         <div className="relative z-10 w-full h-full flex flex-col justify-end pb-24 px-8 animate-fade-in">
                             <h1 className="text-white text-[42px] font-[800] mb-3 leading-[1.1] tracking-tight">
                                 Welcome to<br />Jobee! <span className="inline-block text-[38px] ml-1">👋</span>
@@ -86,9 +76,9 @@ const Landing = () => {
                     </div>
                 ) : (
                     <div className="w-full h-full bg-white flex flex-col relative overflow-hidden shadow-xl mx-auto max-w-md">
-                        {/* Top Image Section */}
+                        {}
                         <div className="flex-1 relative flex items-center justify-center bg-white overflow-hidden pb-4">
-                            {/* Image Carousel */}
+                            {}
                             <div
                                 className="absolute inset-0 flex transition-transform duration-500 ease-in-out"
                                 style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -104,10 +94,9 @@ const Landing = () => {
                                 ))}
                             </div>
                         </div>
-
-                        {/* Bottom Card Section */}
+                        {}
                         <div className="bg-white rounded-t-[40px] pt-12 pb-12 flex flex-col items-center text-center z-20 shadow-[0_-15px_40px_-5px_rgba(0,0,0,0.06)] flex-none relative w-full overflow-hidden">
-                            {/* Text Carousel */}
+                            {}
                             <div
                                 className="flex w-full transition-transform duration-500 ease-in-out mb-10 items-start"
                                 style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -123,8 +112,7 @@ const Landing = () => {
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Pagination Dots */}
+                            {}
                             <div className="flex gap-2.5 mb-10 items-center justify-center">
                                 {[0, 1, 2].map((i) => (
                                     <div
@@ -134,8 +122,7 @@ const Landing = () => {
                                     />
                                 ))}
                             </div>
-
-                            {/* Get Started Button */}
+                            {}
                             <button
                                 onClick={handleGetStarted}
                                 className="w-full max-w-[340px] bg-[#3B82F6] text-white font-[700] py-[18px] rounded-full text-[17px] hover:bg-[#2563EB] transition-colors active:scale-95 shadow-[0_8px_20px_rgba(59,130,246,0.3)] tracking-wide"
@@ -146,17 +133,15 @@ const Landing = () => {
                     </div>
                 )}
             </div>
-
-            {/* DESKTOP VIEW */}
+            {}
             <div className="hidden md:flex flex-row w-full min-h-screen bg-white">
-                {/* Left Side: Images Carousel / Hero */}
+                {}
                 <div className="w-[55%] lg:w-3/5 bg-[#F8FAFC] flex flex-col items-center justify-center relative overflow-hidden">
-                    {/* Background decorations for desktop empty space */}
+                    {}
                     <div className="absolute top-[10%] left-[10%] w-6 h-6 rounded-full bg-[#3B82F6] opacity-10" />
                     <div className="absolute bottom-[20%] left-[20%] w-12 h-12 rounded-full bg-[#3B82F6] opacity-10" />
                     <div className="absolute top-[30%] right-[15%] w-8 h-8 rounded-full bg-[#3B82F6] opacity-10" />
-
-                    {/* Image Carousel */}
+                    {}
                     <div
                         className="absolute inset-0 flex transition-transform duration-700 ease-in-out"
                         style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -171,8 +156,7 @@ const Landing = () => {
                             </div>
                         ))}
                     </div>
-
-                    {/* Pagination Dots */}
+                    {}
                     <div className="absolute bottom-16 flex gap-3 z-20">
                         {onboardingData.map((_, i) => (
                             <div
@@ -184,8 +168,7 @@ const Landing = () => {
                         ))}
                     </div>
                 </div>
-
-                {/* Right Side: Content & CTA */}
+                {}
                 <div className="w-[45%] lg:w-2/5 flex flex-col items-start justify-center p-16 lg:p-24 bg-white z-10 shadow-[-20px_0_40px_-10px_rgba(0,0,0,0.03)] border-l border-slate-100">
                     <div className="mb-16">
                         <h1 className="text-[#3B82F6] font-[900] text-5xl lg:text-6xl tracking-tight flex items-center">
@@ -193,7 +176,6 @@ const Landing = () => {
                         </h1>
                         <p className="text-slate-400 font-medium mt-3 text-lg">The ultimate job finder platform.</p>
                     </div>
-
                     <div className="relative w-full overflow-hidden h-[240px]">
                         <div
                             className="absolute top-0 left-0 flex w-full transition-transform duration-700 ease-in-out"
@@ -211,14 +193,12 @@ const Landing = () => {
                             ))}
                         </div>
                     </div>
-
                     <button
                         onClick={handleGetStarted}
                         className="mt-6 bg-[#3B82F6] text-white font-[700] py-4 px-12 rounded-full text-[19px] hover:bg-[#2563EB] transition-colors active:scale-95 shadow-[0_8px_25px_rgba(59,130,246,0.35)] tracking-wide w-full max-w-[340px]"
                     >
                         Get Started Now
                     </button>
-
                     <p className="mt-8 text-slate-500 text-sm font-medium">
                         Already have an account? <span onClick={handleGetStarted} className="text-[#3B82F6] font-bold cursor-pointer hover:underline">Sign In</span>
                     </p>
@@ -227,5 +207,4 @@ const Landing = () => {
         </div>
     );
 };
-
 export default Landing;

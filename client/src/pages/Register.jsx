@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, User, Briefcase, GraduationCap, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Logo from '../components/Logo';
 import registerIllustration from '../assets/register_illustration.png';
-
 const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -14,16 +13,12 @@ const Register = () => {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
     const { register, user } = useAuth();
     const navigate = useNavigate();
-
     useEffect(() => {
         if (user) navigate('/app', { replace: true });
     }, [user, navigate]);
-
     if (user) return null;
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -36,14 +31,11 @@ const Register = () => {
             setError(result.message);
         }
     };
-
-    // ── Role tiles config
     const roles = [
         { value: 'STUDENT', icon: User, label: 'Student' },
         { value: 'RECRUITER', icon: Briefcase, label: 'Recruiter' },
         { value: 'COLLEGE_ADMIN', icon: GraduationCap, label: 'College' },
     ];
-
     const GoogleIcon = () => (
         <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -52,7 +44,6 @@ const Register = () => {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
     );
-
     const formContent = (isMobile) => (
         <>
             {successMessage && (
@@ -60,15 +51,13 @@ const Register = () => {
                     {successMessage}
                 </div>
             )}
-
             <form className="space-y-4" onSubmit={handleSubmit}>
                 {error && (
                     <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
                         {error}
                     </div>
                 )}
-
-                {/* Name */}
+                {}
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <User className="h-4 w-4 text-slate-400" />
@@ -80,8 +69,7 @@ const Register = () => {
                         placeholder="Full Name"
                     />
                 </div>
-
-                {/* Email */}
+                {}
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Mail className="h-4 w-4 text-slate-400" />
@@ -93,8 +81,7 @@ const Register = () => {
                         placeholder="Email Address"
                     />
                 </div>
-
-                {/* Password */}
+                {}
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Lock className="h-4 w-4 text-slate-400" />
@@ -111,8 +98,7 @@ const Register = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 </div>
-
-                {/* Role picker */}
+                {}
                 <div>
                     <label className="block text-[12px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">I am a...</label>
                     <div className="grid grid-cols-3 gap-2">
@@ -132,7 +118,6 @@ const Register = () => {
                         ))}
                     </div>
                 </div>
-
                 <button
                     type="submit"
                     disabled={isLoading || !!successMessage}
@@ -143,13 +128,11 @@ const Register = () => {
             </form>
         </>
     );
-
     return (
         <>
-            {/* ════════════════════ DESKTOP VIEW ════════════════════ */}
+            {}
             <div className="hidden md:flex min-h-screen overflow-hidden">
-
-                {/* ── LEFT PANEL — gradient ──────────────────────── */}
+                {}
                 <div
                     className="hidden lg:flex w-[48%] xl:w-[52%] flex-col relative overflow-hidden"
                     style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 45%, #4f46e5 100%)' }}
@@ -158,11 +141,9 @@ const Register = () => {
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
                     <div className="absolute -bottom-32 -right-16 w-[500px] h-[500px] rounded-full opacity-[0.08]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
-
                     <div className="relative z-10 pt-10 pl-12">
                         <Logo iconSize="w-9 h-9" textClassName="text-2xl text-white" />
                     </div>
-
                     <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-12 pb-16">
                         <div className="w-full max-w-[380px] xl:max-w-[420px] mb-10">
                             <img
@@ -189,8 +170,7 @@ const Register = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* ── RIGHT PANEL — form ──────────────────────────── */}
+                {}
                 <div className="flex-1 bg-white flex flex-col">
                     <div className="flex justify-end px-10 pt-8">
                         <p className="text-[13px] text-slate-400 font-medium">
@@ -198,7 +178,6 @@ const Register = () => {
                             <Link to="/login" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">Sign in</Link>
                         </p>
                     </div>
-
                     <div className="flex-1 flex items-center justify-center px-8 xl:px-16 py-6">
                         <div className="w-full max-w-[420px]">
                             <div className="mb-6">
@@ -215,8 +194,7 @@ const Register = () => {
                     </div>
                 </div>
             </div>
-
-            {/* ════════════════════ MOBILE VIEW ════════════════════ */}
+            {}
             <div className="md:hidden min-h-[100dvh] w-full bg-white flex flex-col font-sans py-8 px-6">
                 <div className="flex justify-center mb-6">
                     <Logo iconSize="w-10 h-10" textClassName="text-2xl text-slate-900" />
@@ -232,5 +210,4 @@ const Register = () => {
         </>
     );
 };
-
 export default Register;
