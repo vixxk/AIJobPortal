@@ -11,6 +11,7 @@ import {
     MonitorPlay
 } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
+import SkeletonJobCard from '../components/SkeletonJobCard';
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
     const handleSave = async (e) => {
@@ -192,34 +193,34 @@ const Dashboard = () => {
     const firstName = name.split(' ')[0];
     return (
         <>
-            {}
+            { }
             <div className="hidden md:block max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-                {}
+                { }
                 <div className="hidden md:block relative w-full h-[320px] bg-gradient-to-r from-[#3872FA] to-[#1e40af] rounded-[48px] mb-12 overflow-hidden shadow-2xl shadow-blue-500/20 group">
-                    {}
+                    { }
                     <div className="absolute inset-0 pointer-events-none">
                         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[70%] bg-white opacity-[0.08] rounded-full blur-3xl transform rotate-12"></div>
                         <div className="absolute bottom-[-20%] right-[10%] w-[50%] h-[80%] bg-blue-400 opacity-[0.15] rounded-full blur-3xl transform -rotate-12"></div>
                     </div>
                     <div className="relative h-full flex flex-col justify-center px-16 z-10">
                         <div className="max-w-xl">
-                            {}
+                            { }
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full mb-6 w-fit">
                                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                                 <span className="text-xs font-bold text-white/90">AI Personalized Dashboard</span>
                             </div>
-                            {}
+                            { }
                             <h2 className="text-[44px] font-black text-white leading-[1.15] mb-6 tracking-tight">
                                 See how you can <br />
                                 <span className="text-blue-100 italic">find a job quickly!</span>
                             </h2>
-                            {}
+                            { }
                             <button className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-blue-900/20 hover:scale-105 transition-transform active:scale-95 flex items-center gap-2">
                                 Explore Opportunities
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
-                        {}
+                        { }
                         <div className="absolute bottom-0 right-0 w-[45%] h-[115%] pointer-events-none flex items-end justify-end z-10 overflow-hidden">
                             <img
                                 src="/db2.png"
@@ -229,7 +230,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-                {}
+                { }
                 <div className="mb-10">
                     <div className="flex items-center mb-6">
                         <h3 className="text-lg font-bold text-slate-900 tracking-tight">AI-Powered Career Tools</h3>
@@ -250,14 +251,18 @@ const Dashboard = () => {
                         ))}
                     </div>
                 </div>
-                {}
+                { }
                 <div className="mb-10">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
                         <Link to="/app/jobs" className="text-sm font-bold text-blue-600 hover:text-blue-700">See All</Link>
                     </div>
                     {loadingJobs ? (
-                        <div className="flex justify-center p-6"><span className="animate-pulse text-blue-500 font-semibold">Loading jobs...</span></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {[1, 2, 3].map((i) => (
+                                <SkeletonJobCard key={i} />
+                            ))}
+                        </div>
                     ) : error ? (
                         <div className="text-red-500 bg-red-50 p-4 rounded-2xl font-semibold text-center mt-2 border border-red-100 text-sm">
                             {error}
@@ -276,9 +281,9 @@ const Dashboard = () => {
                     )}
                 </div>
             </div>
-            {}
+            { }
             <div className="md:hidden w-full min-h-screen bg-white pb-24 pt-2 animate-in fade-in duration-500 font-sans">
-                {}
+                { }
                 <div className="flex items-center justify-between mb-6 px-5 mt-4">
                     <div className="flex items-center gap-3">
                         <button
@@ -301,10 +306,10 @@ const Dashboard = () => {
                         <Bell className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
                     </button>
                 </div>
-                {}
+                { }
                 <div className="px-5 mb-7">
                     <div className="w-full bg-gradient-to-br from-[#3872FA] to-[#1e40af] rounded-[32px] p-6 text-white relative overflow-hidden flex flex-col justify-center min-h-[180px] shadow-xl shadow-blue-500/20">
-                        {}
+                        { }
                         <div className="absolute inset-0 pointer-events-none opacity-30">
                             <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/20 rotate-45 transform rounded-xl blur-lg"></div>
                             <div className="absolute top-10 right-0 w-40 h-40 bg-blue-300/20 transform rounded-full blur-xl"></div>
@@ -317,7 +322,7 @@ const Dashboard = () => {
                                 Explore Now
                             </button>
                         </div>
-                        {}
+                        { }
                         <div className="absolute bottom-0 right-0 w-[55%] h-full pointer-events-none flex items-end justify-end z-10">
                             <img
                                 src="/db2.png"
@@ -327,7 +332,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-                {}
+                { }
                 <div className="mb-8 px-5">
                     <div className="flex items-center mb-4">
                         <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">AI-Powered Career Tools</h3>
@@ -348,7 +353,7 @@ const Dashboard = () => {
                         ))}
                     </div>
                 </div>
-                {}
+                { }
                 <div className="pl-5 pb-8">
                     <div className="flex items-center justify-between mb-4 pr-5">
                         <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
@@ -369,7 +374,11 @@ const Dashboard = () => {
                 </div>
                 <div className="mt-4 pr-5 pl-5 mb-10">
                     {loadingJobs ? (
-                        <div className="flex justify-center p-6"><span className="animate-pulse text-blue-500 text-sm font-semibold">Loading jobs...</span></div>
+                        <div className="flex flex-col gap-4">
+                            {[1, 2, 3].map((i) => (
+                                <SkeletonJobCard key={i} />
+                            ))}
+                        </div>
                     ) : error ? (
                         <div className="text-red-500 bg-red-50 p-4 rounded-2xl font-semibold text-center mt-2 border border-red-100 text-[13px]">
                             {error}
@@ -386,7 +395,7 @@ const Dashboard = () => {
                     )}
                 </div>
             </div>
-            {}
+            { }
             <JobDetailsModal
                 job={selectedJob}
                 onClose={() => setSelectedJob(null)}

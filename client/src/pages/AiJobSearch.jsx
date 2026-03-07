@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import JobDetailsModal from '../components/JobDetailsModal';
 import notFoundImg from '../assets/404.png';
+import SkeletonJobCard from '../components/SkeletonJobCard';
 const PAGE_SIZE = 10;
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
@@ -302,11 +303,10 @@ const AiJobSearch = () => {
                 { }
                 <div ref={resultsRef}>
                     {loading && (
-                        <div className="flex flex-col items-center justify-center py-24 text-blue-500">
-                            <div className="relative flex justify-center items-center">
-                                <div className="absolute animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500"></div>
-                                <div className="w-10 h-10 bg-blue-500 rounded-full animate-bounce"></div>
-                            </div>
+                        <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6 animate-in fade-in duration-500">
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                <SkeletonJobCard key={i} />
+                            ))}
                         </div>
                     )}
                     {!loading && error && (
