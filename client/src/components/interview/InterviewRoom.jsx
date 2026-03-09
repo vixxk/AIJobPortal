@@ -10,7 +10,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [answers, setAnswers] = useState([]);
     const [phase, setPhase] = useState('ready');
-    const [elapsedSecs, setElapsedSecs] = useState(0);
     const [lastAnalysis, setLastAnalysis] = useState(null);
     const [lastEvaluation, setLastEvaluation] = useState(null);
     const [systemError, setSystemError] = useState(null);
@@ -20,21 +19,21 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const currentQuestion = questions[currentIdx];
     const isLastQuestion = currentIdx === questions.length - 1;
     useEffect(() => {
-        if (!isTimerRunning) return;
-        if (timer <= 0) { setIsTimerRunning(false); return; }
-        const id = setInterval(() => setTimer(prev => prev - 1), 1000);
+        if (!isTimerRunning || timer <= 0) return;
+        const id = setInterval(() => {
+            setTimer(prev => {
+                if (prev <= 1) {
+                    setIsTimerRunning(false);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
         return () => clearInterval(id);
     }, [isTimerRunning, timer]);
-    useEffect(() => {
-        if (phase !== 'answering') return;
-        const id = setInterval(() => setElapsedSecs(prev => prev + 1), 1000);
-        return () => clearInterval(id);
-    }, [phase]);
-    const fmtTime = (s) =>
-        `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     const handleTimerStart = () => setIsTimerRunning(true);
     const handleAnswerSubmit = async (transcript, blob) => {
-        // Strict gating using both state and Ref to catch rapid async calls from double-rendered boxes
+
         if (isSubmittingRef.current || phase === 'processing' || phase === 'finishing') {
             console.log('Submission ignored: already processing or guard active', {
                 ref: isSubmittingRef.current,
@@ -53,7 +52,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         setIsTimerRunning(false);
         setPhase('processing');
 
-        // Clear previous question's analysis to avoid visual confusion during the "Thinking" phase
         setLastAnalysis(null);
         setLastEvaluation(null);
 
@@ -100,7 +98,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         const updatedAnswers = [...answers, newAnswer];
         setAnswers(updatedAnswers);
 
-        // DELIBERATE WAIT: ensure the "Interviewer Thinking" UI is seen and backend is fully settled
         console.log('Evaluation phase complete. Waiting transition delay (2s)...');
         await new Promise(res => setTimeout(res, 2000));
 
@@ -108,15 +105,13 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
             console.log('Transitioning to question', currentIdx + 2);
             const nextIdx = currentIdx + 1;
 
-            // Set currentIdx first
             setCurrentIdx(nextIdx);
             setTimer(TIMER_BY_DIFFICULTY[questions[nextIdx]?.difficulty] || 60);
 
-            // UI Stabilization delay
             await new Promise(res => setTimeout(res, 100));
 
             setPhase('answering');
-            isSubmittingRef.current = false; // Release guard for next question
+            isSubmittingRef.current = false;
         } else {
             console.log('Last question processed. Finalizing report...');
             setPhase('finishing');
@@ -235,8 +230,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
             </div>
         </div>
     );
-    const totalEstSecs = questions.reduce((acc, q) => acc + (TIMER_BY_DIFFICULTY[q.difficulty] || 60) + 10, 0);
-    const progressPct = Math.min(100, (elapsedSecs / totalEstSecs) * 100);
     return (
         <div className="flex flex-col w-full min-h-full bg-[#fafbff] text-slate-800 font-sans relative">
             { }

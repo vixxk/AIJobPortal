@@ -55,7 +55,6 @@ const HelpCenter = () => {
     return (
         <div className="bg-[#F8F9FA] min-h-[100dvh] text-slate-800 flex flex-col md:p-6 lg:p-8">
             <div className="max-w-[1000px] w-full mx-auto md:bg-white md:rounded-[36px] md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:border md:border-slate-100 flex flex-col overflow-hidden relative min-h-[100dvh] md:min-h-[85vh] lg:min-h-[800px]">
-                {}
                 <div className="bg-white px-5 md:px-8 pt-safe md:pt-8 pb-0 flex flex-col z-10 md:rounded-t-[36px] relative">
                     <div className="flex items-center justify-between py-4 md:py-2 pb-4">
                         <div className="flex items-center gap-3">
@@ -75,7 +74,6 @@ const HelpCenter = () => {
                 </div>
                 <div className="flex-1 relative overflow-hidden bg-[#F8F9FA] md:bg-white">
                     <div className="p-5 md:p-8 h-full overflow-y-auto pb-24 md:pb-8 hide-scrollbar">
-                        {}
                         <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-6 -mx-5 px-5 md:mx-0 md:px-0 mt-2">
                             {['General', 'Account', 'Service', 'Applications'].map(cat => (
                                 <button
@@ -87,7 +85,6 @@ const HelpCenter = () => {
                                 </button>
                             ))}
                         </div>
-                        {}
                         <div className="relative mb-8">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                             <input
@@ -101,7 +98,6 @@ const HelpCenter = () => {
                                 <SlidersHorizontal className="w-5 h-5 text-[#2D68FE]" />
                             </button>
                         </div>
-                        {}
                         <div className="space-y-4 md:max-w-[800px]">
                             {filteredFaqs.length > 0 ? (
                                 filteredFaqs.map((faq, idx) => (

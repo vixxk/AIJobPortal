@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -21,15 +22,15 @@ const userSchema = new mongoose.Schema({
   googleId: {
     type: String,
     unique: true,
-    sparse: true 
+    sparse: true
   },
   avatar: {
     type: String
   },
   role: {
     type: String,
-    enum: ['STUDENT', 'RECRUITER', 'COLLEGE_ADMIN', 'SUPER_ADMIN'],
-    default: null 
+    enum: ['STUDENT', 'RECRUITER', 'COLLEGE_ADMIN', 'TEACHER', 'SUPER_ADMIN'],
+    default: null
   },
   isVerified: {
     type: Boolean,
@@ -69,12 +70,15 @@ const userSchema = new mongoose.Schema({
     default: false
   }
 }, { timestamps: true });
+
 userSchema.pre('save', async function() {
   if (!this.isModified('password') || !this.password) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
+
 userSchema.methods.correctPassword = async function(candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
+
 const User = mongoose.model('User', userSchema);
 module.exports = User;

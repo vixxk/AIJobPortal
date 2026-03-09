@@ -12,9 +12,9 @@ const avatarStorage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    const userId = req.user?._id || req.user?.id || 'unknown';
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    cb(null, `avatar_${userId}${ext}`);
+    cb(null, `avatar-${uniqueSuffix}${ext}`);
   }
 });
 const memoryStorage = multer.memoryStorage();
@@ -35,13 +35,13 @@ const documentFilter = (req, file, cb) => {
 const uploadAvatarDisk = multer({
   storage: avatarStorage,
   fileFilter: imageFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } 
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 const uploadMemory = multer({
   storage: memoryStorage,
   fileFilter: documentFilter,
 });
-exports.uploadImage      = uploadAvatarDisk.single('image');   
-exports.uploadResume     = uploadMemory.single('resume');       
-exports.uploadCertificate = uploadMemory.single('certificate'); 
+exports.uploadImage      = uploadAvatarDisk.single('image');
+exports.uploadResume     = uploadMemory.single('resume');
+exports.uploadCertificate = uploadMemory.single('certificate');
 exports.uploadLogo       = uploadAvatarDisk.single('logo');

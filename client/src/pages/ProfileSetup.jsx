@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 const PHONE_CODES = [
@@ -114,7 +114,7 @@ const ProfileSetup = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [avatarLoading, setAvatarLoading] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(user?.avatar || null);
-    const [toast, setToast] = useState(null); 
+    const [toast, setToast] = useState(null);
     const [phonePickerOpen, setPhonePickerOpen] = useState(false);
     const [phoneSearch, setPhoneSearch] = useState('');
     const [selectedDialCode, setSelectedDialCode] = useState(
@@ -131,6 +131,10 @@ const ProfileSetup = () => {
         expertise: [],
         country: '',
     });
+    const [now] = useState(() => Date.now());
+    const maxDob = useMemo(() => {
+        return new Date(now - 13 * 365.25 * 24 * 3600 * 1000).toISOString().split('T')[0];
+    }, [now]);
     const showToast = (message, type = 'error') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 4000);
@@ -161,7 +165,7 @@ const ProfileSetup = () => {
         setAvatarLoading(false);
         if (!res.success) {
             showToast(res.message || 'Failed to upload avatar.');
-            setAvatarPreview(user?.avatar || null); 
+            setAvatarPreview(user?.avatar || null);
         } else {
             showToast('Profile photo updated!', 'success');
         }
@@ -243,7 +247,6 @@ const ProfileSetup = () => {
     );
     const renderStep1 = () => (
         <div className="flex flex-col animate-fadeIn min-h-screen bg-white">
-            {}
             <div className="flex items-center p-6 pb-2">
                 <button className="mr-4 p-1" onClick={() => navigate('/login')} id="back-to-login-btn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -253,7 +256,6 @@ const ProfileSetup = () => {
                 <h1 className="text-[22px] font-bold text-gray-900">Fill Your Profile</h1>
             </div>
             <div className="flex-1 overflow-y-auto px-6 pb-32">
-                {}
                 <div className="flex justify-center mt-6 mb-8 relative">
                     <div
                         className="w-[120px] h-[120px] bg-gray-100 rounded-full flex items-center justify-center overflow-hidden cursor-pointer relative"
@@ -296,9 +298,7 @@ const ProfileSetup = () => {
                         id="avatar-file-input"
                     />
                 </div>
-                {}
                 <div className="space-y-4 text-[14px]">
-                    {}
                     <div className="relative">
                         <input
                             type="text"
@@ -325,7 +325,6 @@ const ProfileSetup = () => {
                         className="w-full bg-gray-50 text-gray-800 px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100"
                         id="nickname-input"
                     />
-                    {}
                     <div className="relative">
                         <label className="absolute left-5 top-[10px] text-[10px] text-gray-400 font-medium uppercase tracking-wide">Date of Birth *</label>
                         <input
@@ -333,12 +332,11 @@ const ProfileSetup = () => {
                             name="dateOfBirth"
                             value={formData.dateOfBirth}
                             onChange={handleChange}
-                            max={new Date(Date.now() - 13 * 365.25 * 24 * 3600 * 1000).toISOString().split('T')[0]}
+                            max={maxDob}
                             className="w-full bg-gray-50 text-gray-800 px-5 pt-7 pb-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-100 appearance-none"
                             id="dob-input"
                         />
                     </div>
-                    {}
                     <div className="relative">
                         <input
                             type="email"
@@ -355,7 +353,6 @@ const ProfileSetup = () => {
                             <polyline points="22,6 12,13 2,6" />
                         </svg>
                     </div>
-                    {}
                     <div className="relative">
                         <div className="flex items-center bg-gray-50 rounded-2xl px-3 focus-within:ring-2 ring-blue-100">
                             <button
@@ -380,7 +377,6 @@ const ProfileSetup = () => {
                                 id="phone-input"
                             />
                         </div>
-                        {}
                         {phonePickerOpen && (
                             <div
                                 className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden"
@@ -422,7 +418,6 @@ const ProfileSetup = () => {
                             </div>
                         )}
                     </div>
-                    {}
                     <div className="relative">
                         <select
                             name="gender"
@@ -443,7 +438,6 @@ const ProfileSetup = () => {
                     </div>
                 </div>
             </div>
-            {}
             {phonePickerOpen && (
                 <div className="fixed inset-0 z-40" onClick={() => setPhonePickerOpen(false)} />
             )}
@@ -529,7 +523,6 @@ const ProfileSetup = () => {
                 <h1 className="text-[22px] font-bold text-gray-900">Your Country</h1>
             </div>
             <div className="flex-1 overflow-y-auto px-6 pb-32">
-                {}
                 <div className="relative mb-6">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
@@ -545,7 +538,6 @@ const ProfileSetup = () => {
                         id="country-search-input"
                     />
                 </div>
-                {}
                 <div className="space-y-5">
                     {filteredCountries.length === 0 ? (
                         <p className="text-center text-gray-400 text-[14px] py-8">No countries found</p>

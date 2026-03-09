@@ -76,7 +76,6 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
             { }
             {(!customTitle || !isMobile) && (
                 <div className="flex items-center gap-4 md:gap-6">
-                    {/* Removed search box as requested */}
                     {!customTitle && <NotificationsDropdown />}
                     {(!customTitle && location.pathname === '/app/profile') ? (
                         <SettingsIcon

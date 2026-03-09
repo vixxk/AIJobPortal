@@ -2,7 +2,7 @@ const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
 const fireworksService = require('../../services/fireworks.service');
 const pythonService = require('../../services/python.service');
-const { parse } = require('pdf-parse'); 
+const { parse } = require('pdf-parse');
 const fs = require('fs');
 exports.startInterview = catchAsync(async (req, res, next) => {
     const { job_role, interview_type } = req.body;

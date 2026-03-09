@@ -1,29 +1,29 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Bookmark, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axios';
+import { useCallback } from 'react';
 import JobDetailsModal from '../components/JobDetailsModal';
 import notFoundImg from '../assets/404.png';
 import SkeletonJobCard from '../components/SkeletonJobCard';
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
+
+    useEffect(() => {
+        setSaved(initiallySaved);
+    }, [initiallySaved]);
     const handleSave = async (e) => {
         e.stopPropagation();
         try {
-            const token = localStorage.getItem('token');
             const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
             if (saved) {
-                await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/unsave`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                await axios.delete('/jobs/unsave', {
                     data: { jobId }
                 });
                 setSaved(false);
                 if (onToggleSave) onToggleSave(jobId, false);
             } else {
-                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/save`,
-                    { job },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                await axios.post('/jobs/save', { job });
                 setSaved(true);
                 if (onToggleSave) onToggleSave(jobId, true);
             }
@@ -92,13 +92,10 @@ const SavedJobs = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
-    const fetchSavedJobs = async () => {
+    const fetchSavedJobs = useCallback(async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/saved`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axios.get('/jobs/saved');
             setJobs(res.data.jobs || []);
         } catch (err) {
             console.error(err);
@@ -106,10 +103,11 @@ const SavedJobs = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
     useEffect(() => {
         fetchSavedJobs();
-    }, []);
+    }, [fetchSavedJobs]);
     const handleToggleSave = (jobId, isSaved) => {
         if (!isSaved) {
             setJobs(jobs.filter(job => {
@@ -121,7 +119,7 @@ const SavedJobs = () => {
     return (
         <div className="bg-slate-50 md:bg-white flex flex-col font-sans relative">
             <div className="flex-1 bg-slate-50 px-5 pt-6 pb-6 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">
-                { }
+
                 <div className="hidden md:block mb-8 mt-2">
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Saved Jobs</h1>
                     <p className="text-slate-500 font-medium">Manage and keep track of your bookmarked job opportunities.</p>
@@ -144,15 +142,18 @@ const SavedJobs = () => {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6">
-                        {jobs.map((job, idx) => (
-                            <JobCard
-                                key={idx}
-                                job={job}
-                                onClick={setSelectedJob}
-                                initiallySaved={true}
-                                onToggleSave={handleToggleSave}
-                            />
-                        ))}
+                        {jobs.map((job) => {
+                            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+                            return (
+                                <JobCard
+                                    key={jobId}
+                                    job={job}
+                                    onClick={setSelectedJob}
+                                    initiallySaved={true}
+                                    onToggleSave={handleToggleSave}
+                                />
+                            );
+                        })}
                     </div>
                 )}
             </div>

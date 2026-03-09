@@ -11,7 +11,7 @@ const Register = () => {
     const [role, setRole] = useState('STUDENT');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [successMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { register, user } = useAuth();
     const navigate = useNavigate();
@@ -44,7 +44,7 @@ const Register = () => {
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
     );
-    const formContent = (isMobile) => (
+    const formContent = () => (
         <>
             {successMessage && (
                 <div className="p-3 mb-5 bg-green-50 text-green-700 text-sm font-medium rounded-xl border border-green-200 text-center">
@@ -57,7 +57,6 @@ const Register = () => {
                         {error}
                     </div>
                 )}
-                {}
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <User className="h-4 w-4 text-slate-400" />
@@ -69,7 +68,6 @@ const Register = () => {
                         placeholder="Full Name"
                     />
                 </div>
-                {}
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Mail className="h-4 w-4 text-slate-400" />
@@ -81,7 +79,6 @@ const Register = () => {
                         placeholder="Email Address"
                     />
                 </div>
-                {}
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Lock className="h-4 w-4 text-slate-400" />
@@ -98,7 +95,6 @@ const Register = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 </div>
-                {}
                 <div>
                     <label className="block text-[12px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">I am a...</label>
                     <div className="grid grid-cols-3 gap-2">
@@ -130,9 +126,7 @@ const Register = () => {
     );
     return (
         <>
-            {}
             <div className="hidden md:flex min-h-screen overflow-hidden">
-                {}
                 <div
                     className="hidden lg:flex w-[48%] xl:w-[52%] flex-col relative overflow-hidden"
                     style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 45%, #4f46e5 100%)' }}
@@ -170,7 +164,6 @@ const Register = () => {
                         </div>
                     </div>
                 </div>
-                {}
                 <div className="flex-1 bg-white flex flex-col">
                     <div className="flex justify-end px-10 pt-8">
                         <p className="text-[13px] text-slate-400 font-medium">
@@ -189,19 +182,18 @@ const Register = () => {
                                 </h2>
                                 <p className="text-slate-500 text-[14px] mt-1">Fill in the details below to get started</p>
                             </div>
-                            {formContent(false)}
+                            {formContent()}
                         </div>
                     </div>
                 </div>
             </div>
-            {}
             <div className="md:hidden min-h-[100dvh] w-full bg-white flex flex-col font-sans py-8 px-6">
                 <div className="flex justify-center mb-6">
                     <Logo iconSize="w-10 h-10" textClassName="text-2xl text-slate-900" />
                 </div>
                 <h1 className="text-2xl font-bold text-slate-900 mb-1 text-center">Create Account</h1>
                 <p className="text-slate-500 text-sm text-center mb-7">Start your journey with JobPortal</p>
-                {formContent(true)}
+                {formContent()}
                 <div className="mt-6 text-center text-[14px] font-medium text-slate-500">
                     Already have an account?{' '}
                     <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700">Sign in</Link>

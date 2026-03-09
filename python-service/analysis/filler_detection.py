@@ -1,16 +1,14 @@
 FILLERS = ["um", "uh", "like", "you know", "basically", "actually", "sort of", "kind of", "right", "okay"]
 
-
 def count_fillers(text: str) -> int:
-    """Count filler words in the transcript."""
+
     if not text:
         return 0
     words = text.lower().split()
     return sum(1 for w in words if w.strip(".,!?;:") in FILLERS)
 
-
 def get_filler_details(text: str) -> dict:
-    """Return detailed filler word breakdown."""
+
     if not text:
         return {"total": 0, "breakdown": {}}
 

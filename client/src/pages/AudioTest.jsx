@@ -51,29 +51,32 @@ const AudioTest = () => {
     const mediaRecorderRef = useRef(null);
     const streamRef = useRef(null);
     const chunksRef = useRef([]);
+
     const stopAny = () => {
         if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
         setIsSpeaking(false);
         setPlayingVoiceId(null);
     };
+
     const playVoice = async (voiceId, text) => {
         stopAny();
         setIsSpeaking(true);
         setPlayingVoiceId(voiceId);
-        setTtsLog(`Requesting audio from Python service (${voiceId})...`);
+        setTtsLog(`Requesting audio...`);
         try {
             const url = await speakText(text, voiceId);
             const audio = new Audio(url);
             audioRef.current = audio;
             setTtsLog('Playing...');
-            audio.onended = () => { stopAny(); setTtsLog(`✅ Done — ${voiceId}`); URL.revokeObjectURL(url); };
-            audio.onerror = () => { stopAny(); setTtsLog('❌ Playback error.'); };
+            audio.onended = () => { stopAny(); setTtsLog(`Done.`); URL.revokeObjectURL(url); };
+            audio.onerror = () => { stopAny(); setTtsLog('Playback error.'); };
             await audio.play();
         } catch (err) {
             stopAny();
-            setTtsLog(`❌ ${err.message}`);
+            setTtsLog(`Error: ${err.message}`);
         }
     };
+
     const startRecording = async () => {
         setSttError(''); chunksRef.current = [];
         try {
@@ -85,13 +88,15 @@ const AudioTest = () => {
             mr.start(250);
             mediaRecorderRef.current = mr;
             setIsRecording(true);
-        } catch (err) { setSttError('Mic denied: ' + err.message); }
+        } catch (err) { setSttError('Mic access denied'); }
     };
+
     const stopRecording = () => {
         mediaRecorderRef.current?.stop();
         streamRef.current?.getTracks().forEach(t => t.stop());
         setIsRecording(false);
     };
+
     const processAudio = async () => {
         setIsProcessing(true); setAnalysisData(null);
         try {
@@ -103,212 +108,136 @@ const AudioTest = () => {
                 const a = res.data.analysis;
                 setTranscript(prev => (prev ? prev + ' ' : '') + (a.transcript || ''));
                 setAnalysisData(a);
-            } else {
-                setSttError('Unexpected API response.');
             }
         } catch (err) {
-            setSttError('Transcription failed: ' + (err.response?.data?.detail || err.message));
+            setSttError('Transcription failed');
         } finally {
             setIsProcessing(false);
         }
     };
+
     const locales = ['all', ...Array.from(new Set(VOICES.map(v => v.locale)))];
     const filteredVoices = VOICES.filter(v =>
         (filterGender === 'all' || v.gender === filterGender) &&
         (filterLocale === 'all' || v.locale === filterLocale)
     );
+
     const selectedVoiceObj = VOICES.find(v => v.id === selectedVoice);
+
     return (
-        <div className="h-full w-full bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col p-4 sm:p-8 items-center overflow-y-auto">
-            <div className="w-full max-w-5xl space-y-6">
-                {}
-                <div className="text-center">
-                    <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-1">
-                        Audio API Diagnostics
-                    </h1>
-                    <p className="text-gray-500 text-sm">Preview all available AI voices, then pick the one for your interview.</p>
+        <div className="min-h-screen w-full bg-[#FCFDFF] flex flex-col p-6 sm:p-12 items-center overflow-y-auto">
+            <div className="w-full max-w-4xl space-y-10">
+                <div className="text-center space-y-2">
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Audio Diagnostics</h1>
+                    <p className="text-slate-500 font-medium">Internal tools to verify voice output and speech-to-text accuracy.</p>
                 </div>
-                {}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                            <h2 className="text-white font-bold text-lg">🗣️ Voice Lab</h2>
-                            <p className="text-blue-100 text-xs mt-0.5">
-                                {filteredVoices.length} voices · Click a voice card to preview · Check ✅ to select for interview
-                            </p>
-                        </div>
-                        {selectedVoiceObj && (
-                            <div className="flex items-center gap-2 bg-white/20 border border-white/30 text-white rounded-xl px-4 py-2 text-sm font-semibold">
-                                <span className="text-base">{selectedVoiceObj.gender === '♀' ? '👩' : '👨'}</span>
-                                Selected: <strong>{selectedVoiceObj.name}</strong> {selectedVoiceObj.locale}
-                            </div>
-                        )}
-                    </div>
-                    <div className="p-4 sm:p-5 space-y-4">
-                        {}
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Preview Text</label>
-                            <div className="flex gap-2">
-                                <textarea
-                                    value={ttsInput}
-                                    onChange={(e) => setTtsInput(e.target.value)}
-                                    rows={2}
-                                    className="flex-1 p-3 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
-                                    placeholder="Type text to preview with any voice..."
-                                />
-                            </div>
-                        </div>
-                        {}
-                        <div className="flex flex-wrap gap-2 items-center">
-                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Filter:</span>
-                            <div className="flex gap-1.5">
-                                {['all', '♀', '♂'].map(g => (
-                                    <button key={g} onClick={() => setFilterGender(g)}
-                                        className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${filterGender === g ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'}`}>
-                                        {g === 'all' ? 'All' : g === '♀' ? '♀ Female' : '♂ Male'}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="flex gap-1.5 flex-wrap">
-                                {locales.map(loc => (
-                                    <button key={loc} onClick={() => setFilterLocale(loc)}
-                                        className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${filterLocale === loc ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'}`}>
-                                        {loc === 'all' ? '🌐 All' : loc}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        {}
-                        {ttsLog && (
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-600">
-                                {ttsLog}
-                                {isSpeaking && (
-                                    <button onClick={stopAny} className="ml-3 text-red-500 font-bold hover:underline">⏹ Stop</button>
+
+                <div className="grid lg:grid-cols-3 gap-10">
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Voice Selection</h3>
+                                {selectedVoiceObj && (
+                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
+                                        ACTIVE: {selectedVoiceObj.name}
+                                    </span>
                                 )}
                             </div>
-                        )}
-                        {}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-96 overflow-y-auto pr-1">
-                            {filteredVoices.map((voice) => {
-                                const isSelected = selectedVoice === voice.id;
-                                const isPlaying = playingVoiceId === voice.id;
-                                return (
-                                    <div key={voice.id}
-                                        className={`relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer ${isSelected
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-100 bg-gray-50 hover:border-blue-200 hover:bg-blue-50/40'
-                                            }`}
-                                        onClick={() => setSelectedVoice(voice.id)}
-                                    >
-                                        {}
-                                        <div className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center text-lg font-bold border-2 transition-all ${isSelected ? 'bg-blue-500 border-blue-400 text-white' : 'bg-white border-gray-200 text-gray-500'
-                                            }`}>
-                                            {voice.gender === '♀' ? '👩' : '👨'}
-                                        </div>
-                                        {}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span className="font-bold text-sm text-gray-800">{voice.name}</span>
-                                                <span className="text-xs text-gray-400">{voice.locale}</span>
-                                                {voice.tag && (
-                                                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded border ${TAG_STYLES[voice.tag]}`}>
-                                                        {voice.tag}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-gray-500 truncate">{voice.desc}</p>
-                                        </div>
-                                        {}
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); isPlaying ? stopAny() : playVoice(voice.id, ttsInput || PREVIEW_TEXT); }}
-                                            disabled={isSpeaking && !isPlaying}
-                                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all font-bold text-sm ${isPlaying
-                                                ? 'bg-red-500 text-white animate-pulse'
-                                                : 'bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40'
-                                                }`}
-                                            title={isPlaying ? 'Stop' : `Preview ${voice.name}`}
-                                        >
-                                            {isPlaying ? '⏹' : '▶'}
-                                        </button>
-                                        {}
-                                        {isSelected && (
-                                            <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-black">✓</span>
-                                        )}
+                            <div className="p-6 space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex flex-wrap gap-2">
+                                        {['all', '♀', '♂'].map(g => (
+                                            <button key={g} onClick={() => setFilterGender(g)}
+                                                className={`px-4 py-1.5 rounded-xl text-xs font-bold border transition-all ${filterGender === g ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
+                                                {g === 'all' ? 'All' : g === '♀' ? 'Female' : 'Male'}
+                                            </button>
+                                        ))}
                                     </div>
-                                );
-                            })}
-                        </div>
-                        {filteredVoices.length === 0 && (
-                            <div className="text-center text-gray-400 py-8 text-sm">No voices match your filters.</div>
-                        )}
-                    </div>
-                </div>
-                {}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-5 py-4">
-                        <h2 className="text-white font-bold text-lg">🎤 Speech-to-Text Test</h2>
-                        <p className="text-green-100 text-xs mt-0.5">Python Whisper (base) · Records audio → sends to Python → returns transcript + filler analysis</p>
-                    </div>
-                    <div className="p-5 space-y-4">
-                        {sttError && (
-                            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{sttError}</div>
-                        )}
-                        <div className="min-h-28 max-h-48 p-3 border border-gray-200 bg-gray-50 rounded-xl overflow-y-auto text-sm text-gray-700 leading-relaxed">
-                            {isProcessing ? (
-                                <div className="flex items-center gap-2 h-20 justify-center text-indigo-600">
-                                    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                                    <span>Whisper is transcribing...</span>
-                                </div>
-                            ) : transcript ? (
-                                <span className="whitespace-pre-wrap">{transcript}</span>
-                            ) : (
-                                <span className="text-gray-400 italic">Record something — transcript will appear here...</span>
-                            )}
-                        </div>
-                        {analysisData && (
-                            <div className="flex flex-wrap gap-2 text-xs">
-                                <div className="bg-orange-50 border border-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-semibold">
-                                    Filler words: {analysisData.filler_count ?? 0}
-                                    {Object.keys(analysisData.filler_breakdown || {}).length > 0 && (
-                                        <span className="ml-1 font-normal text-orange-500">
-                                            ({Object.entries(analysisData.filler_breakdown).map(([k, v]) => `${k}×${v}`).join(', ')})
-                                        </span>
-                                    )}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {filteredVoices.map((voice) => {
+                                            const isSelected = selectedVoice === voice.id;
+                                            const isPlaying = playingVoiceId === voice.id;
+                                            return (
+                                                <div key={voice.id}
+                                                    className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${isSelected ? 'border-indigo-600 bg-indigo-50/30' : 'border-slate-100 bg-slate-50 hover:border-slate-200'}`}
+                                                    onClick={() => setSelectedVoice(voice.id)}
+                                                >
+                                                    <div className="min-w-0 pr-4">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-bold text-xs text-slate-900 truncate">{voice.name}</span>
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase">{voice.locale}</span>
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-500 font-medium truncate">{voice.desc}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); isPlaying ? stopAny() : playVoice(voice.id, PREVIEW_TEXT); }}
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-white text-indigo-600 border border-slate-200 shadow-sm'}`}
+                                                    >
+                                                        {isPlaying ? <span className="text-[10px]">⏹</span> : <span className="text-[10px]">▶</span>}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                        <div className="flex gap-2">
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Transcription</h3>
+
+                            <div className="min-h-[160px] bg-slate-50 rounded-xl p-4 text-xs text-slate-600 font-medium leading-relaxed border border-slate-100">
+                                {isProcessing ? (
+                                    <div className="flex flex-col items-center justify-center gap-3 h-full">
+                                        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                        <span className="text-[10px] font-bold uppercase text-indigo-600 tracking-wider">Processing...</span>
+                                    </div>
+                                ) : transcript ? (
+                                    <span className="whitespace-pre-wrap">"{transcript}"</span>
+                                ) : (
+                                    <span className="text-slate-400 italic">No audio captured yet.</span>
+                                )}
+                            </div>
+
+                            {analysisData && (
+                                <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 text-[10px] font-bold text-indigo-600">
+                                    Fillers detected: {analysisData.filler_count ?? 0}
+                                </div>
+                            )}
+
                             <button
                                 onClick={isRecording ? stopRecording : startRecording}
                                 disabled={isProcessing}
-                                className={`flex-1 py-2.5 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-50 ${isRecording ? 'bg-red-500 hover:bg-red-600 animate-pulse' : 'bg-green-600 hover:bg-green-700'
-                                    }`}
+                                className={`w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all ${isRecording ? 'bg-red-500 hover:bg-red-600 animate-pulse' : 'bg-indigo-600 hover:bg-slate-900'}`}
                             >
-                                {isRecording ? '⏹ Stop Recording' : '⏺ Start Recording'}
+                                {isRecording ? 'Stop Recording' : 'Start Recording'}
                             </button>
+
                             <button
                                 onClick={() => { setTranscript(''); setAnalysisData(null); setSttError(''); }}
-                                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm"
+                                className="w-full text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
                             >
-                                Clear
+                                Reset Terminal
                             </button>
                         </div>
-                    </div>
-                </div>
-                {}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Running Services</p>
-                    <div className="flex flex-wrap gap-2 text-xs">
-                        {[
-                            { label: 'Python FastAPI · localhost:8000', color: 'blue' },
-                            { label: 'TTS · edge-tts (Azure Neural)', color: 'indigo' },
-                            { label: 'STT · Whisper base', color: 'purple' },
-                        ].map(({ label, color }) => (
-                            <div key={label} className={`flex items-center gap-1.5 bg-${color}-50 border border-${color}-100 text-${color}-700 px-3 py-1.5 rounded-full font-medium`}>
-                                <span className={`w-2 h-2 bg-${color}-500 rounded-full`} />
-                                {label}
+
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Service Health</p>
+                            <div className="space-y-2">
+                                {[
+                                    { label: 'Python Backend', status: 'online' },
+                                    { label: 'Azure TTS Engine', status: 'online' },
+                                    { label: 'Whisper STT', status: 'ready' },
+                                ].map((s) => (
+                                    <div key={s.label} className="flex items-center justify-between text-[10px] font-bold">
+                                        <span className="text-slate-600">{s.label}</span>
+                                        <span className="text-emerald-500 uppercase tracking-tighter">{s.status}</span>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             </div>

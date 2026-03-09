@@ -6,7 +6,7 @@ const savedJobSchema = new mongoose.Schema({
         required: true
     },
     jobId: {
-        type: String, 
+        type: String,
         required: true
     },
     jobData: {

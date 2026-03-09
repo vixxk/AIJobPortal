@@ -1,21 +1,3 @@
-"""
-Python FastAPI service — AI Interview Backend (v2)
-==================================================
-All interview logic is self-contained here in Python.
-All interview logic uses Fireworks AI for real-time question generation,
-answer evaluation, and overall performance reporting.
-
-Endpoints:
-  POST /api/tts                  → Text-to-Speech (edge-tts)
-  GET  /api/tts/voices           → List TTS voices
-  POST /api/interview/start      → Generate interview questions
-  POST /api/interview/evaluate   → STT + audio analysis + per-answer feedback
-  POST /api/interview/transcribe → STT only (for AudioTest page)
-  POST /api/interview/report     → Final performance report
-  POST /analyze-audio            → Raw analysis (backwards compat)
-  GET  /health                   → Health check
-"""
-
 import os
 import shutil
 import tempfile
@@ -39,10 +21,11 @@ from services.fireworks_service import (
     generate_questions_v2,
     evaluate_answer as ai_evaluate_answer,
     generate_report as ai_generate_report,
+    evaluate_speaking_test as ai_evaluate_speaking_test,
+    generate_lesson_content as ai_generate_lesson_content,
+    evaluate_lesson_task as ai_evaluate_lesson_task,
 )
 
-
-# ── Bootstrap ────────────────────────────────────────────────────────────────
 load_dotenv()
 
 logging.basicConfig(
@@ -65,44 +48,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
-
 def _save_upload(upload_file: UploadFile) -> str:
-    """Save an UploadFile to a temporary local file."""
+
     fd, path = tempfile.mkstemp(suffix=os.path.splitext(upload_file.filename)[1])
     with os.fdopen(fd, "wb") as tmp:
         shutil.copyfileobj(upload_file.file, tmp)
     return path
 
-
 def _safe_remove(path: str):
-    """Safely delete a file."""
+
     try:
         if path and os.path.exists(path):
             os.remove(path)
     except Exception as e:
         logger.error(f"Error removing temp file {path}: {e}")
 
-
 def _run_audio_analysis(file_path: str) -> dict:
-    """
-    Run the full analysis pipeline:
-    1. transcription (Whisper)
-    2. filler detection
-    3. audio metrics (librosa)
-    """
-    # 1. Get Transcript
+
     transcript_res = get_transcription(file_path)
     transcript = transcript_res.get("text", "")
 
-    # 2. Filler word analysis
     fillers = count_fillers(transcript)
     filler_details = get_filler_details(transcript)
 
-    # 3. Audio & technical metrics
     metrics = calculate_metrics(file_path)
 
-    # Combined result
     result = {
         "transcript": transcript,
         "filler_count": fillers,
@@ -111,9 +81,8 @@ def _run_audio_analysis(file_path: str) -> dict:
     }
     return result
 
-
 def _extract_text_from_pdf(pdf_path: str) -> str:
-    """Extract all text from a PDF file using pypdf."""
+
     text = ""
     try:
         with open(pdf_path, "rb") as f:
@@ -126,19 +95,12 @@ def _extract_text_from_pdf(pdf_path: str) -> str:
         logger.error(f"PDF extraction error: {e}")
     return text.strip()
 
-
-# (Removed internal mock logic - now handled by services.fireworks_service)
-
-
-
-# ── TTS Endpoints ────────────────────────────────────────────────────────────
-
 @app.post("/api/tts")
 async def text_to_speech(
     text: str = Form(...),
     voice: str = Form("en-US-AriaNeural"),
 ):
-    """Convert text to speech using Microsoft Azure Neural voices via edge-tts."""
+
     if not text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
     try:
@@ -157,7 +119,6 @@ async def text_to_speech(
         logger.error(f"TTS error: {e}")
         raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
 
-
 @app.get("/api/tts/voices")
 async def list_voices():
     try:
@@ -166,15 +127,9 @@ async def list_voices():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ── STT Endpoint ─────────────────────────────────────────────────────────────
-
 @app.post("/api/interview/transcribe")
 async def transcribe_audio(audio: UploadFile = File(...)):
-    """
-    STT only — transcribe audio with Whisper.
-    Used by the AudioTest diagnostics page.
-    """
+
     temp_file = _save_upload(audio)
     try:
         stt_result = get_transcription(temp_file)
@@ -197,19 +152,13 @@ async def transcribe_audio(audio: UploadFile = File(...)):
     finally:
         _safe_remove(temp_file)
 
-
-# ── Interview Flow Endpoints ──────────────────────────────────────────────────
-
 @app.post("/api/interview/start")
 async def start_interview(
     job_role: str = Form(None),
     interview_type: str = Form("behavioral"),
     resume: UploadFile = File(None),
 ):
-    """
-    Check if role is clear. If yes, return 5 questions.
-    If yes and resume provided, questions will be tailored to resume.
-    """
+
     resume_text = ""
     temp_resume = None
     if resume and resume.filename:
@@ -223,7 +172,7 @@ async def start_interview(
             _safe_remove(temp_resume)
 
     try:
-        # Generate real AI questions and check role clarity
+
         result = await generate_questions_v2(
             job_role=job_role or "Software Engineer",
             interview_type=interview_type or "behavioral",
@@ -253,11 +202,9 @@ async def start_interview(
         logger.error(f"FATAL ERROR in start_interview: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail=f"Interview initiation failed: {str(e)}"
         )
-
-
 
 @app.post("/api/interview/process-audio")
 async def process_audio(
@@ -265,22 +212,17 @@ async def process_audio(
     job_role: str = Form(None),
     audio: UploadFile = File(...),
 ):
-    """
-    Lightweight audio processing:
-      1. Whisper STT → transcript
-      2. librosa → audio quality metrics
-    DOES NOT call Fireworks AI (latency optimization).
-    """
+
     temp_file = _save_upload(audio)
     try:
         logger.info(f"Processing audio for: {question[:60]}...")
         analysis = _run_audio_analysis(temp_file)
-        
+
         return {
             "status": "success",
             "data": {
                 "analysis": analysis,
-                "evaluation": None, # Defer evaluation to report phase
+                "evaluation": None,
             },
         }
     except Exception as e:
@@ -289,24 +231,18 @@ async def process_audio(
     finally:
         _safe_remove(temp_file)
 
-
 @app.post("/api/interview/evaluate")
 async def evaluate_answer(
     question: str = Form(...),
     job_role: str = Form(None),
     audio: UploadFile = File(...),
 ):
-    """
-    Full answer evaluation:
-      1. Whisper STT → transcript
-      2. librosa → audio quality metrics
-      3. AI evaluation
-    """
+
     temp_file = _save_upload(audio)
     try:
         logger.info(f"Evaluating answer for: {question[:60]}...")
         analysis = _run_audio_analysis(temp_file)
-        
+
         evaluation = await ai_evaluate_answer(
             question=question,
             transcript=analysis.get("transcript", ""),
@@ -328,9 +264,6 @@ async def evaluate_answer(
     finally:
         _safe_remove(temp_file)
 
-
-# ── Report ────────────────────────────────────────────────────────────────────
-
 class AnswerItem(BaseModel):
     question: str
     answer: Optional[str] = ""
@@ -338,24 +271,18 @@ class AnswerItem(BaseModel):
     evaluation: Optional[dict] = None
     analysis: Optional[dict] = None
 
-
 class ReportRequest(BaseModel):
     answers: List[AnswerItem]
     job_role: Optional[str] = None
 
-
 @app.post("/api/interview/report")
 async def generate_report(req: ReportRequest):
-    """
-    Generate a final performance report from all answers.
-    Aggregates per-answer scores into an overall scorecard.
-    """
+
     try:
         answers_dicts = [a.model_dump() for a in req.answers]
-        
-        # Check if there is any actual content in the answers
+
         has_content = any(
-            (a.get("transcript") or "").strip() or (a.get("answer") or "").strip() 
+            (a.get("transcript") or "").strip() or (a.get("answer") or "").strip()
             for a in answers_dicts
         )
 
@@ -370,10 +297,9 @@ async def generate_report(req: ReportRequest):
                 "suggestions": ["To receive a performance evaluation, please ensure you answer the questions during the session."]
             }
         else:
-            # Real AI report analysis
+
             report_data = await ai_generate_report(answers=answers_dicts, job_role=req.job_role or "")
-        
-        # Process and aggregate audio metrics for UI display
+
         speech_rates = []
         filler_counts = []
         pause_ratios = []
@@ -406,12 +332,83 @@ async def generate_report(req: ReportRequest):
         logger.error(f"Report error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+class SpeakingTestTask(BaseModel):
+    task_name: str
+    prompt: str
+    transcript: str
+    metrics: Optional[dict] = {}
 
-# ── Backwards Compatibility ───────────────────────────────────────────────────
+class SpeakingTestRequest(BaseModel):
+    responses: List[SpeakingTestTask]
+
+@app.post("/api/tutor/evaluate-test")
+async def evaluate_test(req: SpeakingTestRequest):
+    try:
+        logger.info(f"Evaluating speaking test with {len(req.responses)} responses")
+        for i, resp in enumerate(req.responses):
+            logger.info(f"Task {i+1} ({resp.task_name}) Transcript: '{resp.transcript}'")
+
+        result = await ai_evaluate_speaking_test(responses=[r.model_dump() for r in req.responses])
+        return {"status": "success", "data": result}
+    except Exception as e:
+        logger.error(f"Speaking test evaluation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tutor/generate-lesson")
+async def get_lesson(level: int, lesson_index: int = 1):
+    try:
+        result = await ai_generate_lesson_content(level=level, lesson_index=lesson_index)
+        return {"status": "success", "data": result}
+    except Exception as e:
+        logger.error(f"Lesson generation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tutor/evaluate-task")
+async def evaluate_task(
+    task_type: str = Form(...),
+    transcript: str = Form(""),
+    context_json: str = Form("{}"),
+    audio: UploadFile = File(None)
+):
+    temp_file = None
+    try:
+        metrics = {}
+        final_transcript = transcript
+
+        if audio:
+            temp_file = _save_upload(audio)
+            analysis = _run_audio_analysis(temp_file)
+            final_transcript = analysis.get("transcript", "")
+            metrics = analysis
+
+        import json
+        context = json.loads(context_json)
+
+        result = await ai_evaluate_lesson_task(
+            task_type=task_type,
+            transcript=final_transcript,
+            metrics=metrics,
+            context=context
+        )
+
+        return {
+            "status": "success",
+            "data": {
+                "evaluation": result,
+                "transcript": final_transcript,
+                "metrics": metrics
+            }
+        }
+    except Exception as e:
+        logger.error(f"Task evaluation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if temp_file:
+            _safe_remove(temp_file)
 
 @app.post("/analyze-audio")
 async def analyze_audio_compat(file: UploadFile = File(...)):
-    """Raw audio analysis — kept for compatibility with Node.js python.service.js."""
+
     temp_file = _save_upload(file)
     try:
         return _run_audio_analysis(temp_file)
@@ -421,9 +418,6 @@ async def analyze_audio_compat(file: UploadFile = File(...)):
     finally:
         _safe_remove(temp_file)
 
-
-# ── Health Check ──────────────────────────────────────────────────────────────
-
 @app.get("/health")
 async def health_check():
     return {
@@ -432,8 +426,6 @@ async def health_check():
         "version": "2.1.0",
         "mode": "production (Fireworks AI enabled)",
     }
-
-
 
 if __name__ == "__main__":
     import uvicorn

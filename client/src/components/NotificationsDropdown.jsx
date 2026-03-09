@@ -6,20 +6,6 @@ const NotificationsDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
-    useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 60000); 
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            clearInterval(interval);
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
     const fetchNotifications = async () => {
         try {
             const res = await axios.get('/notifications');
@@ -31,6 +17,23 @@ const NotificationsDropdown = () => {
             console.error('Failed to fetch notifications', error);
         }
     };
+    useEffect(() => {
+        const load = async () => {
+            await fetchNotifications();
+        };
+        load();
+        const interval = setInterval(fetchNotifications, 60000);
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
     const markAsRead = async (id) => {
         try {
             await axios.patch(`/notifications/${id}/read`);
@@ -38,17 +41,6 @@ const NotificationsDropdown = () => {
             setUnreadCount(prev => Math.max(0, prev - 1));
         } catch (error) {
             console.error('Failed to mark notification as read', error);
-        }
-    };
-    const deleteNotification = async (id, e) => {
-        e.stopPropagation();
-        try {
-            await axios.delete(`/notifications/${id}`);
-            const isUnread = notifications.find(n => n._id === id)?.isRead === false;
-            setNotifications(prev => prev.filter(n => n._id !== id));
-            if (isUnread) setUnreadCount(prev => Math.max(0, prev - 1));
-        } catch (error) {
-            console.error('Failed to delete notification', error);
         }
     };
     return (
@@ -62,7 +54,7 @@ const NotificationsDropdown = () => {
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                 )}
             </button>
-            {}
+            { }
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
                     <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">

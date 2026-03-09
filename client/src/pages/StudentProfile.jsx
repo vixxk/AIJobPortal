@@ -258,14 +258,14 @@ const StudentProfile = () => {
             list.push(localItem);
         }
         await saveProfile({ [listName]: list });
-        setEditIndex(-1); 
+        setEditIndex(-1);
     };
     const deleteItemFromList = async (listName) => {
         const list = [...(profile[listName] || [])];
         if (editIndex >= 0 && editIndex < list.length) {
             list.splice(editIndex, 1);
             await saveProfile({ [listName]: list });
-            setEditIndex(-1); 
+            setEditIndex(-1);
         }
     };
     const renderBasicEdit = () => (
@@ -631,7 +631,7 @@ const StudentProfile = () => {
                                 <h4 className="font-semibold text-slate-400 mb-2 pl-2 text-sm uppercase">General</h4>
                                 <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1">
                                     {[
-                                        { l: 'Notification', i: <Award className="w-5 h-5" /> }, 
+                                        { l: 'Notification', i: <Award className="w-5 h-5" /> },
                                         { l: 'Application Issues', i: <Award className="w-5 h-5" /> },
                                         { l: 'Timezone', i: <Globe className="w-5 h-5" /> },
                                         { l: 'Security', i: <Award className="w-5 h-5" /> },
@@ -666,7 +666,7 @@ const StudentProfile = () => {
             default:
                 break;
         }
-        return null; 
+        return null;
     };
     useEffect(() => {
         if (window.innerWidth >= 1024 && currentView === 'MAIN') {
@@ -676,7 +676,6 @@ const StudentProfile = () => {
     const currentViewRender = () => {
         return (
             <div className="w-full h-full lg:bg-slate-50 lg:h-full">
-                {}
                 <div className="lg:hidden h-full">
                     {currentView === 'MAIN' ? (
                         <div className="bg-slate-50 flex flex-col h-[calc(100dvh-140px)] overflow-hidden">
@@ -719,9 +718,7 @@ const StudentProfile = () => {
                         renderActiveForm()
                     )}
                 </div>
-                {}
                 <div className="hidden lg:flex max-w-[1400px] mx-auto w-full p-6 xl:p-8 gap-6 xl:gap-8 h-full shrink-0 min-h-0">
-                    {}
                     <div className="w-[340px] shrink-0 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
                         <div className="p-8 border-b border-slate-100 flex flex-col items-center gap-4 bg-gradient-to-b from-blue-50/50 to-white text-center">
                             <div className="relative">
@@ -759,7 +756,6 @@ const StudentProfile = () => {
                             <NavButtonDesktop sectionKey="SETTINGS" label="Settings" />
                         </div>
                     </div>
-                    {}
                     <div className="flex-1 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col relative overflow-hidden">
                         <div className="p-6 xl:p-8 border-b border-slate-100 bg-white z-10 flex justify-between items-center">
                             <h2 className="text-[22px] font-bold text-slate-800 tracking-tight">

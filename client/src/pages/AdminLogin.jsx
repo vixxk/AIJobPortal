@@ -34,12 +34,10 @@ const AdminLogin = () => {
                 <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-slate-600/10 rounded-full blur-3xl" />
             </div>
             <div className="relative z-10 w-full max-w-sm">
-                {}
                 <div className="flex justify-center mb-8">
                     <Logo iconSize="w-10 h-10" textClassName="text-2xl text-white" />
                 </div>
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-                    {}
                     <div className="flex flex-col items-center mb-8">
                         <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-4">
                             <Shield className="w-8 h-8 text-indigo-400" strokeWidth={1.5} />
@@ -54,7 +52,6 @@ const AdminLogin = () => {
                         </div>
                     )}
                     <form className="space-y-4" onSubmit={handleSubmit}>
-                        {}
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <Mail className="h-4 w-4 text-slate-500" />
@@ -69,7 +66,6 @@ const AdminLogin = () => {
                                 className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 text-sm transition-all"
                             />
                         </div>
-                        {}
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <Lock className="h-4 w-4 text-slate-500" />

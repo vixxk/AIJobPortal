@@ -8,6 +8,13 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import Logo from '../Logo';
+const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    return `${base}${path}`;
+};
+
 const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     const location = useLocation();
     const { user, logout } = useAuth();
@@ -21,6 +28,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
             { name: 'Jobs & Internships', path: '/app/jobs', icon: Briefcase },
             { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
+            { name: 'AI English Tutor', path: '/app/english-tutor', icon: Users },
         ];
         toolLinks = [
             { name: 'Resume Builder', path: '/app/resume', icon: FileText, highlight: true },
@@ -35,14 +43,31 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         toolLinks = [
             { name: 'Company Profile', path: '/app/profile', icon: User },
         ];
+    } else if (role === 'COLLEGE_ADMIN') {
+        mainLinks = [
+            { name: 'Dashboard', path: '/app', icon: Home },
+            { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
+            { name: 'Student Data', path: '/app/admin', icon: Shield },
+        ];
+        toolLinks = [
+            { name: 'College Profile', path: '/app/profile', icon: User },
+        ];
+    } else if (role === 'TEACHER') {
+        mainLinks = [
+            { name: 'Dashboard', path: '/app', icon: Home },
+            { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
+            { name: 'AI English Tutor', path: '/app/english-tutor', icon: Users },
+        ];
+        toolLinks = [
+            { name: 'My Profile', path: '/app/profile', icon: User },
+        ];
     } else if (role === 'SUPER_ADMIN') {
         mainLinks = [
             { name: 'Analytics', path: '/app', icon: Home },
             { name: 'System Approvals', path: '/app/admin', icon: Shield },
+            { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
         ];
-        toolLinks = [
-            { name: 'Manage Mock Tests', path: '/app/mock-tests', icon: CheckCircle },
-        ];
+        toolLinks = [];
     } else {
         mainLinks = [{ name: 'Dashboard', path: '/app', icon: Home }];
     }
@@ -127,7 +152,11 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
             </div>
             <div className={clsx("p-4 border-t border-[#1E293B]", isCollapsed ? "flex justify-center" : "")}>
                 <div className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30", isCollapsed ? "p-2" : "p-3")}>
-                    <img src={user?.avatar || "https://i.pravatar.cc/150"} alt="User" className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover shrink-0" />
+                    {user?.role === 'SUPER_ADMIN' ? (
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-lg">SA</div>
+                    ) : (
+                        <img src={getImageUrl(user?.avatar) || "https://i.pravatar.cc/150"} alt="User" className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover shrink-0" />
+                    )}
                     {!isCollapsed && (
                         <div className="flex-1 overflow-hidden">
                             <p className="text-sm font-semibold text-white truncate">{user?.name}</p>

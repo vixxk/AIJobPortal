@@ -50,21 +50,18 @@ const Landing = () => {
     const activeIndex = step === 0 ? 0 : step - 1;
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col font-sans">
-            {}
             <div className="md:hidden w-full h-[100dvh]">
                 {step === 0 ? (
                     <div
                         className="w-full h-full relative cursor-pointer overflow-hidden shadow-2xl bg-[#030712] mx-auto max-w-md"
                         onClick={() => setStep(1)}
                     >
-                        {}
                         <img
                             src={splashImg}
                             alt="Splash Background"
                             className="absolute inset-0 w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-black/60" />
-                        {}
                         <div className="relative z-10 w-full h-full flex flex-col justify-end pb-24 px-8 animate-fade-in">
                             <h1 className="text-white text-[42px] font-[800] mb-3 leading-[1.1] tracking-tight">
                                 Welcome to<br />Jobee! <span className="inline-block text-[38px] ml-1">👋</span>
@@ -76,9 +73,7 @@ const Landing = () => {
                     </div>
                 ) : (
                     <div className="w-full h-full bg-white flex flex-col relative overflow-hidden shadow-xl mx-auto max-w-md">
-                        {}
                         <div className="flex-1 relative flex items-center justify-center bg-white overflow-hidden pb-4">
-                            {}
                             <div
                                 className="absolute inset-0 flex transition-transform duration-500 ease-in-out"
                                 style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -94,9 +89,7 @@ const Landing = () => {
                                 ))}
                             </div>
                         </div>
-                        {}
                         <div className="bg-white rounded-t-[40px] pt-12 pb-12 flex flex-col items-center text-center z-20 shadow-[0_-15px_40px_-5px_rgba(0,0,0,0.06)] flex-none relative w-full overflow-hidden">
-                            {}
                             <div
                                 className="flex w-full transition-transform duration-500 ease-in-out mb-10 items-start"
                                 style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -112,7 +105,6 @@ const Landing = () => {
                                     </div>
                                 ))}
                             </div>
-                            {}
                             <div className="flex gap-2.5 mb-10 items-center justify-center">
                                 {[0, 1, 2].map((i) => (
                                     <div
@@ -122,7 +114,6 @@ const Landing = () => {
                                     />
                                 ))}
                             </div>
-                            {}
                             <button
                                 onClick={handleGetStarted}
                                 className="w-full max-w-[340px] bg-[#3B82F6] text-white font-[700] py-[18px] rounded-full text-[17px] hover:bg-[#2563EB] transition-colors active:scale-95 shadow-[0_8px_20px_rgba(59,130,246,0.3)] tracking-wide"
@@ -133,15 +124,11 @@ const Landing = () => {
                     </div>
                 )}
             </div>
-            {}
             <div className="hidden md:flex flex-row w-full min-h-screen bg-white">
-                {}
                 <div className="w-[55%] lg:w-3/5 bg-[#F8FAFC] flex flex-col items-center justify-center relative overflow-hidden">
-                    {}
                     <div className="absolute top-[10%] left-[10%] w-6 h-6 rounded-full bg-[#3B82F6] opacity-10" />
                     <div className="absolute bottom-[20%] left-[20%] w-12 h-12 rounded-full bg-[#3B82F6] opacity-10" />
                     <div className="absolute top-[30%] right-[15%] w-8 h-8 rounded-full bg-[#3B82F6] opacity-10" />
-                    {}
                     <div
                         className="absolute inset-0 flex transition-transform duration-700 ease-in-out"
                         style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -156,7 +143,6 @@ const Landing = () => {
                             </div>
                         ))}
                     </div>
-                    {}
                     <div className="absolute bottom-16 flex gap-3 z-20">
                         {onboardingData.map((_, i) => (
                             <div
@@ -168,7 +154,7 @@ const Landing = () => {
                         ))}
                     </div>
                 </div>
-                {}
+                { }
                 <div className="w-[45%] lg:w-2/5 flex flex-col items-start justify-center p-16 lg:p-24 bg-white z-10 shadow-[-20px_0_40px_-10px_rgba(0,0,0,0.03)] border-l border-slate-100">
                     <div className="mb-16">
                         <h1 className="text-[#3B82F6] font-[900] text-5xl lg:text-6xl tracking-tight flex items-center">

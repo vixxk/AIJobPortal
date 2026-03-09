@@ -4,14 +4,13 @@ const sendEmail = async (options) => {
   const mailConfig = {
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_PORT == 465, // true for 465, false for other ports
+    secure: process.env.EMAIL_PORT == 465,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
     }
   };
 
-  // If using Gmail, it's often more reliable to use the 'service' setting
   if (process.env.EMAIL_HOST?.includes('gmail.com')) {
     delete mailConfig.host;
     delete mailConfig.port;

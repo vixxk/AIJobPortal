@@ -19,7 +19,7 @@ const RecruiterDashboard = () => {
                     const jobs = res.data.data;
                     setRecentJobs(jobs);
                     let applicants = 0;
-                    jobs.forEach(job => applicants += Math.floor(Math.random() * 20)); 
+                    jobs.forEach(() => applicants += Math.floor(Math.random() * 20));
                     setStats({
                         activeJobs: jobs.filter(j => j.status === 'open').length,
                         totalApplicants: applicants
@@ -38,7 +38,6 @@ const RecruiterDashboard = () => {
     const firstName = name.split(' ')[0];
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
-            {}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2 mb-8">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Welcome back, {firstName}</h1>
@@ -51,7 +50,6 @@ const RecruiterDashboard = () => {
                     </Link>
                 </div>
             </div>
-            {}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5">
                     <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
@@ -84,7 +82,6 @@ const RecruiterDashboard = () => {
                     </div>
                 </div>
             </div>
-            {}
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                     <h2 className="text-lg font-bold text-slate-800">Your Recent Listings</h2>
@@ -145,7 +142,6 @@ const RecruiterDashboard = () => {
                     </div>
                 )}
             </div>
-            {}
             <JobDetailsModal job={selectedJob} onClose={() => setSelectedJob(null)} />
         </div>
     );

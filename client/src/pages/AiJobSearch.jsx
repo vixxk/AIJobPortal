@@ -1,30 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, MapPin, Loader2, Bookmark, ArrowLeft, SlidersHorizontal, ArrowDownUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axios';
 import JobDetailsModal from '../components/JobDetailsModal';
 import notFoundImg from '../assets/404.png';
 import SkeletonJobCard from '../components/SkeletonJobCard';
 const PAGE_SIZE = 10;
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
+
+    useEffect(() => {
+        setSaved(initiallySaved);
+    }, [initiallySaved]);
     const handleSave = async (e) => {
         e.stopPropagation();
         try {
-            const token = localStorage.getItem('token');
             const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
             if (saved) {
-                await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/unsave`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                await axios.delete('/jobs/unsave', {
                     data: { jobId }
                 });
                 setSaved(false);
                 if (onToggleSave) onToggleSave(jobId, false);
             } else {
-                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/save`,
-                    { job },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                await axios.post('/jobs/save', { job });
                 setSaved(true);
                 if (onToggleSave) onToggleSave(jobId, true);
             }
@@ -34,10 +33,8 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     };
     return (
         <div onClick={() => onClick(job)} className="bg-white rounded-[16px] md:rounded-[24px] p-3.5 md:p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-lg hover:border-blue-100 transition-all relative">
-            { }
             <div className="flex justify-between items-start">
                 <div className="flex gap-3 md:gap-4">
-                    { }
                     <div className="w-[42px] h-[42px] md:w-[52px] md:h-[52px] rounded-xl md:rounded-2xl border border-slate-100 flex items-center justify-center bg-white shadow-sm shrink-0 overflow-hidden relative">
                         {job.logo && (
                             <img
@@ -59,7 +56,6 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
                             {(job.company || '?').charAt(0).toUpperCase()}
                         </span>
                     </div>
-                    { }
                     <div className="max-w-[200px] md:max-w-xs pt-0 md:pt-0.5">
                         <h4 className="font-bold text-slate-900 tracking-tight text-[15px] md:text-[16px] leading-tight mb-1 truncate">{job.title}</h4>
                         <p className="text-[12px] md:text-[13px] font-semibold text-slate-500 leading-none truncate">{job.company}</p>
@@ -69,7 +65,6 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
                     <Bookmark className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" strokeWidth={2.5} fill={saved ? 'currentColor' : 'none'} />
                 </button>
             </div>
-            { }
             <div className="mt-3 flex flex-col justify-end">
                 {job.salary && job.salary !== 'Not specified' && job.salary !== 'Salary Undisclosed' && (
                     <p className="text-[12px] md:text-[13px] font-bold text-blue-600 tracking-tight self-end mb-2">{job.salary}</p>
@@ -138,7 +133,7 @@ const AiJobSearch = () => {
         setCurrentPage(1);
         if (!isInitial) setHasSearched(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/search`, {
+            const res = await axios.get('/jobs/search', {
                 params: { role, location, type }
             });
             const fetched = res.data.jobs || [];
@@ -159,25 +154,23 @@ const AiJobSearch = () => {
             setLoading(false);
         }
     };
+    const fetchInitialData = useCallback(async () => {
+        try {
+            const savedRes = await axios.get('/jobs/saved');
+            const savedIds = new Set(
+                (savedRes.data.jobs || []).map(sj =>
+                    sj.link || `${sj.title}-${sj.company}`.replace(/\s+/g, '-').toLowerCase()
+                )
+            );
+            setSavedJobsIds(savedIds);
+        } catch {
+        }
+        handleSearch(null, true);
+    }, [handleSearch]);
+
     useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const savedRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/saved`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const savedIds = new Set(
-                    (savedRes.data.jobs || []).map(sj =>
-                        sj.link || `${sj.title}-${sj.company}`.replace(/\s+/g, '-').toLowerCase()
-                    )
-                );
-                setSavedJobsIds(savedIds);
-            } catch (err) {
-            }
-            handleSearch(null, true);
-        };
         fetchInitialData();
-    }, []);
+    }, [fetchInitialData]);
     const goToPage = (page) => {
         const p = Math.max(1, Math.min(page, totalPages));
         setCurrentPage(p);
@@ -244,7 +237,6 @@ const AiJobSearch = () => {
                 </div>
             </div>
             <div className="flex-1 bg-slate-50 px-5 pt-6 pb-12 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">
-                { }
                 <div className="hidden md:flex bg-[linear-gradient(135deg,#2563eb,#4f46e5)] rounded-3xl p-10 text-white relative flex-col items-center text-center overflow-hidden mb-12 shadow-xl shadow-blue-900/10">
                     <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
                         <svg width="240" height="240" viewBox="0 0 24 24" fill="currentColor">
@@ -300,7 +292,6 @@ const AiJobSearch = () => {
                         ))}
                     </div>
                 </div>
-                { }
                 <div ref={resultsRef}>
                     {loading && (
                         <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6 animate-in fade-in duration-500">
@@ -323,7 +314,6 @@ const AiJobSearch = () => {
                     )}
                     {!loading && allJobs.length > 0 && (
                         <>
-                            { }
                             <div className="hidden md:flex justify-between items-center mb-6 mt-4 relative">
                                 <span className="text-lg font-bold text-slate-900 tracking-tight">{totalCount.toLocaleString()} <span className="text-slate-500 font-semibold text-base">found</span></span>
                                 <div>
@@ -358,11 +348,11 @@ const AiJobSearch = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6">
-                                {jobs.map((job, idx) => {
+                                {jobs.map((job) => {
                                     const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
                                     return (
                                         <JobCard
-                                            key={idx}
+                                            key={jobId}
                                             job={job}
                                             onClick={setSelectedJob}
                                             initiallySaved={savedJobsIds.has(jobId)}
@@ -370,7 +360,6 @@ const AiJobSearch = () => {
                                     )
                                 })}
                             </div>
-                            { }
                             {!loading && totalPages > 1 && (
                                 <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2 mt-8 mb-8 pb-4">
                                     <button

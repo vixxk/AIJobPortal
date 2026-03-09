@@ -7,6 +7,25 @@ import {
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import letInImg from '../assets/let_in.png';
+const GoogleIcon = () => (
+    <svg className="w-5 h-5" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+    </svg>
+);
+const ErrorBanner = ({ error }) => error ? (
+    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-start gap-2">
+        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+        {error}
+    </div>
+) : null;
+const SuccessBanner = ({ success }) => success ? (
+    <div className="p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100">
+        {success}
+    </div>
+) : null;
 const loadGoogleGSI = () => {
     return new Promise((resolve, reject) => {
         if (window.google?.accounts?.id) {
@@ -23,40 +42,30 @@ const loadGoogleGSI = () => {
     });
 };
 const OTPInput = ({ value, onChange, disabled, idPrefix = 'otp' }) => {
-    const digits = Array(6).fill('');
-    const chars = value.split('');
-    const [inputs, setInputs] = useState(Array(6).fill(''));
-    useEffect(() => {
-        const filled = value.split('').slice(0, 6);
-        const arr = [...filled, ...Array(6 - filled.length).fill('')];
-        setInputs(arr);
-    }, [value]);
+    const inputs = value.split('').slice(0, 6);
+    const paddedInputs = [...inputs, ...Array(6 - inputs.length).fill('')];
     const handleInput = (e, idx) => {
         const val = e.target.value.replace(/\D/g, '').slice(-1);
-        const next = [...inputs];
+        const next = [...paddedInputs];
         next[idx] = val;
-        setInputs(next);
         onChange(next.join(''));
         if (val && idx < 5) {
             document.getElementById(`${idPrefix}-${idx + 1}`)?.focus();
         }
     };
     const handleKeyDown = (e, idx) => {
-        if (e.key === 'Backspace' && !inputs[idx] && idx > 0) {
+        if (e.key === 'Backspace' && !paddedInputs[idx] && idx > 0) {
             document.getElementById(`${idPrefix}-${idx - 1}`)?.focus();
         }
     };
     const handlePaste = (e) => {
         const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-        const arr = pasted.split('');
-        const filled = [...arr, ...Array(6 - arr.length).fill('')]
-        setInputs(filled);
         onChange(pasted);
         document.getElementById(`${idPrefix}-${Math.min(pasted.length, 5)}`)?.focus();
     };
     return (
         <div className="flex gap-2 justify-center" onPaste={handlePaste}>
-            {inputs.map((digit, idx) => (
+            {paddedInputs.map((digit, idx) => (
                 <input
                     key={idx}
                     id={`${idPrefix}-${idx}`}
@@ -96,18 +105,21 @@ const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
     useEffect(() => {
-        if (location.state && location.state.view) {
-            setView(location.state.view);
-            if (location.state.email) {
-                setOtpEmail(location.state.email);
+        const initView = async () => {
+            if (location.state && location.state.view) {
+                setView(location.state.view);
+                if (location.state.email) {
+                    setOtpEmail(location.state.email);
+                }
+                if (location.state.fromRegister) {
+                    setSuccess(`Verification code sent to ${location.state.email}`);
+                    setOtpTimer(60);
+                    setIsRegistrationFlow(true);
+                    window.history.replaceState({}, document.title)
+                }
             }
-            if (location.state.fromRegister) {
-                setSuccess(`Verification code sent to ${location.state.email}`);
-                setOtpTimer(60);
-                setIsRegistrationFlow(true);
-                window.history.replaceState({}, document.title)
-            }
-        }
+        };
+        initView();
     }, [location.state]);
     useEffect(() => {
         if (user) {
@@ -232,44 +244,25 @@ const Login = () => {
             setError(result.message);
         }
     };
-    const GoogleIcon = () => (
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-        </svg>
-    );
-    const ErrorBanner = () => error ? (
-        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            {error}
-        </div>
-    ) : null;
-    const SuccessBanner = () => success ? (
-        <div className="p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100">
-            {success}
-        </div>
-    ) : null;
     return (
         <>
-            {}
+
             <div className="hidden md:flex min-h-screen overflow-hidden">
-                {}
+
                 <div
                     className="hidden lg:flex w-[48%] xl:w-[52%] flex-col relative overflow-hidden"
                     style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 45%, #4f46e5 100%)' }}
                 >
-                    {}
+
                     <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-[0.12]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
                     <div className="absolute -bottom-32 -right-16 w-[500px] h-[500px] rounded-full opacity-[0.08]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
-                    {}
+
                     <div className="relative z-10 pt-10 pl-12">
                         <Logo iconSize="w-9 h-9" textClassName="text-2xl text-white" />
                     </div>
-                    {}
+
                     <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-12 pb-16">
                         <div className="w-full max-w-[380px] xl:max-w-[420px] mb-10">
                             <img
@@ -296,19 +289,19 @@ const Login = () => {
                         </div>
                     </div>
                 </div>
-                {}
+
                 <div className="flex-1 bg-white flex flex-col">
-                    {}
+
                     <div className="flex justify-end px-10 pt-8">
                         <p className="text-[13px] text-slate-400 font-medium">
                             No account?{' '}
                             <Link to="/register" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">Sign up</Link>
                         </p>
                     </div>
-                    {}
+
                     <div className="flex-1 flex items-center justify-center px-8 xl:px-16 pb-10">
                         <div className="w-full max-w-[420px]">
-                            {}
+
                             {view !== 'social' && (
                                 <button
                                     onClick={() => {
@@ -324,7 +317,7 @@ const Login = () => {
                                     <span className="text-[13px] font-semibold">Back</span>
                                 </button>
                             )}
-                            {}
+
                             <div className="mb-6 flex flex-col items-center text-center">
                                 {view === 'social' && (
                                     <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-5">
@@ -359,10 +352,10 @@ const Login = () => {
                                     <p className="text-slate-500 text-[14px] mt-2 mb-2">We'll send a secure 6-digit code to your inbox</p>
                                 )}
                             </div>
-                            {}
+
                             {view === 'social' && (
                                 <div className="space-y-4">
-                                    <ErrorBanner />
+                                    <ErrorBanner error={error} />
                                     <button
                                         onClick={handleGoogleLogin}
                                         disabled={googleLoading}
@@ -393,10 +386,10 @@ const Login = () => {
                                     </div>
                                 </div>
                             )}
-                            {}
+
                             {view === 'password' && (
                                 <form className="space-y-4" onSubmit={handlePasswordLogin}>
-                                    <ErrorBanner />
+                                    <ErrorBanner error={error} />
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <Mail className="h-4 w-4 text-slate-400" />
@@ -439,10 +432,10 @@ const Login = () => {
                                     </div>
                                 </form>
                             )}
-                            {}
+
                             {view === 'otp-email' && (
                                 <form className="space-y-4" onSubmit={handleSendOTP}>
-                                    <ErrorBanner />
+                                    <ErrorBanner error={error} />
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                             <Mail className="h-4 w-4 text-slate-400" />
@@ -460,11 +453,11 @@ const Login = () => {
                                     </button>
                                 </form>
                             )}
-                            {}
+
                             {view === 'otp-verify' && (
                                 <form className="space-y-6" onSubmit={handleVerifyOTP}>
-                                    <SuccessBanner />
-                                    <ErrorBanner />
+                                    <SuccessBanner success={success} />
+                                    <ErrorBanner error={error} />
                                     <OTPInput value={otp} onChange={setOtp} disabled={isLoading} idPrefix="otp-desktop" />
                                     <button type="submit" disabled={isLoading || otp.length < 6}
                                         className="w-full py-4 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold text-[15px] shadow-[0_8px_20px_-6px_rgba(37,99,235,0.4)] transition-all disabled:opacity-60 flex items-center justify-center gap-2">
@@ -487,9 +480,9 @@ const Login = () => {
                     </div>
                 </div>
             </div>
-            {}
+
             <div className="md:hidden w-full min-h-[100dvh] bg-white flex flex-col font-sans relative overflow-hidden">
-                {}
+
                 <div className="pt-6 pb-0 px-6 flex items-center">
                     <button
                         onClick={() => {
@@ -504,7 +497,7 @@ const Login = () => {
                         <ArrowLeft className="w-6 h-6" strokeWidth={2.5} />
                     </button>
                 </div>
-                {}
+
                 {view === 'social' && (
                     <div className="flex-1 flex flex-col items-center px-6 animate-in slide-in-from-left-4 fade-in duration-300">
                         <div className="w-56 h-56 mt-2 mb-8 relative flex items-center justify-center">
@@ -551,7 +544,7 @@ const Login = () => {
                         </div>
                     </div>
                 )}
-                {}
+
                 {view === 'password' && (
                     <div className="flex-1 flex flex-col px-8 pb-8 animate-in slide-in-from-right-4 fade-in duration-300">
                         <div className="flex-1 flex flex-col pt-8">
@@ -610,7 +603,7 @@ const Login = () => {
                         </div>
                     </div>
                 )}
-                {}
+
                 {view === 'otp-email' && (
                     <div className="flex-1 flex flex-col px-8 pb-8 animate-in slide-in-from-right-4 fade-in duration-300">
                         <div className="flex-1 flex flex-col pt-8">
@@ -639,7 +632,7 @@ const Login = () => {
                         </div>
                     </div>
                 )}
-                {}
+                { }
                 {view === 'otp-verify' && (
                     <div className="flex-1 flex flex-col px-8 pb-8 animate-in slide-in-from-right-4 fade-in duration-300">
                         <div className="flex-1 flex flex-col pt-8">

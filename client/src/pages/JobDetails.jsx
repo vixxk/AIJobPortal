@@ -34,7 +34,6 @@ const JobDetails = () => {
     const tabs = ['Job Description', 'Minimum Qualifications', 'Perks & Benefits'];
     return (
         <div className="min-h-screen md:min-h-0 bg-white md:rounded-[32px] md:border md:border-slate-100 md:shadow-sm pb-24 md:pb-8 font-sans w-full max-w-lg mx-auto md:max-w-2xl md:my-8 md:overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
-            {}
             <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white sticky top-0 z-10">
                 <button onClick={() => navigate(-1)} className="p-1.5 -ml-1 text-[#1c1c1e] hover:bg-slate-100 rounded-full transition-colors flex items-center justify-center">
                     <ArrowLeft className="w-[22px] h-[22px]" strokeWidth={1.5} />
@@ -48,9 +47,7 @@ const JobDetails = () => {
                     </button>
                 </div>
             </div>
-            {}
             <div className="px-5">
-                {}
                 <div className="bg-white rounded-[32px] p-6 pt-6 pb-8 flex flex-col items-center border border-[#F1F3F5] shadow-[0px_4px_32px_rgba(0,0,0,0.03)] mb-8 text-center mx-1 mt-2">
                     <div className="w-[64px] h-[64px] bg-white rounded-2xl flex items-center justify-center border border-[#F1F3F5] shadow-sm mb-4 p-2.5">
                         <img src={job.logo} alt={job.company} className="w-full h-full object-contain" />
@@ -69,8 +66,6 @@ const JobDetails = () => {
                     </div>
                     <p className="text-[12px] text-[#9CA3AF] font-medium">{job.posted}</p>
                 </div>
-                {}
-                {}
                 <div className="flex w-full overflow-x-auto no-scrollbar mb-7 relative z-0">
                     <div className="absolute bottom-[2px] left-0 right-0 h-px bg-[#F1F3F5] z-[-1]"></div>
                     {tabs.map((tab) => (
@@ -87,7 +82,6 @@ const JobDetails = () => {
                         </button>
                     ))}
                 </div>
-                {}
                 <div className="px-1 min-h-[180px]">
                     <h2 className="text-[15px] font-bold text-[#1C1C1E] mb-4">{activeTab}:</h2>
                     <ul className="space-y-2.5">
@@ -100,7 +94,6 @@ const JobDetails = () => {
                     </ul>
                 </div>
             </div>
-            {}
             <div className="fixed bottom-0 left-0 right-0 p-5 pb-safe z-50 md:relative md:mt-8 md:p-0 md:px-5 w-full max-w-lg mx-auto md:max-w-2xl pt-6 bg-gradient-to-t from-white via-white to-transparent">
                 <button className="w-full bg-[#1e5af3] hover:bg-blue-700 text-white font-bold py-3.5 rounded-full text-[15px] shadow-[0px_8px_20px_rgba(37,99,235,0.25)] transition-all active:scale-[0.98]">
                     Apply

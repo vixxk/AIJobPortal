@@ -81,7 +81,6 @@ const CustomerService = () => {
     return (
         <div className="bg-[#F8F9FA] h-[100dvh] overflow-hidden text-slate-800 flex flex-col md:p-6 lg:p-8">
             <div className="max-w-[1000px] w-full mx-auto md:bg-white md:rounded-[36px] md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:border md:border-slate-100 flex flex-col overflow-hidden relative h-full">
-                {}
                 <div className="bg-white px-5 md:px-8 pt-safe md:pt-8 pb-0 flex flex-col z-10 md:rounded-t-[36px] relative shrink-0 shadow-sm">
                     <div className="flex items-center justify-between py-4 md:py-2 pb-4">
                         <div className="flex items-center gap-3">
@@ -134,10 +133,8 @@ const CustomerService = () => {
                         })}
                         <div ref={chatEndRef} />
                     </div>
-                    {}
                     <div className="bg-white border-t border-slate-100 px-4 md:px-8 py-3 md:py-4 pb-[100px] md:pb-6 flex items-center gap-2 md:gap-3 shrink-0">
                         <div className="flex-1 bg-slate-50/50 rounded-full flex items-center px-4 py-3 min-h-[52px] border border-slate-100 relative">
-                            {}
                             {showEmojiPicker && (
                                 <div className="absolute bottom-[65px] left-0 bg-white border border-slate-100 shadow-lg rounded-2xl p-3 flex gap-2 flex-wrap w-[220px] z-50">
                                     {emojis.map((em, i) => (
@@ -167,7 +164,6 @@ const CustomerService = () => {
                                 className="bg-transparent border-none outline-none text-[15px] w-full text-slate-800 placeholder:text-slate-400 disabled:opacity-50"
                             />
                             <div className="flex gap-4 ml-2 shrink-0 items-center">
-                                {}
                                 <input
                                     type="file"
                                     ref={fileInputRef}

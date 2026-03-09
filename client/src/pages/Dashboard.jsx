@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useOutletContext, useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
+import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import {
     Home, Briefcase, BookOpen, Trophy,
@@ -14,23 +15,22 @@ import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
+
+    useEffect(() => {
+        setSaved(initiallySaved);
+    }, [initiallySaved]);
     const handleSave = async (e) => {
         e.stopPropagation();
         try {
-            const token = localStorage.getItem('token');
             const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
             if (saved) {
-                await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/unsave`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                await axios.delete('/jobs/unsave', {
                     data: { jobId }
                 });
                 setSaved(false);
                 if (onToggleSave) onToggleSave(jobId, false);
             } else {
-                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/save`,
-                    { job },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                await axios.post('/jobs/save', { job });
                 setSaved(true);
                 if (onToggleSave) onToggleSave(jobId, true);
             }
@@ -95,6 +95,7 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
 };
 const Dashboard = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const { toggleSidebar } = useOutletContext() || {};
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -110,117 +111,115 @@ const Dashboard = () => {
     const [activeCategory, setActiveCategory] = useState('All');
     const [profile, setProfile] = useState(null);
     useEffect(() => {
-        const fetchStudentProfile = async () => {
-            if (user?.role === 'STUDENT') {
-                try {
-                    const token = localStorage.getItem('token');
-                    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/student/me`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    if (res.data.status === 'success') {
-                        setProfile(res.data.data.profile);
-                    }
-                } catch (err) {
-                    console.error("Failed to fetch student profile", err);
-                }
-            }
-        };
-        fetchStudentProfile();
-    }, [user]);
-    useEffect(() => {
-        const fetchSavedData = async () => {
+        if (user?.role === 'TEACHER') {
+            navigate('/app/teacher', { replace: true });
+        }
+    }, [user, navigate]);
+
+    const fetchStudentProfile = useCallback(async () => {
+        if (user?.role === 'STUDENT') {
             try {
-                const token = localStorage.getItem('token');
-                const savedRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/saved`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).catch(() => ({ data: { jobs: [] } }));
-                const savedIds = new Set(
-                    (savedRes.data.jobs || []).map(sj =>
-                        sj.link || `${sj.title}-${sj.company}`.replace(/\s+/g, '-').toLowerCase()
-                    )
-                );
-                setSavedJobsIds(savedIds);
-            } catch (err) { }
-        };
-        fetchSavedData();
-    }, []);
-    const [error, setError] = useState(null);
-    useEffect(() => {
-        const fetchRecentData = async () => {
-            setLoadingJobs(true);
-            setError(null);
-            try {
-                const cacheKey = `dashboard_recent_jobs_${activeCategory}`;
-                const cachedJobs = sessionStorage.getItem(cacheKey);
-                if (cachedJobs) {
-                    setRecentJobs(JSON.parse(cachedJobs));
-                } else {
-                    const roleQuery = activeCategory === 'All' ? '' : activeCategory;
-                    try {
-                        const jobsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/jobs/search`, {
-                            params: { role: roleQuery }
-                        });
-                        const fetchedJobs = jobsRes.data.jobs?.slice(0, 3) || [];
-                        setRecentJobs(fetchedJobs);
-                        if (fetchedJobs.length > 0) {
-                            sessionStorage.setItem(cacheKey, JSON.stringify(fetchedJobs));
-                        }
-                    } catch (apiErr) {
-                        if (apiErr.response && apiErr.response.status === 429) {
-                            setError("Too many requests to the job board. Please try again in a few moments.");
-                        } else {
-                            setError("Could not load jobs at this time.");
-                        }
-                        setRecentJobs([]);
-                    }
+                const res = await axios.get('/student/me');
+                if (res.data.status === 'success') {
+                    setProfile(res.data.data.profile);
                 }
             } catch (err) {
-                console.error('Failed to fetch recent jobs', err);
-                setError("An unexpected error occurred.");
-            } finally {
-                setLoadingJobs(false);
+                console.error("Failed to fetch student profile", err);
             }
-        };
-        fetchRecentData();
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchStudentProfile();
+    }, [fetchStudentProfile]);
+    const fetchSavedData = useCallback(async () => {
+        try {
+            const savedRes = await axios.get('/jobs/saved')
+                .catch(() => ({ data: { jobs: [] } }));
+            const savedIds = new Set(
+                (savedRes.data.jobs || []).map(sj =>
+                    sj.link || `${sj.title}-${sj.company}`.replace(/\s+/g, '-').toLowerCase()
+                )
+            );
+            setSavedJobsIds(savedIds);
+        } catch (err) { }
+    }, []);
+
+    useEffect(() => {
+        fetchSavedData();
+    }, [fetchSavedData]);
+    const [error, setError] = useState(null);
+    const fetchRecentData = useCallback(async () => {
+        setLoadingJobs(true);
+        setError(null);
+        try {
+            const cacheKey = `dashboard_recent_jobs_${activeCategory}`;
+            const cachedJobs = sessionStorage.getItem(cacheKey);
+            if (cachedJobs) {
+                setRecentJobs(JSON.parse(cachedJobs));
+            } else {
+                const roleQuery = activeCategory === 'All' ? '' : activeCategory;
+                try {
+                    const jobsRes = await axios.get('/jobs/search', {
+                        params: { role: roleQuery }
+                    });
+                    const fetchedJobs = jobsRes.data.jobs?.slice(0, 3) || [];
+                    setRecentJobs(fetchedJobs);
+                    if (fetchedJobs.length > 0) {
+                        sessionStorage.setItem(cacheKey, JSON.stringify(fetchedJobs));
+                    }
+                } catch (apiErr) {
+                    if (apiErr.response && apiErr.response.status === 429) {
+                        setError("Too many requests to the job board. Please try again in a few moments.");
+                    } else {
+                        setError("Could not load jobs at this time.");
+                    }
+                    setRecentJobs([]);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch recent jobs', err);
+            setError("An unexpected error occurred.");
+        } finally {
+            setLoadingJobs(false);
+        }
     }, [activeCategory]);
+
+    useEffect(() => {
+        fetchRecentData();
+    }, [fetchRecentData]);
     const features = [
         { title: 'Job Search', desc: 'Find Best Matches', icon: Search, color: 'text-blue-600', bg: 'bg-blue-50', link: '/app/jobs' },
         { title: 'Resume Builder', desc: 'Optimized for ATS', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', link: '/app/resume' },
         { title: 'Mock Interviews', desc: 'Practice with AI', icon: MonitorPlay, color: 'text-orange-600', bg: 'bg-orange-50', link: '/app/interview' },
-        { title: 'Skill Learning', desc: 'Browse Courses', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
+        { title: 'Skill Learning', desc: 'Online Classes', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
+        { title: 'AI English Tutor', desc: 'Spoken Practice', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/app/english-tutor' },
     ];
     const name = user?.name || "Andrew Ainsley";
     const firstName = name.split(' ')[0];
     return (
         <>
-            { }
             <div className="hidden md:block max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-                { }
                 <div className="hidden md:block relative w-full h-[320px] bg-gradient-to-r from-[#3872FA] to-[#1e40af] rounded-[48px] mb-12 overflow-hidden shadow-2xl shadow-blue-500/20 group">
-                    { }
                     <div className="absolute inset-0 pointer-events-none">
                         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[70%] bg-white opacity-[0.08] rounded-full blur-3xl transform rotate-12"></div>
                         <div className="absolute bottom-[-20%] right-[10%] w-[50%] h-[80%] bg-blue-400 opacity-[0.15] rounded-full blur-3xl transform -rotate-12"></div>
                     </div>
                     <div className="relative h-full flex flex-col justify-center px-16 z-10">
                         <div className="max-w-xl">
-                            { }
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full mb-6 w-fit">
                                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                                 <span className="text-xs font-bold text-white/90">AI Personalized Dashboard</span>
                             </div>
-                            { }
                             <h2 className="text-[44px] font-black text-white leading-[1.15] mb-6 tracking-tight">
                                 See how you can <br />
                                 <span className="text-blue-100 italic">find a job quickly!</span>
                             </h2>
-                            { }
                             <button className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-blue-900/20 hover:scale-105 transition-transform active:scale-95 flex items-center gap-2">
                                 Explore Opportunities
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
-                        { }
                         <div className="absolute bottom-0 right-0 w-[45%] h-[115%] pointer-events-none flex items-end justify-end z-10 overflow-hidden">
                             <img
                                 src="/db2.png"
@@ -230,12 +229,11 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-                { }
                 <div className="mb-10">
                     <div className="flex items-center mb-6">
                         <h3 className="text-lg font-bold text-slate-900 tracking-tight">AI-Powered Career Tools</h3>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
                         {features.map((feature, i) => (
                             <Link
                                 key={i}
@@ -251,7 +249,6 @@ const Dashboard = () => {
                         ))}
                     </div>
                 </div>
-                { }
                 <div className="mb-10">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
@@ -269,21 +266,22 @@ const Dashboard = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                            {recentJobs.map((job, idx) => (
-                                <JobCard
-                                    key={idx}
-                                    job={job}
-                                    onClick={setSelectedJob}
-                                    initiallySaved={savedJobsIds.has(job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase())}
-                                />
-                            ))}
+                            {recentJobs.map((job) => {
+                                const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+                                return (
+                                    <JobCard
+                                        key={jobId}
+                                        job={job}
+                                        onClick={setSelectedJob}
+                                        initiallySaved={savedJobsIds.has(jobId)}
+                                    />
+                                );
+                            })}
                         </div>
                     )}
                 </div>
             </div>
-            { }
             <div className="md:hidden w-full min-h-screen bg-white pb-24 pt-2 animate-in fade-in duration-500 font-sans">
-                { }
                 <div className="flex items-center justify-between mb-6 px-5 mt-4">
                     <div className="flex items-center gap-3">
                         <button
@@ -306,10 +304,8 @@ const Dashboard = () => {
                         <Bell className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
                     </button>
                 </div>
-                { }
                 <div className="px-5 mb-7">
                     <div className="w-full bg-gradient-to-br from-[#3872FA] to-[#1e40af] rounded-[32px] p-6 text-white relative overflow-hidden flex flex-col justify-center min-h-[180px] shadow-xl shadow-blue-500/20">
-                        { }
                         <div className="absolute inset-0 pointer-events-none opacity-30">
                             <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/20 rotate-45 transform rounded-xl blur-lg"></div>
                             <div className="absolute top-10 right-0 w-40 h-40 bg-blue-300/20 transform rounded-full blur-xl"></div>
@@ -322,7 +318,6 @@ const Dashboard = () => {
                                 Explore Now
                             </button>
                         </div>
-                        { }
                         <div className="absolute bottom-0 right-0 w-[55%] h-full pointer-events-none flex items-end justify-end z-10">
                             <img
                                 src="/db2.png"
@@ -332,12 +327,11 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-                { }
                 <div className="mb-8 px-5">
                     <div className="flex items-center mb-4">
                         <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">AI-Powered Career Tools</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3 md:gap-4">
                         {features.map((feature, i) => (
                             <Link
                                 key={i}
@@ -353,7 +347,6 @@ const Dashboard = () => {
                         ))}
                     </div>
                 </div>
-                { }
                 <div className="pl-5 pb-8">
                     <div className="flex items-center justify-between mb-4 pr-5">
                         <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
@@ -384,18 +377,20 @@ const Dashboard = () => {
                             {error}
                         </div>
                     ) : (
-                        recentJobs.map((job, idx) => (
-                            <JobCard
-                                key={idx}
-                                job={job}
-                                onClick={setSelectedJob}
-                                initiallySaved={savedJobsIds.has(job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase())}
-                            />
-                        ))
+                        recentJobs.map((job) => {
+                            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+                            return (
+                                <JobCard
+                                    key={jobId}
+                                    job={job}
+                                    onClick={setSelectedJob}
+                                    initiallySaved={savedJobsIds.has(jobId)}
+                                />
+                            );
+                        })
                     )}
                 </div>
             </div>
-            { }
             <JobDetailsModal
                 job={selectedJob}
                 onClose={() => setSelectedJob(null)}

@@ -36,7 +36,7 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
     return (
         <div className="w-full bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col items-center justify-start p-3 sm:p-8">
             <div className="w-full max-w-3xl space-y-4 sm:space-y-6 pb-20 sm:pb-0">
-                { }
+
                 <div className={`bg-gradient-to-br ${grade.bg} border ${grade.border} rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center shadow-lg relative overflow-hidden`}>
                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                         <span className="text-8xl">{grade.emoji}</span>
@@ -52,7 +52,7 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                         </div>
                     </div>
                 </div>
-                { }
+
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
                     <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 sm:mb-5 text-center">Score Breakdown</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 justify-items-center">
@@ -62,7 +62,7 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                         <ScoreRing score={technical_accuracy} label="Technical" color="#d97706" />
                     </div>
                 </div>
-                { }
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-3 sm:space-y-4 flex-1">
                         <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Detailed Metrics</h2>
@@ -89,7 +89,7 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 flex-1">
                         <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 sm:mb-4">🎤 Vocal Performance Analysis</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-y-4 gap-x-8">
-                            { }
+
                             <div className="flex justify-between items-center">
                                 <span className="text-[11px] sm:text-xs font-semibold text-gray-500">Filler Words</span>
                                 <span className={`text-xs sm:text-sm font-black tabular-nums ${(report.audio_metrics?.total_filler_words || 0) > 5 ? 'text-rose-500' : 'text-blue-500'}`}>
@@ -126,7 +126,7 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                         </div>
                     </div>
                 </div>
-                { }
+
                 {suggestions.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
                         <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 sm:mb-4">💡 Overall Suggestions</h2>
@@ -142,7 +142,7 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                         </ul>
                     </div>
                 )}
-                { }
+
                 {report.answers && report.answers.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
                         <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mb-5 sm:mb-6">📝 Interview Transcript</h2>
@@ -196,7 +196,7 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                         </div>
                     </div>
                 )}
-                { }
+
                 <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pb-8 print:hidden">
                     <button
                         onClick={onRestart}
@@ -228,7 +228,7 @@ const SuggestionModal = ({ isOpen, onClose, roleSuggestions, onSelect }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
             <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col animate-in fade-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in duration-300">
-                { }
+
                 <div className="shrink-0 p-6 sm:p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-indigo-100 relative">
                     <button
                         onClick={onClose}
@@ -242,7 +242,7 @@ const SuggestionModal = ({ isOpen, onClose, roleSuggestions, onSelect }) => {
                     <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2">Role check!</h2>
                     <p className="text-gray-500 font-medium text-sm sm:text-base leading-relaxed px-2">The AI needs a clear job role to generate relevant questions. Try one of these or refine yours:</p>
                 </div>
-                { }
+
                 <div className="p-4 sm:p-6 space-y-3 overflow-y-auto min-h-0 flex-1 overscroll-contain">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 mb-1">AI Suggested Roles</p>
                     <div className="grid grid-cols-1 gap-2">
@@ -266,7 +266,7 @@ const SuggestionModal = ({ isOpen, onClose, roleSuggestions, onSelect }) => {
                         ))}
                     </div>
                 </div>
-                { }
+
                 <div className="shrink-0 px-6 sm:px-8 py-5 sm:py-6 bg-slate-50 border-t border-slate-100">
                     <button
                         onClick={onClose}
@@ -300,7 +300,7 @@ const InterviewPage = () => {
             formData.append('interview_type', interviewType);
             if (resume) formData.append('resume', resume);
             const response = await startInterview(formData);
-            const { role_clear, questions, suggestions } = response.data;
+            const { role_clear, questions, suggestions } = response;
             if (role_clear === false) {
                 setSuggestionData({ open: true, roles: suggestions || [] });
                 return;

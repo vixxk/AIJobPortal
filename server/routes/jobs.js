@@ -8,11 +8,11 @@ const RAPIDAPI_KEY   = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST  = process.env.RAPIDAPI_HOST || 'jsearch.p.rapidapi.com';
 const FINDWORK_KEY   = process.env.FINDWORK_API_KEY;
 const JOOBLE_KEY     = process.env.JOOBLE_API_KEY;
-const CAREERJET_KEY  = process.env.CAREERJET_API_KEY;  
+const CAREERJET_KEY  = process.env.CAREERJET_API_KEY;
 const MUSE_KEY       = process.env.MUSE_API_KEY;
-const USAJOBS_KEY    = process.env.USAJOBS_API_KEY;    
-const USAJOBS_EMAIL  = process.env.USAJOBS_EMAIL;      
-const SERPAPI_KEY    = process.env.SERPAPI_KEY;         
+const USAJOBS_KEY    = process.env.USAJOBS_API_KEY;
+const USAJOBS_EMAIL  = process.env.USAJOBS_EMAIL;
+const SERPAPI_KEY    = process.env.SERPAPI_KEY;
 const cache        = new Map();
 const CACHE_TTL_MS = 15 * 60 * 1000;
 function getCacheKey(role, location, type) {
@@ -95,9 +95,8 @@ router.get('/search', async (req, res) => {
     try {
         let { role, location, type } = req.query;
         const isRecent = (!role && !location);
-        // If no role is provided, we keep it empty to fetch a diverse feed from free APIs
-        // instead of forcing a specific category like 'Developer'.
-        if (!role) role = ''; 
+
+        if (!role) role = '';
         const cacheKey = getCacheKey(role, location, type);
         const cached   = cache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -471,7 +470,11 @@ const auth = require('../src/middleware/auth');
 const SavedJob = require('../src/modules/job/savedJob.model');
 router.get('/saved', auth.protect, async (req, res) => {
     try {
-        const savedJobs = await SavedJob.find({ userId: req.user._id }).sort({ createdAt: -1 });
+        const currentId = req.user._id;
+        if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+            return res.status(200).json({ success: true, count: 0, jobs: [], savedJobs: [] });
+        }
+        const savedJobs = await SavedJob.find({ userId: currentId }).sort({ createdAt: -1 });
         res.status(200).json({
             success: true,
             count: savedJobs.length,
@@ -487,8 +490,12 @@ router.post('/save', auth.protect, async (req, res) => {
         const { job } = req.body;
         if (!job) return res.status(400).json({ success: false, message: 'Job data required' });
         const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+        const currentId = req.user._id;
+        if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+            return res.status(400).json({ success: false, message: 'Super Admin cannot save jobs' });
+        }
         const newSavedJob = await SavedJob.findOneAndUpdate(
-            { userId: req.user._id, jobId },
+            { userId: currentId, jobId },
             { jobData: job },
             { upsert: true, new: true }
         );
@@ -501,7 +508,11 @@ router.delete('/unsave', auth.protect, async (req, res) => {
     try {
         const { jobId } = req.body;
         if (!jobId) return res.status(400).json({ success: false, message: 'jobId is required' });
-        await SavedJob.findOneAndDelete({ userId: req.user._id, jobId });
+        const currentId = req.user._id;
+        if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+            return res.status(400).json({ success: false, message: 'Super Admin has no saved jobs' });
+        }
+        await SavedJob.findOneAndDelete({ userId: currentId, jobId });
         res.status(200).json({ success: true, message: 'Job removed from saved list' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

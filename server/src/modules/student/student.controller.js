@@ -4,7 +4,11 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const { uploadImageToCloudinary, uploadResumeToCloudinary } = require('../../config/cloudinary');
 exports.getMe = catchAsync(async (req, res, next) => {
-  const profile = await StudentProfile.findOne({ userId: req.user.id });
+  const currentId = req.user._id || req.user.id;
+  if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+    return res.status(200).json({ status: 'success', data: { profile: {} } });
+  }
+  const profile = await StudentProfile.findOne({ userId: currentId });
   res.status(200).json({
     status: 'success',
     data: {
@@ -14,7 +18,7 @@ exports.getMe = catchAsync(async (req, res, next) => {
 });
 exports.createOrUpdateProfile = catchAsync(async (req, res, next) => {
   const updates = { ...req.body };
-  delete updates.userId; delete updates._id; delete updates.__v; delete updates.createdAt; delete updates.updatedAt; 
+  delete updates.userId; delete updates._id; delete updates.__v; delete updates.createdAt; delete updates.updatedAt;
   let profile = await StudentProfile.findOne({ userId: req.user.id });
   if (profile) {
     Object.assign(profile, updates);

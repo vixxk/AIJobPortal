@@ -80,19 +80,15 @@ const RoleSelection = () => {
     const selectedRoleData = roles.find(r => r.id === selectedRole);
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 flex flex-col items-center justify-center p-4">
-            {}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-3xl" />
                 <div className="absolute bottom-[-5%] right-[-5%] w-[40%] h-[40%] bg-violet-600/10 rounded-full blur-3xl" />
             </div>
             <div className="relative z-10 w-full max-w-lg">
-                {}
                 <div className="flex justify-center mb-8">
                     <Logo iconSize="w-10 h-10" textClassName="text-2xl text-white" />
                 </div>
-                {}
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-                    {}
                     <div className="text-center mb-8">
                         <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
                             Welcome, {user?.name?.split(' ')[0] || 'there'}! 👋
@@ -101,7 +97,6 @@ const RoleSelection = () => {
                             Select your role to personalize your experience.
                         </p>
                     </div>
-                    {}
                     <div className="space-y-3 mb-6">
                         {roles.map((role) => {
                             const Icon = role.icon;
@@ -116,18 +111,15 @@ const RoleSelection = () => {
                                             : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
                                         }`}
                                 >
-                                    {}
                                     {isSelected && (
                                         <div className="absolute top-3 right-3">
                                             <CheckCircle2 className="w-5 h-5 text-white" />
                                         </div>
                                     )}
                                     <div className="flex items-start gap-4">
-                                        {}
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br ${role.gradient}`}>
                                             <Icon className="w-6 h-6 text-white" />
                                         </div>
-                                        {}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
                                                 <span className={`font-bold text-base ${isSelected ? 'text-white' : 'text-slate-200'}`}>
@@ -149,7 +141,6 @@ const RoleSelection = () => {
                             );
                         })}
                     </div>
-                    {}
                     {selectedRoleData && !selectedRoleData.instant && (
                         <div className="mb-5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5">
                             <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
@@ -158,13 +149,11 @@ const RoleSelection = () => {
                             </p>
                         </div>
                     )}
-                    {}
                     {error && (
                         <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                             {error}
                         </div>
                     )}
-                    {}
                     <button
                         onClick={handleConfirm}
                         disabled={!selectedRole || isLoading}

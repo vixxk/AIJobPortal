@@ -13,7 +13,7 @@ router.post('/admin/login', loginLimiter, authController.adminLogin);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/check-reset-otp', authController.checkResetOTP);
 router.post('/reset-password', authController.resetPassword);
-router.use(authMiddleware.protectAny); 
+router.use(authMiddleware.protectAny);
 router.post('/assign-role', authController.assignRole);
 router.post('/upload-avatar', uploadImage, authController.uploadAvatar);
 router.get('/me', authController.getMe);

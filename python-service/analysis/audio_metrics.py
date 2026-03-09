@@ -3,24 +3,13 @@ import numpy as np
 import logging
 import warnings
 
-# Suppress librosa/audioread warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="librosa")
 warnings.filterwarnings("ignore", category=FutureWarning, module="librosa")
 
 logger = logging.getLogger(__name__)
 
-
 def calculate_metrics(file_path: str) -> dict:
-    """
-    Calculate audio speech quality metrics from an audio file.
 
-    Returns:
-        pitch_stability: std-dev of voiced pitch (lower = more stable)
-        speech_rate:     estimated syllables/onsets per minute
-        pause_ratio:     fraction of total duration that is silence
-        energy:          mean RMS energy (0-1 range)
-        voice_breaks:    number of detected silence-to-speech transitions
-    """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
@@ -29,7 +18,6 @@ def calculate_metrics(file_path: str) -> dict:
             logger.error(f"librosa load failed: {e}")
             return _fallback_metrics()
 
-    # ── 1. Pitch stability & Range ──────────────────────────────────────────
     try:
         f0, voiced_flag, _ = librosa.pyin(
             y,
@@ -45,13 +33,10 @@ def calculate_metrics(file_path: str) -> dict:
         pitch_stability = 0.0
         pitch_range = 0.0
 
-    # ── 2. Energy Dynamics ──────────────────────────────────────────────────
     rms = librosa.feature.rms(y=y)[0]
     energy = float(np.mean(rms))
     energy_variance = float(np.std(rms))
 
-    # ── 3. Pause ratio & voice breaks ────────────────────────────────────────
-    # Standard split at 30db to find silence
     intervals = librosa.effects.split(y, top_db=30)
     total_speech_samples = sum(end - start for start, end in intervals)
     total_samples = len(y)
@@ -59,7 +44,6 @@ def calculate_metrics(file_path: str) -> dict:
     pause_ratio = float(pause_samples) / total_samples if total_samples > 0 else 0.0
     voice_breaks = max(0, len(intervals) - 1)
 
-    # Detect "Long Pauses" (> 2 seconds)
     long_pauses = 0
     if len(intervals) > 1:
         for i in range(len(intervals) - 1):
@@ -67,14 +51,12 @@ def calculate_metrics(file_path: str) -> dict:
             if pause_dur > 2.0:
                 long_pauses += 1
 
-    # ── 4. Speech rate & Pace Stability ──────────────────────────────────────
     try:
         onset_env = librosa.onset.onset_strength(y=y, sr=sr)
         peaks = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, backtrack=False)
         duration_minutes = librosa.get_duration(y=y, sr=sr) / 60.0
         speech_rate = float(len(peaks)) / duration_minutes if duration_minutes > 0 else 0.0
 
-        # Pace stability: coefficient of variation of onset intervals
         if len(peaks) > 2:
             onset_times = librosa.frames_to_time(peaks, sr=sr)
             intervals_onset = np.diff(onset_times)
@@ -98,9 +80,8 @@ def calculate_metrics(file_path: str) -> dict:
         "voice_breaks": int(voice_breaks),
     }
 
-
 def _fallback_metrics() -> dict:
-    """Safe default metrics if analysis completely fails."""
+
     return {
         "pitch_stability": 0.0,
         "pitch_range": 0.0,

@@ -41,7 +41,6 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
     const [uiPhase, setUiPhase] = useState('speaking');
     const [repeatCount, setRepeatCount] = useState(0);
     const [isSpeaking, setIsSpeaking] = useState(false);
-    const [ttsError, setTtsError] = useState(false);
     const [prepSeconds, setPrepSeconds] = useState(PREP_SECONDS);
     const [isBlurring, setIsBlurring] = useState(false);
     const audioRef = useRef(null);
@@ -49,7 +48,6 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
     const hasStartedRef = useRef(false);
     const speakControllerRef = useRef(null);
 
-    // Report state changes to parent for sidebar sync
     useEffect(() => {
         if (onStateChange) {
             onStateChange({ uiPhase, prepSeconds, isSpeaking });
@@ -60,6 +58,14 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
         if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; audioRef.current = null; }
         setIsSpeaking(false);
     }, []);
+    const triggerStart = useCallback(() => {
+        if (hasStartedRef.current) return;
+        hasStartedRef.current = true;
+        speakControllerRef.current?.abort();
+        if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
+        setUiPhase('done');
+        onTimerStart();
+    }, [onTimerStart]);
     const startPrepTimer = useCallback(() => {
         setPrepSeconds(PREP_SECONDS);
         setUiPhase('prep');
@@ -70,23 +76,14 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
                 return p - 1;
             });
         }, 1000);
-    }, []);
-    const triggerStart = useCallback(() => {
-        if (hasStartedRef.current) return;
-        hasStartedRef.current = true;
-        speakControllerRef.current?.abort();
-        if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
-        setUiPhase('done');
-        onTimerStart();
-    }, [onTimerStart]);
+    }, [triggerStart]);
 
-    // Expose triggerStart to parent
     React.useImperativeHandle(ref, () => ({
         triggerStart
     }));
 
     const speak = useCallback(async (text, signal) => {
-        stopAudio(); setIsSpeaking(true); setTtsError(false);
+        stopAudio(); setIsSpeaking(true);
         const tryPlay = async (v) => {
             const url = await speakText(text, v);
             if (signal?.aborted) { URL.revokeObjectURL(url); return; }
@@ -103,7 +100,6 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
             try { if (!signal?.aborted) await tryPlay('en-GB-LibbyNeural'); }
             catch {
                 if (!signal?.aborted) {
-                    setTtsError(true);
                     await new Promise(res => {
                         if ('speechSynthesis' in window) {
                             window.speechSynthesis.cancel();
@@ -119,23 +115,27 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
     }, [stopAudio, startPrepTimer]);
     useEffect(() => {
         if (!questionText) return;
-        setIsBlurring(true);
-        const blurTimer = setTimeout(() => setIsBlurring(false), 2000);
-        const ctrl = new AbortController();
-        speakControllerRef.current = ctrl;
-        hasStartedRef.current = false;
-        setUiPhase('speaking'); setRepeatCount(0); setPrepSeconds(PREP_SECONDS);
-        const speechTimeout = setTimeout(() => {
-            if (!ctrl.signal.aborted) speak(questionText, ctrl.signal);
-        }, 400);
-        return () => {
-            clearTimeout(blurTimer);
-            clearTimeout(speechTimeout);
-            ctrl.abort();
-            speakControllerRef.current = null;
-            stopAudio();
-            if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
+        const init = async () => {
+            setIsBlurring(true);
+            const blurTimer = setTimeout(() => setIsBlurring(false), 2000);
+            const ctrl = new AbortController();
+            speakControllerRef.current = ctrl;
+            hasStartedRef.current = false;
+            setUiPhase('speaking'); setRepeatCount(0); setPrepSeconds(PREP_SECONDS);
+            const speechTimeout = setTimeout(() => {
+                if (!ctrl.signal.aborted) speak(questionText, ctrl.signal);
+            }, 400);
+            return () => {
+                clearTimeout(blurTimer);
+                clearTimeout(speechTimeout);
+                ctrl.abort();
+                speakControllerRef.current = null;
+                stopAudio();
+                if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
+            };
         };
+        const cleanup = init();
+        return () => { if (typeof cleanup === 'function') cleanup(); };
     }, [questionText, speak, stopAudio]);
     const handleRepeat = async () => {
         if (repeatCount >= 1 || hasStartedRef.current || isSpeaking) return;

@@ -14,12 +14,12 @@ router.post('/optimize', async (req, res) => {
     }
     if (!ai) {
         console.warn('No Gemini API key provided. Returning mapped raw data.');
-        return res.json({ 
-            success: true, 
+        return res.json({
+            success: true,
             optimizedExperiences: experiences.map(exp => ({
                 ...exp,
                 description: `• [AI Unavailable] ${exp.description}`
-            })) 
+            }))
         });
     }
     let optimizedExperiences = null;
@@ -28,7 +28,7 @@ router.post('/optimize', async (req, res) => {
         optimizedExperiences = await Promise.all(experiences.map(async (exp) => {
             if (!exp.description || exp.description.trim().length < 10) return exp;
             const prompt = `
-            You are an expert technical recruiter and resume writer. 
+            You are an expert technical recruiter and resume writer.
             Rewrite the following raw job experience into highly professional, ATS-optimized bullet points.
             Rules:
             1. Start every bullet with a strong action verb (e.g., Developed, Orchestrated, Spearheaded).
@@ -54,7 +54,7 @@ router.post('/optimize', async (req, res) => {
         optimizedProjects = await Promise.all(projects.map(async (proj) => {
             if (!proj.description || proj.description.trim().length < 10) return proj;
             const prompt = `
-            You are an expert technical recruiter. 
+            You are an expert technical recruiter.
             Rewrite the following raw coding project description into highly professional, ATS-optimized bullet points.
             Rules:
             1. Start every bullet with a strong action verb (e.g., Architected, Built, Designed).
@@ -91,7 +91,7 @@ router.post('/optimize-summary', async (req, res) => {
         const { text } = req.body;
         if (!text || text.trim().length < 10) return res.status(400).json({ success: false, message: 'Text too short' });
         if (!ai) return res.json({ success: true, optimizedText: text });
-        const prompt = `You are an expert technical recruiter and resume writer. 
+        const prompt = `You are an expert technical recruiter and resume writer.
         Rewrite the following raw professional summary into a highly professional, ATS-optimized 2-3 sentence paragraph.
         Rules:
         1. Keep it concise, punchy, and confident.
@@ -112,10 +112,10 @@ router.post('/optimize-summary', async (req, res) => {
 });
 router.post('/optimize-experience', async (req, res) => {
     try {
-        const { text, type } = req.body; 
+        const { text, type } = req.body;
         if (!text || text.trim().length < 10) return res.status(400).json({ success: false, message: 'Text too short' });
         if (!ai) return res.json({ success: true, optimizedText: text });
-        const prompt = `You are an expert technical recruiter and resume writer. 
+        const prompt = `You are an expert technical recruiter and resume writer.
         Rewrite the following raw ${type || 'experience'} into highly professional, ATS-optimized bullet points.
         Rules:
         1. Start every bullet with a strong action verb (e.g., Developed, Orchestrated, Spearheaded).

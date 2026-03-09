@@ -12,17 +12,42 @@ const competitionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  registrationLink: {
+  category: {
     type: String,
+    default: 'Hackathon'
+  },
+  mode: {
+    type: String,
+    enum: ['Online', 'Offline'],
+    default: 'Online'
+  },
+  location: String,
+  registrationLink: {
+    type: String
+  },
+  startDate: {
+    type: Date,
+    required: true
+  },
+  endDate: {
+    type: Date,
     required: true
   },
   deadline: {
     type: Date,
     required: true
   },
+  rewards: String,
+  rules: String,
+  eligibility: String,
+  bannerImage: String,
+  participants: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   createdBy: {
-    type: String,
-    default: 'SUPER_ADMIN'
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, { timestamps: true });
 const Competition = mongoose.model('Competition', competitionSchema);

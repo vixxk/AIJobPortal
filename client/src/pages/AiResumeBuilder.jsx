@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
 import { FileText, Sparkles, Download, Loader2, Briefcase, Code, User, BookOpen, Layers, Award } from 'lucide-react';
-import axios from 'axios';
+import axios from '../utils/axios';
 const AiResumeBuilder = () => {
-    const [loading, setLoading] = useState(false);
     const [loadingSummary, setLoadingSummary] = useState(false);
     const [loadingExp, setLoadingExp] = useState(null);
     const [resumeData, setResumeData] = useState({
@@ -36,32 +35,6 @@ const AiResumeBuilder = () => {
             [group]: [...resumeData[group], template]
         });
     };
-    const handleAiOptimize = async () => {
-        const hasExp = resumeData.experience.some(e => e.description.trim().length > 10);
-        const hasProj = resumeData.projects.some(p => p.description.trim().length > 10);
-        if (!hasExp && !hasProj) {
-            alert("Please write some rough experience or project notes first before using AI formatting.");
-            return;
-        }
-        setLoading(true);
-        try {
-            const payload = {};
-            if (hasExp) payload.experiences = resumeData.experience;
-            if (hasProj) payload.projects = resumeData.projects;
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/resume/optimize`, payload);
-            if (res.data.success) {
-                const updates = {};
-                if (res.data.optimizedExperiences) updates.experience = res.data.optimizedExperiences;
-                if (res.data.optimizedProjects) updates.projects = res.data.optimizedProjects;
-                setResumeData(prev => ({ ...prev, ...updates }));
-            }
-        } catch (error) {
-            console.error("AI Error", error);
-            alert("Failed to connect to AI. Using manual input.");
-        } finally {
-            setLoading(false);
-        }
-    };
     const handleOptimizeSummary = async () => {
         if (!resumeData.summary || resumeData.summary.trim().length < 10) {
             alert("Please write a rough career objective first.");
@@ -69,7 +42,7 @@ const AiResumeBuilder = () => {
         }
         setLoadingSummary(true);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/resume/optimize-summary`, { text: resumeData.summary });
+            const res = await axios.post('/resume/optimize-summary', { text: resumeData.summary });
             if (res.data.success) {
                 setResumeData(prev => ({ ...prev, summary: res.data.optimizedText }));
             }
@@ -77,7 +50,6 @@ const AiResumeBuilder = () => {
             console.error("AI Error", error);
             alert("Failed to connect to AI for summary optimization.");
         } finally {
-            setLoadingSummary(true);
             setLoadingSummary(false);
         }
     };
@@ -89,7 +61,7 @@ const AiResumeBuilder = () => {
         }
         setLoadingExp(index);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/resume/optimize-experience`, { text: item.description, type });
+            const res = await axios.post('/resume/optimize-experience', { text: item.description, type });
             if (res.data.success) {
                 handleArrayChange(type, index, 'description', res.data.optimizedText);
             }
@@ -115,7 +87,7 @@ const AiResumeBuilder = () => {
                     }
                 `}
             </style>
-            { }
+
             <div className="w-full xl:w-[45%] bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 overflow-y-auto scrollbar-hide max-h-full print:hidden">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div className="flex-1 flex flex-col items-center text-center">
@@ -133,7 +105,7 @@ const AiResumeBuilder = () => {
                         Preview PDF Template
                     </button>
                 </div>
-                { }
+
                 <section className="mb-8">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs">1</span>
@@ -174,7 +146,7 @@ const AiResumeBuilder = () => {
                         </div>
                     </div>
                 </section>
-                { }
+
                 <section className="mb-8">
                     <div className="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
@@ -199,7 +171,7 @@ const AiResumeBuilder = () => {
                         </button>
                     </div>
                 </section>
-                { }
+
                 <section className="mb-8">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs">3</span>
@@ -218,7 +190,7 @@ const AiResumeBuilder = () => {
                     ))}
                     <button onClick={() => addArrayItem('education', { institution: '', degree: '', duration: '', location: '', cgpa: '' })} className="text-sm text-emerald-600 font-semibold hover:underline">+ Add Education</button>
                 </section>
-                { }
+
                 <section className="mb-8">
                     <div className="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
@@ -255,7 +227,7 @@ const AiResumeBuilder = () => {
                     ))}
                     <button onClick={() => addArrayItem('experience', { title: '', company: '', techStack: '', duration: '', location: '', description: '' })} className="text-sm text-purple-600 font-semibold hover:underline">+ Add Experience</button>
                 </section>
-                { }
+
                 <section className="mb-8">
                     <div className="flex items-center justify-between border-b pb-2 mb-4">
                         <h3 className="font-bold text-slate-700 flex items-center gap-2">
@@ -292,7 +264,7 @@ const AiResumeBuilder = () => {
                     ))}
                     <button onClick={() => addArrayItem('projects', { name: '', github: '', liveLink: '', techStack: '', duration: '', description: '' })} className="text-sm text-orange-600 font-semibold hover:underline">+ Add Project</button>
                 </section>
-                { }
+
                 <section className="mb-8">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 text-xs">6</span>
@@ -320,7 +292,7 @@ const AiResumeBuilder = () => {
                     </div>
                     <button onClick={() => addArrayItem('certifications', { name: '', link: '' })} className="text-sm text-yellow-600 font-semibold hover:underline">+ Add Certification</button>
                 </section>
-                { }
+
                 <section className="mb-4">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 border-b pb-2">
                         <span className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs">7</span>
@@ -357,7 +329,7 @@ const AiResumeBuilder = () => {
                     <button onClick={() => addArrayItem('skills', { category: '', items: '' })} className="text-sm text-pink-600 font-semibold hover:underline">+ Add Skill Category</button>
                 </section>
             </div>
-            { }
+
             <div className="w-full xl:w-[55%] flex flex-col bg-slate-200 md:rounded-3xl overflow-hidden max-h-full print:w-full print:bg-white print:block">
                 <div className="flex items-center justify-between bg-slate-800 p-4 print:hidden shrink-0">
                     <h3 className="text-white font-semibold flex items-center gap-2">
@@ -370,17 +342,17 @@ const AiResumeBuilder = () => {
                         <Download className="w-4 h-4" /> Download PDF
                     </button>
                 </div>
-                { }
+
                 <div className="flex-1 overflow-x-auto overflow-y-auto w-full bg-slate-200 print:bg-white flex justify-center p-4 md:p-8 print:p-0">
-                    { }
+
                     <div className="origin-top transform scale-[0.4] sm:scale-50 md:scale-75 xl:scale-100 transition-transform h-[450px] sm:h-[550px] md:h-[800px] xl:h-auto print:scale-100 print:h-auto mx-auto print:mx-0">
-                        { }
+
                         <div
                             ref={printRef}
                             className="bg-white shadow-2xl print:shadow-none min-h-[1056px] w-[794px] pt-[12mm] pb-[25.4mm] px-[25.4mm] text-black"
                             style={{ fontFamily: "'Times New Roman', serif", lineHeight: "1.15", fontSize: "10.5px" }}
                         >
-                            { }
+
                             <header className="text-center mb-3">
                                 <h1 className="font-bold uppercase mb-0.5" style={{ fontSize: "18px" }}>{resumeData.personal.name || 'YOUR NAME'}</h1>
                                 <div className="flex flex-col items-center justify-center" style={{ fontSize: "10.5px", lineHeight: "1.15" }}>
@@ -399,14 +371,14 @@ const AiResumeBuilder = () => {
                                     )}
                                 </div>
                             </header>
-                            { }
+
                             {resumeData.summary && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Career Objective</h2>
                                     <p className="text-justify" style={{ fontSize: "10.5px", lineHeight: "1.15" }}>{resumeData.summary}</p>
                                 </div>
                             )}
-                            { }
+
                             {resumeData.education.some(e => e.institution || e.degree) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Education</h2>
@@ -429,7 +401,7 @@ const AiResumeBuilder = () => {
                                     ))}
                                 </div>
                             )}
-                            { }
+
                             {resumeData.experience.some(e => e.company || e.title) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Experience</h2>
@@ -455,7 +427,7 @@ const AiResumeBuilder = () => {
                                     ))}
                                 </div>
                             )}
-                            { }
+
                             {resumeData.projects.some(p => p.name) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Projects</h2>
@@ -497,7 +469,7 @@ const AiResumeBuilder = () => {
                                     ))}
                                 </div>
                             )}
-                            { }
+
                             {resumeData.certifications.some(c => c.name) && (
                                 <div className="mb-2.5">
                                     <h2 className="font-bold uppercase border-b border-black mb-1 pb-[1px]" style={{ fontSize: "12px" }}>Certifications</h2>

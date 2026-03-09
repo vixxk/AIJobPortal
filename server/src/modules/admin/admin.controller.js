@@ -1,7 +1,9 @@
 const User = require('../user/user.model');
 const Job = require('../job/job.model');
 const Application = require('../application/application.model');
-const MockTest = require('../mocktest/mocktest.model');
+const Course = require('../course/course.model');
+const Lecture = require('../course/lecture.model');
+const Competition = require('../competition/competition.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
@@ -10,7 +12,8 @@ exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
   const totalUsers = await User.countDocuments();
   const totalJobs = await Job.countDocuments();
   const totalApplications = await Application.countDocuments();
-  const totalMockTests = await MockTest.countDocuments();
+  const totalCompetitions = await Competition.countDocuments();
+  const totalCourses = await Course.countDocuments();
   const pendingApprovals = await User.countDocuments({ approvalStatus: 'PENDING' });
   res.status(200).json({
     status: 'success',
@@ -19,7 +22,8 @@ exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
         totalUsers,
         totalJobs,
         totalApplications,
-        totalMockTests,
+        totalCompetitions,
+        totalCourses,
         pendingApprovals
       }
     }
@@ -36,7 +40,7 @@ exports.getPendingUsers = catchAsync(async (req, res, next) => {
   });
 });
 exports.updateUserApproval = catchAsync(async (req, res, next) => {
-  const { action } = req.body; 
+  const { action } = req.body;
   const { userId } = req.params;
   if (!['approve', 'reject'].includes(action)) {
     return next(new AppError('Action must be "approve" or "reject"', 400));
@@ -128,13 +132,81 @@ exports.banUser = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('User not found', 404));
   }
-  user.isActive = false;
+  user.isActive = !user.isActive;
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: 'success',
-    message: 'User banned successfully'
+    message: `User ${user.isActive ? 'unbanned' : 'banned'} successfully`
   });
 });
+
+exports.deleteUser = catchAsync(async (req, res, next) => {
+  const user = await User.findByIdAndDelete(req.params.userId);
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+  await Job.deleteMany({ postedBy: req.params.userId });
+  await Application.deleteMany({ studentId: req.params.userId });
+  await Course.deleteMany({ teacher: req.params.userId });
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+});
+
+exports.updateUserRole = catchAsync(async (req, res, next) => {
+  const { role } = req.body;
+  const user = await User.findByIdAndUpdate(req.params.userId, { role }, { new: true, runValidators: true });
+  if (!user) return next(new AppError('User not found', 404));
+  res.status(200).json({
+    status: 'success',
+    data: { user }
+  });
+});
+
+exports.createTeacher = catchAsync(async (req, res, next) => {
+  const { name, email, password } = req.body;
+  
+  let avatar = req.body.avatar;
+  if (req.file) {
+    avatar = `/uploads/avatars/${req.file.filename}`;
+  }
+
+  const existing = await User.findOne({ email });
+  if (existing) return next(new AppError('User with this email already exists', 400));
+  const teacher = await User.create({
+    name,
+    email,
+    password,
+    avatar,
+    role: 'TEACHER',
+    isVerified: true,
+    approvalStatus: 'NOT_REQUIRED'
+  });
+  res.status(201).json({
+    status: 'success',
+    data: { teacher }
+  });
+});
+
+exports.getAllJobs = catchAsync(async (req, res, next) => {
+  const jobs = await Job.find().sort('-createdAt').populate('postedBy', 'name email');
+  res.status(200).json({
+    status: 'success',
+    results: jobs.length,
+    data: { jobs }
+  });
+});
+
+exports.updateJob = catchAsync(async (req, res, next) => {
+  const job = await Job.findByIdAndUpdate(req.params.jobId, req.body, { new: true });
+  if (!job) return next(new AppError('Job not found', 404));
+  res.status(200).json({
+    status: 'success',
+    data: { job }
+  });
+});
+
 exports.deleteJob = catchAsync(async (req, res, next) => {
   const job = await Job.findByIdAndDelete(req.params.jobId);
   if (!job) {
@@ -143,5 +215,79 @@ exports.deleteJob = catchAsync(async (req, res, next) => {
   res.status(204).json({
     status: 'success',
     data: null
+  });
+});
+
+exports.getAllCourses = catchAsync(async (req, res, next) => {
+  const courses = await Course.find().populate('teacher', 'name email');
+  res.status(200).json({
+    status: 'success',
+    results: courses.length,
+    data: { courses }
+  });
+});
+
+exports.updateCourse = catchAsync(async (req, res, next) => {
+  const course = await Course.findByIdAndUpdate(req.params.courseId, req.body, { new: true });
+  if (!course) return next(new AppError('Course not found', 404));
+  res.status(200).json({
+    status: 'success',
+    data: { course }
+  });
+});
+
+exports.deleteCourse = catchAsync(async (req, res, next) => {
+  await Course.findByIdAndDelete(req.params.courseId);
+  await Lecture.deleteMany({ course: req.params.courseId });
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+});
+
+exports.getAllApplications = catchAsync(async (req, res, next) => {
+  const applications = await Application.find()
+    .populate('jobId', 'title')
+    .populate('studentId', 'name email');
+  res.status(200).json({
+    status: 'success',
+    results: applications.length,
+    data: { applications }
+  });
+});
+
+// Mock tests removed
+
+exports.getAllCompetitions = catchAsync(async (req, res, next) => {
+  const competitions = await Competition.find().sort('-startDate');
+  res.status(200).json({
+    status: 'success',
+    results: competitions.length,
+    data: { competitions }
+  });
+});
+
+exports.deleteCompetition = catchAsync(async (req, res, next) => {
+  await Competition.findByIdAndDelete(req.params.id);
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+});
+
+exports.createCompetition = catchAsync(async (req, res, next) => {
+  const data = { ...req.body };
+  
+  if (req.file) {
+    data.bannerImage = `/uploads/avatars/${req.file.filename}`;
+  }
+  
+  data.createdBy = req.user._id;
+
+  const competition = await Competition.create(data);
+
+  res.status(201).json({
+    status: 'success',
+    data: { competition }
   });
 });

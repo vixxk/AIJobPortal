@@ -15,8 +15,11 @@ const maskEmail = (email) => {
 const OTPInput = ({ value, onChange, disabled, idPrefix = 'fp-otp' }) => {
     const [inputs, setInputs] = useState(Array(6).fill(''));
     useEffect(() => {
-        const filled = value.split('').slice(0, 6);
-        setInputs([...filled, ...Array(6 - filled.length).fill('')]);
+        const syncInputs = async () => {
+            const filled = value.split('').slice(0, 6);
+            setInputs([...filled, ...Array(6 - filled.length).fill('')]);
+        };
+        syncInputs();
     }, [value]);
     const handleInput = (e, idx) => {
         const val = e.target.value.replace(/\D/g, '').slice(-1);
@@ -170,7 +173,6 @@ const ForgotPassword = () => {
             <p className="text-slate-500 text-[14px] mb-6">
                 Select which contact details we should use to reset your password
             </p>
-            {}
             <div
                 id="fp-email-option"
                 onClick={() => { }}
@@ -189,7 +191,6 @@ const ForgotPassword = () => {
                     <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
                 </div>
             </div>
-            {}
             <div className="relative mb-4">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail className="h-4 w-4 text-slate-400" />
@@ -354,7 +355,6 @@ const ForgotPassword = () => {
     const stepIconBg = step === 'done' ? 'bg-green-50' : 'bg-blue-50';
     return (
         <>
-            {}
             <div className="md:hidden w-full min-h-[100dvh] bg-white flex flex-col font-sans">
                 <div className="flex items-center px-5 pt-6 pb-2 flex-shrink-0">
                     <button id="fp-back-btn-mobile" onClick={handleBack}
@@ -367,25 +367,19 @@ const ForgotPassword = () => {
                     {renderContent(true)}
                 </div>
             </div>
-            {}
             <div className="hidden md:flex min-h-screen overflow-hidden">
-                {}
                 <div
                     className="hidden lg:flex w-[48%] xl:w-[52%] flex-col relative overflow-hidden"
                     style={{ background: 'linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 45%, #4f46e5 100%)' }}
                 >
-                    {}
                     <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-[0.12]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
                     <div className="absolute -bottom-32 -right-16 w-[500px] h-[500px] rounded-full opacity-[0.08]"
                         style={{ background: 'radial-gradient(circle, white, transparent)' }} />
-                    {}
                     <div className="relative z-10 pt-10 pl-12">
                         <Logo iconSize="w-9 h-9" textClassName="text-2xl text-white" />
                     </div>
-                    {}
                     <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-12 pb-16">
-                        {}
                         <div className="w-full max-w-[380px] xl:max-w-[420px] mb-10">
                             <img
                                 src={forgotIllustration}
@@ -411,19 +405,15 @@ const ForgotPassword = () => {
                         </div>
                     </div>
                 </div>
-                {}
                 <div className="flex-1 bg-white flex flex-col">
-                    {}
                     <div className="flex justify-end px-10 pt-8">
                         <p className="text-[13px] text-slate-400 font-medium">
                             Remember it?{' '}
                             <Link to="/login" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">Sign in</Link>
                         </p>
                     </div>
-                    {}
                     <div className="flex-1 flex items-center justify-center px-8 xl:px-16 pb-10">
                         <div className="w-full max-w-[420px]">
-                            {}
                             <div className="flex items-center justify-between mb-8">
                                 <button
                                     id="fp-back-btn-desktop"
@@ -448,7 +438,6 @@ const ForgotPassword = () => {
                                     })}
                                 </div>
                             </div>
-                            {}
                             <div className="mb-6">
                                 <div className={`w-14 h-14 rounded-2xl ${stepIconBg} flex items-center justify-center mb-5`}>
                                     {stepIcon[step]}

@@ -73,7 +73,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
       email,
       googleId,
       avatar: picture,
-      isVerified: true, 
+      isVerified: true,
       approvalStatus: 'NOT_REQUIRED'
     });
   } else {
@@ -117,7 +117,7 @@ exports.sendOTP = catchAsync(async (req, res, next) => {
   }
   const otp = generateOTP();
   user.otpCode = crypto.createHash('sha256').update(otp).digest('hex');
-  user.otpExpires = Date.now() + 10 * 60 * 1000; 
+  user.otpExpires = Date.now() + 10 * 60 * 1000;
   await user.save({ validateBeforeSave: false });
   try {
     await sendOTPEmail(email, otp, user.name);
@@ -166,21 +166,17 @@ exports.assignRole = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
   const allowed = ['STUDENT', 'RECRUITER', 'COLLEGE_ADMIN'];
   if (!allowed.includes(role)) {
-    return next(new AppError('Invalid role. Must be STUDENT, RECRUITER, or COLLEGE_ADMIN', 400));
+    return next(new AppError('Invalid role selection.', 400));
   }
   const user = await User.findById(userId);
   if (!user) {
     return next(new AppError('User not found', 404));
   }
   if (user.role && user.role !== 'NONE') {
-    return next(new AppError('Role is already assigned. Contact support to change it.', 400));
+    return next(new AppError('Role is already assigned.', 400));
   }
   user.role = role;
-  if (role === 'RECRUITER' || role === 'COLLEGE_ADMIN') {
-    user.approvalStatus = 'PENDING';
-  } else {
-    user.approvalStatus = 'NOT_REQUIRED';
-  }
+  user.approvalStatus = (role === 'RECRUITER' || role === 'COLLEGE_ADMIN') ? 'PENDING' : 'NOT_REQUIRED';
   await user.save({ validateBeforeSave: false });
   const token = generateToken(user._id, user.role);
   res.status(200).json({
@@ -191,8 +187,8 @@ exports.assignRole = catchAsync(async (req, res, next) => {
 });
 exports.register = catchAsync(async (req, res, next) => {
   const { name, email, password, role } = req.body;
-  if (role === 'SUPER_ADMIN') {
-    return next(new AppError('Cannot register as SUPER_ADMIN', 400));
+  if (role === 'SUPER_ADMIN' || role === 'TEACHER') {
+    return next(new AppError('Cannot register with this role publicly.', 400));
   }
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -249,7 +245,29 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!email || !password) {
     return next(new AppError('Please provide email and password!', 400));
   }
+
+  if (email === process.env.SUPER_ADMIN_EMAIL && password === process.env.SUPER_ADMIN_PASSWORD) {
+    const adminId = process.env.SUPER_ADMIN_ID || 'super_admin';
+    const token = generateToken(adminId, 'SUPER_ADMIN');
+    return res.status(200).json({
+      status: 'success',
+      token,
+      data: {
+        user: {
+          id: adminId,
+          role: 'SUPER_ADMIN',
+          name: 'Super Admin',
+          email: process.env.SUPER_ADMIN_EMAIL,
+          needsRole: false,
+          pendingApproval: false,
+          approvalStatus: 'NOT_REQUIRED'
+        }
+      }
+    });
+  }
+
   const user = await User.findOne({ email }).select('+password');
+
   if (!user || !user.password) {
     return next(new AppError('No account found with this email, or you must use Google/OTP login.', 401));
   }
@@ -295,7 +313,26 @@ exports.adminLogin = catchAsync(async (req, res, next) => {
   return next(new AppError('Invalid admin credentials', 401));
 });
 exports.getMe = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user._id || req.user.id);
+  const currentId = req.user._id || req.user.id;
+  
+  if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          id: currentId,
+          role: 'SUPER_ADMIN',
+          name: 'Super Admin',
+          email: process.env.SUPER_ADMIN_EMAIL,
+          needsRole: false,
+          pendingApproval: false,
+          approvalStatus: 'NOT_REQUIRED'
+        }
+      }
+    });
+  }
+
+  const user = await User.findById(currentId);
   if (!user) {
     return next(new AppError('User not found', 404));
   }
@@ -371,13 +408,13 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 exports.updateProfile = catchAsync(async (req, res, next) => {
-  const { 
-    nickname, 
-    dateOfBirth, 
-    phoneNumber, 
-    gender, 
-    country, 
-    expertise 
+  const {
+    nickname,
+    dateOfBirth,
+    phoneNumber,
+    gender,
+    country,
+    expertise
   } = req.body;
   const user = await User.findById(req.user._id || req.user.id);
   if (!user) {
@@ -416,7 +453,7 @@ exports.uploadAvatar = catchAsync(async (req, res, next) => {
     if (!fileBuffer && req.file.path) {
       const fs = require('fs');
       fileBuffer = fs.readFileSync(req.file.path);
-      fs.unlink(req.file.path, () => {}); 
+      fs.unlink(req.file.path, () => {});
     }
     let result;
     try {
