@@ -2,6 +2,7 @@ const express = require('express');
 const courseController = require('./course.controller');
 const { protect } = require('../../middleware/auth');
 const { restrictTo } = require('../../middleware/role');
+const upload = require('../../middleware/upload');
 
 const router = express.Router();
 
@@ -10,27 +11,33 @@ router.use(protect);
 router
   .route('/')
   .get(courseController.getAllCourses)
-  .post(restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.createCourse);
+  .post(restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN'), upload.uploadImage, courseController.createCourse);
 
-router.get('/my-courses', restrictTo('TEACHER', 'COLLEGE_ADMIN'), courseController.getMyCourses);
+router.get('/my-courses', restrictTo('TEACHER', 'COLLEGE_ADMIN', 'SUPER_ADMIN'), courseController.getMyCourses);
 
 router
   .route('/:id')
   .get(courseController.getCourse)
-  .patch(restrictTo('SUPER_ADMIN', 'TEACHER', 'COLLEGE_ADMIN'), courseController.updateCourse)
+  .patch(restrictTo('SUPER_ADMIN', 'TEACHER', 'COLLEGE_ADMIN'), upload.uploadImage, courseController.updateCourse)
   .delete(restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.deleteCourse);
 
-router
-  .post('/:id/enroll', courseController.enrollInCourse);
+router.post('/:id/enroll', courseController.enrollInCourse);
+router.post('/:id/unenroll', restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER'), courseController.unenrollFromCourse);
 
+// Chapter routes
+router.post('/:id/chapters', restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER'), courseController.addChapter);
+router.patch('/:id/chapters/:chapterId', restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER'), courseController.updateChapter);
+router.delete('/:id/chapters/:chapterId', restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER'), courseController.deleteChapter);
+
+// Lecture routes
 router
   .route('/:courseId/lectures')
   .get(courseController.getLectures)
-  .post(restrictTo('TEACHER', 'SUPER_ADMIN'), courseController.addLecture);
+  .post(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.addLecture);
 
 router
   .route('/lectures/:id')
-  .patch(restrictTo('TEACHER', 'SUPER_ADMIN'), courseController.updateLecture)
-  .delete(restrictTo('TEACHER', 'SUPER_ADMIN'), courseController.deleteLecture);
+  .patch(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.updateLecture)
+  .delete(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.deleteLecture);
 
 module.exports = router;

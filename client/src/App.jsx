@@ -24,13 +24,16 @@ import PostJob from './pages/PostJob';
 import ManageApplicants from './pages/ManageApplicants';
 import {
   AdminLayout, AdminOverview, AdminUsers, AdminJobs,
-  AdminCourses, AdminApplications, AdminCompetitions
+  AdminCourses, AdminApplications, AdminCompetitions, CourseManagement
 } from './pages/admin';
+
 import MyApplications from './pages/MyApplications';
 import InterviewPage from './pages/InterviewPage';
 import EnglishTutor from './pages/EnglishTutor';
 import SkillLearning from './pages/SkillLearning';
-import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherLayout from './pages/teacher/TeacherLayout';
+import TeacherOverview from './pages/teacher/TeacherOverview';
+import TeacherCourses from './pages/teacher/TeacherCourses';
 
 function App() {
   return (
@@ -46,7 +49,7 @@ function App() {
           <Route path="/pending-approval" element={<PendingApproval />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<ProtectedRoute allowedRoles={['STUDENT']}><Dashboard /></ProtectedRoute>} />
             <Route path="jobs" element={<ProtectedRoute allowedRoles={['STUDENT']}><AiJobSearch /></ProtectedRoute>} />
             <Route path="saved" element={<ProtectedRoute allowedRoles={['STUDENT']}><SavedJobs /></ProtectedRoute>} />
             <Route path="job/:id" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER']}><JobDetails /></ProtectedRoute>} />
@@ -64,20 +67,27 @@ function App() {
               <Route path="teachers" element={<AdminUsers role="TEACHER" />} />
               <Route path="jobs" element={<AdminJobs />} />
               <Route path="courses" element={<AdminCourses />} />
+              <Route path="courses/:id" element={<CourseManagement />} />
+
               <Route path="applications" element={<AdminApplications />} />
               <Route path="competitions" element={<AdminCompetitions />} />
             </Route>
-            <Route path="teacher" element={<ProtectedRoute allowedRoles={['TEACHER', 'SUPER_ADMIN']}><TeacherDashboard /></ProtectedRoute>} />
-            <Route path="interview" element={<InterviewPage />} />
-            <Route path="english-tutor" element={<EnglishTutor />} />
-            <Route path="learning/*" element={<SkillLearning />} />
-            <Route path="community" element={<ComingSoon feature="Community" />} />
-            <Route path="competitions" element={<ComingSoon feature="Competitions" />} />
-            <Route path="notifications" element={<ComingSoon feature="Notifications" />} />
-            <Route path="messages" element={<ComingSoon feature="Messages" />} />
+            <Route path="teacher" element={<ProtectedRoute allowedRoles={['TEACHER', 'SUPER_ADMIN']}><TeacherLayout /></ProtectedRoute>}>
+              <Route index element={<TeacherOverview />} />
+              <Route path="courses" element={<TeacherCourses />} />
+              <Route path="courses/:id" element={<CourseManagement />} />
+
+            </Route>
+            <Route path="interview" element={<ProtectedRoute allowedRoles={['STUDENT']}><InterviewPage /></ProtectedRoute>} />
+            <Route path="english-tutor" element={<ProtectedRoute allowedRoles={['STUDENT']}><EnglishTutor /></ProtectedRoute>} />
+            <Route path="learning/*" element={<ProtectedRoute allowedRoles={['STUDENT']}><SkillLearning /></ProtectedRoute>} />
+            <Route path="community" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Community" /></ProtectedRoute>} />
+            <Route path="competitions" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Competitions" /></ProtectedRoute>} />
+            <Route path="notifications" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Notifications" /></ProtectedRoute>} />
+            <Route path="messages" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Messages" /></ProtectedRoute>} />
             <Route path="help" element={<HelpCenter />} />
             <Route path="contact" element={<CustomerService />} />
-            <Route path="settings" element={<ComingSoon feature="Settings" />} />
+            <Route path="settings" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER', 'TEACHER', 'SUPER_ADMIN']}><ComingSoon feature="Settings" /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

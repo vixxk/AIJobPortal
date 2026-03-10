@@ -27,7 +27,16 @@ const AdminApplications = () => {
     return (
         <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
             <div className="p-6 lg:p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
-                <h3 className="font-black text-slate-900 tracking-tighter uppercase text-[10px] lg:text-sm">Global Application Ledger</h3>
+                <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 bg-indigo-600 rounded-full" />
+                    <h3 className="font-black text-slate-900 tracking-tighter uppercase text-[10px] lg:text-sm">Global Application Ledger</h3>
+                    <div className="flex items-center gap-2.5 px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-lg shadow-blue-100 animate-in zoom-in-95 duration-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                        <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
+                            {applications.length} <span className="text-blue-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">records</span>
+                        </span>
+                    </div>
+                </div>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">

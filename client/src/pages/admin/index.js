@@ -5,3 +5,4 @@ export { default as AdminJobs } from './AdminJobs';
 export { default as AdminCourses } from './AdminCourses';
 export { default as AdminApplications } from './AdminApplications';
 export { default as AdminCompetitions } from './AdminCompetitions';
+export { default as CourseManagement } from './CourseManagement';

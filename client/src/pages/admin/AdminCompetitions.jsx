@@ -104,20 +104,32 @@ const AdminCompetitions = () => {
 
     return (
         <div className="space-y-4 lg:space-y-8 animate-in fade-in duration-500">
-            <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-6 lg:p-8 rounded-[32px] border border-slate-100 shadow-sm gap-4">
-                <input
-                    type="text"
-                    placeholder="Search competitions..."
-                    className="w-full sm:max-w-sm h-11 px-6 bg-slate-50 border-none rounded-xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                />
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 shrink-0"
-                >
-                    <Plus className="w-4 h-4" /> HOST COMPETITION
-                </button>
+            <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 lg:p-8 rounded-[32px] border border-slate-100 shadow-sm gap-4">
+                <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 bg-indigo-600 rounded-full" />
+                    <h3 className="font-black text-slate-900 tracking-tighter uppercase text-sm whitespace-nowrap">Competition Registry</h3>
+                    <div className="flex items-center gap-2.5 px-3 py-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-lg shadow-violet-100 animate-in zoom-in-95 duration-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                        <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
+                            {competitions.length} <span className="text-violet-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">active</span>
+                        </span>
+                    </div>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Search competitions..."
+                        className="w-full sm:max-w-sm h-11 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                    />
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 shrink-0"
+                    >
+                        <Plus className="w-4 h-4" /> HOST COMPETITION
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
@@ -199,18 +211,18 @@ const AdminCompetitions = () => {
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Universal Title</label>
-                                    <input required className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                    <input required className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                         placeholder="Elite Coding Hackathon..." value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Host Entity (Organizer)</label>
-                                    <input required className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                    <input required className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                         placeholder="Google Developer Student Clubs..." value={form.organizer} onChange={e => setForm({ ...form, organizer: e.target.value })} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
-                                        <select className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900 appearance-none"
+                                        <select className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 appearance-none"
                                             value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                                             <option>Hackathon</option>
                                             <option>Quiz</option>
@@ -221,7 +233,7 @@ const AdminCompetitions = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mode</label>
-                                        <select className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900 appearance-none"
+                                        <select className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 appearance-none"
                                             value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value })}>
                                             <option>Online</option>
                                             <option>Offline</option>
@@ -233,14 +245,14 @@ const AdminCompetitions = () => {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Physical Location</label>
                                         <div className="relative">
                                             <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <input className="w-full h-14 pl-14 pr-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                            <input className="w-full h-14 pl-14 pr-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                                 placeholder="Campus Auditorium..." value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
                                         </div>
                                     </div>
                                 )}
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description (Markdown Supported)</label>
-                                    <textarea required rows={4} className="w-full p-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[24px] outline-none transition-all font-bold text-slate-900 text-sm"
+                                    <textarea required rows={4} className="w-full p-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[24px] outline-none transition-all font-bold text-slate-700 text-sm placeholder:text-slate-400"
                                         placeholder="Elaborate on the challenge objectives..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                                 </div>
                             </div>
@@ -249,18 +261,18 @@ const AdminCompetitions = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
-                                        <input required type="date" className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                        <input required type="date" className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                             value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">End Date</label>
-                                        <input required type="date" className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                        <input required type="date" className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                             value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Registration Cut-off (Deadline)</label>
-                                    <input required type="date" className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                    <input required type="date" className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                         value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
                                 </div>
 
@@ -286,14 +298,14 @@ const AdminCompetitions = () => {
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                                             <Award className="w-3 h-3" /> Rewards
                                         </label>
-                                        <input className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                        <input className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                             placeholder="INR 50,000 + Goodies..." value={form.rewards} onChange={e => setForm({ ...form, rewards: e.target.value })} />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                                             <BookOpen className="w-3 h-3" /> Eligibility
                                         </label>
-                                        <input className="w-full h-14 px-6 bg-slate-50 border-transparent focus:bg-white focus:ring-2 ring-indigo-500/10 rounded-[20px] outline-none transition-all font-bold text-slate-900"
+                                        <input className="w-full h-14 px-6 bg-slate-100 border border-slate-200 focus:ring-2 ring-indigo-500/30 rounded-[20px] outline-none transition-all font-bold text-slate-700 placeholder:text-slate-400"
                                             placeholder="All Undergrads..." value={form.eligibility} onChange={e => setForm({ ...form, eligibility: e.target.value })} />
                                     </div>
                                 </div>

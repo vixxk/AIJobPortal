@@ -24,6 +24,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     if (allowedRoles && !allowedRoles.includes(user.role)) {
         if (user.role === 'SUPER_ADMIN') return <Navigate to="/app/admin" replace />;
         if (user.role === 'RECRUITER') return <Navigate to="/app/recruiter" replace />;
+        if (user.role === 'TEACHER') return <Navigate to="/app/teacher" replace />;
         return <Navigate to="/app" replace />;
     }
     return children;

@@ -11,9 +11,12 @@ const lectureSchema = new mongoose.Schema({
     ref: 'Course',
     required: [true, 'A lecture must belong to a course']
   },
+  chapter: {
+    type: mongoose.Schema.ObjectId, // references embedded chapter _id
+    default: null
+  },
   videoIdentifier: {
     type: String,
-
   },
   type: {
     type: String,
@@ -31,6 +34,22 @@ const lectureSchema = new mongoose.Schema({
   },
   streamKey: {
     type: String,
+  },
+  duration: {
+    type: Number, // duration in minutes
+    default: 0
+  },
+  order: {
+    type: Number,
+    default: 0
+  },
+  scheduledAt: {
+    type: Date,
+    default: null
+  },
+  isPreview: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,

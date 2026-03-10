@@ -43,6 +43,7 @@ const AdminLayout = () => {
         if (path.includes('/recruiters')) return 'Recruiters Control';
         if (path.includes('/teachers')) return 'Teachers Control';
         if (path.includes('/jobs')) return 'Jobs Control';
+        if (/\/courses\/[^/]+/.test(path)) return 'Course Management';
         if (path.includes('/courses')) return 'Courses Control';
         if (path.includes('/applications')) return 'Applications Control';
         if (path.includes('/competitions')) return 'Competitions Control';

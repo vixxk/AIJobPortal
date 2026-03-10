@@ -110,11 +110,7 @@ const Dashboard = () => {
     const [loadingJobs, setLoadingJobs] = useState(false);
     const [activeCategory, setActiveCategory] = useState('All');
     const [profile, setProfile] = useState(null);
-    useEffect(() => {
-        if (user?.role === 'TEACHER') {
-            navigate('/app/teacher', { replace: true });
-        }
-    }, [user, navigate]);
+
 
     const fetchStudentProfile = useCallback(async () => {
         if (user?.role === 'STUDENT') {

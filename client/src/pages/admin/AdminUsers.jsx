@@ -94,11 +94,23 @@ const AdminUsers = ({ role }) => {
         <div className="space-y-4 lg:space-y-6 animate-in fade-in duration-500">
             <div className="bg-white rounded-[32px] lg:rounded-[40px] border border-slate-100 shadow-2xl overflow-hidden">
                 <div className="p-6 lg:p-8 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/30">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <span className="w-3 h-3 bg-indigo-600 rounded-full" />
                         <h3 className="font-black text-slate-900 tracking-tighter uppercase text-sm">
                             {role ? `${role} Registry` : 'All Users Registry'}
                         </h3>
+                        <div className={clsx(
+                            "flex items-center gap-2.5 px-3 py-1 rounded-full shadow-lg animate-in zoom-in-95 duration-500",
+                            role === 'STUDENT' ? "bg-gradient-to-r from-blue-600 to-cyan-600 shadow-blue-100" :
+                                role === 'RECRUITER' ? "bg-gradient-to-r from-violet-600 to-purple-600 shadow-violet-100" :
+                                    role === 'TEACHER' ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-100" :
+                                        "bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-100"
+                        )}>
+                            <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                            <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
+                                {users.length} <span className="text-white/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">records</span>
+                            </span>
+                        </div>
                     </div>
                     {role === 'TEACHER' && (
                         <button
@@ -227,7 +239,7 @@ const AdminUsers = ({ role }) => {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Name</label>
                                 <input
-                                    className="w-full h-14 px-6 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all placeholder:text-slate-300"
+                                    className="w-full h-14 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
                                     placeholder="Enter full name..."
                                     value={teacherForm.name}
                                     onChange={e => setTeacherForm({ ...teacherForm, name: e.target.value })}
@@ -236,7 +248,7 @@ const AdminUsers = ({ role }) => {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Comm Endpoint (Email)</label>
                                 <input
-                                    className="w-full h-14 px-6 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all placeholder:text-slate-300"
+                                    className="w-full h-14 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
                                     placeholder="Enter institutional email..."
                                     value={teacherForm.email}
                                     onChange={e => setTeacherForm({ ...teacherForm, email: e.target.value })}
@@ -246,7 +258,7 @@ const AdminUsers = ({ role }) => {
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Protocol (Password)</label>
                                 <input
                                     type="password"
-                                    className="w-full h-14 px-6 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all placeholder:text-slate-300"
+                                    className="w-full h-14 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
                                     placeholder="Initialize access key..."
                                     value={teacherForm.password}
                                     onChange={e => setTeacherForm({ ...teacherForm, password: e.target.value })}
@@ -273,7 +285,7 @@ const AdminUsers = ({ role }) => {
                                     </label>
                                 </div>
                             </div>
-                            <button className="w-full py-5 bg-indigo-600 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 ring-4 ring-white hover:bg-indigo-700 transition-all active:scale-95">AUTHORIZE NODE</button>
+                            <button className="w-full py-5 bg-indigo-600 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95">AUTHORIZE NODE</button>
                         </form>
                     </div>
                 </div>

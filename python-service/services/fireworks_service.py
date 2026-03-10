@@ -57,30 +57,85 @@ async def _call_fireworks(system_prompt: str, user_prompt: str) -> dict:
     return json.loads(cleaned)
 
 async def generate_questions_v2(job_role: str, interview_type: str, resume_text: str = "") -> dict:
-    system_prompt = f
+    system_prompt = f"""You are an expert interviewer for a {job_role} position.
+    Generate 5 high-quality {interview_type} interview questions.
+    {f"Candidate's Resume Context: {resume_text}" if resume_text else ""}
+    
+    Guidelines:
+    - Mix difficulty levels (easy, medium, hard).
+    - If a resume is provided, personalize at least 2 questions to their experience.
+    - Return ONLY a JSON object with:
+    {{
+      "role_clear": true,
+      "questions": [
+        {{ "id": 1, "question": "...", "difficulty": "...", "topic": "..." }}
+      ]
+    }}
+    If the job role is nonsense, return "role_clear": false and suggestions for valid roles."""
     return await _call_fireworks(system_prompt, f"Generate {interview_type} questions for {job_role}")
 
 async def evaluate_answer(question: str, transcript: str, metrics: dict, job_role: str) -> dict:
-    system_prompt = f"Evaluate technical accuracy and communication for {job_role}. Return JSON."
+    system_prompt = f"""You are an expert evaluator for {job_role} interviews.
+    Evaluate the candidate's answer for technical accuracy, communication skill, and relevance.
+    Audio Metrics provided: {json.dumps(metrics)}
+    
+    Return ONLY a JSON object with:
+    {{
+      "answer_score": 0-100,
+      "communication_score": 0-100,
+      "strengths": ["...", "..."],
+      "weaknesses": ["...", "..."],
+      "suggestions": ["..."]
+    }}"""
     return await _call_fireworks(system_prompt, f"Question: {question}, Answer: {transcript}")
 
 async def generate_report(answers: list, job_role: str) -> dict:
-    system_prompt = f"Generate final performance scorecard for {job_role}. Return JSON."
-    return await _call_fireworks(system_prompt, "Synthesize results")
+    system_prompt = f"""Generate a final performance scorecard for a {job_role} interview.
+    Synthesize the candidate's performance across all questions: {json.dumps(answers)}
+    
+    Calculate overall scores and provide strategic advice.
+    Return ONLY a JSON object with:
+    {{
+      "overall_score": 0-100,
+      "confidence_score": 0-100,
+      "fluency_score": 0-100,
+      "technical_accuracy": 0-100,
+      "strengths": [...],
+      "weaknesses": [...],
+      "suggestions": [...]
+    }}"""
+    return await _call_fireworks(system_prompt, "Synthesize results and generate final evaluation.")
 
 async def evaluate_speaking_test(responses: list) -> dict:
-
     tasks_text = json.dumps(responses, indent=2)
-
-    system_prompt =
-    return await _call_fireworks(system_prompt, f"Evaluate this proficiency test. provide deep linguistic analysis: {tasks_text}")
+    system_prompt = """You are a professional CEFR English examiner. Analyze several spoken responses.
+    
+    Evaluation Rubric:
+    1. Overall CEFR Level (A1-C2).
+    2. Detailed feedback per task.
+    3. Identify "missing words" (words from the prompt that were NOT in the transcript).
+    4. Provide pronunciation and grammar scores (0-10).
+    
+    Return ONLY a JSON object:
+    {
+      "overall_cefr": "...",
+      "scores": { "fluency": 0, "vocabulary": 0, "grammar": 0, "pronunciation": 0 },
+      "analysis": "...",
+      "detailed_breakdown": [
+        { "task_name": "...", "feedback": "...", "missing_words": [...] }
+      ]
+    }"""
+    return await _call_fireworks(system_prompt, f"Evaluate proficiency test: {tasks_text}")
 
 async def generate_lesson_content(level: int, lesson_index: int) -> dict:
-
-    system_prompt = f
-    return await _call_fireworks(system_prompt, f"Create a Level {level} English Lesson (Index {lesson_index})")
+    system_prompt = f"""Create a targeted Level {level} English lesson.
+    Include a short story/dialogue and 3 interactive tasks (Repeating, Question, or Vocabulary).
+    Return ONLY a JSON object with 'title', 'content', and 'tasks' (list)."""
+    return await _call_fireworks(system_prompt, f"Create Level {level} Lesson (Index {lesson_index})")
 
 async def evaluate_lesson_task(task_type: str, transcript: str, metrics: dict, context: dict) -> dict:
-
-    system_prompt = f
+    system_prompt = f"""Evaluate student response for task type: {task_type}.
+    Context: {json.dumps(context)}
+    Identify errors and provide a 'score', 'feedback', and 'missing_words'.
+    Return ONLY a JSON object."""
     return await _call_fireworks(system_prompt, f"User response: {transcript}")

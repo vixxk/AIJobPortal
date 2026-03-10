@@ -156,8 +156,8 @@ const Landing = () => {
                 </div>
                 { }
                 <div className="w-[45%] lg:w-2/5 flex flex-col items-start justify-center p-16 lg:p-24 bg-white z-10 shadow-[-20px_0_40px_-10px_rgba(0,0,0,0.03)] border-l border-slate-100">
-                    <div className="mb-16">
-                        <h1 className="text-[#3B82F6] font-[900] text-5xl lg:text-6xl tracking-tight flex items-center">
+                    <div className="mb-16 w-full max-w-[340px] text-center">
+                        <h1 className="text-[#3B82F6] font-[900] text-5xl lg:text-6xl tracking-tight flex items-center justify-center">
                             Jobee <span className="text-[40px] ml-3 mt-1">👋</span>
                         </h1>
                         <p className="text-slate-400 font-medium mt-3 text-lg">The ultimate job finder platform.</p>
@@ -185,8 +185,9 @@ const Landing = () => {
                     >
                         Get Started Now
                     </button>
-                    <p className="mt-8 text-slate-500 text-sm font-medium">
-                        Already have an account? <span onClick={handleGetStarted} className="text-[#3B82F6] font-bold cursor-pointer hover:underline">Sign In</span>
+                    <p className="mt-5 text-slate-400 text-sm font-medium w-full max-w-[340px] text-center">
+                        Already have an account?{' '}
+                        <span onClick={handleGetStarted} className="text-[#3B82F6] font-bold cursor-pointer hover:underline">Sign In</span>
                     </p>
                 </div>
             </div>

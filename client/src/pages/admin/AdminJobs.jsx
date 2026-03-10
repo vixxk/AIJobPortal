@@ -37,11 +37,21 @@ const AdminJobs = () => {
 
     return (
         <div className="space-y-4 lg:space-y-8 animate-in fade-in duration-500">
-            <div className="bg-white rounded-[32px] p-6 lg:p-8 border border-slate-100 shadow-sm flex items-center">
+            <div className="bg-white rounded-[32px] p-6 lg:p-8 border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 bg-indigo-600 rounded-full" />
+                    <h3 className="font-black text-slate-900 tracking-tighter uppercase text-sm whitespace-nowrap">Active Job Registry</h3>
+                    <div className="flex items-center gap-2.5 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full shadow-lg shadow-emerald-100 animate-in zoom-in-95 duration-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                        <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
+                            {jobs.length} <span className="text-emerald-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">listings</span>
+                        </span>
+                    </div>
+                </div>
                 <input
                     type="text"
                     placeholder="Search by job title..."
-                    className="w-full max-w-sm h-11 px-4 bg-slate-50 border-none rounded-xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all"
+                    className="w-full max-w-sm h-11 px-6 bg-slate-50 border-none rounded-2xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all placeholder:text-slate-300"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                 />

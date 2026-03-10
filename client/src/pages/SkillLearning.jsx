@@ -6,45 +6,102 @@ import {
     BookOpen, Play, Video, Plus, Edit, Trash2,
     ChevronRight, BadgeInfo, Clock, Users,
     Globe, Radio, CheckCircle, ExternalLink,
-    ArrowLeft, MonitorPlay, Settings, Key
+    ArrowLeft, MonitorPlay, Settings, Key, Lock
 } from 'lucide-react';
 import { useCallback } from 'react';
 import clsx from 'clsx';
 
-const CourseCard = ({ course }) => (
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const getImgUrl = (p) => {
+    if (!p) return null;
+    if (p.startsWith('http')) return p;
+    return `${API_BASE}/${p.replace(/^\//, '')}`;
+};
+
+const LEVEL_COLORS = {
+    Beginner: 'bg-emerald-100 text-emerald-700',
+    Intermediate: 'bg-amber-100   text-amber-700',
+    Advanced: 'bg-rose-100    text-rose-700',
+    Expert: 'bg-purple-100  text-purple-700',
+};
+
+const CourseCard = ({ course, isEnrolled }) => (
     <Link
         to={`/app/learning/course/${course._id}`}
-        className="bg-white rounded-[24px] overflow-hidden border border-slate-100 hover:border-blue-200 hover:shadow-xl transition-all group"
+        className="group bg-white rounded-[28px] overflow-hidden border border-slate-100 hover:border-indigo-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
     >
-        <div className="relative h-48 overflow-hidden">
-            <img
-                src={course.coverImage}
-                alt={course.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-            <div className="absolute top-4 left-4">
-                <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[12px] font-bold text-blue-600 shadow-sm">
-                    {course.category}
-                </span>
+        {/* Cover */}
+        <div className="relative h-48 overflow-hidden shrink-0">
+            {getImgUrl(course.coverImage)
+                ? <img src={getImgUrl(course.coverImage)} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                : <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center"><BookOpen className="w-12 h-12 text-indigo-300" /></div>
+            }
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+
+            {/* top badges */}
+            <div className="absolute top-3 left-3 flex gap-2">
+                <span className="px-2.5 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-[10px] font-black text-white tracking-widest uppercase">{course.category}</span>
+                {isEnrolled && (
+                    <span className="px-2.5 py-1 bg-emerald-500/90 backdrop-blur-sm rounded-full text-[10px] font-black text-white tracking-widest uppercase flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Enrolled
+                    </span>
+                )}
+            </div>
+
+            {/* level */}
+            {course.level && (
+                <div className="absolute top-3 right-3">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase backdrop-blur-sm ${LEVEL_COLORS[course.level] || 'bg-white/80 text-slate-600'}`}>
+                        {course.level}
+                    </span>
+                </div>
+            )}
+
+            {/* teacher */}
+            <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-white/20 border border-white/40 overflow-hidden shrink-0">
+                    {course.teacher?.avatar
+                        ? <img src={getImgUrl(course.teacher.avatar)} className="w-full h-full object-cover" />
+                        : <span className="w-full h-full flex items-center justify-center text-[9px] font-black text-white">{course.teacher?.name?.[0] || 'T'}</span>
+                    }
+                </div>
+                <span className="text-white/90 text-[11px] font-bold line-clamp-1">{course.teacher?.name || 'Unknown Teacher'}</span>
             </div>
         </div>
-        <div className="p-6">
-            <h3 className="text-[17px] font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
+
+        {/* Body */}
+        <div className="p-5 flex flex-col flex-1">
+            <h3 className="text-[16px] font-black text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
                 {course.title}
             </h3>
-            <div className="flex items-center gap-4 text-slate-500 text-[13px] font-medium">
-                <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    <span>{course.enrolledStudents?.length || 0} Students</span>
+            {course.description && (
+                <p className="text-slate-400 text-xs font-medium line-clamp-2 mb-4 leading-relaxed">{course.description}</p>
+            )}
+
+            {/* Tags */}
+            {course.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-4">
+                    {course.tags.slice(0, 3).map((t, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-bold">#{t}</span>
+                    ))}
                 </div>
-                <div className="flex items-center gap-1">
-                    <BookOpen className="w-4 h-4" />
-                    <span>{course.lectures?.length || 0} Lects</span>
+            )}
+
+            {/* Stats row */}
+            <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50">
+                <div className="flex items-center gap-3 text-slate-400 text-[11px] font-bold">
+                    <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{course.enrolledStudents?.length || 0}</span>
+                    <span className="flex items-center gap-1"><Video className="w-3.5 h-3.5" />{course.lectures?.length || 0} lects</span>
+                    {course.duration > 0 && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{course.duration}h</span>}
                 </div>
+                <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                    {isEnrolled ? 'Continue →' : course.price > 0 ? `₹${course.price}` : 'Free'}
+                </span>
             </div>
         </div>
     </Link>
 );
+
 
 const LectureList = ({ lectures, onSelect, currentId }) => (
     <div className="space-y-2">
@@ -113,7 +170,7 @@ const VideoPlayer = ({ lecture }) => {
                     src={embedUrl}
                     className="w-full h-full border-0"
                     title={lecture.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                 ></iframe>
 
@@ -134,12 +191,14 @@ const VideoPlayer = ({ lecture }) => {
 const CourseListingPage = () => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [activeCategory, setActiveCategory] = useState('All');
     const { user } = useAuth();
 
     const fetchCourses = useCallback(async () => {
         try {
             const res = await axios.get('/courses');
-            setCourses(res.data.data.courses);
+            setCourses(res.data.data.courses || []);
         } catch (err) {
             console.error(err);
         } finally {
@@ -147,36 +206,181 @@ const CourseListingPage = () => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchCourses();
-    }, [fetchCourses]);
+    useEffect(() => { fetchCourses(); }, [fetchCourses]);
 
-    if (loading) return <div className="p-8 text-center font-bold text-slate-400">Loading courses...</div>;
+    // Derive categories from courses
+    const categories = ['All', ...Array.from(new Set(courses.map(c => c.category).filter(Boolean)))];
+
+    // Filtering
+    const filtered = courses.filter(c => {
+        const q = search.toLowerCase();
+        const matchSearch = !q || c.title?.toLowerCase().includes(q)
+            || c.description?.toLowerCase().includes(q)
+            || c.teacher?.name?.toLowerCase().includes(q)
+            || c.tags?.some(t => t.toLowerCase().includes(q));
+        const matchCat = activeCategory === 'All' || c.category === activeCategory;
+        return matchSearch && matchCat;
+    });
+
+    // Enrolled IDs from user (backend sends isEnrolled per course on getCourse, but listing may not)
+    // We'll mark enrolled if user._id appears in enrolledStudents
+    const userId = user?._id;
+    const isEnrolled = (course) =>
+        Array.isArray(course.enrolledStudents) &&
+        course.enrolledStudents.some(s => (s._id || s) === userId);
+
+    const enrolledCount = courses.filter(isEnrolled).length;
 
     return (
-        <div className="max-w-6xl mx-auto p-4 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                <div>
-                    <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Expand Your Skills</h2>
-                    <p className="text-slate-500 font-medium text-[15px]">Join live classes and watch expert-led lectures.</p>
+        <div className="min-h-screen bg-[#F8FAFC]">
+
+            {/* ── Hero / Search Strip */}
+            <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 px-4 pt-10 pb-16">
+                <div className="max-w-4xl mx-auto text-center">
+                    <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-white/80 text-xs font-black tracking-widest uppercase mb-5">
+                        {courses.length} courses available
+                    </span>
+                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-3">
+                        Expand Your Skills
+                    </h1>
+                    <p className="text-indigo-200 font-medium text-base md:text-lg mb-8">
+                        Join live classes and watch expert-led lectures at your own pace.
+                    </p>
+
+                    {/* Search bar */}
+                    <div className="relative max-w-xl mx-auto">
+                        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search courses, teachers, topics…"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full h-14 pl-14 pr-5 bg-white/95 backdrop-blur-sm rounded-2xl text-slate-800 font-medium text-[15px] outline-none shadow-xl shadow-indigo-900/20 placeholder:text-slate-400 focus:ring-2 ring-white/60 transition-all"
+                        />
+                        {search && (
+                            <button
+                                onClick={() => setSearch('')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 bg-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-300 transition-all"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
                 </div>
-                {(user?.role === 'TEACHER' || user?.role === 'COLLEGE_ADMIN' || user?.role === 'SUPER_ADMIN') && (
-                    <Link
-                        to="/app/teacher"
-                        className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-slate-900/20 hover:scale-105 transition-all text-sm"
-                    >
-                        <Settings className="w-4 h-4" />
-                        Management Console
-                    </Link>
-                )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {courses.map(course => <CourseCard key={course._id} course={course} />)}
-                {courses.length === 0 && (
-                    <div className="col-span-full py-20 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center">
-                        <BookOpen className="w-16 h-16 text-slate-300 mb-4" />
-                        <p className="text-slate-500 font-bold">No courses available yet.</p>
+            <div className="max-w-6xl mx-auto px-4 md:px-8 -mt-6">
+
+                {/* ── Stats strip */}
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                    {[
+                        { label: 'Total Courses', value: courses.length, icon: BookOpen, color: 'indigo' },
+                        { label: 'Enrolled', value: enrolledCount, icon: CheckCircle, color: 'emerald' },
+                        { label: 'Available', value: courses.length - enrolledCount, icon: Play, color: 'violet' },
+                    ].map(({ label, value, icon: Icon, color }) => (
+                        <div key={label} className={`bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4`}>
+                            <div className={`w-10 h-10 bg-${color}-50 rounded-xl flex items-center justify-center shrink-0`}>
+                                <Icon className={`w-5 h-5 text-${color}-500`} />
+                            </div>
+                            <div>
+                                <p className={`text-xl font-black text-${color}-600`}>{value}</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* ── Category pills */}
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-8">
+                    {categories.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setActiveCategory(cat)}
+                            className={`px-5 py-2.5 rounded-2xl text-xs font-black tracking-wide whitespace-nowrap transition-all ${activeCategory === cat
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                : 'bg-white text-slate-500 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                                }`}
+                        >
+                            {cat}
+                            {cat !== 'All' && <span className="ml-1.5 opacity-60">{courses.filter(c => c.category === cat).length}</span>}
+                        </button>
+                    ))}
+                </div>
+
+                {/* ── Teacher/management link for teachers */}
+                {(user?.role === 'TEACHER' || user?.role === 'COLLEGE_ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                    <div className="mb-8 p-5 bg-slate-900 rounded-2xl flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                <Settings className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-white font-black text-sm">Management Console</p>
+                                <p className="text-slate-400 text-xs font-medium">Manage your courses, chapters and lectures</p>
+                            </div>
+                        </div>
+                        <Link to="/app/teacher" className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-500 transition-all">
+                            Open Console
+                        </Link>
+                    </div>
+                )}
+
+                {/* ── Results header */}
+                <div className="flex items-center justify-between mb-6">
+                    <p className="text-slate-500 text-sm font-bold">
+                        {search || activeCategory !== 'All'
+                            ? <>{filtered.length} result{filtered.length !== 1 ? 's' : ''} {search && <span className="text-indigo-600">for "{search}"</span>}</>
+                            : `Showing all ${courses.length} courses`
+                        }
+                    </p>
+                    {(search || activeCategory !== 'All') && (
+                        <button
+                            onClick={() => { setSearch(''); setActiveCategory('All'); }}
+                            className="text-xs font-black text-indigo-600 hover:underline"
+                        >
+                            Clear filters
+                        </button>
+                    )}
+                </div>
+
+                {/* ── Grid */}
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="bg-white rounded-[28px] overflow-hidden border border-slate-100 animate-pulse">
+                                <div className="h-48 bg-slate-100" />
+                                <div className="p-5 space-y-3">
+                                    <div className="h-4 bg-slate-100 rounded-xl w-3/4" />
+                                    <div className="h-3 bg-slate-100 rounded-xl w-full" />
+                                    <div className="h-3 bg-slate-100 rounded-xl w-2/3" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div className="py-20 bg-white rounded-[28px] border border-slate-100 flex flex-col items-center text-center mb-12">
+                        <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-5">
+                            <BookOpen className="w-10 h-10 text-slate-300" />
+                        </div>
+                        <h3 className="font-black text-slate-900 text-lg mb-2">No courses found</h3>
+                        <p className="text-slate-400 text-sm max-w-xs">
+                            {search ? `No results for "${search}". Try a different keyword.` : 'No courses in this category yet.'}
+                        </p>
+                        <button onClick={() => { setSearch(''); setActiveCategory('All'); }} className="mt-6 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all">
+                            View All Courses
+                        </button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                        {filtered.map(course => (
+                            <CourseCard key={course._id} course={course} isEnrolled={isEnrolled(course)} />
+                        ))}
                     </div>
                 )}
             </div>
@@ -197,63 +401,197 @@ const CourseDetailPage = () => {
             const res = await axios.get(`/courses/${id}`);
             setCourse(res.data.data.course);
             setIsEnrolled(res.data.data.isEnrolled);
-            if (res.data.data.course.lectures?.length > 0) {
+            if (res.data.data.course.lectures?.length > 0)
                 setActiveLecture(res.data.data.course.lectures[0]);
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { console.error(err); }
+        finally { setLoading(false); }
     }, [id]);
 
-    useEffect(() => {
-        fetchCourse();
-    }, [fetchCourse]);
+    useEffect(() => { fetchCourse(); }, [fetchCourse]);
 
     const handleEnroll = async () => {
-        try {
-            await axios.post(`/courses/${id}/enroll`);
-            setIsEnrolled(true);
-        } catch (err) {
-            alert("Failed to enroll");
-        }
+        try { await axios.post(`/courses/${id}/enroll`); setIsEnrolled(true); }
+        catch { alert('Failed to enroll'); }
     };
 
-    if (loading) return <div className="p-8 text-center text-slate-400 font-bold">Loading course details...</div>;
-    if (!course) return <div className="p-8 text-center">Course not found</div>;
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+                <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Loading Course</p>
+            </div>
+        </div>
+    );
+    if (!course) return <div className="p-8 text-center text-slate-400 font-bold">Course not found</div>;
 
+    /* ─── PRE-ENROLLMENT ────────────────────────────────── */
     if (!isEnrolled) {
+        const lectures = course.lectures || [];
+        const chapters = course.chapters || [];
         return (
-            <div className="max-w-4xl mx-auto p-4 md:p-8">
-                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-6 hover:text-blue-600">
-                    <ArrowLeft className="w-4 h-4" /> Back to Courses
-                </button>
-                <div className="bg-white rounded-[40px] overflow-hidden border border-slate-100 shadow-2xl">
-                    <div className="h-64 md:h-96 relative">
-                        <img src={course.coverImage} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-                        <div className="absolute bottom-10 left-10 text-white">
-                            <span className="px-3 py-1 bg-blue-600 rounded-full text-xs font-bold mb-4 inline-block">{course.category}</span>
-                            <h1 className="text-4xl font-black mb-2">{course.title}</h1>
-                            <p className="text-white/80 font-medium">Taught by {course.teacher?.name}</p>
+            <div className="min-h-screen bg-[#F8FAFC]">
+                {/* Full-bleed hero */}
+                <div className="relative h-72 md:h-[420px] overflow-hidden">
+                    {getImgUrl(course.coverImage)
+                        ? <img src={getImgUrl(course.coverImage)} className="w-full h-full object-cover" alt={course.title} />
+                        : <div className="w-full h-full bg-gradient-to-br from-indigo-800 to-violet-900" />
+                    }
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-slate-900/10" />
+                    <button onClick={() => navigate(-1)} className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl text-xs font-black hover:bg-white/20 transition-all">
+                        <ArrowLeft className="w-4 h-4" /> Back
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            <span className="px-3 py-1 bg-indigo-600/90 backdrop-blur-sm rounded-full text-[10px] font-black text-white tracking-widest uppercase">{course.category}</span>
+                            {course.level && <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black text-white/80 uppercase">{course.level}</span>}
+                            {course.language && <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black text-white/80 uppercase">{course.language}</span>}
+                        </div>
+                        <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight mb-2 max-w-3xl">{course.title}</h1>
+                        <div className="flex flex-wrap items-center gap-4 text-white/70 text-xs font-bold">
+                            <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{course.enrolledStudents?.length || 0} enrolled</span>
+                            <span className="flex items-center gap-1.5"><Video className="w-3.5 h-3.5" />{lectures.length} lectures</span>
+                            {course.duration > 0 && <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{course.duration}h total</span>}
+                            {chapters.length > 0 && <span className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" />{chapters.length} chapters</span>}
                         </div>
                     </div>
-                    <div className="p-10">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                            <div className="md:col-span-2">
-                                <h3 className="text-xl font-bold mb-4">About this course</h3>
-                                <p className="text-slate-600 leading-relaxed mb-8">{course.description}</p>
+                </div>
+
+                <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Info column */}
+                        <div className="lg:col-span-2 space-y-5">
+                            {/* Instructor */}
+                            <div className="bg-white rounded-[24px] p-5 border border-slate-100 flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 overflow-hidden shrink-0 flex items-center justify-center">
+                                    {getImgUrl(course.teacher?.avatar)
+                                        ? <img src={getImgUrl(course.teacher.avatar)} className="w-full h-full object-cover" />
+                                        : <span className="text-xl font-black text-indigo-400">{course.teacher?.name?.[0] || 'T'}</span>}
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instructor</p>
+                                    <p className="font-black text-slate-900 text-lg leading-tight">{course.teacher?.name || 'Unknown'}</p>
+                                </div>
                             </div>
-                            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
-                                <p className="text-3xl font-black text-slate-900 mb-6">{course.price === 0 ? "Free" : `$${course.price}`}</p>
-                                <button
-                                    onClick={handleEnroll}
-                                    className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
-                                >
-                                    Unlock Course Now
-                                </button>
-                                <p className="text-[11px] text-slate-400 text-center mt-4 font-medium uppercase tracking-wider">Lifetime Access Included</p>
+
+                            {/* Description */}
+                            <div className="bg-white rounded-[24px] p-6 border border-slate-100">
+                                <h2 className="font-black text-slate-900 uppercase tracking-widest text-xs mb-4 flex items-center gap-2"><BookOpen className="w-4 h-4 text-indigo-500" />About This Course</h2>
+                                <p className="text-slate-600 leading-relaxed">{course.description || 'No description provided.'}</p>
+                            </div>
+
+                            {/* Objectives */}
+                            {course.objectives?.length > 0 && (
+                                <div className="bg-white rounded-[24px] p-6 border border-slate-100">
+                                    <h2 className="font-black text-slate-900 uppercase tracking-widest text-xs mb-4 flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500" />What You'll Learn</h2>
+                                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {course.objectives.map((o, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
+                                                <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5"><CheckCircle className="w-3 h-3 text-emerald-600" /></div>{o}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {/* Prerequisites */}
+                            {course.prerequisites?.length > 0 && (
+                                <div className="bg-white rounded-[24px] p-6 border border-slate-100">
+                                    <h2 className="font-black text-slate-900 uppercase tracking-widest text-xs mb-4 flex items-center gap-2"><Globe className="w-4 h-4 text-amber-500" />Prerequisites</h2>
+                                    <ul className="space-y-2">
+                                        {course.prerequisites.map((p, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-sm text-slate-700"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 shrink-0" />{p}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {/* Content preview — chapter names + counts only, individual lectures hidden */}
+                            {(chapters.length > 0 || lectures.filter(l => !l.chapter).length > 0) && (
+                                <div className="bg-white rounded-[24px] p-6 border border-slate-100">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
+                                            <Video className="w-4 h-4 text-indigo-500" />Course Content
+                                        </h2>
+                                        <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 bg-slate-50 px-3 py-1 rounded-xl border border-slate-100">
+                                            <Lock className="w-3 h-3" /> Enroll to unlock
+                                        </span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {chapters.sort((a, b) => a.order - b.order).map((ch, ci) => {
+                                            const n = lectures.filter(l => l.chapter?.toString() === ch._id?.toString()).length;
+                                            return (
+                                                <div key={ch._id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                                                    <div className="w-8 h-8 bg-indigo-100 rounded-xl flex items-center justify-center text-xs font-black text-indigo-600 shrink-0">{ci + 1}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-black text-slate-900 text-sm truncate">{ch.title}</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{n} lecture{n !== 1 ? 's' : ''}</p>
+                                                    </div>
+                                                    <Lock className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                                </div>
+                                            );
+                                        })}
+                                        {/* Uncategorized lectures count — no titles revealed */}
+                                        {(() => {
+                                            const un = lectures.filter(l => !l.chapter).length;
+                                            return un > 0 ? (
+                                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
+                                                    <div className="w-8 h-8 bg-slate-200 rounded-xl flex items-center justify-center shrink-0"><Video className="w-4 h-4 text-slate-400" /></div>
+                                                    <div className="flex-1">
+                                                        <p className="font-black text-slate-700 text-sm">Additional Content</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{un} lecture{un !== 1 ? 's' : ''}</p>
+                                                    </div>
+                                                    <Lock className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                                </div>
+                                            ) : null;
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tags */}
+                            {course.tags?.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {course.tags.map((t, i) => <span key={i} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-500 rounded-xl text-xs font-bold">#{t}</span>)}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Sticky enroll card */}
+                        <div className="lg:col-span-1">
+                            <div className="sticky top-6 bg-white rounded-[28px] border border-slate-100 shadow-xl overflow-hidden">
+                                <div className="h-44 relative overflow-hidden">
+                                    {getImgUrl(course.coverImage)
+                                        ? <img src={getImgUrl(course.coverImage)} className="w-full h-full object-cover" />
+                                        : <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center"><BookOpen className="w-12 h-12 text-indigo-300" /></div>}
+                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                        <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/50 flex items-center justify-center">
+                                            <Play className="w-6 h-6 text-white ml-1" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-black text-slate-900">{course.price > 0 ? `₹${course.price}` : 'Free'}</span>
+                                        {course.price === 0 && <span className="text-xs text-emerald-600 font-black bg-emerald-50 px-2 py-0.5 rounded-xl">No cost</span>}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { icon: Video, label: `${lectures.length} Lectures` },
+                                            { icon: Users, label: `${course.enrolledStudents?.length || 0} Students` },
+                                            { icon: Clock, label: course.duration > 0 ? `${course.duration}h Total` : 'Self-paced' },
+                                            { icon: Globe, label: course.language || 'English' },
+                                        ].map(({ icon: Icon, label }) => (
+                                            <div key={label} className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl">
+                                                <Icon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                                <span className="text-xs font-bold text-slate-600">{label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button onClick={handleEnroll} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center gap-2">
+                                        <Play className="w-4 h-4" /> Enroll Now — {course.price > 0 ? `₹${course.price}` : "It's Free"}
+                                    </button>
+                                    <p className="text-center text-[11px] text-slate-400 font-medium">Lifetime access · All devices</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -262,37 +600,72 @@ const CourseDetailPage = () => {
         );
     }
 
+    /* ─── ENROLLED / PLAYER VIEW ────────────────────────── */
+    const chapters2 = course.chapters || [];
+    const lectures2 = course.lectures || [];
+    const lecturesForChapter = (chId) => lectures2.filter(l => l.chapter?.toString() === chId?.toString());
+    const uncategorized = lectures2.filter(l => !l.chapter);
+
     return (
-        <div className="min-h-screen bg-slate-50">
-            <div className="max-w-[1400px] mx-auto p-4 md:p-8 h-full">
-                <div className="flex items-center justify-between mb-8">
-                    <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 font-bold text-sm hover:text-blue-600">
-                        <ArrowLeft className="w-4 h-4" /> Course Overview
-                    </button>
-                    <div className="flex items-center gap-4 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm">
-                        <span className="text-slate-400 text-xs font-bold uppercase">You are watching:</span>
-                        <span className="text-blue-600 text-sm font-black">{course.title}</span>
-                    </div>
+        <div className="h-screen flex flex-col bg-slate-900 overflow-hidden">
+            {/* Top bar */}
+            <div className="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between shrink-0 z-40">
+                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold text-sm transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> All Courses
+                </button>
+                <div className="flex items-center gap-2 max-w-[280px]">
+                    <span className="text-slate-500 text-xs font-bold hidden md:block shrink-0">Watching:</span>
+                    <span className="text-white text-sm font-black truncate">{activeLecture?.title || course.title}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-emerald-400 text-xs font-black uppercase tracking-widest">Enrolled</span>
+                </div>
+            </div>
+
+            {/* Main flex */}
+            <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+                {/* Player */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-900">
+                    <VideoPlayer lecture={activeLecture} />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    <div className="lg:col-span-8">
-                        <VideoPlayer lecture={activeLecture} />
+                {/* Sidebar */}
+                <div className="w-full lg:w-[380px] bg-white border-l border-slate-100 flex flex-col shrink-0 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 shrink-0">
+                        <h3 className="font-black text-slate-900">Course Content</h3>
+                        <p className="text-xs text-slate-400 font-bold mt-0.5">{chapters2.length} chapters · {lectures2.length} lectures</p>
                     </div>
-                    <div className="lg:col-span-4 bg-white rounded-[32px] p-6 border border-slate-100 shadow-xl overflow-hidden flex flex-col max-h-[800px]">
-                        <div className="flex items-center justify-between mb-6 shrink-0">
-                            <h3 className="text-lg font-bold text-slate-900 tracking-tight">Course Content</h3>
-                            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-[11px] font-bold">
-                                {course.lectures?.length || 0} Lectures
-                            </span>
-                        </div>
-                        <div className="overflow-y-auto pr-2 custom-scrollbar">
-                            <LectureList
-                                lectures={course.lectures || []}
-                                onSelect={setActiveLecture}
-                                currentId={activeLecture?._id}
-                            />
-                        </div>
+                    <div className="flex-1 overflow-y-auto">
+                        {chapters2.sort((a, b) => a.order - b.order).map((ch, ci) => {
+                            const chLects = lecturesForChapter(ch._id);
+                            return (
+                                <div key={ch._id}>
+                                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-3 sticky top-0 z-10">
+                                        <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center text-[10px] font-black text-indigo-600 shrink-0">{ci + 1}</div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-black text-slate-800 truncate">{ch.title}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold">{chLects.length} lectures</p>
+                                        </div>
+                                    </div>
+                                    <LectureList lectures={chLects} onSelect={setActiveLecture} currentId={activeLecture?._id} />
+                                </div>
+                            );
+                        })}
+                        {uncategorized.length > 0 && (
+                            <div>
+                                <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Other Lectures</p>
+                                </div>
+                                <LectureList lectures={uncategorized} onSelect={setActiveLecture} currentId={activeLecture?._id} />
+                            </div>
+                        )}
+                        {lectures2.length === 0 && (
+                            <div className="p-10 text-center">
+                                <Video className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                                <p className="text-slate-400 text-sm font-bold">No lectures yet</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
