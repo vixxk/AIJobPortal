@@ -48,7 +48,12 @@ const competitionSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }
+  },
+  rounds: [{
+    title: { type: String, required: true },
+    description: String,
+    date: Date
+  }]
 }, { timestamps: true });
 const Competition = mongoose.model('Competition', competitionSchema);
 module.exports = Competition;

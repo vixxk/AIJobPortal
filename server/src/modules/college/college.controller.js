@@ -38,3 +38,12 @@ exports.createOrUpdateProfile = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+exports.getAllColleges = catchAsync(async (req, res, next) => {
+  const colleges = await CollegeProfile.find().populate('userId', 'email name');
+  res.status(200).json({
+    status: 'success',
+    results: colleges.length,
+    data: colleges
+  });
+});

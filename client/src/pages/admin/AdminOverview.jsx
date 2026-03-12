@@ -33,10 +33,41 @@ const AdminOverview = () => {
         fetchData();
     }, [fetchData]);
 
-    if (loading) return null;
+    const DashboardSkeleton = () => (
+        <div className="space-y-4 lg:space-y-10 animate-pulse pb-20">
+            {/* Banner Skeleton */}
+            <div className="h-[200px] lg:h-[280px] w-full bg-slate-200 rounded-[32px]" />
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="bg-white p-8 rounded-[32px] border border-slate-100 h-[180px]" />
+                ))}
+            </div>
+
+            {/* Bottom Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 bg-slate-200 rounded-[32px] h-[400px]" />
+                <div className="bg-white rounded-[32px] p-10 border border-slate-100 space-y-6">
+                    <div className="h-6 w-1/3 bg-slate-100 rounded-md mb-8" />
+                    {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className="flex gap-4 items-center">
+                            <div className="w-10 h-10 bg-slate-100 rounded-xl" />
+                            <div className="flex-1 space-y-2">
+                                <div className="h-3 w-3/4 bg-slate-50 rounded-md" />
+                                <div className="h-2 w-1/2 bg-slate-50 rounded-md" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) return <DashboardSkeleton />;
 
     return (
-        <div className="space-y-4 lg:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-700">
+        <div className="space-y-4 lg:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-20">
             {/* Welcome Banner */}
             <div className="bg-indigo-600 rounded-[32px] p-8 lg:p-12 text-white relative overflow-hidden shadow-2xl shadow-indigo-200">
                 <div className="relative z-10">
@@ -65,7 +96,11 @@ const AdminOverview = () => {
                                     s.color === 'amber' ? 'text-amber-600' : 'text-rose-600'
                                 }`} />
                         </div>
-                        <h3 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tighter mb-1 lg:mb-2 italic">{s.value || 0}</h3>
+                        {loading ? (
+                            <div className="h-10 w-16 bg-slate-100 animate-pulse rounded-md" />
+                        ) : (
+                            <h3 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tighter mb-1 lg:mb-2 italic">{s.value || 0}</h3>
+                        )}
                         <p className="text-slate-900 font-black text-[9px] lg:text-xs uppercase tracking-widest">{s.label}</p>
                         <p className="hidden lg:block text-slate-400 text-[10px] font-bold mt-1">{s.desc}</p>
                     </div>

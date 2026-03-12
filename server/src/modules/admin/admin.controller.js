@@ -66,13 +66,13 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Your JobPortal Account Has Been Approved!',
-        message: `Hi ${user.name}, your account has been approved. You can now log in and start using JobPortal.`,
+        subject: 'Your Gradnex Account Has Been Approved!',
+        message: `Hi ${user.name}, your account has been approved. You can now log in and start using Gradnex.`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 16px;">
             <h2 style="color: #1e293b;">Account Approved! 🎉</h2>
             <p style="color: #475569;">Hi ${user.name},</p>
-            <p style="color: #475569;">Your <strong>${user.role === 'RECRUITER' ? 'Recruiter' : 'College'}</strong> account on JobPortal has been approved by our admin team.</p>
+            <p style="color: #475569;">Your <strong>${user.role === 'RECRUITER' ? 'Recruiter' : 'College'}</strong> account on Gradnex has been approved by our admin team.</p>
             <p style="color: #475569;">You can now log in and access all features available to you.</p>
             <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Login Now</a>
           </div>
@@ -90,7 +90,7 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'JobPortal Account Application Update',
+        subject: 'Gradnex Account Application Update',
         message: `Hi ${user.name}, unfortunately your account application was not approved at this time. Please contact support for more information.`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 16px;">
@@ -198,6 +198,19 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.createJob = catchAsync(async (req, res, next) => {
+  const newJob = await Job.create({
+    ...req.body,
+    recruiterId: req.user.id
+  });
+  res.status(201).json({
+    status: 'success',
+    data: {
+      job: newJob
+    }
+  });
+});
+
 exports.updateJob = catchAsync(async (req, res, next) => {
   const job = await Job.findByIdAndUpdate(req.params.jobId, req.body, { new: true });
   if (!job) return next(new AppError('Job not found', 404));
@@ -282,6 +295,14 @@ exports.createCompetition = catchAsync(async (req, res, next) => {
     data.bannerImage = `/uploads/avatars/${req.file.filename}`;
   }
   
+  if (typeof data.rounds === 'string') {
+    try {
+      data.rounds = JSON.parse(data.rounds);
+    } catch (e) {
+      data.rounds = [];
+    }
+  }
+
   data.createdBy = req.user._id;
 
   const competition = await Competition.create(data);

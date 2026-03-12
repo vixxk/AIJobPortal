@@ -1,11 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
-import { MapPin, Clock, DollarSign, Trash2, Edit2 } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Trash2, Edit2, Plus, Users, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const AdminJobs = () => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        location: '',
+        salaryRange: '',
+        skillsRequired: '',
+        experienceRange: '',
+        jobType: 'Full-time'
+    });
+    const [submitting, setSubmitting] = useState(false);
 
     const fetchJobs = useCallback(async () => {
         setLoading(true);
@@ -33,6 +45,34 @@ const AdminJobs = () => {
         }
     };
 
+    const handleCreateJob = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            const payload = {
+                ...formData,
+                skillsRequired: formData.skillsRequired.split(',').map(s => s.trim()).filter(Boolean)
+            };
+            await axios.post('/admin/jobs', payload);
+            setShowModal(false);
+            setFormData({
+                title: '',
+                description: '',
+                location: '',
+                salaryRange: '',
+                skillsRequired: '',
+                experienceRange: '',
+                jobType: 'Full-time'
+            });
+            fetchJobs();
+        } catch (err) {
+            console.error(err);
+            alert('Creation failed');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     if (loading) return null;
 
     return (
@@ -48,13 +88,21 @@ const AdminJobs = () => {
                         </span>
                     </div>
                 </div>
-                <input
-                    type="text"
-                    placeholder="Search by job title..."
-                    className="w-full max-w-sm h-11 px-6 bg-slate-50 border-none rounded-2xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all placeholder:text-slate-300"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                />
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Search by job title..."
+                        className="w-full sm:w-64 h-11 px-6 bg-slate-50 border-none rounded-2xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all placeholder:text-slate-300"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                    />
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="h-11 px-6 bg-indigo-600 text-white rounded-2xl flex items-center justify-center gap-2 font-bold text-xs hover:bg-indigo-700 transition"
+                    >
+                        <Plus className="w-4 h-4" /> Create
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
@@ -64,11 +112,11 @@ const AdminJobs = () => {
                         <div className="relative z-10 flex-1">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center font-black text-indigo-600">
-                                    {job.companyName[0]}
+                                    {job.title?.[0] || 'J'}
                                 </div>
                                 <div>
                                     <h4 className="font-black text-slate-900 text-lg lg:text-xl leading-tight uppercase line-clamp-1">{job.title}</h4>
-                                    <p className="text-indigo-500 text-[9px] lg:text-[10px] font-black uppercase tracking-[0.1em]">{job.companyName}</p>
+                                    <p className="text-indigo-500 text-[9px] lg:text-[10px] font-black uppercase tracking-[0.1em]">{job.location}</p>
                                 </div>
                             </div>
 
@@ -76,20 +124,17 @@ const AdminJobs = () => {
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-xl text-[10px] font-black text-slate-500 tracking-wider">
                                     <MapPin className="w-3 h-3" /> {job.location}
                                 </div>
-                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-xl text-[10px] font-black text-slate-500 tracking-wider">
-                                    <Clock className="w-3 h-3" /> {job.jobType}
-                                </div>
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-xl text-[9px] lg:text-[10px] font-black text-emerald-600 tracking-wider">
-                                    <DollarSign className="w-3 h-3" /> {job.salary?.min ? (window.innerWidth < 640 ? `$${job.salary.min}k+` : `$${job.salary.min}k - $${job.salary.max}k`) : 'TBD'}
+                                    <DollarSign className="w-3 h-3" /> {job.salaryRange || 'TBD'}
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between mt-4">
                                 <span className="text-[10px] font-bold text-slate-400 tracking-wider">Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                                 <div className="flex gap-2">
-                                    <button className="p-3 bg-slate-50 text-slate-900 rounded-2xl hover:bg-slate-100 transition-all">
-                                        <Edit2 className="w-4 h-4" />
-                                    </button>
+                                    <Link to={`/admin/applications?job=${job._id}`} className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-all" title="View Applicants">
+                                        <Users className="w-4 h-4" />
+                                    </Link>
                                     <button onClick={() => handleDeleteJob(job._id)} className="p-3 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -99,6 +144,53 @@ const AdminJobs = () => {
                     </div>
                 ))}
             </div>
+
+            {showModal && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[32px] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
+                            <h2 className="text-lg font-black uppercase text-slate-900">Create New Job Listing</h2>
+                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreateJob} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Job Title</label>
+                                <input required type="text" className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Senior Software Engineer" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Location</label>
+                                <input required type="text" className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} placeholder="e.g. Remote, New York" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Salary Range</label>
+                                    <input type="text" className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm" value={formData.salaryRange} onChange={e => setFormData({...formData, salaryRange: e.target.value})} placeholder="e.g. $100k - $120k" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Experience</label>
+                                    <input type="text" className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm" value={formData.experienceRange} onChange={e => setFormData({...formData, experienceRange: e.target.value})} placeholder="e.g. 3-5 years" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Skills Required</label>
+                                <input required type="text" className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm" value={formData.skillsRequired} onChange={e => setFormData({...formData, skillsRequired: e.target.value})} placeholder="e.g. React, Node.js, MongoDB (comma separated)" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Description</label>
+                                <textarea required className="w-full p-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm min-h-[120px]" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Job description..." />
+                            </div>
+                            <div className="pt-4 flex justify-end gap-3">
+                                <button type="button" onClick={() => setShowModal(false)} className="px-6 h-12 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancel</button>
+                                <button type="submit" disabled={submitting} className="px-6 h-12 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors shrink-0">
+                                    {submitting ? 'Creating...' : 'Create Job'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

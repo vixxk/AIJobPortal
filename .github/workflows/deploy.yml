@@ -1,0 +1,66 @@
+name: Deploy Backend & Python Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'server/**'
+      - 'python-service/**'
+      - '.github/workflows/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            # Load NVM for Node.js
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            # Navigate to project directory (Assuming the repo name is AIJobPortal on EC2)
+            # You might need to change this folder name to match your EC2 setup
+            cd ~/AIJobPortal
+
+            echo "📥 Pulling latest changes from main..."
+            git pull origin main
+
+            # --- 🚀 Deploy Node.js (Server) ---
+            echo "📦 Setting up Node.js Backend..."
+            cd server
+            npm install --production
+            
+            # Restart with PM2 - Try to restart, if fails (first time), then start
+            pm2 restart server || pm2 start src/server.js --name server
+            cd ..
+
+            # --- 🐍 Deploy Python Service ---
+            echo "📦 Setting up Python Service..."
+            cd python-service
+            
+            # Create venv if missing on EC2
+            if [ ! -d "venv" ]; then
+                echo "🔧 Creating virtual environment..."
+                python3 -m venv venv
+            fi
+            
+            # Install dependencies
+            ./venv/bin/pip install -r requirements.txt
+            
+            # Restart with PM2 using the venv python interpreter
+            pm2 restart python-service || pm2 start main.py --name python-service --interpreter ./venv/bin/python3
+            cd ..
+
+            # Save PM2 state to survive reboots
+            pm2 save
+            
+            echo "✅ Deployment Successful!"

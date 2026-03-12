@@ -31,16 +31,16 @@ export const AuthProvider = ({ children }) => {
         };
         initAuth();
     }, []);
-    const persistUser = (token, userData) => {
-        localStorage.setItem('token', token);
+    const persistUser = useCallback((jwtToken, userData) => {
+        localStorage.setItem('token', jwtToken);
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
-    };
-    const loginWithGoogle = useCallback(async (idToken) => {
+    }, []);
+    const loginWithGoogle = useCallback(async (googleCredential) => {
         try {
-            const response = await api.post('/auth/google', { idToken });
-            const { token, data } = response.data;
-            persistUser(token, data.user);
+            const response = await api.post('/auth/google', { token: googleCredential });
+            const { token: jwtToken, data } = response.data;
+            persistUser(jwtToken, data.user);
             return { success: true, user: data.user, isNewUser: data.isNewUser };
         } catch (error) {
             return {
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Google login failed'
             };
         }
-    }, []);
+    }, [persistUser]);
     const sendOTP = useCallback(async (email, name) => {
         try {
             const response = await api.post('/auth/send-otp', { email, name });
@@ -63,8 +63,8 @@ export const AuthProvider = ({ children }) => {
     const verifyOTP = useCallback(async (email, otp) => {
         try {
             const response = await api.post('/auth/verify-otp', { email, otp });
-            const { token, data } = response.data;
-            persistUser(token, data.user);
+            const { token: jwtToken, data } = response.data;
+            persistUser(jwtToken, data.user);
             return { success: true, user: data.user };
         } catch (error) {
             return {
@@ -72,12 +72,12 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Invalid OTP'
             };
         }
-    }, []);
+    }, [persistUser]);
     const login = useCallback(async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
-            const { token, data } = response.data;
-            persistUser(token, data.user);
+            const { token: jwtToken, data } = response.data;
+            persistUser(jwtToken, data.user);
             return { success: true, user: data.user };
         } catch (error) {
             return {
@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Login failed'
             };
         }
-    }, []);
+    }, [persistUser]);
     const register = useCallback(async (name, email, password, role) => {
         try {
             const response = await api.post('/auth/register', { name, email, password, role });
@@ -100,8 +100,8 @@ export const AuthProvider = ({ children }) => {
     const assignRole = useCallback(async (role) => {
         try {
             const response = await api.post('/auth/assign-role', { role });
-            const { token, data } = response.data;
-            persistUser(token, data.user);
+            const { token: jwtToken, data } = response.data;
+            persistUser(jwtToken, data.user);
             return { success: true, user: data.user };
         } catch (error) {
             return {
@@ -109,12 +109,12 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Role assignment failed'
             };
         }
-    }, []);
+    }, [persistUser]);
     const adminLogin = useCallback(async (email, password) => {
         try {
             const response = await api.post('/auth/admin/login', { email, password });
-            const { token, data } = response.data;
-            persistUser(token, data.user);
+            const { token: jwtToken, data } = response.data;
+            persistUser(jwtToken, data.user);
             return { success: true, user: data.user };
         } catch (error) {
             return {
@@ -122,12 +122,13 @@ export const AuthProvider = ({ children }) => {
                 message: error.response?.data?.message || 'Admin login failed'
             };
         }
-    }, []);
+    }, [persistUser]);
     const updateProfile = useCallback(async (profileData) => {
         try {
             const response = await api.post('/auth/update-profile', profileData);
             const { data } = response.data;
-            persistUser(localStorage.getItem('token'), data.user);
+            const currentToken = localStorage.getItem('token');
+            persistUser(currentToken, data.user);
             return { success: true, user: data.user };
         } catch (error) {
             return {

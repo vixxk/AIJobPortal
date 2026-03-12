@@ -38,14 +38,20 @@ const EnglishTutor = () => {
         }
     };
 
-    if (loading) return (
-        <div className="flex items-center justify-center min-h-screen bg-white">
-            <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-600 border-t-transparent"></div>
-                <p className="text-slate-400 text-sm font-medium">Syncing your progress...</p>
+    const TutorSkeleton = () => (
+        <div className="min-h-screen bg-[#FCFDFF] animate-pulse">
+            <div className="max-w-6xl mx-auto px-8 pt-8 space-y-6">
+                <div className="bg-white rounded-2xl h-[280px] border border-slate-200" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 h-[400px] bg-white rounded-2xl border border-slate-200" />
+                    <div className="h-[400px] bg-white rounded-2xl border border-slate-200" />
+                </div>
+                <div className="bg-white rounded-xl h-[120px] border border-slate-200" />
             </div>
         </div>
     );
+
+    if (loading) return <TutorSkeleton />;
 
     if (view === 'test') {
         return <SpeakingTest onComplete={(data) => { setTutorData(data); setView('dashboard'); }} onCancel={() => setView('dashboard')} />;

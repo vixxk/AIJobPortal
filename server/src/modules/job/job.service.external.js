@@ -334,7 +334,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
     pool.push({
         name: 'WeWorkRemotely', region: 'GLB',
         fetch: () => axios.get('https://weworkremotely.com/remote-jobs.rss', {
-            headers: { 'User-Agent': 'JobPortalApp/1.0' },
+            headers: { 'User-Agent': 'GradnexApp/1.0' },
             responseType: 'text',
         }).then(r => {
             const items = parseRSS(r.data);

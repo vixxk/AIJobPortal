@@ -26,7 +26,8 @@ const legacyResumeRouter = require('../routes/resume');
 const app = express();
 
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -44,7 +45,7 @@ if (process.env.NODE_ENV !== 'production') {
 connectDB();
 
 app.get('/', (req, res) => {
-  res.send('Job Portal API is running... Modular Version.');
+  res.send('Gradnex API is running... Modular Version.');
 });
 
 app.get('/health', (req, res) => {
@@ -65,7 +66,7 @@ app.use('/api/v1/english-tutor', englishTutorRoutes);
 app.use('/api/v1/courses', courseRoutes);
 
 app.use('/api/jobs', legacyJobsRouter);
-app.use('/api/resume', legacyResumeRouter);
+app.use('/api/v1/resume', legacyResumeRouter);
 
 app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

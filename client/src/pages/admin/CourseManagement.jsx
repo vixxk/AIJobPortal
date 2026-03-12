@@ -6,7 +6,7 @@ import {
     ArrowLeft, Edit3, Save, X, Plus, Trash2, BookOpen, Users, Settings,
     Clock, Tag, Globe, BarChart2, Video, Radio, ChevronDown, ChevronRight,
     GripVertical, Calendar, Eye, EyeOff, Star, Award, Target, CheckCircle,
-    UploadCloud, AlertCircle, Check
+    UploadCloud, AlertCircle, Check, Play
 } from 'lucide-react';
 
 const getImageUrl = (path) => {
@@ -18,6 +18,19 @@ const getImageUrl = (path) => {
 
 const LEVEL_OPTIONS = ['Beginner', 'Intermediate', 'Advanced'];
 const CATEGORY_OPTIONS = ['Skill', 'AI', 'Technology', 'Business', 'Design', 'Marketing', 'Data Science', 'Web Development', 'Mobile Dev', 'Other'];
+
+// ─── YouTube URL Parser (defined early so all components can use it) ──────────
+const extractYouTubeId = (url) => {
+    if (!url) return '';
+    if (/^[\w-]{11}$/.test(url.trim())) return url.trim(); // bare 11-char ID
+    try {
+        const u = new URL(url);
+        if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
+        if (u.pathname.startsWith('/live/')) return u.pathname.split('/live/')[1].split('?')[0];
+        if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split('?')[0];
+        return u.searchParams.get('v') || '';
+    } catch { return ''; }
+};
 
 // ─── Inline Editable Field ───────────────────────────────────────────────────
 const EditableField = ({ label, value, onSave, multiline = false, type = 'text' }) => {
@@ -139,8 +152,12 @@ const CourseManagement = () => {
     const [expandedChapters, setExpandedChapters] = useState({});
     const [chapterForm, setChapterForm] = useState({ show: false, title: '', description: '', order: 0 });
     const [editChapter, setEditChapter] = useState(null);
-    const [lectureForm, setLectureForm] = useState({ show: false, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: 0 });
     const [editLecture, setEditLecture] = useState(null);
+    const [previewLecture, setPreviewLecture] = useState(null);
+
+    // Live form state
+    const DEFAULT_LECTURE_FORM = { show: false, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, liveDuration: 60, scheduledAt: '', isPreview: false, order: 0, youtubeUrl: '', videoIdentifier: '', notesUrl: '' };
+    const [lectureForm, setLectureForm] = useState(DEFAULT_LECTURE_FORM);
 
     // Settings
     const [coverFile, setCoverFile] = useState(null);
@@ -225,18 +242,25 @@ const CourseManagement = () => {
     const handleAddLecture = async (e) => {
         e.preventDefault();
         try {
+            // Re-derive videoIdentifier from youtubeUrl as a safety fallback
+            // in case React state batching left videoIdentifier stale/empty
+            const vidId = lectureForm.videoIdentifier || extractYouTubeId(lectureForm.youtubeUrl);
             const payload = {
                 title: lectureForm.title,
                 description: lectureForm.description,
+                videoIdentifier: vidId,
                 type: lectureForm.type,
                 duration: Number(lectureForm.duration),
+                liveDuration: lectureForm.type === 'LIVE' ? Number(lectureForm.liveDuration) : 0,
                 order: Number(lectureForm.order),
                 isPreview: lectureForm.isPreview,
                 ...(lectureForm.chapterId && { chapter: lectureForm.chapterId }),
                 ...(lectureForm.scheduledAt && { scheduledAt: lectureForm.scheduledAt }),
+                notesUrl: lectureForm.notesUrl,
+                status: lectureForm.type === 'LIVE' ? 'LIVE' : 'READY'
             };
             await axios.post(`/courses/${id}/lectures`, payload);
-            setLectureForm({ show: false, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: 0 });
+            setLectureForm(DEFAULT_LECTURE_FORM);
             fetchCourse();
             showToast('Lecture added');
         } catch (err) {
@@ -247,13 +271,18 @@ const CourseManagement = () => {
     const handleUpdateLecture = async (e) => {
         e.preventDefault();
         try {
+            // Re-derive videoIdentifier as a safety fallback
+            const vidId = editLecture.videoIdentifier || extractYouTubeId(editLecture.youtubeUrl || '');
             await axios.patch(`/courses/lectures/${editLecture._id}`, {
                 title: editLecture.title,
                 description: editLecture.description,
+                videoIdentifier: vidId,
                 type: editLecture.type,
                 duration: Number(editLecture.duration),
+                liveDuration: editLecture.type === 'LIVE' ? Number(editLecture.liveDuration) : 0,
                 order: Number(editLecture.order),
                 isPreview: editLecture.isPreview,
+                notesUrl: editLecture.notesUrl,
                 ...(editLecture.scheduledAt && { scheduledAt: editLecture.scheduledAt }),
             });
             setEditLecture(null);
@@ -697,6 +726,7 @@ const CourseManagement = () => {
                                                             <LectureRow key={lecture._id} lecture={lecture} index={li} canEdit={canEdit}
                                                                 onEdit={() => setEditLecture({ ...lecture, scheduledAt: lecture.scheduledAt ? new Date(lecture.scheduledAt).toISOString().slice(0, 16) : '' })}
                                                                 onDelete={() => handleDeleteLecture(lecture._id)}
+                                                                onPreview={() => setPreviewLecture(lecture)}
                                                             />
                                                         ))
                                                     )}
@@ -716,6 +746,7 @@ const CourseManagement = () => {
                                             <LectureRow key={lecture._id} lecture={lecture} index={li} canEdit={canEdit}
                                                 onEdit={() => setEditLecture({ ...lecture, scheduledAt: lecture.scheduledAt ? new Date(lecture.scheduledAt).toISOString().slice(0, 16) : '' })}
                                                 onDelete={() => handleDeleteLecture(lecture._id)}
+                                                onPreview={() => setPreviewLecture(lecture)}
                                             />
                                         ))}
                                     </div>
@@ -919,7 +950,7 @@ const CourseManagement = () => {
 
             {/* Add/Edit Lecture Modal */}
             {(lectureForm.show || editLecture) && (
-                <Modal title={editLecture ? 'Edit Lecture' : 'New Lecture'} onClose={() => { setLectureForm({ show: false, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: 0, youtubeUrl: '' }); setEditLecture(null); }}>
+                <Modal title={editLecture ? 'Edit Lecture' : 'New Lecture'} onClose={() => { setLectureForm({ ...DEFAULT_LECTURE_FORM, show: false }); setEditLecture(null); }}>
                     <form onSubmit={editLecture ? handleUpdateLecture : handleAddLecture} className="space-y-5">
                         <FormField label="Lecture Title">
                             <input required className={inputCls} placeholder="e.g. Variables and Data Types"
@@ -985,12 +1016,21 @@ const CourseManagement = () => {
                                     <option value="LIVE">Live</option>
                                 </select>
                             </FormField>
-                            <FormField label="Duration (minutes)">
-                                <input type="number" min={0} className={inputCls}
-                                    value={editLecture ? editLecture.duration : lectureForm.duration}
-                                    onChange={e => editLecture ? setEditLecture({ ...editLecture, duration: e.target.value }) : setLectureForm({ ...lectureForm, duration: e.target.value })}
-                                />
-                            </FormField>
+                            {(editLecture ? editLecture.type === 'LIVE' : lectureForm.type === 'LIVE') ? (
+                                <FormField label="Live Duration (minutes)">
+                                    <input type="number" min={5} required className={`${inputCls} border-red-200 focus:border-red-400`}
+                                        value={editLecture ? (editLecture.liveDuration || 60) : (lectureForm.liveDuration || 60)}
+                                        onChange={e => editLecture ? setEditLecture({ ...editLecture, liveDuration: e.target.value }) : setLectureForm({ ...lectureForm, liveDuration: e.target.value })}
+                                    />
+                                </FormField>
+                            ) : (
+                                <FormField label="Duration (minutes)">
+                                    <input type="number" min={0} className={inputCls}
+                                        value={editLecture ? editLecture.duration : lectureForm.duration}
+                                        onChange={e => editLecture ? setEditLecture({ ...editLecture, duration: e.target.value }) : setLectureForm({ ...lectureForm, duration: e.target.value })}
+                                    />
+                                </FormField>
+                            )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <FormField label="Order">
@@ -1006,6 +1046,23 @@ const CourseManagement = () => {
                                 />
                             </FormField>
                         </div>
+                        
+                        <FormField label="Notes URL / PDF Link (optional)">
+                            <input
+                                className={inputCls}
+                                placeholder="e.g. https://drive.google.com/..."
+                                value={editLecture ? (editLecture.notesUrl || '') : (lectureForm.notesUrl || '')}
+                                onChange={e => {
+                                    if (editLecture) {
+                                        setEditLecture({ ...editLecture, notesUrl: e.target.value });
+                                    } else {
+                                        setLectureForm({ ...lectureForm, notesUrl: e.target.value });
+                                    }
+                                }}
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1 font-medium px-1">Links to PDF or supplementary materials for this lecture.</p>
+                        </FormField>
+
                         <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl">
                             <input type="checkbox" id="isPreview" className="w-4 h-4 accent-indigo-600 rounded"
                                 checked={editLecture ? editLecture.isPreview : lectureForm.isPreview}
@@ -1022,22 +1079,62 @@ const CourseManagement = () => {
                 </Modal>
             )}
 
+            {/* ─── Lecture Preview Modal ───────────────────────────────────────────── */}
+            {previewLecture && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setPreviewLecture(null)}>
+                    <div className="bg-slate-900 rounded-[32px] w-full max-w-3xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden"
+                        onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-4 lg:px-6 py-4 border-b border-slate-700">
+                            <div className="min-w-0 pr-4">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Student Preview</p>
+                                <p className="text-white font-black truncate text-sm lg:text-base">{previewLecture.title}</p>
+                            </div>
+                            <button onClick={() => setPreviewLecture(null)} className="p-2 shrink-0 text-slate-400 hover:text-white hover:bg-slate-700 rounded-xl transition-all">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-4 lg:p-6 overflow-y-auto max-h-[70vh]">
+                            {previewLecture.videoIdentifier ? (() => {
+                                const cleanId = extractYouTubeId(previewLecture.videoIdentifier);
+                                const origin = window.location.origin;
+                                const embedUrl = `https://www.youtube.com/embed/${cleanId}?rel=0&modestbranding=1&enablejsapi=1&origin=${origin}&widget_referrer=${origin}&controls=0&iv_load_policy=3&fs=0`;
+                                
+                                return (
+                                    <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-xl mb-4 relative group">
+                                        <iframe
+                                            src={embedUrl}
+                                            className="w-full h-full border-0 relative z-0"
+                                            title={previewLecture.title}
+                                            loading="lazy"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        />
+                                        <div className="absolute inset-0 z-10 cursor-default bg-transparent" onContextMenu={e => e.preventDefault()} />
+                                        
+                                        <div className="absolute top-4 left-4 z-20 opacity-20 pointer-events-none">
+                                            <span className="text-[8px] font-black text-white/60 bg-black/40 px-2 py-1 rounded uppercase tracking-widest">Student Preview Mode</span>
+                                        </div>
+                                    </div>
+                                );
+                            })() : (
+                                <div className="aspect-video bg-slate-800 rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-xl mb-4">
+                                    <Video className="w-10 h-10 lg:w-12 lg:h-12 text-slate-600 mb-3" />
+                                    <p className="text-slate-400 font-bold text-xs lg:text-sm">No video URL set for this lecture</p>
+                                    <p className="text-slate-500 text-[10px] lg:text-xs mt-1">Add a YouTube URL in the lecture settings to preview</p>
+                                </div>
+                            )}
+                            {previewLecture.description && (
+                                <p className="text-slate-300 text-xs lg:text-sm leading-relaxed">{previewLecture.description}</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-// ─── YouTube URL Parser ────────────────────────────────────────────────────────
-const extractYouTubeId = (url) => {
-    if (!url) return '';
-    if (/^[\w-]{11}$/.test(url.trim())) return url.trim(); // bare 11-char ID
-    try {
-        const u = new URL(url);
-        if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
-        if (u.pathname.startsWith('/live/')) return u.pathname.split('/live/')[1].split('?')[0];
-        if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split('?')[0];
-        return u.searchParams.get('v') || '';
-    } catch { return ''; }
-};
+// extractYouTubeId is defined near the top of the file (before components)
 
 // ─── Shared Sub-Components ───────────────────────────────────────────────────
 const inputCls = "w-full h-12 px-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 transition-all placeholder:text-slate-300";
@@ -1064,7 +1161,7 @@ const Modal = ({ title, children, onClose }) => (
     </div>
 );
 
-const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete }) => (
+const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) => (
     <div className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none group">
         <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400 shrink-0">
             {index + 1}
@@ -1076,7 +1173,13 @@ const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete }) => (
             }
         </div>
         <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-800 truncate">{lecture.title}</p>
+            <button
+                onClick={onPreview}
+                className="text-sm font-bold text-slate-800 hover:text-indigo-600 truncate block text-left w-full transition-colors"
+                title="Click to preview as student"
+            >
+                {lecture.title}
+            </button>
             <div className="flex items-center gap-3 mt-0.5">
                 {lecture.duration > 0 && (
                     <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
@@ -1091,21 +1194,48 @@ const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete }) => (
                 {lecture.isPreview && (
                     <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Preview</span>
                 )}
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${lecture.type === 'LIVE' ? 'text-rose-600 bg-rose-50' : 'text-indigo-600 bg-indigo-50'}`}>
-                    {lecture.type}
-                </span>
+                {(() => {
+                    const isLiveType = lecture.type === 'LIVE';
+                    const startTime = new Date(lecture.scheduledAt || lecture.createdAt).getTime();
+                    const duration = (lecture.liveDuration || 60) * 60 * 1000;
+                    const isExpired = Date.now() > (startTime + duration);
+                    const isCurrentlyLive = isLiveType && lecture.status === 'LIVE' && !isExpired;
+
+                    return (
+                        <>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${isCurrentlyLive ? 'text-rose-600 bg-rose-50' : 'text-indigo-600 bg-indigo-50'}`}>
+                                {isCurrentlyLive ? 'LIVE SESSION' : isLiveType ? 'Past Live' : 'RECORDED'}
+                            </span>
+                            {isCurrentlyLive && (
+                                <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
+                            )}
+                        </>
+                    );
+                })()}
+                {lecture.notesUrl && (
+                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                        <BookOpen className="w-3 h-3" /> Notes Attached
+                    </span>
+                )}
             </div>
         </div>
-        {canEdit && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                <button onClick={onEdit} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all">
-                    <Edit3 className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1 shrink-0">
+            {lecture.videoIdentifier && (
+                <button onClick={onPreview} title="Preview video" className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+                    <Play className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={onDelete} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
-                    <Trash2 className="w-3.5 h-3.5" />
-                </button>
-            </div>
-        )}
+            )}
+            {canEdit && (
+                <>
+                    <button onClick={onEdit} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all opacity-0 flex-none group-hover:opacity-100 transition-opacity">
+                        <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={onDelete} className="p-2 text-slate-400 hover:text-rose-600 flex-none hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                </>
+            )}
+        </div>
     </div>
 );
 

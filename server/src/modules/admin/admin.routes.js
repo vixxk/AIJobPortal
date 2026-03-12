@@ -20,6 +20,7 @@ const upload = require('../../middleware/upload');
 router.post('/teachers', upload.uploadImage, adminController.createTeacher);
 
 router.get('/jobs', adminController.getAllJobs);
+router.post('/jobs', adminController.createJob);
 router.patch('/jobs/:jobId', adminController.updateJob);
 router.delete('/jobs/:jobId', adminController.deleteJob);
 

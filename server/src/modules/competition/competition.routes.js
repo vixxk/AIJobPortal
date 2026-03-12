@@ -5,5 +5,5 @@ const roleMiddleware = require('../../middleware/role');
 const router = express.Router();
 router.get('/', competitionController.getAllCompetitions);
 router.use(authMiddleware.protect);
-router.post('/', roleMiddleware.restrictTo('SUPER_ADMIN'), competitionController.createCompetition);
+router.post('/', roleMiddleware.restrictTo('SUPER_ADMIN', 'RECRUITER'), competitionController.createCompetition);
 module.exports = router;

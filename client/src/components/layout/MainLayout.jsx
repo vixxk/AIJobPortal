@@ -29,7 +29,7 @@ const MainLayout = () => {
     return (
         <div className="flex h-screen overflow-hidden bg-background print:h-auto print:bg-white print:overflow-visible">
             { }
-            {!isMobile && !['/app/admin', '/app/teacher'].some(path => location.pathname.startsWith(path)) && (
+            {!isMobile && !['/app/admin', '/app/teacher', '/app/college'].some(path => location.pathname.startsWith(path)) && (
                 <div className="print:hidden h-full">
                     <Sidebar
                         isOpen={isSidebarOpen}
@@ -40,14 +40,14 @@ const MainLayout = () => {
             { }
             <div className="flex-1 flex flex-col relative w-full h-full overflow-hidden print:overflow-visible">
                 { }
-                {!['/app/learning', '/app/admin', '/app/teacher'].some(path => location.pathname.startsWith(path)) && (
+                {!['/app/learning', '/app/admin', '/app/teacher', '/app/college'].some(path => location.pathname.startsWith(path)) && (
                     <div className="print:hidden z-10 sticky top-0 bg-background">
                         {isMobile && <MobileNavbar toggleSidebar={() => setIsSidebarOpen(true)} />}
                         <Topbar toggleSidebar={() => setIsSidebarOpen(true)} isMobile={isMobile} />
                     </div>
                 )}
                 { }
-                <main id="main-scroll-container" className={`flex-1 overflow-y-auto relative scroll-smooth print:p-0 print:overflow-visible print:bg-white ${['/app/learning', '/app/admin', '/app/teacher'].some(path => location.pathname.startsWith(path)) ? 'p-0' : 'p-0 md:p-6 pb-0 md:pb-6'}`}>
+                <main id="main-scroll-container" className={`flex-1 overflow-y-auto relative scroll-smooth print:p-0 print:overflow-visible print:bg-white ${['/app/learning', '/app/admin', '/app/teacher', '/app/college'].some(path => location.pathname.startsWith(path)) ? 'p-0' : 'p-0 md:p-6 pb-0 md:pb-6'}`}>
                     <Outlet context={{ toggleSidebar: () => setIsSidebarOpen(true) }} />
                 </main>
             </div>

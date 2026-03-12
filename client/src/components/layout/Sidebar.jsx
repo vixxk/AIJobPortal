@@ -24,9 +24,10 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     let toolLinks = [];
     if (role === 'STUDENT') {
         mainLinks = [
-            { name: 'Dashboard', path: '/app', icon: Home },
+            { name: 'Dashboard', path: '/app', icon: Home, exact: true },
             { name: 'Jobs & Internships', path: '/app/jobs', icon: Briefcase },
             { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
+            { name: 'Competitions', path: '/app/competitions', icon: Trophy },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
             { name: 'AI English Tutor', path: '/app/english-tutor', icon: Users },
         ];
@@ -36,16 +37,13 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         ];
     } else if (role === 'RECRUITER') {
         mainLinks = [
-            { name: 'Overview', path: '/app', icon: Home },
+            { name: 'Dashboard', path: '/app/recruiter', icon: Home, exact: true },
             { name: 'Post a Job', path: '/app/recruiter/post-job', icon: PlusCircle },
-            { name: 'My Listings', path: '/app/recruiter', icon: Briefcase },
         ];
-        toolLinks = [
-            { name: 'Company Profile', path: '/app/profile', icon: User },
-        ];
+        toolLinks = [];
     } else if (role === 'COLLEGE_ADMIN') {
         mainLinks = [
-            { name: 'Dashboard', path: '/app', icon: Home },
+            { name: 'Dashboard', path: '/app', icon: Home, exact: true },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
             { name: 'Student Data', path: '/app/admin', icon: Shield },
         ];
@@ -54,7 +52,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         ];
     } else if (role === 'TEACHER') {
         mainLinks = [
-            { name: 'Dashboard', path: '/app', icon: Home },
+            { name: 'Dashboard', path: '/app', icon: Home, exact: true },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
             { name: 'AI English Tutor', path: '/app/english-tutor', icon: Users },
         ];
@@ -63,17 +61,15 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         ];
     } else if (role === 'SUPER_ADMIN') {
         mainLinks = [
-            { name: 'Analytics', path: '/app', icon: Home },
+            { name: 'Analytics', path: '/app', icon: Home, exact: true },
             { name: 'System Approvals', path: '/app/admin', icon: Shield },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
         ];
         toolLinks = [];
     } else {
-        mainLinks = [{ name: 'Dashboard', path: '/app', icon: Home }];
+        mainLinks = [{ name: 'Dashboard', path: '/app', icon: Home, exact: true }];
     }
     const bottomLinks = [
-        { name: 'Notifications', path: '/app/notifications', icon: Bell, badge: 1 },
-        { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
     ];
     return (
@@ -100,13 +96,18 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                     {!isCollapsed && <p className="text-xs font-semibold text-slate-500 mb-3 px-3 uppercase">Main</p>}
                     <ul className="space-y-1">
                         {mainLinks.map((link) => {
-                            const isActive = location.pathname === link.path || (link.path !== '/app' && location.pathname.startsWith(link.path));
+                            const currentPath = location.pathname.replace(/\/$/, "");
+                            const linkPath = link.path.replace(/\/$/, "");
+                            const isActive = link.exact 
+                                ? currentPath === linkPath 
+                                : currentPath.startsWith(linkPath);
+                            
                             return (
                                 <li key={link.name}>
-                                    <Link to={link.path} className={clsx("flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative", isActive ? "bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md" : "hover:bg-[#1E293B] hover:text-white")}>
+                                    <Link to={link.path} className={clsx("flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative", isActive ? "bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md shadow-blue-900/20" : "hover:bg-[#1E293B] hover:text-white")}>
                                         {isActive && !isCollapsed && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-blue-400 rounded-r-md"></div>}
-                                        <link.icon className={clsx("w-5 h-5 shrink-0", isActive ? "text-blue-200" : "text-slate-400")} />
-                                        {!isCollapsed && <span className="font-medium whitespace-nowrap">{link.name}</span>}
+                                        <link.icon className={clsx("w-5 h-5 shrink-0 transition-transform duration-300", isActive ? "text-blue-200 scale-110" : "text-slate-400 group-hover:scale-110")} />
+                                        {!isCollapsed && <span className="font-bold whitespace-nowrap">{link.name}</span>}
                                     </Link>
                                 </li>
                             );
@@ -154,6 +155,10 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                 <div className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30", isCollapsed ? "p-2" : "p-3")}>
                     {user?.role === 'SUPER_ADMIN' ? (
                         <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-lg">SA</div>
+                    ) : user?.role === 'RECRUITER' && !user?.avatar ? (
+                        <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-black text-xl shrink-0 shadow-lg">
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                        </div>
                     ) : (
                         <img src={getImageUrl(user?.avatar) || "https://i.pravatar.cc/150"} alt="User" className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover shrink-0" />
                     )}

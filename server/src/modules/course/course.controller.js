@@ -1,5 +1,6 @@
 const Course = require('./course.model');
 const Lecture = require('./lecture.model');
+const LectureProgress = require('./progress.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 
@@ -40,7 +41,7 @@ exports.updateCourse = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('No course found with that ID', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher.toString() === req.user.id;
+  const isTeacher = course.teacher?.toString() === req.user.id;
 
   if (!isAdmin && !isTeacher) {
     return next(new AppError('You can only update your own courses', 403));
@@ -132,15 +133,25 @@ exports.getCourse = catchAsync(async (req, res, next) => {
   }
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher._id.toString() === req.user.id;
-  const isEnrolled = course.enrolledStudents.some(s => s._id.toString() === req.user.id);
+  const isTeacher = course.teacher?._id?.toString() === req.user.id;
+  const isEnrolled = course.enrolledStudents?.some(s => s?._id?.toString() === req.user.id);
+
+  let completedLectures = [];
+  if (isEnrolled || isTeacher || isAdmin) {
+    const progress = await LectureProgress.find({
+      user: req.user.id,
+      course: course._id
+    });
+    completedLectures = progress.map(p => p.lecture);
+  }
 
   res.status(200).json({
     status: 'success',
     data: {
       course,
       isEnrolled: isEnrolled || isTeacher || isAdmin,
-      canEdit: isTeacher || isAdmin
+      canEdit: isTeacher || isAdmin,
+      completedLectures
     }
   });
 });
@@ -164,7 +175,7 @@ exports.unenrollFromCourse = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('Course not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher.toString() === req.user.id;
+  const isTeacher = course.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) {
     return next(new AppError('Not authorized to remove students', 403));
   }
@@ -188,7 +199,7 @@ exports.addChapter = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('Course not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher.toString() === req.user.id;
+  const isTeacher = course.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) {
     return next(new AppError('Not authorized', 403));
   }
@@ -204,7 +215,7 @@ exports.updateChapter = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('Course not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher.toString() === req.user.id;
+  const isTeacher = course.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) return next(new AppError('Not authorized', 403));
 
   const chapter = course.chapters.id(req.params.chapterId);
@@ -221,7 +232,7 @@ exports.deleteChapter = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('Course not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher.toString() === req.user.id;
+  const isTeacher = course.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) return next(new AppError('Not authorized', 403));
 
   course.chapters.pull(req.params.chapterId);
@@ -240,7 +251,7 @@ exports.addLecture = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('Course not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher.toString() === req.user.id;
+  const isTeacher = course.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) {
     return next(new AppError('Only the teacher or admin can add lectures', 403));
   }
@@ -257,7 +268,7 @@ exports.getLectures = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('Course not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher.toString() === req.user.id;
+  const isTeacher = course.teacher?.toString() === req.user.id;
   const isEnrolled = course.enrolledStudents.includes(req.user.id);
 
   if (!isEnrolled && !isTeacher && !isAdmin) {
@@ -274,7 +285,7 @@ exports.updateLecture = catchAsync(async (req, res, next) => {
   if (!lecture) return next(new AppError('Lecture not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = lecture.course.teacher.toString() === req.user.id;
+  const isTeacher = lecture.course?.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) {
     return next(new AppError('Not authorized', 403));
   }
@@ -292,7 +303,7 @@ exports.deleteLecture = catchAsync(async (req, res, next) => {
   if (!lecture) return next(new AppError('Lecture not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = lecture.course.teacher.toString() === req.user.id;
+  const isTeacher = lecture.course?.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) {
     return next(new AppError('Not authorized', 403));
   }
@@ -300,4 +311,32 @@ exports.deleteLecture = catchAsync(async (req, res, next) => {
   await Lecture.findByIdAndDelete(req.params.id);
 
   res.status(204).json({ status: 'success', data: null });
+});
+
+exports.markLectureComplete = catchAsync(async (req, res, next) => {
+  const lecture = await Lecture.findById(req.params.id);
+  if (!lecture) return next(new AppError('Lecture not found', 404));
+
+  await LectureProgress.findOneAndUpdate(
+    { user: req.user.id, lecture: lecture._id },
+    { user: req.user.id, lecture: lecture._id, course: lecture.course },
+    { upsert: true, new: true }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Lecture marked as complete'
+  });
+});
+
+exports.unmarkLectureComplete = catchAsync(async (req, res, next) => {
+  await LectureProgress.findOneAndDelete({
+    user: req.user.id,
+    lecture: req.params.id
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Lecture marked as incomplete'
+  });
 });

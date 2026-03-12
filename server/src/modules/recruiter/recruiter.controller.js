@@ -54,3 +54,12 @@ exports.uploadLogo = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+exports.getAllRecruiters = catchAsync(async (req, res, next) => {
+  const recruiters = await RecruiterProfile.find().populate('userId', 'email name');
+  res.status(200).json({
+    status: 'success',
+    results: recruiters.length,
+    data: recruiters
+  });
+});

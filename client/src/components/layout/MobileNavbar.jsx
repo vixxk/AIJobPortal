@@ -1,5 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
-import { Home, Bookmark, User, HelpCircle } from 'lucide-react';
+import { Home, Bookmark, User, HelpCircle, Trophy } from 'lucide-react';
 import clsx from 'clsx';
 const MobileNavbar = () => {
     const location = useLocation();
@@ -8,7 +8,8 @@ const MobileNavbar = () => {
     }
     const bottomNavItems = [
         { name: 'Home', path: '/app', icon: Home },
-        { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
+        { name: 'Contest', path: '/app/competitions', icon: Trophy },
+        { name: 'Saved', path: '/app/saved', icon: Bookmark },
         { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
     ];

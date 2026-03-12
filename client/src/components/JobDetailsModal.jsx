@@ -5,9 +5,18 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave }) => {
     const [didSave, setDidSave] = useState(initiallySaved || false);
     const [isSaving, setIsSaving] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
+    const [applied, setApplied] = useState(false);
+    const [error, setError] = useState(null);
+
     const handleCopyLink = () => {
         if (job?.link) {
-            navigator.clipboard.writeText(job.link);
+            navigator.clipboard.writeText(job.link || window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } else if (job?._id) {
+            const url = `${window.location.origin}/app/special-jobs/${job._id}`;
+            navigator.clipboard.writeText(url);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
@@ -20,6 +29,12 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave }) => {
     useEffect(() => {
         if (job) {
             document.body.style.overflow = 'hidden';
+            setApplied(false);
+            setError(null);
+            // Check if already applied if internal
+            if (job.isInternal) {
+                checkApplicationStatus();
+            }
         } else {
             document.body.style.overflow = '';
         }
@@ -27,6 +42,35 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave }) => {
             document.body.style.overflow = '';
         };
     }, [job]);
+
+    const checkApplicationStatus = async () => {
+        try {
+            const res = await axios.get('/applications/my-applications');
+            if (res.data.status === 'success') {
+                const alreadyApplied = res.data.data.applications.some(app => app.jobId?._id === job._id || app.jobId === job._id);
+                setApplied(alreadyApplied);
+            }
+        } catch (err) {
+            console.error("Failed to check app status", err);
+        }
+    };
+
+    const handleApply = async () => {
+        if (!job.isInternal) return;
+        setIsApplying(true);
+        setError(null);
+        try {
+            const res = await axios.post('/applications', { jobId: job._id });
+            if (res.data.status === 'success') {
+                setApplied(true);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to apply. Please try again.");
+        } finally {
+            setIsApplying(false);
+        }
+    };
+
     if (!job) return null;
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -141,15 +185,32 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave }) => {
                     >
                         {isSaving ? 'Processing...' : didSave ? 'Remove from saved' : 'Save for later'}
                     </button>
-                    <a
-                        href={job.link || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-[1.2] bg-[#1a56f0] text-white font-bold py-3 px-4 rounded-xl text-sm whitespace-nowrap hover:bg-[#1546c7] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10"
-                    >
-                        Apply Now <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                    {job.isInternal ? (
+                        <button
+                            onClick={handleApply}
+                            disabled={isApplying || applied}
+                            className={`flex-[1.2] font-bold py-3 px-4 rounded-xl text-sm whitespace-nowrap transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 ${applied ? 'bg-emerald-500 text-white cursor-default' : 'bg-[#1a56f0] text-white hover:bg-[#1546c7]'}`}
+                        >
+                            {isApplying ? 'Applying...' : applied ? (
+                                <><Check className="w-4 h-4" /> Applied</>
+                            ) : 'Apply Now'}
+                        </button>
+                    ) : (
+                        <a
+                            href={job.link || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-[1.2] bg-[#1a56f0] text-white font-bold py-3 px-4 rounded-xl text-sm whitespace-nowrap hover:bg-[#1546c7] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10"
+                        >
+                            Apply Now <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                    )}
                 </div>
+                {error && (
+                    <div className="px-8 pb-4 text-center">
+                        <p className="text-rose-500 text-xs font-semibold">{error}</p>
+                    </div>
+                )}
             </div>
         </div>
     );

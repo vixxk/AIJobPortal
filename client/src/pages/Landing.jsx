@@ -28,11 +28,11 @@ const Landing = () => {
         }
     }, [step]);
     const handleGetStarted = () => {
-        navigate(user ? '/app' : '/login');
+        navigate(user ? '/app' : '/register');
     };
     const onboardingData = [
         {
-            title: "We are the best job\nportal platform",
+            title: "We are the best career\ngrowth platform",
             subtitle: "Discover opportunities that match your skills. Your next big career move is just a tap away.",
             image: landing1Img
         },
@@ -64,10 +64,10 @@ const Landing = () => {
                         <div className="absolute inset-0 bg-black/60" />
                         <div className="relative z-10 w-full h-full flex flex-col justify-end pb-24 px-8 animate-fade-in">
                             <h1 className="text-white text-[42px] font-[800] mb-3 leading-[1.1] tracking-tight">
-                                Welcome to<br />Jobee! <span className="inline-block text-[38px] ml-1">👋</span>
+                                Welcome to<br />Gradnex! <span className="inline-block text-[38px] ml-1">👋</span>
                             </h1>
                             <p className="text-[#F1F5F9] text-[15px] max-w-[280px] leading-[1.6] font-medium tracking-wide">
-                                The best job finder & job portal app where the best jobs will find you.
+                                The best career finder & talent portal where the best opportunities find you.
                             </p>
                         </div>
                     </div>
@@ -120,6 +120,15 @@ const Landing = () => {
                             >
                                 Get Started
                             </button>
+                            <p className="mt-5 text-slate-400 text-[14px] font-medium text-center">
+                                Already have an account?{' '}
+                                <span
+                                    onClick={() => navigate('/login')}
+                                    className="text-[#3B82F6] font-bold cursor-pointer hover:underline"
+                                >
+                                    Sign In
+                                </span>
+                            </p>
                         </div>
                     </div>
                 )}
@@ -158,9 +167,9 @@ const Landing = () => {
                 <div className="w-[45%] lg:w-2/5 flex flex-col items-start justify-center p-16 lg:p-24 bg-white z-10 shadow-[-20px_0_40px_-10px_rgba(0,0,0,0.03)] border-l border-slate-100">
                     <div className="mb-16 w-full max-w-[340px] text-center">
                         <h1 className="text-[#3B82F6] font-[900] text-5xl lg:text-6xl tracking-tight flex items-center justify-center">
-                            Jobee <span className="text-[40px] ml-3 mt-1">👋</span>
+                            Gradnex <span className="text-[40px] ml-3 mt-1">👋</span>
                         </h1>
-                        <p className="text-slate-400 font-medium mt-3 text-lg">The ultimate job finder platform.</p>
+                        <p className="text-slate-400 font-medium mt-3 text-lg">The ultimate career finder platform.</p>
                     </div>
                     <div className="relative w-full overflow-hidden h-[240px]">
                         <div
@@ -187,7 +196,7 @@ const Landing = () => {
                     </button>
                     <p className="mt-5 text-slate-400 text-sm font-medium w-full max-w-[340px] text-center">
                         Already have an account?{' '}
-                        <span onClick={handleGetStarted} className="text-[#3B82F6] font-bold cursor-pointer hover:underline">Sign In</span>
+                        <span onClick={() => navigate('/login')} className="text-[#3B82F6] font-bold cursor-pointer hover:underline">Sign In</span>
                     </p>
                 </div>
             </div>

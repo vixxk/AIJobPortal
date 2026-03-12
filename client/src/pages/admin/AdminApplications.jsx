@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from '../../utils/axios';
 import clsx from 'clsx';
 
 const AdminApplications = () => {
+    const { search } = useLocation();
+    const jobIdFilter = new URLSearchParams(search).get('job');
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -22,21 +25,51 @@ const AdminApplications = () => {
         fetchApplications();
     }, [fetchApplications]);
 
-    if (loading) return null;
+    const TableSkeleton = () => (
+        <div className="bg-white rounded-[40px] border border-slate-100 animate-pulse overflow-hidden">
+            <div className="p-8 h-20 bg-slate-50/50" />
+            <div className="p-8 space-y-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="flex justify-between items-center h-12 border-b border-slate-50">
+                        <div className="flex gap-4">
+                            <div className="w-10 h-10 rounded-full bg-slate-100" />
+                            <div className="space-y-2">
+                                <div className="h-4 w-32 bg-slate-100 rounded" />
+                                <div className="h-3 w-48 bg-slate-50 rounded" />
+                            </div>
+                        </div>
+                        <div className="h-4 w-24 bg-slate-50 rounded" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    if (loading) return <TableSkeleton />;
+
+    const filteredApplications = applications.filter(app => {
+        if (jobIdFilter) return app.jobId?._id === jobIdFilter || app.jobId === jobIdFilter;
+        return true;
+    });
 
     return (
         <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
             <div className="p-6 lg:p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
                 <div className="flex items-center gap-3">
                     <span className="w-3 h-3 bg-indigo-600 rounded-full" />
-                    <h3 className="font-black text-slate-900 tracking-tighter uppercase text-[10px] lg:text-sm">Global Application Ledger</h3>
+                    <h3 className="font-black text-slate-900 tracking-tighter uppercase text-[10px] lg:text-sm">
+                        {jobIdFilter ? `Applications for Job ID: ${jobIdFilter}` : 'Global Application Ledger'}
+                    </h3>
                     <div className="flex items-center gap-2.5 px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full shadow-lg shadow-blue-100 animate-in zoom-in-95 duration-500">
                         <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
                         <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
-                            {applications.length} <span className="text-blue-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">records</span>
+                            {filteredApplications.length} <span className="text-blue-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">records</span>
                         </span>
                     </div>
                 </div>
+                {jobIdFilter && (
+                    <a href="/admin/applications" className="px-4 py-2 border rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-50">Clear Filter</a>
+                )}
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -49,7 +82,7 @@ const AdminApplications = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {applications.map(app => (
+                        {filteredApplications.map(app => (
                             <tr key={app._id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="p-6 lg:p-8">
                                     <div className="flex items-center gap-3 lg:gap-4">

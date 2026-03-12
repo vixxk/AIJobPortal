@@ -30,101 +30,98 @@ const PendingApproval = () => {
     };
     const roleLabel = user?.role === 'RECRUITER' ? 'Recruiter' : 'College';
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950/30 flex flex-col items-center justify-center p-4">
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-5%] right-[-5%] w-[35%] h-[35%] bg-amber-600/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-[-5%] left-[-5%] w-[35%] h-[35%] bg-orange-500/10 rounded-full blur-3xl" />
-            </div>
-            <div className="relative z-10 w-full max-w-md">
-                <div className="flex justify-center mb-8">
-                    <Logo iconSize="w-10 h-10" textClassName="text-2xl text-white" />
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 sm:p-8">
+            <div className="w-full max-w-md">
+                <div className="flex justify-center mb-10">
+                    <Logo iconSize="w-8 h-8" textClassName="text-xl text-slate-900 font-bold" />
                 </div>
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl text-center">
-                    <div className="flex items-center justify-center mb-6">
-                        <div className="relative">
-                            <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center">
-                                <div className="w-20 h-20 rounded-full bg-amber-500/15 border-2 border-amber-500/40 flex items-center justify-center">
-                                    <Clock className="w-10 h-10 text-amber-400" strokeWidth={1.5} />
-                                </div>
-                            </div>
-                            <div className="absolute inset-0 rounded-full border-2 border-amber-400/30 animate-ping" />
+                
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm text-center">
+                    <div className="flex items-center justify-center mb-8">
+                        <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center">
+                            <Clock className="w-8 h-8 text-amber-600" strokeWidth={2} />
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-white mb-3 tracking-tight">
+                    
+                    <h1 className="text-2xl font-bold text-slate-900 mb-2">
                         Verification Pending
                     </h1>
-                    <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                        Your <span className="text-amber-300 font-semibold">{roleLabel}</span> account is under review.
-                        Our admin team will verify your details and approve your account within{' '}
-                        <span className="text-white font-medium">24–48 hours</span>.
+                    <p className="text-slate-500 text-sm leading-relaxed mb-8">
+                        Your <span className="text-slate-900 font-semibold">{roleLabel}</span> account is currently being reviewed by our administration team. This process typically takes <span className="text-slate-900 font-medium">24–48 hours</span>.
                     </p>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6 text-left space-y-3">
+                    
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-8 text-left space-y-4">
                         {[
-                            { icon: CheckCircle, text: 'Account created successfully', done: true },
-                            { icon: CheckCircle, text: `Role assigned: ${roleLabel}`, done: true },
-                            { icon: Shield, text: 'Admin verification in progress', done: false },
-                            { icon: CheckCircle, text: 'Full platform access unlocked', done: false }
+                            { icon: CheckCircle, text: 'Account registration', done: true },
+                            { icon: CheckCircle, text: `Role assignment: ${roleLabel}`, done: true },
+                            { icon: Shield, text: 'Administrative verification', done: false },
+                            { icon: CheckCircle, text: 'Platform access', done: false }
                         ].map((step, i) => (
                             <div key={i} className="flex items-center gap-3">
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0
-                                    ${step.done ? 'bg-emerald-500/20 border border-emerald-500/40' : 'bg-slate-700/50 border border-slate-600/40'}`}>
-                                    <step.icon className={`w-3.5 h-3.5 ${step.done ? 'text-emerald-400' : 'text-slate-500'}`} />
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0
+                                    ${step.done ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-200 text-slate-400'}`}>
+                                    <step.icon className="w-3.5 h-3.5" />
                                 </div>
-                                <span className={`text-sm ${step.done ? 'text-slate-200' : 'text-slate-500'}`}>
+                                <span className={`text-sm font-medium ${step.done ? 'text-slate-700' : 'text-slate-400'}`}>
                                     {step.text}
                                 </span>
                                 {i === 2 && (
-                                    <span className="ml-auto text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                                        ACTIVE
+                                    <span className="ml-auto text-[9px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        In Progress
                                     </span>
                                 )}
                             </div>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2 justify-center text-xs text-slate-500 mb-6">
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>We'll notify you at <span className="text-slate-300">{user?.email}</span> when approved</span>
-                    </div>
+
                     {checkMsg && (
-                        <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-300">
+                        <div className={`mb-6 p-4 rounded-xl text-sm font-medium ${checkMsg.includes('❌') ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-indigo-50 text-indigo-700 border border-indigo-100'}`}>
                             {checkMsg}
                         </div>
                     )}
+                    
                     <div className="space-y-3">
                         <button
                             onClick={handleCheckStatus}
                             disabled={checking}
-                            className="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-[0_8px_24px_-8px_rgba(245,158,11,0.4)]"
+                            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm"
                         >
                             {checking ? (
                                 <>
                                     <RefreshCw className="w-4 h-4 animate-spin" />
-                                    Checking...
+                                    Updating Status...
                                 </>
                             ) : (
                                 <>
                                     <RefreshCw className="w-4 h-4" />
-                                    Check Approval Status
+                                    Check Application Status
                                 </>
                             )}
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="w-full py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-slate-200 font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-semibold text-sm transition-all flex items-center justify-center gap-2"
                         >
                             <LogOut className="w-4 h-4" />
                             Sign Out
                         </button>
                     </div>
                 </div>
-                <p className="text-center text-xs text-slate-600 mt-6">
-                    Questions? Contact us at{' '}
-                    <a href="mailto:support@jobportal.com" className="text-slate-400 hover:text-slate-200 transition-colors">
-                        support@jobportal.com
-                    </a>
-                </p>
+                
+                <div className="mt-8 text-center space-y-4">
+                    <p className="text-xs text-slate-500">
+                        We'll send a notification to <span className="font-semibold text-slate-700">{user?.email}</span> once approved.
+                    </p>
+                    <p className="text-xs text-slate-400">
+                        Need help? Contact{' '}
+                        <a href="mailto:support@gradnex.com" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+                            support@gradnex.com
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
     );
 };
+
 export default PendingApproval;

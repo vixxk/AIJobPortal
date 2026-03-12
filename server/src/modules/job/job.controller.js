@@ -1,6 +1,7 @@
 const Job = require('./job.model');
 const SavedJob = require('./savedJob.model');
 const RecruiterProfile = require('../recruiter/recruiter.model');
+const Application = require('../application/application.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const externalJobService = require('./job.service.external');
@@ -62,6 +63,34 @@ exports.deleteJob = catchAsync(async (req, res, next) => {
     data: null
   });
 });
+
+exports.getMyJobs = catchAsync(async (req, res, next) => {
+  const jobs = await Job.find({ recruiterId: req.user._id }).sort('-createdAt');
+  
+  res.status(200).json({
+    status: 'success',
+    results: jobs.length,
+    data: jobs
+  });
+});
+
+exports.getRecruiterStats = catchAsync(async (req, res, next) => {
+  const activeJobs = await Job.countDocuments({ recruiterId: req.user._id, status: 'OPEN' });
+  
+  // Aggregate applications for all jobs of this recruiter
+  const jobs = await Job.find({ recruiterId: req.user._id }).select('_id');
+  const jobIds = jobs.map(j => j._id);
+  
+  const totalApplicants = await Application.countDocuments({ jobId: { $in: jobIds } });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      activeJobs,
+      totalApplicants: totalApplicants || 0
+    }
+  });
+});
 exports.getAllJobs = catchAsync(async (req, res, next) => {
   const queryObj = { ...req.query };
   const excludedFields = ['page', 'sort', 'limit', 'fields'];
@@ -72,7 +101,7 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
   if (!queryObj.status) {
       queryObj.status = 'OPEN';
   }
-  let query = Job.find(queryObj);
+  let query = Job.find(queryObj).populate('recruiterId', 'companyName logo');
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 10;
   const skip = (page - 1) * limit;

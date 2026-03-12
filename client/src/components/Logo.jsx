@@ -13,7 +13,7 @@ const Logo = ({ className = '', iconSize = 'w-10 h-10', textClassName = 'text-2x
             <LogoIcon className={iconSize} />
             {withText && (
                 <span className={`font-extrabold tracking-tight ${textClassName}`}>
-                    Job<span className="text-blue-600">Portal</span>
+                    Grad<span className="text-blue-600">nex</span>
                 </span>
             )}
         </Link>

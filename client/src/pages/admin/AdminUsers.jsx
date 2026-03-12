@@ -40,17 +40,31 @@ const AdminUsers = ({ role }) => {
     }, [fetchUsers]);
 
     const handleUserAction = async (userId, action) => {
+        // Optimistic Update
+        const previousUsers = [...users];
+        
         try {
-            if (action === 'approve') await axios.patch(`/admin/users/${userId}/approval`, { action: 'approve' });
-            else if (action === 'reject') await axios.patch(`/admin/users/${userId}/approval`, { action: 'reject' });
-            else if (action === 'ban') await axios.patch(`/admin/users/${userId}/ban`);
+            if (action === 'approve') {
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, approvalStatus: 'APPROVED' } : u));
+                await axios.patch(`/admin/users/${userId}/approval`, { action: 'approve' });
+            }
+            else if (action === 'reject') {
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, approvalStatus: 'REJECTED' } : u));
+                await axios.patch(`/admin/users/${userId}/approval`, { action: 'reject' });
+            }
+            else if (action === 'ban') {
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, isActive: !u.isActive } : u));
+                await axios.patch(`/admin/users/${userId}/ban`);
+            }
             else if (action === 'delete') {
                 if (!confirm('Delete this user forever?')) return;
+                setUsers(prev => prev.filter(u => u._id !== userId));
                 await axios.delete(`/admin/users/${userId}`);
             }
-            fetchUsers();
         } catch (err) {
-            alert(err.response?.data?.message || 'Action failed');
+            console.error(err);
+            setUsers(previousUsers); // Rollback
+            alert(err.response?.data?.message || 'Server sync failed. Rolling back changes.');
         }
     };
 
@@ -88,134 +102,161 @@ const AdminUsers = ({ role }) => {
         }
     };
 
-    if (loading) return null;
+    const TableSkeleton = () => (
+        <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-0 animate-pulse">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="p-6 bg-slate-50/50 flex justify-between">
+                    <div className="space-y-2">
+                        <div className="h-5 w-32 bg-slate-200 rounded" />
+                        <div className="h-3 w-48 bg-slate-100 rounded" />
+                    </div>
+                    <div className="h-10 w-24 bg-slate-200 rounded-xl" />
+                </div>
+                <div className="p-4 border-b border-slate-100">
+                    <div className="h-10 w-full max-w-md bg-slate-100 rounded-xl" />
+                </div>
+                <div className="p-6 space-y-4">
+                    {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className="flex items-center justify-between">
+                            <div className="flex gap-4">
+                                <div className="w-10 h-10 bg-slate-100 rounded-xl" />
+                                <div className="space-y-2">
+                                    <div className="h-4 w-40 bg-slate-100 rounded" />
+                                    <div className="h-3 w-32 bg-slate-50 rounded" />
+                                </div>
+                            </div>
+                            <div className="h-8 w-24 bg-slate-50 rounded-lg" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading && users.length === 0) return <TableSkeleton />;
 
     return (
-        <div className="space-y-4 lg:space-y-6 animate-in fade-in duration-500">
-            <div className="bg-white rounded-[32px] lg:rounded-[40px] border border-slate-100 shadow-2xl overflow-hidden">
-                <div className="p-6 lg:p-8 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/30">
-                    <div className="flex items-center gap-3">
-                        <span className="w-3 h-3 bg-indigo-600 rounded-full" />
-                        <h3 className="font-black text-slate-900 tracking-tighter uppercase text-sm">
-                            {role ? `${role} Registry` : 'All Users Registry'}
-                        </h3>
-                        <div className={clsx(
-                            "flex items-center gap-2.5 px-3 py-1 rounded-full shadow-lg animate-in zoom-in-95 duration-500",
-                            role === 'STUDENT' ? "bg-gradient-to-r from-blue-600 to-cyan-600 shadow-blue-100" :
-                                role === 'RECRUITER' ? "bg-gradient-to-r from-violet-600 to-purple-600 shadow-violet-100" :
-                                    role === 'TEACHER' ? "bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-100" :
-                                        "bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-100"
-                        )}>
-                            <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
-                            <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
-                                {users.length} <span className="text-white/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">records</span>
-                            </span>
+        <div className="max-w-7xl mx-auto space-y-6 px-4 sm:px-0">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col">
+                            <h3 className="text-xl font-bold text-slate-800 tracking-tight">
+                                {role ? `${role} MANAGEMENT` : 'USER MANAGEMENT'}
+                            </h3>
+                            <p className="text-xs text-slate-500 font-medium">
+                                Showing {users.length} registered {role?.toLowerCase() || 'user'}s
+                            </p>
                         </div>
                     </div>
                     {role === 'TEACHER' && (
                         <button
                             onClick={() => setTeacherForm({ ...teacherForm, show: true })}
-                            className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-sm"
                         >
-                            <GraduationCap className="w-4 h-4" /> CREATE TEACHER
+                            <GraduationCap className="w-4 h-4" /> ADD TEACHER
                         </button>
                     )}
                 </div>
 
-                <div className="p-4 lg:p-6 border-b border-slate-50 flex items-center">
-                    <input
-                        type="text"
-                        placeholder={`Filter by name...`}
-                        className="w-full max-w-sm h-11 px-4 bg-slate-100 border-none rounded-xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/20 outline-none transition-all placeholder:text-slate-400 text-slate-600"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                    />
+                <div className="p-4 border-b border-slate-100">
+                    <div className="relative max-w-md">
+                        <input
+                            type="text"
+                            placeholder={`Search ${role?.toLowerCase() || 'user'}s...`}
+                            className="w-full h-10 pl-10 pr-4 bg-slate-100/50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-white text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-wider lg:tracking-[0.2em]">
-                            <tr>
-                                <th className="p-4 lg:p-8">IDENTITY</th>
-                                <th className="p-4 lg:p-8 text-center hidden sm:table-cell">{role === 'TEACHER' ? 'PRIVILEGE' : 'VERIFICATION'}</th>
-                                <th className="p-4 lg:p-8 text-center">STATUS</th>
-                                <th className="p-4 lg:p-8 text-right">OPS</th>
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-100">
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">User Identity</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center hidden md:table-cell">{role === 'TEACHER' ? 'Role' : 'Verification'}</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
-                                <tr key={u._id} className="group hover:bg-slate-50/50 transition-colors">
-                                    <td className="p-4 lg:p-8">
-                                        <div className="flex items-center gap-3 lg:gap-4">
-                                            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-[14px] lg:rounded-[18px] bg-slate-100 flex items-center justify-center font-black text-indigo-600 border border-white shadow-sm text-sm lg:text-lg overflow-hidden shrink-0">
+                                <tr key={u._id} className="hover:bg-slate-50/80 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-indigo-600 border border-slate-200 overflow-hidden shrink-0">
                                                 {u.avatar ? (
                                                     <img src={getImageUrl(u.avatar)} alt={u.name} className="w-full h-full object-cover" />
                                                 ) : u.name[0]}
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="font-black text-slate-900 text-[11px] lg:text-sm mb-0.5 truncate uppercase">{u.name}</p>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex items-center gap-1 text-[9px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate max-w-[120px] lg:max-w-none"><Mail className="w-3 h-3 shrink-0" /> {u.email}</div>
-                                                </div>
+                                                <p className="font-semibold text-slate-900 text-sm truncate">{u.name}</p>
+                                                <p className="text-xs text-slate-500 truncate">{u.email}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4 lg:p-8 text-center hidden sm:table-cell">
+                                    <td className="px-6 py-4 text-center hidden md:table-cell">
                                         {role === 'TEACHER' ? (
                                             <span className={clsx(
-                                                "px-3 py-1.5 rounded-xl text-[9px] font-black tracking-widest uppercase border whitespace-nowrap",
-                                                ROLE_CONFIG[u.role]?.text || "text-slate-400 border-slate-100 bg-slate-50",
+                                                "inline-flex px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
+                                                ROLE_CONFIG[u.role]?.text || "text-slate-500 border-slate-200 bg-slate-50",
                                                 ROLE_CONFIG[u.role]?.bg || "bg-slate-50"
                                             )}>
                                                 {u.role}
                                             </span>
                                         ) : (
                                             <span className={clsx(
-                                                "px-3 py-1.5 rounded-xl text-[9px] font-black tracking-widest uppercase border whitespace-nowrap",
-                                                u.approvalStatus === 'APPROVED' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                                                    u.approvalStatus === 'REJECTED' ? "bg-rose-50 text-rose-600 border-rose-100" :
-                                                        "bg-amber-50 text-amber-600 border-amber-100"
+                                                "inline-flex px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
+                                                u.approvalStatus === 'APPROVED' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                                                    u.approvalStatus === 'REJECTED' ? "bg-rose-50 text-rose-700 border-rose-100" :
+                                                        "bg-amber-50 text-amber-700 border-amber-100"
                                             )}>
                                                 {u.approvalStatus || 'PENDING'}
                                             </span>
                                         )}
                                     </td>
-                                    <td className="p-4 lg:p-8">
+                                    <td className="px-6 py-4">
                                         <div className="flex justify-center">
                                             <span className={clsx(
-                                                "flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1 bg-white rounded-full border text-[8px] lg:text-[10px] font-black tracking-wider uppercase whitespace-nowrap",
-                                                u.isActive ? "text-emerald-500 border-emerald-100" : "text-rose-500 border-rose-100"
+                                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-tight",
+                                                u.isActive ? "text-emerald-600 border-emerald-100 bg-emerald-50" : "text-rose-600 border-rose-100 bg-rose-50"
                                             )}>
-                                                <div className={clsx("w-1 lg:w-1.5 h-1 lg:h-1.5 rounded-full", u.isActive ? "bg-emerald-500" : "bg-rose-500")} />
-                                                {u.isActive ? (window.innerWidth < 640 ? 'ON' : 'Active') : (window.innerWidth < 640 ? 'OFF' : 'Locked')}
+                                                <span className={clsx("w-1.5 h-1.5 rounded-full animate-pulse", u.isActive ? "bg-emerald-500" : "bg-rose-500")} />
+                                                {u.isActive ? 'Active' : 'Locked'}
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="p-4 lg:p-8">
-                                        <div className="flex justify-end gap-1.5 lg:gap-3 opacity-100 lg:translate-x-4 lg:opacity-0 group-hover:opacity-100 lg:group-hover:translate-x-0 transition-all">
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end items-center gap-2">
                                             {u.approvalStatus === 'PENDING' && (
                                                 <button
                                                     onClick={() => handleUserAction(u._id, 'approve')}
-                                                    className="px-2 lg:px-4 py-1.5 lg:py-2 bg-indigo-600 text-white rounded-lg lg:rounded-xl text-[8px] lg:text-[10px] font-black hover:scale-105 transition-all shadow-lg shadow-indigo-200 uppercase"
+                                                    className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold hover:bg-emerald-700 transition-colors shadow-sm uppercase tracking-wider"
                                                 >
-                                                    OK
+                                                    Approve
                                                 </button>
                                             )}
                                             <button
                                                 onClick={() => handleUserAction(u._id, 'ban')}
                                                 className={clsx(
-                                                    "p-2 lg:p-2.5 rounded-lg lg:rounded-xl transition-all",
-                                                    u.isActive ? "bg-amber-50 text-amber-600 hover:bg-amber-100" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                                                    "p-2 rounded-lg transition-all border",
+                                                    u.isActive ? "text-amber-600 border-amber-100 hover:bg-amber-50" : "text-emerald-600 border-emerald-100 hover:bg-emerald-50"
                                                 )}
                                                 title={u.isActive ? 'Suspend' : 'Unsuspend'}
                                             >
-                                                <Ban className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                                <Ban className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleUserAction(u._id, 'delete')}
-                                                className="p-2 lg:p-2.5 bg-rose-50 text-rose-600 rounded-lg lg:rounded-xl hover:bg-rose-100 transition-all"
+                                                className="p-2 text-rose-600 border border-rose-100 rounded-lg hover:bg-rose-50 transition-all"
+                                                title="Delete User"
                                             >
-                                                <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -227,55 +268,61 @@ const AdminUsers = ({ role }) => {
             </div>
 
             {teacherForm.show && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 lg:p-8 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[32px] lg:rounded-[40px] p-8 lg:p-12 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-                        <button onClick={() => setTeacherForm({ ...teacherForm, show: false })} className="absolute top-6 right-6 lg:top-8 lg:right-8 text-slate-400 hover:text-slate-900 transition-colors">
-                            <XCircle className="w-6 h-6 lg:w-8 lg:h-8" />
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-300">
+                        <button onClick={() => setTeacherForm({ ...teacherForm, show: false })} className="absolute top-4 right-4 text-slate-400 hover:text-slate-900 transition-colors">
+                            <XCircle className="w-6 h-6" />
                         </button>
-                        <h3 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tighter mb-1 lg:mb-2 uppercase">CREATE ACCOUNT</h3>
-                        <p className="text-slate-400 text-[9px] lg:text-xs font-bold mb-6 lg:mb-10 tracking-widest uppercase italic">Initialize Instructor Node</p>
+                        <div className="mb-8">
+                            <h3 className="text-2xl font-bold text-slate-900 tracking-tight uppercase">Add New Teacher</h3>
+                            <p className="text-slate-500 text-xs font-medium">Create a new instructor account with full access.</p>
+                        </div>
 
-                        <form onSubmit={handleCreateTeacher} className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Name</label>
+                        <form onSubmit={handleCreateTeacher} className="space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Full Name</label>
                                 <input
-                                    className="w-full h-14 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
-                                    placeholder="Enter full name..."
+                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                    placeholder="e.g. John Doe"
                                     value={teacherForm.name}
                                     onChange={e => setTeacherForm({ ...teacherForm, name: e.target.value })}
+                                    required
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Comm Endpoint (Email)</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Email Address</label>
                                 <input
-                                    className="w-full h-14 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
-                                    placeholder="Enter institutional email..."
+                                    type="email"
+                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                    placeholder="teacher@institution.com"
                                     value={teacherForm.email}
                                     onChange={e => setTeacherForm({ ...teacherForm, email: e.target.value })}
+                                    required
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Protocol (Password)</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Secure Password</label>
                                 <input
                                     type="password"
-                                    className="w-full h-14 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
-                                    placeholder="Initialize access key..."
+                                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                    placeholder="••••••••"
                                     value={teacherForm.password}
                                     onChange={e => setTeacherForm({ ...teacherForm, password: e.target.value })}
+                                    required
                                 />
                             </div>
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Profile Manifest (Image)</label>
-                                <div className="flex items-center gap-6">
-                                    <div className="w-20 h-20 rounded-[24px] bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Profile Photo</label>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                                         {teacherForm.preview ? (
                                             <img src={teacherForm.preview} className="w-full h-full object-cover" />
                                         ) : (
-                                            <GraduationCap className="w-8 h-8 text-slate-200" />
+                                            <GraduationCap className="w-6 h-6 text-slate-400" />
                                         )}
                                     </div>
-                                    <label className="flex-1 h-14 bg-indigo-50 border-2 border-dashed border-indigo-100 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-indigo-100/50 transition-all">
-                                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Select Image File</span>
+                                    <label className="flex-1 h-11 bg-white border border-slate-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
+                                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Choose File</span>
                                         <input
                                             type="file"
                                             className="hidden"
@@ -285,7 +332,9 @@ const AdminUsers = ({ role }) => {
                                     </label>
                                 </div>
                             </div>
-                            <button className="w-full py-5 bg-indigo-600 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95">AUTHORIZE NODE</button>
+                            <button className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-[0.98] mt-4">
+                                Create Account
+                            </button>
                         </form>
                     </div>
                 </div>

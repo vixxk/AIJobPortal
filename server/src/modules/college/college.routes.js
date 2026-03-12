@@ -4,6 +4,7 @@ const authMiddleware = require('../../middleware/auth');
 const roleMiddleware = require('../../middleware/role');
 const router = express.Router();
 router.use(authMiddleware.protect);
+router.get('/', roleMiddleware.restrictTo('RECRUITER', 'COLLEGE_ADMIN', 'SUPER_ADMIN'), collegeController.getAllColleges);
 router.use(roleMiddleware.restrictTo('COLLEGE_ADMIN'));
 router.get('/me', collegeController.getMe);
 router.post('/profile', collegeController.createOrUpdateProfile);

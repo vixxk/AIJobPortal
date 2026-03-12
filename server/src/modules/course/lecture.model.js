@@ -39,6 +39,10 @@ const lectureSchema = new mongoose.Schema({
     type: Number, // duration in minutes
     default: 0
   },
+  liveDuration: {
+    type: Number, // duration of live class in minutes
+    default: 0
+  },
   order: {
     type: Number,
     default: 0
@@ -54,6 +58,33 @@ const lectureSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  }
+});
+
+lectureSchema.pre(/^find/, async function() {
+  try {
+    const Model = mongoose.model('Lecture');
+    await Model.updateMany(
+      {
+        status: 'LIVE',
+        type: 'LIVE',
+        liveDuration: { $gt: 0 },
+        $expr: {
+          $lt: [
+            {
+              $add: [
+                { $ifNull: ["$scheduledAt", "$createdAt"] },
+                { $multiply: ["$liveDuration", 60, 1000] }
+              ]
+            },
+            new Date()
+          ]
+        }
+      },
+      { status: 'ENDED' }
+    );
+  } catch (err) {
+    console.error('Error auto-ending live classes:', err);
   }
 });
 

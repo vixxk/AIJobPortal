@@ -13,6 +13,9 @@ router.get('/', jobController.getAllJobs);
 router.get('/:id', jobController.getJob);
 
 router.use(authMiddleware.protect);
+router.get('/me', roleMiddleware.restrictTo('RECRUITER'), jobController.getMyJobs);
+router.get('/stats', roleMiddleware.restrictTo('RECRUITER'), jobController.getRecruiterStats);
+
 router.use(roleMiddleware.restrictTo('RECRUITER'));
 router.post('/', jobController.createJob);
 router.patch('/:id', jobController.updateJob);

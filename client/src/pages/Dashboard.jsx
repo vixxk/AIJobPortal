@@ -110,6 +110,8 @@ const Dashboard = () => {
     const [loadingJobs, setLoadingJobs] = useState(false);
     const [activeCategory, setActiveCategory] = useState('All');
     const [profile, setProfile] = useState(null);
+    const [specialJobs, setSpecialJobs] = useState([]);
+    const [loadingSpecial, setLoadingSpecial] = useState(false);
 
 
     const fetchStudentProfile = useCallback(async () => {
@@ -126,8 +128,8 @@ const Dashboard = () => {
     }, [user]);
 
     useEffect(() => {
-        fetchStudentProfile();
-    }, [fetchStudentProfile]);
+        // Consolidated in the mount effect below
+    }, []);
     const fetchSavedData = useCallback(async () => {
         try {
             const savedRes = await axios.get('/jobs/saved')
@@ -142,8 +144,8 @@ const Dashboard = () => {
     }, []);
 
     useEffect(() => {
-        fetchSavedData();
-    }, [fetchSavedData]);
+        // Consolidated in the mount effect below
+    }, []);
     const [error, setError] = useState(null);
     const fetchRecentData = useCallback(async () => {
         setLoadingJobs(true);
@@ -181,15 +183,38 @@ const Dashboard = () => {
         }
     }, [activeCategory]);
 
+    const fetchSpecialJobs = useCallback(async () => {
+        if (user?.role === 'STUDENT') {
+            setLoadingSpecial(true);
+            try {
+                const res = await axios.get('/jobs', { params: { limit: 3 } });
+                if (res.data.status === 'success') {
+                    setSpecialJobs(res.data.data.jobs);
+                }
+            } catch (err) {
+                console.error("Failed to fetch special jobs", err);
+            } finally {
+                setLoadingSpecial(false);
+            }
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchStudentProfile();
+        fetchSavedData();
+        fetchSpecialJobs();
+    }, []); // Run once on mount
+
     useEffect(() => {
         fetchRecentData();
-    }, [fetchRecentData]);
+    }, [fetchRecentData]); // Run when activeCategory changes (since fetchRecentData depends on it)
     const features = [
         { title: 'Job Search', desc: 'Find Best Matches', icon: Search, color: 'text-blue-600', bg: 'bg-blue-50', link: '/app/jobs' },
         { title: 'Resume Builder', desc: 'Optimized for ATS', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', link: '/app/resume' },
         { title: 'Mock Interviews', desc: 'Practice with AI', icon: MonitorPlay, color: 'text-orange-600', bg: 'bg-orange-50', link: '/app/interview' },
         { title: 'Skill Learning', desc: 'Online Classes', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
         { title: 'AI English Tutor', desc: 'Spoken Practice', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/app/english-tutor' },
+        { title: 'Gradnex Job Postings', desc: 'Top Companies', icon: Sparkles, color: 'text-rose-600', bg: 'bg-rose-50', link: '/app/gradnex-jobs' },
     ];
     const name = user?.name || "Andrew Ainsley";
     const firstName = name.split(' ')[0];
@@ -229,7 +254,7 @@ const Dashboard = () => {
                     <div className="flex items-center mb-6">
                         <h3 className="text-lg font-bold text-slate-900 tracking-tight">AI-Powered Career Tools</h3>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
                         {features.map((feature, i) => (
                             <Link
                                 key={i}
@@ -247,7 +272,48 @@ const Dashboard = () => {
                 </div>
                 <div className="mb-10">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
+                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Gradnex Job Postings</h3>
+                        <Link to="/app/gradnex-jobs" className="text-sm font-bold text-rose-600 hover:text-rose-700">See All</Link>
+                    </div>
+                    {loadingSpecial ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {[1, 2, 3].map((i) => (
+                                <SkeletonJobCard key={i} />
+                            ))}
+                        </div>
+                    ) : specialJobs.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {specialJobs.map((job) => {
+                                const internalJob = {
+                                    ...job,
+                                    jobId: job._id,
+                                    company: job.recruiterId?.companyName || 'Top Recruiter', // Recruiters display company
+                                    logo: job.recruiterId?.logo,
+                                    salary: job.salaryRange,
+                                    type: 'full-time', // Defaulting for display
+                                    isInternal: true
+                                };
+                                return (
+                                    <JobCard
+                                        key={job._id}
+                                        job={internalJob}
+                                        onClick={setSelectedJob}
+                                        initiallySaved={savedJobsIds.has(job._id)}
+                                    />
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-8 text-center">
+                            <Sparkles className="w-10 h-10 text-rose-300 mx-auto mb-3" />
+                            <p className="text-slate-500 font-medium">No special postings at the moment. Check back soon!</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="mb-10">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Recent Jobs (Global Board)</h3>
                         <Link to="/app/jobs" className="text-sm font-bold text-blue-600 hover:text-blue-700">See All</Link>
                     </div>
                     {loadingJobs ? (

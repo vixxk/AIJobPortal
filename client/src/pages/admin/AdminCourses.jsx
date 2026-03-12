@@ -111,26 +111,26 @@ const AdminCourses = () => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {courses.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(course => (
-                        <div key={course._id} className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group">
+                        <div key={course._id} className="bg-white rounded-[28px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group">
                             <div className="h-44 bg-slate-100 relative overflow-hidden">
                                 <img src={getImageUrl(course.coverImage)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-80" />
-                                <div className="absolute top-6 left-6 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black text-indigo-600 tracking-widest uppercase">
+                                <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black text-indigo-600 tracking-widest uppercase">
                                     {course.category || 'Skill'}
                                 </div>
-                                <div className="absolute top-6 right-6 flex gap-2">
-                                    <button onClick={() => handleDeleteCourse(course._id)} className="p-2.5 bg-rose-600 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all shadow-xl">
+                                <div className="absolute top-4 right-4 flex gap-2">
+                                    <button onClick={() => handleDeleteCourse(course._id)} className="p-2.5 bg-rose-600 text-white rounded-xl transition-all shadow-xl">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
-                            <div className="p-6 lg:p-8">
-                                <h4 className="font-black text-slate-900 text-lg mb-4 line-clamp-1">{course.title}</h4>
-                                <div className="flex items-center justify-between mb-6">
+                            <div className="p-5 md:p-6">
+                                <h4 className="font-black text-slate-900 text-base mb-3 line-clamp-1">{course.title}</h4>
+                                <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px] overflow-hidden shrink-0">
+                                        <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px] overflow-hidden shrink-0">
                                             {course.teacher?.avatar ? (
                                                 <img src={getImageUrl(course.teacher.avatar)} alt={course.teacher.name} className="w-full h-full object-cover" />
                                             ) : (
@@ -146,7 +146,7 @@ const AdminCourses = () => {
                                 </div>
                                 <button
                                     onClick={() => navigate(`/app/admin/courses/${course._id}`)}
-                                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all"
+                                    className="w-full py-3 md:py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all"
                                 >
                                     VIEW MANAGEMENT
                                 </button>

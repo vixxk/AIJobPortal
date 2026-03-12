@@ -32,8 +32,9 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
     else if (location.pathname === '/app/profile') pageTitle = "Profile";
     else if (location.pathname === '/app/help') pageTitle = "Help Center";
     else if (location.pathname === '/app/contact') pageTitle = "Customer Service";
+    else if (location.pathname === '/app/competitions') pageTitle = "Competitions";
     else if (location.pathname !== '/app') pageTitle = "Feature Details";
-    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
+    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/competitions'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
     return (
         <div className={`h-16 md:h-20 px-4 md:px-8 flex items-center justify-between z-10 sticky top-0 transition-all duration-300 ${customTitle && isMobile ? 'bg-white' : 'bg-white/80 md:bg-background/80 backdrop-blur-md border-b border-slate-100 md:border-none shadow-sm md:shadow-none'}`}>
             { }
@@ -76,18 +77,26 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
             { }
             {(!customTitle || !isMobile) && (
                 <div className="flex items-center gap-4 md:gap-6">
-                    {!customTitle && <NotificationsDropdown />}
+                    {!customTitle && user?.role !== 'RECRUITER' && <NotificationsDropdown />}
                     {(!customTitle && location.pathname === '/app/profile') ? (
                         <SettingsIcon
                             className="w-6 h-6 text-slate-700 cursor-pointer hover:text-blue-500 active:text-blue-500"
                             onClick={() => window.dispatchEvent(new CustomEvent('open-settings'))}
                         />
                     ) : !customTitle ? (
-                        <img
-                            src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Student")}&background=f1f5f9&color=0f172a&bold=true`}
-                            alt="Profile"
-                            className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-slate-200 cursor-pointer hover:border-blue-500 transition-colors"
-                        />
+                        user?.role === 'RECRUITER' && !user?.avatar ? (
+                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold cursor-pointer hover:bg-indigo-600 transition-colors shadow-sm"
+                                 onClick={() => navigate('/app/profile')}
+                            >
+                                {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                            </div>
+                        ) : (
+                            <img
+                                src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Student")}&background=f1f5f9&color=0f172a&bold=true`}
+                                alt="Profile"
+                                className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-slate-200 cursor-pointer hover:border-blue-500 transition-colors"
+                            />
+                        )
                     ) : null}
                 </div>
             )}

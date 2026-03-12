@@ -32,27 +32,41 @@ exports.applyToJob = catchAsync(async (req, res, next) => {
 exports.getJobApplicants = catchAsync(async (req, res, next) => {
   const job = await Job.findOne({ _id: req.params.jobId, recruiterId: req.user.id });
   if (!job) {
-      return next(new AppError('Job not found or permission denied', 404));
+    return next(new AppError('Job not found or permission denied', 404));
   }
+  
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 20;
   const skip = (page - 1) * limit;
+
+  // Manual populate for now or using aggregation for better performance.
+  // 1. Get Applications
   const applications = await Application.find({ jobId: req.params.jobId })
-    .populate('studentId', 'name email')
+    .populate('studentId', 'name email avatar')
+    .sort('-createdAt')
     .skip(skip)
     .limit(limit)
     .lean();
+
+  // 2. Attach StudentProfile for each application
+  const StudentProfile = require('../student/student.model');
+  const applicationsWithProfile = await Promise.all(applications.map(async (app) => {
+    const profile = await StudentProfile.findOne({ userId: app.studentId._id });
+    return { ...app, studentProfile: profile };
+  }));
+
   const total = await Application.countDocuments({ jobId: req.params.jobId });
+
   res.status(200).json({
     status: 'success',
-    results: applications.length,
+    results: applicationsWithProfile.length,
     pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit)
+      total,
+      page,
+      pages: Math.ceil(total / limit)
     },
     data: {
-      applications
+      applications: applicationsWithProfile
     }
   });
 });

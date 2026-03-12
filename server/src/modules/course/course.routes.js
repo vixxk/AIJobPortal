@@ -40,4 +40,7 @@ router
   .patch(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.updateLecture)
   .delete(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.deleteLecture);
 
+router.post('/lectures/:id/complete', courseController.markLectureComplete);
+router.delete('/lectures/:id/complete', courseController.unmarkLectureComplete);
+
 module.exports = router;

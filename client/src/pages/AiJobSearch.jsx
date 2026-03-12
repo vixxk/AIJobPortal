@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, MapPin, Loader2, Bookmark, ArrowLeft, SlidersHorizontal, ArrowDownUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
@@ -118,15 +118,15 @@ const AiJobSearch = () => {
         return sorted;
     };
     const resultsRef = useRef(null);
-    const scrollToResults = () => {
+    const scrollToResults = useCallback(() => {
         setTimeout(() => {
-            if (resultsRef.current && hasSearched) {
+            if (resultsRef.current) {
                 const y = resultsRef.current.getBoundingClientRect().top + window.scrollY - 80;
                 window.scrollTo({ top: y, behavior: 'smooth' });
             }
         }, 80);
-    };
-    const handleSearch = async (e, isInitial = false) => {
+    }, []);
+    const handleSearch = useCallback(async (e, isInitial = false) => {
         if (e) e.preventDefault();
         setLoading(true);
         setError(null);
@@ -153,7 +153,7 @@ const AiJobSearch = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [role, location, type, scrollToResults]);
     const fetchInitialData = useCallback(async () => {
         try {
             const savedRes = await axios.get('/jobs/saved');
@@ -170,7 +170,7 @@ const AiJobSearch = () => {
 
     useEffect(() => {
         fetchInitialData();
-    }, [fetchInitialData]);
+    }, []); // Run only once on mount
     const goToPage = (page) => {
         const p = Math.max(1, Math.min(page, totalPages));
         setCurrentPage(p);

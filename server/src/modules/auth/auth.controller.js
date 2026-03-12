@@ -1,11 +1,9 @@
 const crypto = require('crypto');
-const { OAuth2Client } = require('google-auth-library');
 const User = require('../user/user.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const generateToken = require('../../utils/generateToken');
 const sendEmail = require('../../config/mailer');
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const buildUserPayload = (user) => ({
   id: user._id,
   name: user.name,
@@ -29,7 +27,7 @@ const sendOTPEmail = async (email, otp, name) => {
         <div style="text-align: center; margin-bottom: 28px;">
           <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 800; color: #1e293b;">
             <span style="background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 6px 10px; border-radius: 8px; font-size: 18px;">JP</span>
-            JobPortal
+            Gradnex
           </div>
         </div>
         <h2 style="color: #1e293b; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Your Login OTP</h2>
@@ -43,57 +41,65 @@ const sendOTPEmail = async (email, otp, name) => {
   `;
   await sendEmail({
     email,
-    subject: `${otp} – Your JobPortal Login Code`,
-    message: `Your OTP for JobPortal login is: ${otp}. It expires in 10 minutes.`,
+    subject: `${otp} – Your Gradnex Login Code`,
+    message: `Your OTP for Gradnex login is: ${otp}. It expires in 10 minutes.`,
     html
   });
 };
 exports.googleAuth = catchAsync(async (req, res, next) => {
-  const { idToken } = req.body;
-  if (!idToken) {
-    return next(new AppError('Google ID token is required', 400));
+  const { token: accessToken } = req.body;
+
+  if (!accessToken) {
+    return next(new AppError('Google token is required', 400));
   }
-  let ticket;
+
+  let userInfo;
   try {
-    ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${accessToken}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user info from Google');
+    }
+
+    userInfo = await response.json();
   } catch (err) {
     return next(new AppError('Invalid Google token', 401));
   }
-  const payload = ticket.getPayload();
-  const { sub: googleId, email, name, picture } = payload;
-  let isNewUser = false;
-  let user = await User.findOne({ $or: [{ googleId }, { email }] });
-  if (!user) {
-    isNewUser = true;
-    user = await User.create({
-      name,
-      email,
-      googleId,
-      avatar: picture,
-      isVerified: true,
-      approvalStatus: 'NOT_REQUIRED'
-    });
-  } else {
-    if (!user.googleId) {
-      user.googleId = googleId;
-    }
-    if (picture && !user.avatar) {
-      user.avatar = picture;
-    }
-    user.isVerified = true;
-    await user.save({ validateBeforeSave: false });
+
+  const { sub: googleId, email, name, picture } = userInfo;
+
+  if (!email || !googleId) {
+    return next(new AppError('Incomplete profile returned from Google', 400));
   }
+
+  // Only allow login for existing registered users — do NOT auto-create accounts
+  const user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+  if (!user) {
+    return next(new AppError('No account found with this Google email. Please register first.', 404));
+  }
+
   if (!user.isActive) {
     return next(new AppError('Your account has been suspended. Please contact support.', 403));
   }
-  const token = generateToken(user._id, user.role || 'NONE');
+
+  // Link Google ID to existing account if not already linked
+  if (!user.googleId) {
+    user.googleId = googleId;
+  }
+  // Set avatar from Google if they don't have one yet
+  if (picture && !user.avatar) {
+    user.avatar = picture;
+  }
+  user.isVerified = true;
+  await user.save({ validateBeforeSave: false });
+
+  const jwtToken = generateToken(user._id, user.role || 'NONE');
+
   res.status(200).json({
     status: 'success',
-    token,
-    data: { user: buildUserPayload(user), isNewUser }
+    token: jwtToken,
+    data: { user: buildUserPayload(user), isNewUser: false }
   });
 });
 exports.sendOTP = catchAsync(async (req, res, next) => {

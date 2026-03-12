@@ -24,11 +24,16 @@ const PostJob = () => {
         setError('');
         try {
             const payload = {
-                ...formData,
-                skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
+                title: formData.title,
+                description: formData.description,
+                location: formData.location,
+                salaryRange: formData.salary,
+                skillsRequired: formData.skills.split(',').map(s => s.trim()).filter(s => s),
+                experienceRange: formData.experienceLevel,
+                type: formData.type // This might not be in the model but it's good to keep if added later
             };
             const res = await axios.post('/jobs', payload);
-            if (res.data.success) {
+            if (res.data.status === 'success') {
                 navigate('/app/recruiter');
             }
         } catch (err) {

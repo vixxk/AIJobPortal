@@ -5,6 +5,7 @@ const roleMiddleware = require('../../middleware/role');
 const { uploadLogo } = require('../../middleware/upload');
 const router = express.Router();
 router.use(authMiddleware.protect);
+router.get('/', roleMiddleware.restrictTo('RECRUITER', 'COLLEGE_ADMIN', 'SUPER_ADMIN'), recruiterController.getAllRecruiters);
 router.use(roleMiddleware.restrictTo('RECRUITER'));
 router.get('/me', recruiterController.getMe);
 router.post('/profile', recruiterController.createOrUpdateProfile);

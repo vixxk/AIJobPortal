@@ -272,7 +272,15 @@ const StudentProfile = () => {
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex justify-center mb-6">
                 <div className="relative w-24 h-24">
-                    <img src={profile.profileImage || user?.avatar || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=random`} alt="Avatar" className={`w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10 ${saving ? 'opacity-50' : 'opacity-100'}`} />
+                    {(profile.profileImage || user?.avatar) ? (
+                        <img src={profile.profileImage || user?.avatar} alt="Avatar" className={`w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10 ${saving ? 'opacity-50' : 'opacity-100'}`} />
+                    ) : user?.role === 'RECRUITER' ? (
+                        <div className={`w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-md relative z-10 ${saving ? 'opacity-50' : 'opacity-100'}`}>
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                        </div>
+                    ) : (
+                        <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=random`} alt="Avatar" className={`w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10 ${saving ? 'opacity-50' : 'opacity-100'}`} />
+                    )}
                     <label className="absolute bottom-0 right-0 z-20 bg-blue-500 hover:bg-blue-600 active:scale-95 cursor-pointer p-1.5 rounded-xl border-2 border-white shadow-sm transition-all">
                         <input type="file" accept="image/*" className="hidden" disabled={saving} onChange={async (e) => {
                             const file = e.target.files[0];
@@ -594,22 +602,26 @@ const StudentProfile = () => {
                 return (
                     <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                         <div className="flex-1 space-y-4 pt-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
-                            <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-4 text-white shadow-lg flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full border-4 border-white/30 flex items-center justify-center font-bold text-xl shrink-0">{calculateCompletion()}%</div>
-                                <div>
-                                    <h3 className="font-bold text-lg mb-1">Profile Completed!</h3>
-                                    <p className="text-xs text-white/80 leading-tight">A complete profile increases the chances of a recruiter being more interested in recruiting you.</p>
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-3xl p-2 cursor-pointer shadow-sm" onClick={() => navigate('/app/profile/status')}>
-                                <div className="flex justify-between items-center p-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 border border-slate-100 rounded-full flex items-center justify-center"><User className="w-5 h-5 text-slate-700" /></div>
-                                        <span className="font-bold text-slate-800">Job Seeking Status</span>
+                            {user?.role !== 'RECRUITER' && (
+                                <>
+                                    <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-4 text-white shadow-lg flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full border-4 border-white/30 flex items-center justify-center font-bold text-xl shrink-0">{calculateCompletion()}%</div>
+                                        <div>
+                                            <h3 className="font-bold text-lg mb-1">Profile Completed!</h3>
+                                            <p className="text-xs text-white/80 leading-tight">A complete profile increases the chances of a recruiter being more interested in recruiting you.</p>
+                                        </div>
                                     </div>
-                                    <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
-                                </div>
-                            </div>
+                                    <div className="bg-white rounded-3xl p-2 cursor-pointer shadow-sm" onClick={() => navigate('/app/profile/status')}>
+                                        <div className="flex justify-between items-center p-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 border border-slate-100 rounded-full flex items-center justify-center"><User className="w-5 h-5 text-slate-700" /></div>
+                                                <span className="font-bold text-slate-800">Job Seeking Status</span>
+                                            </div>
+                                            <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                             <div>
                                 <h4 className="font-semibold text-slate-400 mb-2 pl-2 text-sm uppercase">Account</h4>
                                 <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1">
@@ -683,10 +695,18 @@ const StudentProfile = () => {
                                 <div className="px-4 flex-1 overflow-y-auto hide-scrollbar h-full pb-20">
                                     <div className="flex items-center justify-between mt-4 mb-8">
                                         <div className="flex items-center gap-4">
-                                            <img src={profile.profileImage || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                                            {(profile.profileImage || user?.avatar) ? (
+                                                <img src={profile.profileImage || user?.avatar} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                                            ) : user?.role === 'RECRUITER' ? (
+                                                <div className="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-sm">
+                                                    {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                                                </div>
+                                            ) : (
+                                                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                                            )}
                                             <div>
                                                 <h2 className="text-xl font-bold tracking-tight">{profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name')}</h2>
-                                                <p className="text-slate-500 text-sm mt-0.5">{profile.currentPosition || 'Job Hunter @ Application'}</p>
+                                                <p className="text-slate-500 text-sm mt-0.5">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
                                             </div>
                                         </div>
                                         <button onClick={() => navigate('/app/profile/basic')} className="w-9 h-9 flex items-center justify-center border border-blue-200 bg-white rounded-full shrink-0 shadow-sm hover:bg-slate-50 transition-colors">
@@ -694,23 +714,27 @@ const StudentProfile = () => {
                                         </button>
                                     </div>
                                     <NavButton sectionKey="CONTACT" label="Contact Information" />
-                                    <NavButton sectionKey="SUMMARY" label="Summary" />
-                                    <NavButton sectionKey="SALARY" label="Expected Salary" />
-                                    <NavButton sectionKey="EXPERIENCE" label="Work Experience" />
-                                    <NavButton sectionKey="EDUCATION" label="Education" />
-                                    <NavButton sectionKey="PROJECTS" label="Projects" />
-                                    <NavButton sectionKey="CERTIFICATIONS" label="Certification and Licenses" />
-                                    <NavButton sectionKey="EXAMS" label="Professional Exams" />
-                                    <NavButton sectionKey="AWARDS" label="Awards & Achievements" />
-                                    <NavButton sectionKey="SEMINARS" label="Seminars & Trainings" />
-                                    <NavButton sectionKey="ORGANIZATIONS" label="Organization Activities" />
-                                    <NavButton sectionKey="LANGUAGES" label="Languages" />
-                                    <NavButton sectionKey="SKILLS" label="Skills" />
-                                    <NavButton sectionKey="AFFILIATIONS" label="Affiliations" />
-                                    <NavButton sectionKey="REFERENCES" label="References" />
-                                    <NavButton sectionKey="RESUME" label="CV/Resume" />
+                                    <NavButton sectionKey="SUMMARY" label={user?.role === 'RECRUITER' ? 'Company Details' : 'Summary'} />
+                                    {user?.role !== 'RECRUITER' && (
+                                        <>
+                                            <NavButton sectionKey="SALARY" label="Expected Salary" />
+                                            <NavButton sectionKey="EXPERIENCE" label="Work Experience" />
+                                            <NavButton sectionKey="EDUCATION" label="Education" />
+                                            <NavButton sectionKey="PROJECTS" label="Projects" />
+                                            <NavButton sectionKey="CERTIFICATIONS" label="Certification and Licenses" />
+                                            <NavButton sectionKey="EXAMS" label="Professional Exams" />
+                                            <NavButton sectionKey="AWARDS" label="Awards & Achievements" />
+                                            <NavButton sectionKey="SEMINARS" label="Seminars & Trainings" />
+                                            <NavButton sectionKey="ORGANIZATIONS" label="Organization Activities" />
+                                            <NavButton sectionKey="LANGUAGES" label="Languages" />
+                                            <NavButton sectionKey="SKILLS" label="Skills" />
+                                            <NavButton sectionKey="AFFILIATIONS" label="Affiliations" />
+                                            <NavButton sectionKey="REFERENCES" label="References" />
+                                            <NavButton sectionKey="RESUME" label="CV/Resume" />
+                                        </>
+                                    )}
                                     <NavButton sectionKey="SETTINGS" label="Settings" />
-                                    <NavButton sectionKey="STATUS" label="Job Seeking Status" />
+                                    {user?.role !== 'RECRUITER' && <NavButton sectionKey="STATUS" label="Job Seeking Status" />}
                                 </div>
                             </div>
                         </div>
@@ -722,37 +746,50 @@ const StudentProfile = () => {
                     <div className="w-[340px] shrink-0 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
                         <div className="p-8 border-b border-slate-100 flex flex-col items-center gap-4 bg-gradient-to-b from-blue-50/50 to-white text-center">
                             <div className="relative">
-                                <img src={profile.profileImage || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10" />
+                                {(profile.profileImage || user?.avatar) ? (
+                                    <img src={profile.profileImage || user?.avatar} alt="User" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10" />
+                                ) : user?.role === 'RECRUITER' ? (
+                                    <div className="w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-md relative z-10">
+                                        {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                                    </div>
+                                ) : (
+                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10" />
+                                )}
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold tracking-tight text-slate-800">{profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name')}</h2>
-                                <p className="text-slate-500 text-sm mt-1 font-medium">{profile.currentPosition || 'Job Hunter @ Application'}</p>
+                                <p className="text-slate-500 text-sm mt-1 font-medium">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-0.5">
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-2 px-3">Profile Details</h4>
-                            <NavButtonDesktop sectionKey="BASIC" label="Edit Profile" />
+                            <NavButtonDesktop sectionKey="BASIC" label={user?.role === 'RECRUITER' ? 'Recruiter Profile' : 'Edit Profile'} />
                             <NavButtonDesktop sectionKey="CONTACT" label="Contact Information" />
-                            <NavButtonDesktop sectionKey="SUMMARY" label="Summary" />
-                            <NavButtonDesktop sectionKey="SALARY" label="Expected Salary" />
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Experience & Education</h4>
-                            <NavButtonDesktop sectionKey="EXPERIENCE" label="Work Experience" />
-                            <NavButtonDesktop sectionKey="EDUCATION" label="Education" />
-                            <NavButtonDesktop sectionKey="PROJECTS" label="Projects" />
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Qualifications</h4>
-                            <NavButtonDesktop sectionKey="CERTIFICATIONS" label="Certification & Licenses" />
-                            <NavButtonDesktop sectionKey="EXAMS" label="Professional Exams" />
-                            <NavButtonDesktop sectionKey="AWARDS" label="Awards & Achievements" />
-                            <NavButtonDesktop sectionKey="SEMINARS" label="Seminars & Trainings" />
-                            <NavButtonDesktop sectionKey="ORGANIZATIONS" label="Organization Activities" />
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Other Information</h4>
-                            <NavButtonDesktop sectionKey="LANGUAGES" label="Languages" />
-                            <NavButtonDesktop sectionKey="SKILLS" label="Skills" />
-                            <NavButtonDesktop sectionKey="AFFILIATIONS" label="Affiliations" />
-                            <NavButtonDesktop sectionKey="REFERENCES" label="References" />
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">System</h4>
-                            <NavButtonDesktop sectionKey="RESUME" label="CV/Resume" />
-                            <NavButtonDesktop sectionKey="STATUS" label="Job Seeking Status" />
+                            <NavButtonDesktop sectionKey="SUMMARY" label={user?.role === 'RECRUITER' ? 'Company Details' : 'Summary'} />
+                            {user?.role !== 'RECRUITER' && (
+                                <>
+                                    <NavButtonDesktop sectionKey="SALARY" label="Expected Salary" />
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Experience & Education</h4>
+                                    <NavButtonDesktop sectionKey="EXPERIENCE" label="Work Experience" />
+                                    <NavButtonDesktop sectionKey="EDUCATION" label="Education" />
+                                    <NavButtonDesktop sectionKey="PROJECTS" label="Projects" />
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Qualifications</h4>
+                                    <NavButtonDesktop sectionKey="CERTIFICATIONS" label="Certification & Licenses" />
+                                    <NavButtonDesktop sectionKey="EXAMS" label="Professional Exams" />
+                                    <NavButtonDesktop sectionKey="AWARDS" label="Awards & Achievements" />
+                                    <NavButtonDesktop sectionKey="SEMINARS" label="Seminars & Trainings" />
+                                    <NavButtonDesktop sectionKey="ORGANIZATIONS" label="Organization Activities" />
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Other Information</h4>
+                                    <NavButtonDesktop sectionKey="LANGUAGES" label="Languages" />
+                                    <NavButtonDesktop sectionKey="SKILLS" label="Skills" />
+                                    <NavButtonDesktop sectionKey="AFFILIATIONS" label="Affiliations" />
+                                    <NavButtonDesktop sectionKey="REFERENCES" label="References" />
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">System</h4>
+                                    <NavButtonDesktop sectionKey="RESUME" label="CV/Resume" />
+                                    <NavButtonDesktop sectionKey="STATUS" label="Job Seeking Status" />
+                                </>
+                            )}
+                            {user?.role === 'RECRUITER' && <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">System</h4>}
                             <NavButtonDesktop sectionKey="SETTINGS" label="Settings" />
                         </div>
                     </div>
@@ -780,7 +817,31 @@ const StudentProfile = () => {
             </div>
         );
     };
-    if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+    const ProfileSkeleton = () => (
+        <div className="w-full h-full lg:bg-slate-50 flex flex-col lg:flex-row max-w-[1400px] mx-auto p-6 xl:p-8 gap-8 animate-pulse">
+            <div className="hidden lg:flex w-[340px] shrink-0 bg-white rounded-3xl border border-slate-200/60 p-8 flex-col items-center gap-6">
+                <div className="w-24 h-24 rounded-full bg-slate-100" />
+                <div className="w-40 h-5 bg-slate-100 rounded" />
+                <div className="w-24 h-3 bg-slate-50 rounded" />
+                <div className="w-full mt-10 space-y-4">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="w-full h-10 bg-slate-50 rounded-xl" />
+                    ))}
+                </div>
+            </div>
+            <div className="flex-1 bg-white rounded-3xl border border-slate-200/60 p-10 space-y-8">
+                <div className="h-8 w-1/4 bg-slate-100 rounded mb-10" />
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="space-y-3">
+                        <div className="h-4 w-20 bg-slate-50 rounded" />
+                        <div className="h-12 w-full bg-slate-50 rounded-2xl" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    if (loading) return <ProfileSkeleton />;
     return currentViewRender();
 };
 export default StudentProfile;

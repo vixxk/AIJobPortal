@@ -6,9 +6,12 @@ import {
     BookOpen, Play, Video, Plus, Edit, Trash2,
     ChevronRight, BadgeInfo, Clock, Users,
     Globe, Radio, CheckCircle, ExternalLink,
-    ArrowLeft, MonitorPlay, Settings, Key, Lock
+    ArrowLeft, MonitorPlay, Settings, Key, Lock,
+    Pause, Volume2, VolumeX, RotateCcw, RotateCw, X,
+    Maximize
 } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
@@ -103,88 +106,300 @@ const CourseCard = ({ course, isEnrolled }) => (
 );
 
 
-const LectureList = ({ lectures, onSelect, currentId }) => (
+const LectureList = ({ lectures, onSelect, currentId, completedIds = [], dark = false }) => (
     <div className="space-y-2">
-        {lectures.map((lecture, index) => (
-            <button
-                key={lecture._id}
-                onClick={() => onSelect(lecture)}
-                className={clsx(
-                    "w-full flex items-center gap-3 p-4 rounded-2xl transition-all border",
-                    currentId === lecture._id
-                        ? "bg-blue-50 border-blue-200 shadow-sm"
-                        : "hover:bg-slate-50 border-transparent"
-                )}
-            >
-                <div className={clsx(
-                    "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                    lecture.type === 'LIVE' ? "bg-red-50 text-red-500" : "bg-blue-50 text-blue-500"
-                )}>
-                    {lecture.type === 'LIVE' ? <Radio className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-                </div>
-                <div className="flex-1 text-left">
-                    <p className={clsx(
-                        "text-[14px] font-bold leading-tight mb-0.5",
-                        currentId === lecture._id ? "text-blue-600" : "text-slate-800"
+        {lectures.map((lecture, index) => {
+            const isActive = currentId === lecture._id;
+            const isCompleted = completedIds.includes(lecture._id);
+            return (
+                <button
+                    key={lecture._id}
+                    onClick={() => onSelect(lecture)}
+                    className={clsx(
+                        "w-full flex items-center gap-4 p-4 rounded-[20px] transition-all border group",
+                        dark
+                            ? isActive
+                                ? "bg-white/10 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                : "hover:bg-white/5 border-transparent"
+                            : isActive
+                                ? "bg-indigo-50 border-indigo-200 shadow-sm"
+                                : "hover:bg-slate-50 border-transparent"
+                    )}
+                >
+                    <div className={clsx(
+                        "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105",
+                        dark
+                            ? isActive ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "bg-white/5 text-slate-400"
+                            : lecture.type === 'LIVE' ? "bg-rose-50 text-rose-500" : "bg-indigo-50 text-indigo-500"
                     )}>
-                        {index + 1}. {lecture.title}
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <span className={clsx(
-                            "text-[10px] font-black tracking-wider uppercase",
-                            lecture.type === 'LIVE' ? "text-red-500" : "text-slate-400"
-                        )}>
-                            {lecture.type === 'LIVE' ? '🔴 Live Class' : 'Recorded'}
-                        </span>
-                        {lecture.status === 'LIVE' && (
-                            <span className="px-1.5 py-0.5 bg-red-100 text-red-600 rounded-md text-[9px] font-bold animate-pulse">
-                                NOW LIVE
-                            </span>
-                        )}
+                        {lecture.type === 'LIVE' ? <Radio className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
                     </div>
-                </div>
-                {lecture.status === 'ENDED' && (
-                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                )}
-            </button>
-        ))}
+                    <div className="flex-1 text-left min-w-0">
+                        <p className={clsx(
+                            "text-[14px] font-bold leading-tight mb-1 truncate",
+                            dark
+                                ? isActive ? "text-white" : "text-white/60 group-hover:text-white"
+                                : isActive ? "text-indigo-600" : "text-slate-800"
+                        )}>
+                            {index + 1}. {lecture.title}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            {(() => {
+                                const isLiveType = lecture.type === 'LIVE';
+                                const startTime = new Date(lecture.scheduledAt || lecture.createdAt).getTime();
+                                const duration = (lecture.liveDuration || 60) * 60 * 1000;
+                                const isExpired = Date.now() > (startTime + duration);
+                                const isCurrentlyLive = isLiveType && lecture.status === 'LIVE' && !isExpired;
+
+                                return (
+                                    <>
+                                        <span className={clsx(
+                                            "text-[9px] font-black tracking-[0.15em] uppercase",
+                                            isCurrentlyLive ? "text-rose-500" : (dark ? "text-white/30" : "text-slate-400")
+                                        )}>
+                                            {isCurrentlyLive ? '🔴 Live Now' : isLiveType ? 'Past Live' : 'Recorded'}
+                                        </span>
+                                        {isCurrentlyLive && (
+                                            <span className="px-1.5 py-0.5 bg-rose-500 text-white rounded-md text-[8px] font-black animate-pulse">
+                                                LIVE NOW
+                                            </span>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                    {(isCompleted || lecture.status === 'ENDED') && (
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                    )}
+                </button>
+            );
+        })}
     </div>
 );
 
 const VideoPlayer = ({ lecture }) => {
+    const iframeRef = useRef(null);
+    const playerContainerRef = useRef(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [showControls, setShowControls] = useState(false);
+    const [isFullScreen, setIsFullScreen] = useState(false);
+    const timeoutRef = useRef(null);
+
+    useEffect(() => {
+        if (showControls && isPlaying) {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => setShowControls(false), 3000);
+        }
+    }, [showControls, isPlaying]);
+
+    // Unified message listener for YouTube API
+    useEffect(() => {
+        const handleMessage = (event) => {
+            if (!event.origin.includes("youtube")) return;
+            try {
+                const data = JSON.parse(event.data);
+
+                // Track current time from various YouTube message types
+                if (data.event === 'infoDelivery' && data.info) {
+                    if (data.info.currentTime !== undefined) {
+                        setCurrentTime(data.info.currentTime);
+                    }
+                    if (data.info.playerState !== undefined) {
+                        setIsPlaying(data.info.playerState === 1);
+                    }
+                }
+            } catch (e) { }
+        };
+
+        // Poll for time updates every second to ensure seek state is fresh
+        const timePoll = setInterval(() => {
+            if (isPlaying) {
+                sendCommand('addEventListener', 'onStateChange');
+            }
+        }, 1000);
+
+        window.addEventListener('message', handleMessage);
+        return () => {
+            window.removeEventListener('message', handleMessage);
+            clearInterval(timePoll);
+        };
+    }, [isPlaying]);
+
+    useEffect(() => {
+        const handleFsChange = () => {
+            setIsFullScreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFsChange);
+        return () => document.removeEventListener('fullscreenchange', handleFsChange);
+    }, []);
+
     if (!lecture) return (
         <div className="aspect-video bg-slate-900 rounded-3xl flex flex-col items-center justify-center text-white p-8">
             <MonitorPlay className="w-16 h-16 text-slate-700 mb-4" />
             <p className="text-slate-400 font-bold">Select a lecture to start watching</p>
         </div>
     );
+
     const videoId = lecture.videoIdentifier || "";
-    const embedUrl = videoId.startsWith('http')
-        ? videoId
-        : `https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0`;
+    let cleanVideoId = "";
+
+    if (videoId) {
+        if (videoId.includes('youtube.com/watch')) {
+            try {
+                const url = new URL(videoId);
+                cleanVideoId = url.searchParams.get('v') || "";
+            } catch (e) { }
+        } else if (videoId.includes('youtu.be/')) {
+            cleanVideoId = videoId.split('youtu.be/')[1].split('?')[0];
+        } else if (!videoId.startsWith('http')) {
+            cleanVideoId = videoId;
+        }
+    }
+
+    if (!cleanVideoId) return (
+        <div className="aspect-video bg-slate-900 rounded-3xl flex flex-col items-center justify-center text-white p-8 overflow-hidden">
+            <Video className="w-16 h-16 text-slate-700 mb-4" />
+            <p className="text-slate-400 font-bold">No Video Available</p>
+            <p className="text-slate-500 text-[11px] mt-1 max-w-xs text-center">The instructor hasn't provided a valid video URL for "{lecture.title}"</p>
+        </div>
+    );
+
+    const embedUrl = `https://www.youtube-nocookie.com/embed/${cleanVideoId}?rel=0&modestbranding=1&enablejsapi=1&controls=0&iv_load_policy=3&fs=0`;
+
+    const sendCommand = (func, args = '') => {
+        if (iframeRef.current) {
+            iframeRef.current.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: func,
+                args: args
+            }), '*');
+        }
+    };
+
+    const togglePlay = () => {
+        if (isPlaying) {
+            sendCommand('pauseVideo');
+        } else {
+            sendCommand('unMute'); // Force unmute on YT side
+            sendCommand('playVideo');
+        }
+        setIsPlaying(!isPlaying);
+    };
+
+    const toggleMute = () => {
+        if (isMuted) sendCommand('unMute');
+        else sendCommand('mute');
+        setIsMuted(!isMuted);
+    };
+
+    const seek = (delta) => {
+        const targetTime = Math.max(0, currentTime + delta);
+        if (iframeRef.current) {
+            iframeRef.current.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: 'seekTo',
+                args: [targetTime, true]
+            }), '*');
+        }
+        setCurrentTime(targetTime);
+    };
+
+    const toggleFullScreen = (e) => {
+        e.stopPropagation();
+        if (!document.fullscreenElement) {
+            playerContainerRef.current?.requestFullscreen?.();
+        } else {
+            document.exitFullscreen?.();
+        }
+    };
 
     return (
-        <div className="w-full">
-            <div className="aspect-video bg-black rounded-[32px] overflow-hidden shadow-2xl relative">
+        <div 
+            ref={playerContainerRef}
+            className={clsx(
+                "relative group overflow-hidden shadow-2xl bg-black border border-white/5 transition-all duration-300",
+                isFullScreen ? "rounded-0 w-screen h-screen" : "rounded-3xl"
+            )}
+            onClick={() => setShowControls(prev => !prev)}
+        >
+            <div className={clsx(
+                "relative overflow-hidden",
+                isFullScreen ? "h-screen w-screen" : "aspect-video"
+            )}>
                 <iframe
+                    ref={iframeRef}
+                    width="100%"
+                    height="100%"
                     src={embedUrl}
-                    className="w-full h-full border-0"
+                    loading="lazy"
                     title={lecture.title}
+                    frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
+                    className="w-full h-full relative z-0"
                 ></iframe>
 
-                {lecture.status === 'LIVE' && (
-                    <div className="absolute top-6 left-6 flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-full text-[11px] font-black tracking-widest uppercase shadow-lg shadow-red-900/40">
-                        <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                        LIVE
-                    </div>
-                )}
+                {/* Security Watermark */}
+                <div className="absolute top-4 left-4 z-10 pointer-events-none opacity-20 select-none">
+                    <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.3em] bg-black/20 px-3 py-1 rounded-lg backdrop-blur-md">
+                        Secure Environment • {lecture?._id?.slice(-6)}
+                    </p>
+                </div>
+
+                {/* Custom Control Bar - Floating at the bottom */}
+                <div className={clsx(
+                    "absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-6 py-3 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl transition-all duration-300 transform",
+                    showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0"
+                )}>
+                    <button
+                        onClick={() => seek(-10)}
+                        className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all active:scale-90"
+                        title="Backward 10s"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                    </button>
+
+                    <button
+                        onClick={togglePlay}
+                        className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all active:scale-95"
+                    >
+                        {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+                    </button>
+
+                    <button
+                        onClick={() => seek(10)}
+                        className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all active:scale-90"
+                        title="Forward 10s"
+                    >
+                        <RotateCw className="w-4 h-4" />
+                    </button>
+
+                    <div className="w-px h-6 bg-white/10 mx-1" />
+
+                    <button
+                        onClick={toggleMute}
+                        className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all"
+                    >
+                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+
+                    <button
+                        onClick={toggleFullScreen}
+                        className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all active:scale-90"
+                        title="Fullscreen"
+                    >
+                        <Maximize className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
-            <div className="mt-8">
-                <h1 className="text-2xl font-black text-slate-900 mb-2">{lecture.title}</h1>
-                <p className="text-slate-500 leading-relaxed font-medium">{lecture.description || "No description provided for this lecture."}</p>
-            </div>
+
+            {/* Total Interaction Shield - prevents direct iframe interaction */}
+            <div
+                className="absolute inset-0 z-10 cursor-default select-none bg-transparent"
+                onContextMenu={(e) => e.preventDefault()}
+            />
         </div>
     );
 };
@@ -278,19 +493,19 @@ const CourseListingPage = () => {
             <div className="max-w-6xl mx-auto px-4 md:px-8 -mt-6">
 
                 {/* ── Stats strip */}
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
                     {[
                         { label: 'Total Courses', value: courses.length, icon: BookOpen, color: 'indigo' },
                         { label: 'Enrolled', value: enrolledCount, icon: CheckCircle, color: 'emerald' },
                         { label: 'Available', value: courses.length - enrolledCount, icon: Play, color: 'violet' },
                     ].map(({ label, value, icon: Icon, color }) => (
-                        <div key={label} className={`bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4`}>
-                            <div className={`w-10 h-10 bg-${color}-50 rounded-xl flex items-center justify-center shrink-0`}>
-                                <Icon className={`w-5 h-5 text-${color}-500`} />
+                        <div key={label} className={`bg-white rounded-2xl p-3 sm:p-5 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 gap-1 text-center sm:text-left`}>
+                            <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-${color}-50 rounded-xl flex items-center justify-center shrink-0`}>
+                                <Icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${color}-500`} />
                             </div>
                             <div>
-                                <p className={`text-xl font-black text-${color}-600`}>{value}</p>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+                                <p className={`text-lg sm:text-xl font-black text-${color}-600`}>{value}</p>
+                                <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">{label}</p>
                             </div>
                         </div>
                     ))}
@@ -315,18 +530,18 @@ const CourseListingPage = () => {
 
                 {/* ── Teacher/management link for teachers */}
                 {(user?.role === 'TEACHER' || user?.role === 'COLLEGE_ADMIN' || user?.role === 'SUPER_ADMIN') && (
-                    <div className="mb-8 p-5 bg-slate-900 rounded-2xl flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                                <Settings className="w-5 h-5 text-white" />
+                    <div className="mb-8 p-4 sm:p-5 bg-slate-900 rounded-2xl flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-white font-black text-sm">Management Console</p>
-                                <p className="text-slate-400 text-xs font-medium">Manage your courses, chapters and lectures</p>
+                                <p className="text-slate-400 text-xs font-medium hidden sm:block">Manage your courses, chapters and lectures</p>
                             </div>
                         </div>
-                        <Link to="/app/teacher" className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-500 transition-all">
-                            Open Console
+                        <Link to="/app/learning/teacher" className="px-4 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-black hover:bg-indigo-500 transition-all shrink-0">
+                            Open
                         </Link>
                     </div>
                 )}
@@ -394,13 +609,30 @@ const CourseDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeLecture, setActiveLecture] = useState(null);
     const [isEnrolled, setIsEnrolled] = useState(false);
+    const [completedLectures, setCompletedLectures] = useState([]);
+    const [showSidebar, setShowSidebar] = useState(true);
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 1024;
+            setIsMobile(mobile);
+            // Default: closed on mobile, open on desktop
+            setShowSidebar(!mobile);
+        };
+        
+        handleResize(); // Initial check
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const fetchCourse = useCallback(async () => {
         try {
             const res = await axios.get(`/courses/${id}`);
             setCourse(res.data.data.course);
             setIsEnrolled(res.data.data.isEnrolled);
+            setCompletedLectures(res.data.data.completedLectures || []);
             if (res.data.data.course.lectures?.length > 0)
                 setActiveLecture(res.data.data.course.lectures[0]);
         } catch (err) { console.error(err); }
@@ -410,18 +642,50 @@ const CourseDetailPage = () => {
     useEffect(() => { fetchCourse(); }, [fetchCourse]);
 
     const handleEnroll = async () => {
-        try { await axios.post(`/courses/${id}/enroll`); setIsEnrolled(true); }
+        try { await axios.post(`/courses/${id}/enroll`); setIsEnrolled(true); fetchCourse(); }
         catch { alert('Failed to enroll'); }
     };
 
-    if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Loading Course</p>
+    const handleMarkComplete = async () => {
+        if (!activeLecture) return;
+        const isCurrentlyCompleted = completedLectures.includes(activeLecture._id);
+
+        try {
+            if (isCurrentlyCompleted) {
+                await axios.delete(`/courses/lectures/${activeLecture._id}/complete`);
+                setCompletedLectures(prev => prev.filter(id => id !== activeLecture._id));
+            } else {
+                await axios.post(`/courses/lectures/${activeLecture._id}/complete`);
+                setCompletedLectures(prev => [...prev, activeLecture._id]);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const progress = course?.lectures?.length > 0
+        ? Math.round((completedLectures.length / course.lectures.length) * 100)
+        : 0;
+
+    const CourseDetailSkeleton = () => (
+        <div className="min-h-screen bg-[#F8FAFC] animate-pulse">
+            <div className="h-72 md:h-[420px] bg-slate-200" />
+            <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="h-24 bg-white rounded-[24px] border border-slate-100" />
+                        <div className="h-40 bg-white rounded-[24px] border border-slate-100" />
+                        <div className="h-60 bg-white rounded-[24px] border border-slate-100" />
+                    </div>
+                    <div className="lg:col-span-1">
+                        <div className="h-[500px] bg-white rounded-[28px] border border-slate-100" />
+                    </div>
+                </div>
             </div>
         </div>
     );
+
+    if (loading) return <CourseDetailSkeleton />;
     if (!course) return <div className="p-8 text-center text-slate-400 font-bold">Course not found</div>;
 
     /* ─── PRE-ENROLLMENT ────────────────────────────────── */
@@ -600,78 +864,224 @@ const CourseDetailPage = () => {
         );
     }
 
-    /* ─── ENROLLED / PLAYER VIEW ────────────────────────── */
-    const chapters2 = course.chapters || [];
-    const lectures2 = course.lectures || [];
-    const lecturesForChapter = (chId) => lectures2.filter(l => l.chapter?.toString() === chId?.toString());
-    const uncategorized = lectures2.filter(l => !l.chapter);
-
+    /* ─── ENROLLED VIEW (MASTERCLASS WORKSPACE) ────────────────── */
     return (
-        <div className="h-screen flex flex-col bg-slate-900 overflow-hidden">
-            {/* Top bar */}
-            <div className="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between shrink-0 z-40">
-                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white font-bold text-sm transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> All Courses
-                </button>
-                <div className="flex items-center gap-2 max-w-[280px]">
-                    <span className="text-slate-500 text-xs font-bold hidden md:block shrink-0">Watching:</span>
-                    <span className="text-white text-sm font-black truncate">{activeLecture?.title || course.title}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-emerald-400 text-xs font-black uppercase tracking-widest">Enrolled</span>
-                </div>
-            </div>
-
-            {/* Main flex */}
-            <div className="flex flex-col lg:flex-row flex-1 min-h-0">
-                {/* Player */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-900">
-                    <VideoPlayer lecture={activeLecture} />
-                </div>
-
-                {/* Sidebar */}
-                <div className="w-full lg:w-[380px] bg-white border-l border-slate-100 flex flex-col shrink-0 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-slate-100 shrink-0">
-                        <h3 className="font-black text-slate-900">Course Content</h3>
-                        <p className="text-xs text-slate-400 font-bold mt-0.5">{chapters2.length} chapters · {lectures2.length} lectures</p>
+        <div className="flex flex-col lg:flex-row h-screen lg:h-screen bg-slate-950 overflow-hidden relative">
+            {/* Cinematic Main Workspace */}
+            <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden">
+                {/* Header Bar */}
+                <div className="h-16 px-6 bg-slate-950/50 backdrop-blur-xl border-b border-white/5 flex items-center justify-between shrink-0 relative z-20">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/app/learning')}
+                            className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <div className="h-4 w-px bg-white/10 mx-2" />
+                        <h2 className="text-sm font-black text-white/90 uppercase tracking-[0.15em] truncate max-w-[300px]">{course.title}</h2>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
-                        {chapters2.sort((a, b) => a.order - b.order).map((ch, ci) => {
-                            const chLects = lecturesForChapter(ch._id);
-                            return (
-                                <div key={ch._id}>
-                                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-3 sticky top-0 z-10">
-                                        <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center text-[10px] font-black text-indigo-600 shrink-0">{ci + 1}</div>
-                                        <div className="min-w-0">
-                                            <p className="text-xs font-black text-slate-800 truncate">{ch.title}</p>
-                                            <p className="text-[10px] text-slate-400 font-bold">{chLects.length} lectures</p>
-                                        </div>
+
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <button
+                            onClick={() => setShowSidebar(!showSidebar)}
+                            className={clsx(
+                                "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black transition-all",
+                                !showSidebar ? "bg-indigo-600 text-white" : "bg-white/5 text-slate-400 hover:bg-white/10"
+                            )}
+                        >
+                            <MonitorPlay className="w-3.5 h-3.5 sm:w-4 h-4" />
+                            <span className="hidden xs:inline">{showSidebar ? 'Hide Curriculum' : 'Show Curriculum'}</span>
+                            <span className="xs:hidden">{showSidebar ? 'Hide' : 'Show'}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Video Area */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar-dark bg-black relative overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {/* Glowing highlight behind player */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[60%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-12 space-y-6 lg:space-y-10 relative z-10">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)]"
+                        >
+                            <VideoPlayer lecture={activeLecture} />
+                        </motion.div>
+
+                        {/* Session Details */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-5 lg:p-8 rounded-[30px] lg:rounded-[40px] space-y-4 lg:space-y-6"
+                        >
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-500/20">Module Overview</span>
+                                        {(() => {
+                                            const isLiveType = activeLecture?.type === 'LIVE';
+                                            const startTime = new Date(activeLecture?.scheduledAt || activeLecture?.createdAt).getTime();
+                                            const duration = (activeLecture?.liveDuration || 60) * 60 * 1000;
+                                            const isExpired = Date.now() > (startTime + duration);
+                                            const isCurrentlyLive = isLiveType && activeLecture?.status === 'LIVE' && !isExpired;
+
+                                            if (isCurrentlyLive) {
+                                                return (
+                                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-rose-500/20 animate-pulse">
+                                                        <Radio className="w-3 h-3" /> Live Event
+                                                    </span>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
-                                    <LectureList lectures={chLects} onSelect={setActiveLecture} currentId={activeLecture?._id} />
+                                    <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight">{activeLecture?.title}</h3>
                                 </div>
-                            );
-                        })}
-                        {uncategorized.length > 0 && (
-                            <div>
-                                <div className="px-5 py-3 bg-slate-50 border-b border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Other Lectures</p>
+                                <div className="flex items-center gap-4">
+                                    {activeLecture?.notesUrl && (
+                                        <a
+                                            href={activeLecture.notesUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                                        >
+                                            <BookOpen className="w-4 h-4" /> Download Notes
+                                        </a>
+                                    )}
+                                    <button
+                                        onClick={handleMarkComplete}
+                                        className={clsx(
+                                            "px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl transition-all",
+                                            completedLectures.includes(activeLecture?._id)
+                                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/20"
+                                                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-900/20"
+                                        )}
+                                    >
+                                        {completedLectures.includes(activeLecture?._id) ? 'Completed' : 'Mark as Complete'}
+                                    </button>
                                 </div>
-                                <LectureList lectures={uncategorized} onSelect={setActiveLecture} currentId={activeLecture?._id} />
                             </div>
-                        )}
-                        {lectures2.length === 0 && (
-                            <div className="p-10 text-center">
-                                <Video className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                                <p className="text-slate-400 text-sm font-bold">No lectures yet</p>
-                            </div>
-                        )}
+
+                            <p className="text-slate-400 font-medium text-lg leading-relaxed max-w-4xl">
+                                {activeLecture?.description || "In this intensive module, we explore high-level industry patterns and implementation details that will sharpen your professional skills."}
+                            </p>
+                            <div className="h-20 lg:hidden" /> {/* Mobile Spacer */}
+                        </motion.div>
                     </div>
                 </div>
             </div>
+
+            {/* Premium Right Sidebar (Curriculum) */}
+            <AnimatePresence mode="wait">
+                {showSidebar && (
+                    <motion.div
+                        initial={isMobile ? { opacity: 0, y: '100%' } : { width: 0, opacity: 0, x: 20 }}
+                        animate={isMobile ? { opacity: 1, y: 0, width: '100%' } : { width: 400, opacity: 1, x: 0 }}
+                        exit={isMobile ? { opacity: 0, y: '100%' } : { width: 0, opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                        className={clsx(
+                            "bg-slate-900 border-l border-white/5 flex flex-col shrink-0 overflow-hidden shadow-2xl",
+                            isMobile ? "fixed inset-0 z-[100] h-full" : "h-full z-30 relative"
+                        )}
+                    >
+                        {/* Sidebar Header */}
+                        <div className="p-6 lg:p-8 pb-4 lg:pb-6 border-b border-white/5 shrink-0 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Course Curriculum</h3>
+                                <div className="flex items-center gap-3">
+                                    <h4 className="text-lg font-black text-white leading-tight">Masters Program</h4>
+                                    <div className="px-3 py-1 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                                        <span className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">{progress}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {isMobile && (
+                                <button 
+                                    onClick={() => setShowSidebar(false)}
+                                    className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="px-6 lg:px-8 py-4 shrink-0">
+                            {/* Simple Progress Bar */}
+                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-50 shadow-[0_0_15px_rgba(79,70,229,0.5)] transition-all duration-500" style={{ width: `${progress}%` }} />
+                            </div>
+                        </div>
+
+                        {/* Chapters Scrollable */}
+                        <div 
+                            className="flex-1 overflow-y-auto p-4 custom-scrollbar-dark space-y-6 lg:space-y-10 overscroll-contain"
+                            style={{ WebkitOverflowScrolling: 'touch' }}
+                        >
+                            {(course.chapters?.length > 0) ? (
+                                course.chapters.sort((a, b) => a.order - b.order).map((ch, ci) => {
+                                    const chLects = course.lectures?.filter(l => l.chapter?.toString() === ch._id?.toString()) || [];
+                                    if (chLects.length === 0) return null;
+                                    return (
+                                        <div key={ch._id} className="space-y-4">
+                                            <div className="flex items-center gap-3 px-4">
+                                                <span className="text-[10px] font-black text-indigo-500 tabular-nums">{String(ci + 1).padStart(2, '0')}</span>
+                                                <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">{ch.title}</h5>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <LectureList
+                                                    lectures={chLects}
+                                                    onSelect={setActiveLecture}
+                                                    currentId={activeLecture?._id}
+                                                    completedIds={completedLectures}
+                                                    dark={true}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="space-y-1">
+                                    <LectureList
+                                        lectures={course.lectures || []}
+                                        onSelect={setActiveLecture}
+                                        currentId={activeLecture?._id}
+                                        completedIds={completedLectures}
+                                        dark={true}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Uncategorized if any */}
+                            {course.lectures?.some(l => !l.chapter) && course.chapters?.length > 0 && (
+                                <div className="space-y-4 pt-4 border-t border-white/5">
+                                    <div className="flex items-center gap-3 px-4">
+                                        <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Supplementary Modules</h5>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <LectureList
+                                            lectures={course.lectures.filter(l => !l.chapter)}
+                                            onSelect={setActiveLecture}
+                                            currentId={activeLecture?._id}
+                                            completedIds={completedLectures}
+                                            dark={true}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            <div className="h-32 lg:hidden" /> {/* Mobile Spacer */}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
+
+
+
 
 const TeacherDashboard = () => {
     const [courses, setCourses] = useState([]);
@@ -734,22 +1144,40 @@ const TeacherDashboard = () => {
         }
     };
 
-    if (loading) return <div className="p-8 text-center font-bold text-slate-400">Loading your courses...</div>;
+    const TeacherDashboardSkeleton = () => (
+        <div className="max-w-6xl mx-auto p-8 animate-pulse space-y-10">
+            <div className="flex justify-between items-center">
+                <div className="space-y-3">
+                    <div className="h-8 w-64 bg-slate-200 rounded" />
+                    <div className="h-4 w-48 bg-slate-100 rounded" />
+                </div>
+                <div className="h-12 w-40 bg-slate-200 rounded-2xl" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="h-80 bg-white rounded-[28px] border border-slate-100" />
+                ))}
+            </div>
+        </div>
+    );
+
+    if (loading) return <TeacherDashboardSkeleton />;
 
     return (
         <div className="max-w-6xl mx-auto p-4 md:p-8">
-            <div className="flex items-center justify-between mb-12">
-                <div>
-                    <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Academy Console</h2>
-                    <p className="text-slate-500 font-medium">Manage your courses, lectures and live streams.</p>
+            <div className="flex items-center justify-between mb-6 md:mb-12 gap-3">
+                <div className="min-w-0">
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-1 md:mb-2 tracking-tight">Academy Console</h2>
+                    <p className="text-slate-500 font-medium text-sm hidden sm:block">Manage your courses, lectures and live streams.</p>
                 </div>
                 {(user?.role === 'SUPER_ADMIN' || user?.role === 'TEACHER' || user?.role === 'COLLEGE_ADMIN') && (
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all text-sm"
+                        className="bg-blue-600 text-white px-4 sm:px-8 py-3 sm:py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all text-sm shrink-0"
                     >
-                        <Plus className="w-5 h-5" />
-                        New Course
+                        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="hidden sm:inline">New Course</span>
+                        <span className="sm:hidden">New</span>
                     </button>
                 )}
             </div>
@@ -893,8 +1321,10 @@ const ManageLectures = () => {
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showLiveModal, setShowLiveModal] = useState(false);
+    const [liveDuration, setLiveDuration] = useState(60);
     const [selectedLecture, setSelectedLecture] = useState(null);
-    const [newLecture, setNewLecture] = useState({ title: '', type: 'RECORDED', videoIdentifier: '', description: '' });
+    const [newLecture, setNewLecture] = useState({ title: '', type: 'RECORDED', videoIdentifier: '', description: '', notesUrl: '' });
     const navigate = useNavigate();
 
     const fetchCourseData = useCallback(async () => {
@@ -918,7 +1348,7 @@ const ManageLectures = () => {
         try {
             await axios.post(`/courses/${courseId}/lectures`, newLecture);
             setShowAddModal(false);
-            setNewLecture({ title: '', type: 'RECORDED', videoIdentifier: '', description: '' });
+            setNewLecture({ title: '', type: 'RECORDED', videoIdentifier: '', description: '', notesUrl: '' });
             fetchCourseData();
         } catch (err) {
             alert("Failed to add lecture");
@@ -958,15 +1388,18 @@ const ManageLectures = () => {
         }
     };
 
-    const handleStartLive = async () => {
+    const handleStartLive = async (e) => {
+        e.preventDefault();
         try {
             await axios.post(`/courses/${courseId}/lectures`, {
                 title: `Live Class - ${new Date().toLocaleDateString()}`,
                 type: 'LIVE',
                 status: 'LIVE',
                 videoIdentifier: '',
-                description: 'Join the live class now!'
+                description: 'Join the live class now!',
+                liveDuration: Number(liveDuration)
             });
+            setShowLiveModal(false);
             alert("Live class entry created! Start your streaming software now.");
             fetchCourseData();
         } catch (err) {
@@ -978,81 +1411,81 @@ const ManageLectures = () => {
 
     return (
         <div className="max-w-6xl mx-auto p-4 md:p-8">
-            <button onClick={() => navigate(user?.role === 'SUPER_ADMIN' ? '/app/admin' : '/app/teacher')} className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-8 hover:text-blue-600">
+            <button onClick={() => navigate(user?.role === 'SUPER_ADMIN' ? '/app/admin' : '/app/teacher')} className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-5 md:mb-8 hover:text-blue-600">
                 <ArrowLeft className="w-4 h-4" /> Back to Dashboard
             </button>
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-[28px] overflow-hidden border-4 border-white shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-6 md:mb-12">
+                <div className="flex items-center gap-4 md:gap-6">
+                    <div className="w-14 h-14 md:w-20 md:h-20 rounded-[20px] md:rounded-[28px] overflow-hidden border-4 border-white shadow-xl shrink-0">
                         <img src={course?.coverImage} className="w-full h-full object-cover" />
                     </div>
-                    <div>
-                        <h2 className="text-2xl font-black text-slate-900 mb-1">{course?.title}</h2>
-                        <p className="text-slate-500 text-sm font-medium">Lecture Management</p>
+                    <div className="min-w-0">
+                        <h2 className="text-lg md:text-2xl font-black text-slate-900 mb-0.5 md:mb-1 truncate">{course?.title}</h2>
+                        <p className="text-slate-500 text-xs md:text-sm font-medium">Lecture Management</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                     <button
-                        onClick={handleStartLive}
-                        className="bg-red-50 text-red-600 px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 border border-red-100 hover:bg-red-100 transition-all text-sm"
+                        onClick={() => setShowLiveModal(true)}
+                        className="flex-1 md:flex-none bg-red-50 text-red-600 px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 border border-red-100 hover:bg-red-100 transition-all text-xs sm:text-sm"
                     >
-                        <Radio className="w-4 h-4" /> Start Live Class
+                        <Radio className="w-4 h-4" /> <span className="hidden sm:inline">Start</span> Live
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all text-sm"
+                        className="flex-1 md:flex-none bg-blue-600 text-white px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all text-xs sm:text-sm"
                     >
-                        <Plus className="w-4 h-4" /> Add Recorded Lecture
+                        <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Recorded</span> Lecture
                     </button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
-                <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+            <div className="bg-white rounded-[24px] sm:rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
+                <div className="p-4 sm:p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
                     <h3 className="font-bold text-slate-800">Available Lectures</h3>
-                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{lectures.length} Total items</span>
+                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{lectures.length} total</span>
                 </div>
                 <div className="divide-y divide-slate-100">
                     {lectures.map((lecture, idx) => (
-                        <div key={lecture._id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                            <div className="flex items-center gap-5">
-                                <div className="text-slate-300 font-black text-xl w-6">{idx + 1}</div>
-                                <div>
-                                    <h4 className="font-bold text-slate-900 mb-1">{lecture.title}</h4>
-                                    <div className="flex items-center gap-3">
+                        <div key={lecture._id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors gap-3">
+                            <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                                <div className="text-slate-300 font-black text-base sm:text-xl w-5 sm:w-6 shrink-0">{idx + 1}</div>
+                                <div className="min-w-0">
+                                    <h4 className="font-bold text-slate-900 mb-0.5 sm:mb-1 text-sm sm:text-base truncate">{lecture.title}</h4>
+                                    <div className="flex items-center gap-2">
                                         <span className={clsx(
                                             "text-[10px] font-bold px-2 py-0.5 rounded-md",
                                             lecture.type === 'LIVE' ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
                                         )}>
                                             {lecture.type}
                                         </span>
-                                        <span className="text-[11px] text-slate-400 font-medium">
+                                        <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
                                             Added {new Date(lecture.createdAt).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                                 {lecture.status === 'LIVE' && (
                                     <button
                                         onClick={() => handleEndLive(lecture._id)}
-                                        className="px-3 py-1.5 bg-red-600 text-white rounded-xl text-[10px] font-bold hover:bg-red-700 transition-all"
+                                        className="px-2 sm:px-3 py-1.5 bg-red-600 text-white rounded-xl text-[10px] font-bold hover:bg-red-700 transition-all"
                                     >
-                                        Stop Live
+                                        Stop
                                     </button>
                                 )}
                                 <button
                                     onClick={() => { setSelectedLecture(lecture); setShowEditModal(true); }}
-                                    className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                    className="p-2 sm:p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                                 >
-                                    <Edit className="w-5 h-5" />
+                                    <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
                                 <button
                                     onClick={() => handleDeleteLecture(lecture._id)}
-                                    className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                    className="p-2 sm:p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                                 >
-                                    <Trash2 className="w-5 h-5" />
+                                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
                             </div>
                         </div>
@@ -1112,6 +1545,16 @@ const ManageLectures = () => {
                                     onChange={e => setNewLecture({ ...newLecture, description: e.target.value })}
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 px-1">Notes URL / PDF Link (Optional)</label>
+                                <input
+                                    className="w-full h-14 bg-slate-50 border-none rounded-2xl px-5 font-medium focus:ring-2 ring-blue-500 transition-all"
+                                    placeholder="e.g. https://drive.google.com/..."
+                                    value={newLecture.notesUrl}
+                                    onChange={e => setNewLecture({ ...newLecture, notesUrl: e.target.value })}
+                                />
+                                <p className="text-[10px] text-slate-400 mt-2 px-1">Links to PDF or supplementary materials.</p>
+                            </div>
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
                                 <button type="submit" className="flex-1 h-14 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Publish Lecture</button>
@@ -1152,9 +1595,72 @@ const ManageLectures = () => {
                                     onChange={e => setSelectedLecture({ ...selectedLecture, description: e.target.value })}
                                 />
                             </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 px-1">Notes URL / PDF Link</label>
+                                <input
+                                    className="w-full h-14 bg-slate-50 border-none rounded-2xl px-5 font-medium focus:ring-2 ring-blue-500 transition-all"
+                                    value={selectedLecture.notesUrl || ''}
+                                    onChange={e => setSelectedLecture({ ...selectedLecture, notesUrl: e.target.value })}
+                                />
+                            </div>
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
                                 <button type="submit" className="flex-1 h-14 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Update Lecture</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showLiveModal && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[40px] p-10 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
+                                <Radio className="w-6 h-6 text-red-600" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900">Go Live</h2>
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-0.5">Define session duration</p>
+                            </div>
+                        </div>
+                        <form onSubmit={handleStartLive} className="space-y-6">
+                            <div className="p-6 bg-slate-50 rounded-[28px] border border-slate-100">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-1 text-center">Duration (Minutes)</label>
+                                <div className="flex items-center justify-between gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setLiveDuration(Math.max(15, liveDuration - 15))}
+                                        className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-xl font-black text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                                    >
+                                        -
+                                    </button>
+                                    <div className="flex-1 text-center">
+                                        <span className="text-4xl font-black text-slate-900">{liveDuration}</span>
+                                        <span className="text-xs font-black text-slate-400 uppercase ml-2">Min</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLiveDuration(liveDuration + 15)}
+                                        className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-xl font-black text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex gap-3">
+                                <BadgeInfo className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                                    The "LIVE" tag will be automatically removed from the curriculum once this duration expires.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-4">
+                                <button type="button" onClick={() => setShowLiveModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
+                                <button type="submit" className="flex-2 h-14 bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-200 hover:scale-[1.02] active:scale-95 transition-all">
+                                    Start Session
+                                </button>
                             </div>
                         </form>
                     </div>

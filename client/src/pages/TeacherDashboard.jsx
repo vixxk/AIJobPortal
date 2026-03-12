@@ -93,7 +93,7 @@ const TeacherDashboard = () => {
                         <BookOpen className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <span className="font-black text-xl tracking-tighter text-slate-900 block leading-none">JobPortal</span>
+                        <span className="font-black text-xl tracking-tighter text-slate-900 block leading-none">Gradnex</span>
                         <span className="text-[10px] font-black tracking-[0.2em] text-indigo-500 uppercase mt-1 block">Teacher Academy</span>
                     </div>
                 </div>
