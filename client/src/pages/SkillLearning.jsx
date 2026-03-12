@@ -6,13 +6,14 @@ import {
     BookOpen, Play, Video, Plus, Edit, Trash2,
     ChevronRight, BadgeInfo, Clock, Users,
     Globe, Radio, CheckCircle, ExternalLink,
-    ArrowLeft, MonitorPlay, Settings, Key, Lock,
+    ArrowLeft, MonitorPlay, Settings, Key, Lock, User,
     Pause, Volume2, VolumeX, RotateCcw, RotateCw, X,
     Maximize
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import SmartImage from '../components/ui/SmartImage';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const getImgUrl = (p) => {
@@ -35,10 +36,13 @@ const CourseCard = ({ course, isEnrolled }) => (
     >
         {/* Cover */}
         <div className="relative h-48 overflow-hidden shrink-0">
-            {getImgUrl(course.coverImage)
-                ? <img src={getImgUrl(course.coverImage)} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                : <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center"><BookOpen className="w-12 h-12 text-indigo-300" /></div>
-            }
+            <SmartImage 
+                src={getImgUrl(course.coverImage)} 
+                alt={course.title} 
+                className="group-hover:scale-105 transition-transform duration-500"
+                containerClassName="w-full h-full"
+                fallbackIcon={BookOpen}
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
             {/* top badges */}
@@ -62,12 +66,12 @@ const CourseCard = ({ course, isEnrolled }) => (
 
             {/* teacher */}
             <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-white/20 border border-white/40 overflow-hidden shrink-0">
-                    {course.teacher?.avatar
-                        ? <img src={getImgUrl(course.teacher.avatar)} className="w-full h-full object-cover" />
-                        : <span className="w-full h-full flex items-center justify-center text-[9px] font-black text-white">{course.teacher?.name?.[0] || 'T'}</span>
-                    }
-                </div>
+                <SmartImage 
+                    src={getImgUrl(course.teacher?.avatar)} 
+                    alt={course.teacher?.name}
+                    containerClassName="w-6 h-6 rounded-full bg-white/20 border border-white/40 overflow-hidden shrink-0"
+                    fallbackIcon={User}
+                />
                 <span className="text-white/90 text-[11px] font-bold line-clamp-1">{course.teacher?.name || 'Unknown Teacher'}</span>
             </div>
         </div>
@@ -696,10 +700,11 @@ const CourseDetailPage = () => {
             <div className="min-h-screen bg-[#F8FAFC]">
                 {/* Full-bleed hero */}
                 <div className="relative h-72 md:h-[420px] overflow-hidden">
-                    {getImgUrl(course.coverImage)
-                        ? <img src={getImgUrl(course.coverImage)} className="w-full h-full object-cover" alt={course.title} />
-                        : <div className="w-full h-full bg-gradient-to-br from-indigo-800 to-violet-900" />
-                    }
+                    <SmartImage 
+                        src={getImgUrl(course.coverImage)} 
+                        alt={course.title}
+                        containerClassName="w-full h-full"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-slate-900/10" />
                     <button onClick={() => navigate(-1)} className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl text-xs font-black hover:bg-white/20 transition-all">
                         <ArrowLeft className="w-4 h-4" /> Back
@@ -726,11 +731,12 @@ const CourseDetailPage = () => {
                         <div className="lg:col-span-2 space-y-5">
                             {/* Instructor */}
                             <div className="bg-white rounded-[24px] p-5 border border-slate-100 flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-2xl bg-indigo-50 overflow-hidden shrink-0 flex items-center justify-center">
-                                    {getImgUrl(course.teacher?.avatar)
-                                        ? <img src={getImgUrl(course.teacher.avatar)} className="w-full h-full object-cover" />
-                                        : <span className="text-xl font-black text-indigo-400">{course.teacher?.name?.[0] || 'T'}</span>}
-                                </div>
+                                <SmartImage 
+                                    src={getImgUrl(course.teacher?.avatar)} 
+                                    alt={course.teacher?.name}
+                                    containerClassName="w-14 h-14 rounded-2xl bg-indigo-50 overflow-hidden shrink-0"
+                                    fallbackIcon={User}
+                                />
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instructor</p>
                                     <p className="font-black text-slate-900 text-lg leading-tight">{course.teacher?.name || 'Unknown'}</p>

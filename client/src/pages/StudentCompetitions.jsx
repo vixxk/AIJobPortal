@@ -162,7 +162,7 @@ const StudentCompetitions = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto animate-in fade-in duration-500 pb-16">
+        <div className="max-w-6xl mx-auto animate-in fade-in duration-500 pb-16 px-4 md:px-0">
 
             {/* ── Hero Banner ──────────────────────────────────────────────── */}
             <div className="relative rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 p-4 md:p-10 shadow-xl shadow-blue-200/60 transition-all duration-300">

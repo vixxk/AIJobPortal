@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import Logo from '../Logo';
+import SmartImage from '../ui/SmartImage';
 const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
@@ -153,15 +154,24 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
             </div>
             <div className={clsx("p-4 border-t border-[#1E293B]", isCollapsed ? "flex justify-center" : "")}>
                 <div className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30", isCollapsed ? "p-2" : "p-3")}>
-                    {user?.role === 'SUPER_ADMIN' ? (
-                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-lg">SA</div>
-                    ) : user?.role === 'RECRUITER' && !user?.avatar ? (
-                        <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-black text-xl shrink-0 shadow-lg">
-                            {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
-                        </div>
-                    ) : (
-                        <img src={getImageUrl(user?.avatar) || "https://i.pravatar.cc/150"} alt="User" className="w-10 h-10 rounded-full border-2 border-blue-500 object-cover shrink-0" />
-                    )}
+                    <div className="w-10 h-10 rounded-full border-2 border-blue-500 flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative z-10">
+                        <SmartImage 
+                            src={getImageUrl(user?.avatar)} 
+                            alt={user?.name || "User"}
+                            containerClassName="w-full h-full"
+                            fallbackIcon={() => (
+                                <div className={clsx(
+                                    "w-full h-full flex items-center justify-center text-white font-black",
+                                    user?.role === 'SUPER_ADMIN' ? "bg-rose-500 text-[10px]" : 
+                                    user?.role === 'RECRUITER' ? "bg-indigo-500 text-lg" : 
+                                    user?.role === 'COLLEGE_ADMIN' ? "bg-emerald-500 text-lg" :
+                                    "bg-blue-600 text-lg"
+                                )}>
+                                    {user?.role === 'SUPER_ADMIN' ? 'SA' : (user?.name ? user.name.charAt(0).toUpperCase() : 'U')}
+                                </div>
+                            )}
+                        />
+                    </div>
                     {!isCollapsed && (
                         <div className="flex-1 overflow-hidden">
                             <p className="text-sm font-semibold text-white truncate">{user?.name}</p>

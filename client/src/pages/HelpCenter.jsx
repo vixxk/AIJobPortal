@@ -66,9 +66,6 @@ const HelpCenter = () => {
                             </h1>
                         </div>
                         <div className="flex items-center gap-4 text-slate-600">
-                            <button onClick={() => navigate('/app/contact')} className="hover:bg-slate-100 p-2 rounded-full transition-colors">
-                                <MessageSquare className="w-6 h-6 md:w-5 md:h-5 text-slate-700" />
-                            </button>
                         </div>
                     </div>
                 </div>

@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { Search, Menu, ArrowLeft, Settings as SettingsIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationsDropdown from '../NotificationsDropdown';
+import SmartImage from '../ui/SmartImage';
+import clsx from 'clsx';
 const Topbar = ({ toggleSidebar, isMobile }) => {
     const { user } = useAuth();
     const location = useLocation();
@@ -84,19 +86,24 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
                             onClick={() => window.dispatchEvent(new CustomEvent('open-settings'))}
                         />
                     ) : !customTitle ? (
-                        user?.role === 'RECRUITER' && !user?.avatar ? (
-                            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold cursor-pointer hover:bg-indigo-600 transition-colors shadow-sm"
-                                 onClick={() => navigate('/app/profile')}
-                            >
-                                {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
-                            </div>
-                        ) : (
-                            <img
-                                src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Student")}&background=f1f5f9&color=0f172a&bold=true`}
-                                alt="Profile"
-                                className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-slate-200 cursor-pointer hover:border-blue-500 transition-colors"
+                        <div 
+                            className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden cursor-pointer hover:border-blue-500 transition-colors shadow-sm relative z-10"
+                            onClick={() => navigate('/app/profile')}
+                        >
+                            <SmartImage 
+                                src={user?.avatar} 
+                                alt={user?.name || "User"}
+                                containerClassName="w-full h-full"
+                                fallbackIcon={() => (
+                                    <div className={clsx(
+                                        "w-full h-full flex items-center justify-center text-white font-black text-sm uppercase",
+                                        user?.role === 'RECRUITER' ? "bg-indigo-500" : "bg-blue-600"
+                                    )}>
+                                        {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                )}
                             />
-                        )
+                        </div>
                     ) : null}
                 </div>
             )}

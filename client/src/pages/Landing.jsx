@@ -6,7 +6,7 @@ import landing2Img from '../assets/landing_2.png';
 import landing3Img from '../assets/landing_3.png';
 import { useAuth } from '../context/AuthContext';
 const Landing = () => {
-    const [step, setStep] = useState(0);
+    const [step, setStep] = useState(1);
     const navigate = useNavigate();
     const { user } = useAuth();
     useEffect(() => {
@@ -15,17 +15,10 @@ const Landing = () => {
         }
     }, [user, step, navigate]);
     useEffect(() => {
-        if (step === 0) {
-            const timer = setTimeout(() => {
-                setStep(1);
-            }, 3000);
-            return () => clearTimeout(timer);
-        } else {
-            const timer = setTimeout(() => {
-                setStep(prev => (prev === 3 ? 1 : prev + 1));
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
+        const timer = setTimeout(() => {
+            setStep(prev => (prev === 3 ? 1 : prev + 1));
+        }, 3000);
+        return () => clearTimeout(timer);
     }, [step]);
     const handleGetStarted = () => {
         navigate(user ? '/app' : '/register');
@@ -51,28 +44,7 @@ const Landing = () => {
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col font-sans">
             <div className="md:hidden w-full h-[100dvh]">
-                {step === 0 ? (
-                    <div
-                        className="w-full h-full relative cursor-pointer overflow-hidden shadow-2xl bg-[#030712] mx-auto max-w-md"
-                        onClick={() => setStep(1)}
-                    >
-                        <img
-                            src={splashImg}
-                            alt="Splash Background"
-                            className="absolute inset-0 w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/60" />
-                        <div className="relative z-10 w-full h-full flex flex-col justify-end pb-24 px-8 animate-fade-in">
-                            <h1 className="text-white text-[42px] font-[800] mb-3 leading-[1.1] tracking-tight">
-                                Welcome to<br />Gradnex! <span className="inline-block text-[38px] ml-1">👋</span>
-                            </h1>
-                            <p className="text-[#F1F5F9] text-[15px] max-w-[280px] leading-[1.6] font-medium tracking-wide">
-                                The best career finder & talent portal where the best opportunities find you.
-                            </p>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="w-full h-full bg-white flex flex-col relative overflow-hidden shadow-xl mx-auto max-w-md">
+                <div className="w-full h-full bg-white flex flex-col relative overflow-hidden shadow-xl mx-auto max-w-md">
                         <div className="flex-1 relative flex items-center justify-center bg-white overflow-hidden pb-4">
                             <div
                                 className="absolute inset-0 flex transition-transform duration-500 ease-in-out"
@@ -131,7 +103,6 @@ const Landing = () => {
                             </p>
                         </div>
                     </div>
-                )}
             </div>
             <div className="hidden md:flex flex-row w-full min-h-screen bg-white">
                 <div className="w-[55%] lg:w-3/5 bg-[#F8FAFC] flex flex-col items-center justify-center relative overflow-hidden">

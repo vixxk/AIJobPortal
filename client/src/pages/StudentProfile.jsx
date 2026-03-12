@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
+import SmartImage from '../components/ui/SmartImage';
 import {
     User, Mail, GraduationCap, Briefcase, FileText, Plus, X, UploadCloud, CheckCircle,
     Settings, ChevronLeft, Trash2, Edit2, ChevronDown, Check,
@@ -272,15 +273,21 @@ const StudentProfile = () => {
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex justify-center mb-6">
                 <div className="relative w-24 h-24">
-                    {(profile.profileImage || user?.avatar) ? (
-                        <img src={profile.profileImage || user?.avatar} alt="Avatar" className={`w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10 ${saving ? 'opacity-50' : 'opacity-100'}`} />
-                    ) : user?.role === 'RECRUITER' ? (
-                        <div className={`w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-md relative z-10 ${saving ? 'opacity-50' : 'opacity-100'}`}>
-                            {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
-                        </div>
-                    ) : (
-                        <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=random`} alt="Avatar" className={`w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10 ${saving ? 'opacity-50' : 'opacity-100'}`} />
-                    )}
+                    <SmartImage 
+                        src={profile.profileImage || user?.avatar} 
+                        alt="Avatar" 
+                        containerClassName="w-24 h-24 rounded-full border-4 border-white shadow-md relative z-10"
+                        className={saving ? 'opacity-50' : 'opacity-100'}
+                        fallbackIcon={() => (
+                            user?.role === 'RECRUITER' ? (
+                                <div className={`w-full h-full bg-indigo-500 flex items-center justify-center text-white text-3xl font-bold ${saving ? 'opacity-50' : 'opacity-100'}`}>
+                                    {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                                </div>
+                            ) : (
+                                <img src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=random`} alt="Avatar" className="w-full h-full object-cover" />
+                            )
+                        )}
+                    />
                     <label className="absolute bottom-0 right-0 z-20 bg-blue-500 hover:bg-blue-600 active:scale-95 cursor-pointer p-1.5 rounded-xl border-2 border-white shadow-sm transition-all">
                         <input type="file" accept="image/*" className="hidden" disabled={saving} onChange={async (e) => {
                             const file = e.target.files[0];
@@ -695,15 +702,20 @@ const StudentProfile = () => {
                                 <div className="px-4 flex-1 overflow-y-auto hide-scrollbar h-full pb-20">
                                     <div className="flex items-center justify-between mt-4 mb-8">
                                         <div className="flex items-center gap-4">
-                                            {(profile.profileImage || user?.avatar) ? (
-                                                <img src={profile.profileImage || user?.avatar} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
-                                            ) : user?.role === 'RECRUITER' ? (
-                                                <div className="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-sm">
-                                                    {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
-                                                </div>
-                                            ) : (
-                                                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
-                                            )}
+                                            <SmartImage 
+                                                src={profile.profileImage || user?.avatar} 
+                                                alt="User" 
+                                                containerClassName="w-12 h-12 rounded-full border-2 border-white shadow-sm"
+                                                fallbackIcon={() => (
+                                                    user?.role === 'RECRUITER' ? (
+                                                        <div className="w-full h-full bg-indigo-500 flex items-center justify-center text-white text-xl font-bold">
+                                                            {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                                                        </div>
+                                                    ) : (
+                                                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-full h-full object-cover" />
+                                                    )
+                                                )}
+                                            />
                                             <div>
                                                 <h2 className="text-xl font-bold tracking-tight">{profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name')}</h2>
                                                 <p className="text-slate-500 text-sm mt-0.5">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
@@ -746,15 +758,20 @@ const StudentProfile = () => {
                     <div className="w-[340px] shrink-0 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
                         <div className="p-8 border-b border-slate-100 flex flex-col items-center gap-4 bg-gradient-to-b from-blue-50/50 to-white text-center">
                             <div className="relative">
-                                {(profile.profileImage || user?.avatar) ? (
-                                    <img src={profile.profileImage || user?.avatar} alt="User" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10" />
-                                ) : user?.role === 'RECRUITER' ? (
-                                    <div className="w-24 h-24 rounded-full bg-indigo-500 flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-md relative z-10">
-                                        {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
-                                    </div>
-                                ) : (
-                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md relative z-10" />
-                                )}
+                                <SmartImage 
+                                    src={profile.profileImage || user?.avatar} 
+                                    alt="User" 
+                                    containerClassName="w-24 h-24 rounded-full border-4 border-white shadow-md relative z-10"
+                                    fallbackIcon={() => (
+                                        user?.role === 'RECRUITER' ? (
+                                            <div className="w-full h-full bg-indigo-500 flex items-center justify-center text-white text-4xl font-bold">
+                                                {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
+                                            </div>
+                                        ) : (
+                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-full h-full object-cover" />
+                                        )
+                                    )}
+                                />
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold tracking-tight text-slate-800">{profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name')}</h2>

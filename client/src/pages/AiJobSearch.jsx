@@ -5,6 +5,7 @@ import axios from '../utils/axios';
 import JobDetailsModal from '../components/JobDetailsModal';
 import notFoundImg from '../assets/404.png';
 import SkeletonJobCard from '../components/SkeletonJobCard';
+import SmartImage from '../components/ui/SmartImage';
 const PAGE_SIZE = 10;
 const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const [saved, setSaved] = useState(initiallySaved);
@@ -36,25 +37,13 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
             <div className="flex justify-between items-start">
                 <div className="flex gap-3 md:gap-4">
                     <div className="w-[42px] h-[42px] md:w-[52px] md:h-[52px] rounded-xl md:rounded-2xl border border-slate-100 flex items-center justify-center bg-white shadow-sm shrink-0 overflow-hidden relative">
-                        {job.logo && (
-                            <img
-                                src={job.logo}
-                                alt={job.company}
-                                className="w-[22px] h-[22px] md:w-[26px] md:h-[26px] object-contain rounded-md"
-                                crossOrigin="anonymous"
-                                referrerPolicy="no-referrer"
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'block';
-                                }}
-                            />
-                        )}
-                        <span
-                            className="font-extrabold text-lg md:text-xl text-blue-600"
-                            style={{ display: job.logo ? 'none' : 'block' }}
-                        >
-                            {(job.company || '?').charAt(0).toUpperCase()}
-                        </span>
+                        <SmartImage 
+                            src={job.logo} 
+                            alt={job.company}
+                            className="w-[22px] h-[22px] md:w-[26px] md:h-[26px] object-contain rounded-md"
+                            containerClassName="w-full h-full flex items-center justify-center"
+                            fallbackIcon={() => <span className="font-extrabold text-lg md:text-xl text-blue-600">{(job.company || '?').charAt(0).toUpperCase()}</span>}
+                        />
                     </div>
                     <div className="max-w-[200px] md:max-w-xs pt-0 md:pt-0.5">
                         <h4 className="font-bold text-slate-900 tracking-tight text-[15px] md:text-[16px] leading-tight mb-1 truncate">{job.title}</h4>
