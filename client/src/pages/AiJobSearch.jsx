@@ -99,10 +99,6 @@ const AiJobSearch = () => {
             sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
         } else if (sortType === 'name-desc') {
             sorted.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
-        } else if (sortType === 'loc-asc') {
-            sorted.sort((a, b) => (a.location || '').localeCompare(b.location || ''));
-        } else if (sortType === 'loc-desc') {
-            sorted.sort((a, b) => (b.location || '').localeCompare(a.location || ''));
         }
         return sorted;
     };
@@ -314,8 +310,6 @@ const AiJobSearch = () => {
                                         <div className="absolute right-0 top-12 bg-white shadow-xl border border-slate-100 rounded-xl py-2 w-48 z-10 flex flex-col overflow-hidden">
                                             <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-asc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (A-Z)</button>
                                             <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-desc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (Z-A)</button>
-                                            <button onClick={() => handleSort('loc-asc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'loc-asc' ? 'text-blue-600' : 'text-slate-600'}`}>Location (A-Z)</button>
-                                            <button onClick={() => handleSort('loc-desc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'loc-desc' ? 'text-blue-600' : 'text-slate-600'}`}>Location (Z-A)</button>
                                         </div>
                                     )}
                                 </div>
@@ -330,8 +324,6 @@ const AiJobSearch = () => {
                                         <div className="absolute right-0 top-8 bg-white shadow-xl border border-slate-100 rounded-xl py-2 w-48 z-10 flex flex-col overflow-hidden">
                                             <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-asc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (A-Z)</button>
                                             <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-desc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (Z-A)</button>
-                                            <button onClick={() => handleSort('loc-asc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'loc-asc' ? 'text-blue-600' : 'text-slate-600'}`}>Location (A-Z)</button>
-                                            <button onClick={() => handleSort('loc-desc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'loc-desc' ? 'text-blue-600' : 'text-slate-600'}`}>Location (Z-A)</button>
                                         </div>
                                     )}
                                 </div>
