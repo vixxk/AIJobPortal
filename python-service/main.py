@@ -297,8 +297,30 @@ async def generate_report(req: ReportRequest):
                 "suggestions": ["To receive a performance evaluation, please ensure you answer the questions during the session."]
             }
         else:
-
-            report_data = await ai_generate_report(answers=answers_dicts, job_role=req.job_role or "")
+            # Update the prompt to be more strict about unanswered or skipped questions
+            strict_system_prompt = f"""Generate a high-stakes performance scorecard for a {job_role} interview.
+            Synthesize the candidate's performance across all questions: {json.dumps(answers_dicts)}
+            
+            STRICT GUIDELINES:
+            1. If a question has "skipped": true or an empty transcript/answer, the candidate MUST be heavily penalized for that specific question in the overall scoring.
+            2. High weights on technical accuracy and communication.
+            3. Detailed breakdown of strengths and weaknesses.
+            4. If more than 50% of questions are skipped, the overall score should not exceed 40.
+            
+            Return ONLY a JSON object with:
+            {{
+              "overall_score": 0-100,
+              "confidence_score": 0-100,
+              "fluency_score": 0-100,
+              "technical_accuracy": 0-100,
+              "strengths": [...],
+              "weaknesses": [...],
+              "suggestions": [...]
+            }}"""
+            
+            # Using the customized strict prompt instead of the generic one in fireworks_service
+            from services.fireworks_service import _call_fireworks
+            report_data = await _call_fireworks(strict_system_prompt, "Process interview results strictly.")
 
         speech_rates = []
         filler_counts = []

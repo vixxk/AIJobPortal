@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import QuestionBox from './QuestionBox';
 import LiveAnswerBox from './LiveAnswerBox';
 import PrepRing from './PrepRing';
@@ -15,6 +15,15 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const [systemError, setSystemError] = useState(null);
     const [prepState, setPrepState] = useState({ uiPhase: 'speaking', prepSeconds: 5, isSpeaking: false });
     const isSubmittingRef = useRef(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     const questionBoxRef = useRef(null);
     const currentQuestion = questions[currentIdx];
     const isLastQuestion = currentIdx === questions.length - 1;
@@ -31,27 +40,11 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         }, 1000);
         return () => clearInterval(id);
     }, [isTimerRunning, timer]);
-    const handleTimerStart = () => setIsTimerRunning(true);
-    const handleAnswerSubmit = async (transcript, blob) => {
-
-        if (isSubmittingRef.current || phase === 'processing' || phase === 'finishing') {
-            console.log('Submission ignored: already processing or guard active', {
-                ref: isSubmittingRef.current,
-                phase
-            });
-            return;
-        }
-
+    const handleTimerStart = useCallback(() => setIsTimerRunning(true), []);
+    const handleAnswerSubmit = useCallback(async (transcript, blob) => {
         isSubmittingRef.current = true;
-        console.log('Starting answer submission...', {
-            questionIdx: currentIdx,
-            transcript: transcript?.slice(0, 20),
-            blobSize: blob?.size
-        });
-
         setIsTimerRunning(false);
         setPhase('processing');
-
         setLastAnalysis(null);
         setLastEvaluation(null);
 
@@ -65,9 +58,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                 fd.append('question', currentQuestion.question);
                 fd.append('job_role', jobRole || '');
 
-                console.log('Calling evaluateAnswer API...');
                 const result = await evaluateAnswer(fd);
-                console.log('API response received:', result.status);
 
                 if (result.status === 'success') {
                     analysis = result.data.analysis;
@@ -84,7 +75,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                 analysis.failed = true;
             }
         } else {
-            console.log('No audio blob provided or empty blob');
+            // No audio blob provided or empty blob
         }
 
         const newAnswer = {
@@ -98,22 +89,15 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         const updatedAnswers = [...answers, newAnswer];
         setAnswers(updatedAnswers);
 
-        console.log('Evaluation phase complete. Waiting transition delay (2s)...');
         await new Promise(res => setTimeout(res, 2000));
-
         if (!isLastQuestion) {
-            console.log('Transitioning to question', currentIdx + 2);
             const nextIdx = currentIdx + 1;
-
             setCurrentIdx(nextIdx);
             setTimer(TIMER_BY_DIFFICULTY[questions[nextIdx]?.difficulty] || 60);
-
             await new Promise(res => setTimeout(res, 100));
-
             setPhase('answering');
             isSubmittingRef.current = false;
         } else {
-            console.log('Last question processed. Finalizing report...');
             setPhase('finishing');
             try {
                 const result = await generateReport(updatedAnswers, jobRole);
@@ -124,8 +108,9 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                 isSubmittingRef.current = false;
             }
         }
-    };
-    const handleEndInterview = async () => {
+    }, [currentIdx, phase, currentQuestion, jobRole, answers, questions, onComplete]);
+
+    const handleEndInterview = useCallback(async () => {
         setIsTimerRunning(false);
         setPhase('finishing');
         const currentSkipped = { question: currentQuestion.question, answer: '', transcript: '', evaluation: null, skipped: true };
@@ -138,7 +123,8 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
             console.error('Final report generation failed (end early):', err);
             setSystemError('We could not synthesize your report after ending the session. Technical logs have recorded the incident.');
         }
-    };
+    }, [currentQuestion.question, questions, currentIdx, answers, jobRole, onComplete]);
+
     if (systemError) return (
         <div className="flex-grow flex items-center justify-center p-4">
             <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl border border-rose-100 text-center max-w-md w-full animate-in zoom-in duration-500">
@@ -269,18 +255,11 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                 </div>
             </header>
             { }
-            <main className="flex-grow flex flex-col relative overflow-hidden z-10">
-                <div className={`flex-grow flex flex-col items-center justify-start p-4 sm:p-12 pt-16 sm:pt-24 pb-96 relative transition-all duration-1000 ${(timer === 0 && phase === 'answering') ? 'blur-2xl pointer-events-none' : 'blur-0'}`}>
-                    <div className="w-full max-w-3xl animate-in fade-in zoom-in duration-1000 flex justify-center">
-                        <QuestionBox
-                            ref={questionBoxRef}
-                            questionText={currentQuestion.question}
-                            onTimerStart={handleTimerStart}
-                            onStateChange={setPrepState}
-                        />
-                    </div>
-                    { }
-                    <div className="hidden lg:flex absolute top-32 left-10 flex-col gap-6 animate-in slide-in-from-left duration-1000">
+            <main className="flex-grow flex flex-col items-center relative overflow-y-auto z-10 px-4 sm:px-6 lg:px-12 py-6 lg:py-12">
+                <div className={`w-full max-w-[1600px] flex flex-col lg:grid lg:grid-cols-[280px_1fr_320px] gap-8 items-start transition-all duration-1000 ${(timer === 0 && phase === 'answering') ? 'blur-2xl pointer-events-none' : 'blur-0'}`}>
+                    
+                    {/* Left Sidebar (Desktop) */}
+                    <div className="hidden lg:flex flex-col gap-6 sticky top-0">
                         <div className="group bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-blue-500/10 transition-all hover:-translate-y-1">
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
@@ -302,33 +281,41 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                         else if (currentQuestion.difficulty === 'Medium') colorCls = 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
                                         else colorCls = 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]';
                                     }
-                                    return (
-                                        <div key={i} className={`h-2 w-10 rounded-full transition-all duration-700 ${colorCls}`} />
-                                    );
+                                    return <div key={i} className={`h-2 w-10 rounded-full transition-all duration-700 ${colorCls}`} />;
                                 })}
-                                <span className={`ml-3 text-xs font-black uppercase italic tracking-widest ${currentQuestion.difficulty === 'Easy' ? 'text-emerald-600' :
-                                    currentQuestion.difficulty === 'Medium' ? 'text-amber-600' :
-                                        'text-rose-600'
-                                    }`}>
+                                <span className={`ml-3 text-xs font-black uppercase italic tracking-widest ${currentQuestion.difficulty === 'Easy' ? 'text-emerald-600' : currentQuestion.difficulty === 'Medium' ? 'text-amber-600' : 'text-rose-600'}`}>
                                     {currentQuestion.difficulty}
                                 </span>
                             </div>
                         </div>
-                        <div className="w-full">
-                            <LiveAnswerBox
-                                key={currentIdx}
-                                isTimerRunning={isTimerRunning}
-                                timer={timer}
-                                maxTimer={TIMER_BY_DIFFICULTY[currentQuestion.difficulty] || 60}
-                                onSubmitAnswer={handleAnswerSubmit}
-                                onEndInterview={handleEndInterview}
+                        <LiveAnswerBox
+                            key={currentIdx + "-desktop"}
+                            isTimerRunning={isTimerRunning}
+                            timer={timer}
+                            maxTimer={TIMER_BY_DIFFICULTY[currentQuestion.difficulty] || 60}
+                            onSubmitAnswer={handleAnswerSubmit}
+                            onEndInterview={handleEndInterview}
+                            layout="sidebar"
+                        />
+                    </div>
+
+                    {/* Center Content */}
+                    <div className="flex-grow flex flex-col items-center gap-8 w-full max-w-3xl mx-auto">
+                        <div className="w-full animate-in fade-in zoom-in duration-1000">
+                            <QuestionBox
+                                ref={questionBoxRef}
+                                questionText={currentQuestion.question}
+                                onTimerStart={handleTimerStart}
+                                onStateChange={setPrepState}
                             />
                         </div>
+                        <div className="lg:hidden h-40 w-full" /> {/* Spacer for fixed mobile footer */}
                     </div>
-                    { }
-                    <div className="hidden lg:flex absolute top-32 right-10 flex-col gap-4">
+
+                    {/* Right Sidebar (Desktop) */}
+                    <div className="hidden lg:flex flex-col gap-6 sticky top-0">
                         {lastAnalysis ? (
-                            <div className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] w-80 animate-in slide-in-from-right duration-700">
+                            <div className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] w-full animate-in slide-in-from-right duration-700">
                                 <div className="flex items-center justify-between mb-8">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-1">Live Intelligence</span>
@@ -339,7 +326,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                     </div>
                                 </div>
                                 <div className="space-y-4">
-                                    { }
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-slate-400">Pace Stability</span>
                                         <span className={`text-[10px] font-black ${(lastAnalysis.pace_stability || 0) < 0.6 ? 'text-emerald-500' : 'text-amber-500'} uppercase`}>
@@ -349,7 +335,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                     <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden">
                                         <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${Math.max(20, 100 - (lastAnalysis.pace_stability || 0) * 100)}%` }} />
                                     </div>
-                                    { }
                                     <div className="flex items-center justify-between mt-2">
                                         <span className="text-xs font-bold text-slate-400">Voice Modulation</span>
                                         <span className="text-xs font-black text-slate-800">{Math.round((lastAnalysis.energy_variance || 0) * 1000)} <span className="text-[9px] text-slate-300 font-bold uppercase">MDL</span></span>
@@ -357,8 +342,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                     <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden">
                                         <div className="h-full bg-indigo-400 rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, (lastAnalysis.energy_variance || 0) * 4000)}%` }} />
                                     </div>
-                                    { }
-                                    { }
                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
                                         <div className="flex flex-col">
                                             <span className="text-[10px] font-bold text-slate-300 uppercase">Fillers</span>
@@ -369,7 +352,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                             <span className="text-xs font-black text-slate-700">{Math.round((lastAnalysis.pause_ratio || 0) * 100)}%</span>
                                         </div>
                                     </div>
-                                    { }
                                     {lastEvaluation && (
                                         <div className="mt-8 p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl text-center shadow-xl shadow-blue-200 relative overflow-hidden group">
                                             <div className="absolute inset-0 bg-white/10 group-hover:bg-transparent transition-colors" />
@@ -380,7 +362,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white/40 backdrop-blur-md border border-white/40 rounded-[2.5rem] p-8 shadow-sm w-80 flex flex-col items-center justify-center text-center">
+                            <div className="bg-white/40 backdrop-blur-md border border-white/40 rounded-[2.5rem] p-8 shadow-sm flex flex-col items-center justify-center text-center">
                                 <div className="w-12 h-12 bg-slate-100/50 rounded-2xl flex items-center justify-center text-slate-300 mb-4 border border-white">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                                 </div>
@@ -388,7 +370,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                             </div>
                         )}
                         {(prepState.uiPhase === 'speaking' || prepState.uiPhase === 'prep') && (
-                            <div className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] w-80 hover:shadow-blue-500/10 transition-all hover:-translate-y-1">
+                            <div className="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:shadow-blue-500/10 transition-all hover:-translate-y-1">
                                 <PrepRing
                                     seconds={prepState.prepSeconds}
                                     total={5}
@@ -399,16 +381,17 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                         )}
                     </div>
                 </div>
-                { }
-                <footer className="fixed bottom-0 sm:bottom-10 left-0 right-0 px-4 pb-6 sm:pb-0 z-50 lg:hidden flex justify-center">
-                    <div className="w-full sm:min-w-[400px] mx-auto animate-in slide-in-from-bottom duration-1000">
+
+                <footer className="fixed bottom-0 sm:bottom-10 left-0 right-0 px-4 pb-6 sm:pb-0 z-50 lg:hidden flex justify-center pointer-events-none">
+                    <div className="w-full sm:min-w-[400px] mx-auto animate-in slide-in-from-bottom duration-1000 pointer-events-auto">
                         <LiveAnswerBox
-                            key={currentIdx}
+                            key={currentIdx + "-mobile"}
                             isTimerRunning={isTimerRunning}
                             timer={timer}
                             maxTimer={TIMER_BY_DIFFICULTY[currentQuestion.difficulty] || 60}
                             onSubmitAnswer={handleAnswerSubmit}
                             onEndInterview={handleEndInterview}
+                            layout="footer"
                         />
                     </div>
                 </footer>

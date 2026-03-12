@@ -53,7 +53,7 @@ exports.speakText = catchAsync(async (req, res, next) => {
     const audioBuffer = await pythonService.speakText({ text, voice });
     res.set({
         'Content-Type': 'audio/mpeg',
-        'Content-Length': audioBuffer.length
+        'Content-Length': audioBuffer.byteLength
     });
     res.send(Buffer.from(audioBuffer));
 });

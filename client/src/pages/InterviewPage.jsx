@@ -300,7 +300,8 @@ const InterviewPage = () => {
             formData.append('interview_type', interviewType);
             if (resume) formData.append('resume', resume);
             const response = await startInterview(formData);
-            const { role_clear, questions, suggestions } = response;
+            // Destructure from response.data as the backend wraps everything in a 'data' object
+            const { role_clear, questions, suggestions } = response.data || {};
             if (role_clear === false) {
                 setSuggestionData({ open: true, roles: suggestions || [] });
                 return;

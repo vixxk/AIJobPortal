@@ -13,19 +13,24 @@ def calculate_metrics(file_path: str) -> dict:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
-            y, sr = librosa.load(file_path, sr=None, mono=True)
+            # Load with fixed sample rate to save memory and ensure consistency
+            y, sr = librosa.load(file_path, sr=16000, mono=True)
         except Exception as e:
             logger.error(f"librosa load failed: {e}")
             return _fallback_metrics()
 
+    if len(y) < 100:
+        return _fallback_metrics()
+
     try:
-        f0, voiced_flag, _ = librosa.pyin(
+        # yin is much faster than pyin for basic pitch metrics
+        f0 = librosa.yin(
             y,
             fmin=librosa.note_to_hz("C2"),
             fmax=librosa.note_to_hz("C7"),
             sr=sr
         )
-        voiced_f0 = f0[voiced_flag] if voiced_flag is not None else np.array([])
+        voiced_f0 = f0[f0 > 0]
         pitch_stability = float(np.std(voiced_f0)) if len(voiced_f0) > 0 else 0.0
         pitch_range = float(np.ptp(voiced_f0)) if len(voiced_f0) > 1 else 0.0
     except Exception as e:

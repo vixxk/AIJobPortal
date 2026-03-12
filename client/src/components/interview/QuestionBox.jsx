@@ -115,27 +115,36 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
     }, [stopAudio, startPrepTimer]);
     useEffect(() => {
         if (!questionText) return;
-        const init = async () => {
-            setIsBlurring(true);
-            const blurTimer = setTimeout(() => setIsBlurring(false), 2000);
-            const ctrl = new AbortController();
-            speakControllerRef.current = ctrl;
-            hasStartedRef.current = false;
-            setUiPhase('speaking'); setRepeatCount(0); setPrepSeconds(PREP_SECONDS);
-            const speechTimeout = setTimeout(() => {
-                if (!ctrl.signal.aborted) speak(questionText, ctrl.signal);
-            }, 400);
-            return () => {
-                clearTimeout(blurTimer);
-                clearTimeout(speechTimeout);
-                ctrl.abort();
-                speakControllerRef.current = null;
-                stopAudio();
-                if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
-            };
+
+        let isMounted = true;
+        const ctrl = new AbortController();
+        speakControllerRef.current = ctrl;
+        hasStartedRef.current = false;
+
+        setUiPhase('speaking');
+        setRepeatCount(0);
+        setPrepSeconds(PREP_SECONDS);
+        setIsBlurring(true);
+
+        const blurTimer = setTimeout(() => {
+            if (isMounted) setIsBlurring(false);
+        }, 2000);
+
+        const speechTimeout = setTimeout(() => {
+            if (isMounted && !ctrl.signal.aborted) {
+                speak(questionText, ctrl.signal);
+            }
+        }, 400);
+
+        return () => {
+            isMounted = false;
+            clearTimeout(blurTimer);
+            clearTimeout(speechTimeout);
+            ctrl.abort();
+            speakControllerRef.current = null;
+            stopAudio();
+            if (prepIntervalRef.current) clearInterval(prepIntervalRef.current);
         };
-        const cleanup = init();
-        return () => { if (typeof cleanup === 'function') cleanup(); };
     }, [questionText, speak, stopAudio]);
     const handleRepeat = async () => {
         if (repeatCount >= 1 || hasStartedRef.current || isSpeaking) return;
@@ -161,13 +170,13 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
             )}
             <div className={`flex flex-col items-center justify-center text-center w-full max-w-lg lg:max-w-4xl px-4 transition-all duration-1000 ${isBlurring ? 'blur-3xl grayscale opacity-0 scale-110' : 'blur-0 grayscale-0 opacity-100 scale-100'}`}>
                 { }
-                <div className="relative flex items-center justify-center w-20 h-20 sm:w-32 sm:h-32 lg:w-40 lg:h-40 mb-2 sm:mb-4 lg:mb-6 shrink-0">
+                <div className="relative flex items-center justify-center w-16 h-16 sm:w-32 sm:h-32 lg:w-40 lg:h-40 mb-1 lg:mb-6 shrink-0">
                     {isSpeaking && <PulseRings />}
                     <div className={`absolute inset-0 bg-blue-500/20 rounded-full blur-[80px] transition-all duration-1000 ${isSpeaking ? 'scale-150 opacity-100' : 'scale-100 opacity-0'}`} />
                     { }
                     <div className={`absolute -inset-1 sm:-inset-2 lg:-inset-3 rounded-full border-2 border-dashed border-blue-400/20 transition-all duration-1000 ${isSpeaking ? 'opacity-100' : 'opacity-0'}`}
                         style={{ animation: 'rotateRing 20s linear infinite' }} />
-                    <div className={`relative w-20 h-20 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full bg-white/90 backdrop-blur-2xl border border-white shadow-[0_25px_60px_-15px_rgba(59,130,246,0.3)] transition-all duration-700 transform ${isSpeaking ? 'scale-110 ring-[15px] ring-blue-500/5' : 'scale-100 rotate-0'}`}>
+                    <div className={`relative w-16 h-16 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full bg-white/90 backdrop-blur-2xl border border-white shadow-[0_25px_60px_-15px_rgba(59,130,246,0.3)] transition-all duration-700 transform ${isSpeaking ? 'scale-105 ring-[8px] ring-blue-500/5' : 'scale-100 rotate-0'}`}>
                         <div className="absolute inset-0 bg-gradient-to-tr from-blue-100/50 via-white to-transparent rounded-full overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.1),transparent_70%)]" />
                         </div>
@@ -186,9 +195,9 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
                 </div>
                 <Waveform active={isSpeaking} />
                 { }
-                <div className="mt-1 sm:mt-4 lg:mt-8 w-full transition-all duration-700 transform">
+                <div className="mt-0.5 sm:mt-4 lg:mt-8 w-full transition-all duration-700 transform">
                     <div className="relative p-[1px] rounded-[2rem] sm:rounded-[3rem] lg:rounded-[4rem] bg-gradient-to-br from-white via-slate-200 to-transparent shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] w-full lg:max-w-3xl lg:mx-auto">
-                        <div className="bg-white/60 backdrop-blur-3xl rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[4rem] px-4 sm:px-8 lg:px-12 py-4 sm:py-7 lg:py-12 border border-white relative overflow-hidden">
+                        <div className="bg-white/60 backdrop-blur-3xl rounded-[1.2rem] sm:rounded-[2rem] lg:rounded-[4rem] px-3 sm:px-8 lg:px-12 py-3 sm:py-7 lg:py-12 border border-white relative overflow-hidden">
                             { }
                             <div className="absolute -top-2 -left-1 text-[50px] sm:text-[80px] lg:text-[120px] text-slate-100/50 font-serif pointer-events-none select-none italic lg:-top-6 lg:-left-2">“</div>
                             <div className="absolute -bottom-8 -right-2 text-[50px] sm:text-[80px] lg:text-[120px] text-slate-100/50 font-serif pointer-events-none select-none italic lg:-bottom-12 lg:-right-4">”</div>

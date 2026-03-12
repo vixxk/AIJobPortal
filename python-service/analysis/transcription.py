@@ -1,4 +1,4 @@
-import whisper
+from faster_whisper import WhisperModel
 import subprocess
 import os
 import tempfile
@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 model = None
 
 def _convert_to_wav(input_path: str) -> str:
-
     out_fd, out_path = tempfile.mkstemp(suffix=".wav")
     os.close(out_fd)
 
@@ -29,27 +28,33 @@ def _convert_to_wav(input_path: str) -> str:
 
     return out_path
 
-def get_transcription(file_path: str) -> str:
-
+def get_transcription(file_path: str) -> dict:
     global model
     if model is None:
-        logger.info("Loading Whisper model (base)...")
-        model = whisper.load_model("base")
-        logger.info("Whisper model loaded.")
+        logger.info("Loading Faster Whisper model (tiny.en)...")
+        # Run on CPU with int8 quantization for minimal RAM usage
+        model = WhisperModel("tiny.en", device="cpu", compute_type="int8")
+        logger.info("Faster Whisper model loaded.")
 
     converted_path = _convert_to_wav(file_path)
     converted = converted_path != file_path
 
     try:
+        # transcribe returns (segments, info)
+        segments, info = model.transcribe(converted_path, beam_size=5)
+        
+        full_text = ""
+        avg_logprobs = []
+        
+        for segment in segments:
+            full_text += segment.text + " "
+            avg_logprobs.append(segment.avg_logprob)
 
-        result = model.transcribe(converted_path, fp16=False)
-        text = result.get("text", "").strip()
-        segments = result.get("segments", [])
+        text = full_text.strip()
 
-        if segments:
-            avg_logprobs = [s.get("avg_logprob", -3.0) for s in segments]
+        if avg_logprobs:
             mean_logprob = sum(avg_logprobs) / len(avg_logprobs)
-
+            # Rough confidence calculation based on logprob
             confidence = max(0, min(100, (1 - abs(mean_logprob) / 2.0) * 100))
         else:
             confidence = 0.0
@@ -58,6 +63,9 @@ def get_transcription(file_path: str) -> str:
             "text": text,
             "confidence": round(confidence, 2)
         }
+    except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
+        return {"text": "", "confidence": 0.0}
     finally:
         if converted and os.path.exists(converted_path):
             os.unlink(converted_path)
