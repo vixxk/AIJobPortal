@@ -321,35 +321,6 @@ router.get('/search', async (req, res) => {
             }),
         });
         pool.push({
-            name: 'WeWorkRemotely', region: 'GLB',
-            fetch: () => axios.get('https://weworkremotely.com/remote-jobs.rss', {
-            headers: { 'User-Agent': 'GradnexApp/1.0' },
-                responseType: 'text',
-            }).then(r => {
-                const items = parseRSS(r.data);
-                if (!items.length) return [];
-                return items
-                    .map(item => {
-                        const parts = (item.title || '').split(':');
-                        const company = parts[0]?.trim() || 'Unknown';
-                        const title   = parts.slice(1).join(':').trim() || item.title;
-                        return { rawTitle: title, company, item };
-                    })
-                    .filter(({ rawTitle }) => titleMatchesRole(rawTitle, role))
-                    .slice(0, 20)
-                    .map(({ rawTitle, company, item }) => ({
-                        title:    rawTitle,
-                        company,
-                        location: 'Remote (Worldwide)',
-                        type:     'Full-time',
-                        salary:   'Not specified',
-                        link:     item.link,
-                        snippet:  snippet(item.description),
-                        source: 'WeWorkRemotely', logo: null,
-                    }));
-            }),
-        });
-        pool.push({
             name: 'Jobicy', region: 'GLB',
             fetch: () => axios.get('https://jobicy.com/api/v2/remote-jobs', {
                 params: { count: 20, tag: role.split(' ')[0] },
