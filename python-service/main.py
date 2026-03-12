@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import random
 import logging
+import json
 from typing import List, Optional
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -298,7 +299,7 @@ async def generate_report(req: ReportRequest):
             }
         else:
             # Update the prompt to be more strict about unanswered or skipped questions
-            strict_system_prompt = f"""Generate a high-stakes performance scorecard for a {job_role} interview.
+            strict_system_prompt = f"""Generate a high-stakes performance scorecard for a {req.job_role or 'General'} interview.
             Synthesize the candidate's performance across all questions: {json.dumps(answers_dicts)}
             
             STRICT GUIDELINES:
@@ -403,7 +404,6 @@ async def evaluate_task(
             final_transcript = analysis.get("transcript", "")
             metrics = analysis
 
-        import json
         context = json.loads(context_json)
 
         result = await ai_evaluate_lesson_task(

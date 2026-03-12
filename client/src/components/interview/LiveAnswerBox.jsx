@@ -82,14 +82,14 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
     const handleSubmit = () => {
         if (isSubmitting) return;
         setIsSubmitting(true);
-        
+
         try { recognitionRef.current?.stop(); } catch (_) { }
         stopAll();
 
         // Give MediaRecorder a moment to finalize the onstop and blob creation
         const checkBlob = (attempts) => {
             const finalTranscript = (typedTextRef.current + interimTextRef.current).trim();
-            
+
             // If we have a blob OR we've exhausted wait attempts
             if (audioBlobRef.current || attempts <= 0) {
                 // If neither transcript nor blob exist, we treat it as an empty answer but allow it
