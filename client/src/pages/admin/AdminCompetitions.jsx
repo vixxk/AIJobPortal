@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
 import { Globe, Trash2, Calendar, Users, Plus, XCircle, MapPin, Award, BookOpen, Layers } from 'lucide-react';
 import clsx from 'clsx';
+import Skeleton from '../../components/ui/Skeleton';
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -120,7 +121,50 @@ const AdminCompetitions = () => {
         }
     };
 
-    if (loading) return null;
+    if (loading) {
+        return (
+            <div className="space-y-4 lg:space-y-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 lg:p-8 rounded-[32px] border border-slate-100 shadow-sm gap-4">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="w-12 h-12 rounded-2xl" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-6 w-48" />
+                            <Skeleton className="h-4 w-32 rounded-full" />
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <Skeleton className="h-11 w-64 rounded-2xl" />
+                        <Skeleton className="h-11 w-48 rounded-2xl" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-white rounded-[40px] border border-slate-100 shadow-sm flex flex-col md:flex-row overflow-hidden">
+                            <Skeleton className="w-full md:w-48 h-48 md:h-auto shrink-0" />
+                            <div className="p-8 flex-1 space-y-6">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-6 w-3/4" />
+                                    <Skeleton className="h-3 w-1/4" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-full" />
+                                </div>
+                                <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
+                                    <div className="flex gap-2">
+                                        <Skeleton className="h-6 w-12 rounded-lg" />
+                                        <Skeleton className="h-6 w-12 rounded-lg" />
+                                    </div>
+                                    <Skeleton className="h-3 w-20" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4 lg:space-y-8 animate-in fade-in duration-500">

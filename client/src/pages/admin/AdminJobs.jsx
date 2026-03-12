@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
 import { MapPin, Clock, DollarSign, Trash2, Edit2, Plus, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Skeleton from '../../components/ui/Skeleton';
 
 const AdminJobs = () => {
     const [jobs, setJobs] = useState([]);
@@ -73,7 +74,45 @@ const AdminJobs = () => {
         }
     };
 
-    if (loading) return null;
+    if (loading) {
+        return (
+            <div className="space-y-4 lg:space-y-8">
+                <div className="bg-white rounded-[32px] p-6 lg:p-8 border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="w-12 h-12 rounded-2xl" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-4 w-48" />
+                        </div>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-white p-6 lg:p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="w-14 h-14 rounded-2xl" />
+                                <div className="space-y-2 flex-1">
+                                    <Skeleton className="h-6 w-1/2" />
+                                    <Skeleton className="h-3 w-1/4" />
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Skeleton className="h-8 w-24 rounded-xl" />
+                                <Skeleton className="h-8 w-24 rounded-xl" />
+                            </div>
+                            <div className="flex justify-between items-center pt-4 border-t border-slate-50">
+                                <Skeleton className="h-4 w-32" />
+                                <div className="flex gap-2">
+                                    <Skeleton className="w-10 h-10 rounded-xl" />
+                                    <Skeleton className="w-10 h-10 rounded-xl" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4 lg:space-y-8 animate-in fade-in duration-500">

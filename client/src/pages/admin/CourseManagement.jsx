@@ -8,6 +8,7 @@ import {
     GripVertical, Calendar, Eye, EyeOff, Star, Award, Target, CheckCircle,
     UploadCloud, AlertCircle, Check, Play
 } from 'lucide-react';
+import Skeleton from '../../components/ui/Skeleton';
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -341,10 +342,52 @@ const CourseManagement = () => {
     };
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-14 h-14 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="font-black text-slate-400 uppercase tracking-widest text-xs">Loading Course</p>
+        <div className="min-h-screen bg-[#F8FAFC]">
+            {/* Hero Skeleton */}
+            <div className="relative h-80 lg:h-80 bg-slate-200 overflow-hidden">
+                <div className="absolute inset-0 p-5 lg:p-10 flex flex-col justify-between">
+                    <div className="flex justify-between">
+                        <Skeleton className="w-20 h-9 rounded-2xl" />
+                        <Skeleton className="w-20 h-9 rounded-2xl" />
+                    </div>
+                    <div className="space-y-4">
+                        <div className="flex gap-2">
+                            <Skeleton className="w-16 h-5 rounded-full" />
+                            <Skeleton className="w-16 h-5 rounded-full" />
+                        </div>
+                        <Skeleton className="h-8 w-3/4 lg:w-1/3" />
+                        <div className="flex flex-wrap gap-4">
+                            <Skeleton className="w-24 h-4" />
+                            <Skeleton className="w-24 h-4" />
+                            <Skeleton className="w-24 h-4" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabs Skeleton */}
+            <div className="bg-white border-b border-slate-200 overflow-hidden">
+                <div className="max-w-6xl mx-auto px-5 lg:px-10 flex gap-6">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="py-4">
+                            <Skeleton className="h-4 w-20" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Content Skeleton */}
+            <div className="max-w-6xl mx-auto px-4 lg:px-10 py-8 lg:py-12">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                    <div className="lg:col-span-2 space-y-6">
+                        {[1, 2].map(i => (
+                            <Skeleton key={i} className="h-48 w-full rounded-[28px]" />
+                        ))}
+                    </div>
+                    <div className="space-y-6">
+                        <Skeleton className="h-64 lg:h-96 w-full rounded-[28px]" />
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -371,91 +414,90 @@ const CourseManagement = () => {
             {toast && <Toast msg={toast.msg} type={toast.type} />}
 
             {/* Hero Header */}
-            <div className="relative h-72 lg:h-80 overflow-hidden">
+            <div className="relative h-[340px] lg:h-80 overflow-hidden">
                 <img
                     src={getImageUrl(course.coverImage)}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover scale-105"
                     alt={course.title}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
-                <div className="absolute inset-0 p-6 lg:p-10 flex flex-col justify-between">
+                <div className="absolute inset-0 p-5 lg:p-10 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                         <button
                             onClick={() => navigate(-1)}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl text-xs font-black tracking-wide hover:bg-white/20 transition-all"
+                            className="flex items-center gap-2 px-3.5 py-2 lg:px-4 lg:py-2.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black tracking-wide hover:bg-white/20 transition-all"
                         >
-                            <ArrowLeft className="w-4 h-4" /> Back
+                            <ArrowLeft className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> Back
                         </button>
                         {canEdit && (
                             <button
                                 onClick={handleTogglePublish}
-                                className={`flex items-center gap-2 px-4 py-2.5 backdrop-blur-md border rounded-2xl text-xs font-black tracking-wide transition-all ${course.isPublished ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:bg-emerald-500/30' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}
+                                className={`flex items-center gap-2 px-3.5 py-2 lg:px-4 lg:py-2.5 backdrop-blur-md border rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black tracking-wide transition-all ${course.isPublished ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:bg-emerald-500/30' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}
                             >
-                                {course.isPublished ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                {course.isPublished ? <Eye className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> : <EyeOff className="w-3.5 h-3.5 lg:w-4 lg:h-4" />}
                                 {course.isPublished ? 'Published' : 'Draft'}
                             </button>
                         )}
                     </div>
 
-                    <div>
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="px-3 py-1 bg-indigo-600/90 backdrop-blur-md rounded-full text-[10px] font-black text-white tracking-widest uppercase">
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap gap-1.5 lg:gap-2">
+                            <span className="px-2.5 py-1 bg-indigo-600/90 backdrop-blur-md rounded-full text-[9px] lg:text-[10px] font-black text-white tracking-widest uppercase">
                                 {course.category}
                             </span>
-                            <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black text-white/80 tracking-widest uppercase">
+                            <span className="px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] lg:text-[10px] font-black text-white/80 tracking-widest uppercase">
                                 {course.level}
                             </span>
                             {course.language && (
-                                <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black text-white/80 tracking-widest uppercase">
+                                <span className="px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] lg:text-[10px] font-black text-white/80 tracking-widest uppercase">
                                     {course.language}
                                 </span>
                             )}
                         </div>
-                        <h1 className="text-2xl lg:text-4xl font-black text-white tracking-tight mb-2 max-w-3xl">
+                        <h1 className="text-xl lg:text-4xl font-black text-white tracking-tight leading-tight max-w-3xl uppercase">
                             {course.title}
                         </h1>
-                        <div className="flex items-center gap-4 text-white/60">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/60">
                             <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-indigo-500 overflow-hidden">
+                                <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-full bg-indigo-500/20 border border-white/10 overflow-hidden ring-2 ring-white/10">
                                     {course.teacher?.avatar
                                         ? <img src={getImageUrl(course.teacher.avatar)} className="w-full h-full object-cover" />
-                                        : <span className="w-full h-full flex items-center justify-center text-[10px] font-black text-white">{course.teacher?.name?.[0]}</span>
+                                        : <span className="w-full h-full flex items-center justify-center text-[9px] font-black text-white">{course.teacher?.name?.[0]}</span>
                                     }
                                 </div>
-                                <span className="text-xs font-bold">{course.teacher?.name}</span>
+                                <span className="text-[11px] lg:text-xs font-bold text-white line-clamp-1">{course.teacher?.name}</span>
                             </div>
-                            <span className="text-white/30">•</span>
-                            <span className="text-xs font-bold flex items-center gap-1.5">
-                                <Users className="w-3.5 h-3.5" /> {course.enrolledStudents?.length || 0} enrolled
-                            </span>
-                            <span className="text-white/30">•</span>
-                            <span className="text-xs font-bold flex items-center gap-1.5">
-                                <Video className="w-3.5 h-3.5" /> {course.lectures?.length || 0} lectures
-                            </span>
-                            {course.duration > 0 && (
-                                <>
-                                    <span className="text-white/30">•</span>
-                                    <span className="text-xs font-bold flex items-center gap-1.5">
-                                        <Clock className="w-3.5 h-3.5" /> {course.duration}h total
+                            <div className="hidden lg:block w-px h-3 bg-white/20" />
+                            <div className="flex items-center gap-3 lg:gap-4 flex-wrap">
+                                <span className="text-[11px] lg:text-xs font-bold flex items-center gap-1.5">
+                                    <Users className="w-3.5 h-3.5 text-indigo-400" /> {course.enrolledStudents?.length || 0} <span className="hidden sm:inline">enrolled</span>
+                                </span>
+                                <span className="text-[11px] lg:text-xs font-bold flex items-center gap-1.5">
+                                    <Video className="w-3.5 h-3.5 text-indigo-400" /> {course.lectures?.length || 0} <span className="hidden sm:inline">lectures</span>
+                                </span>
+                                {course.duration > 0 && (
+                                    <span className="text-[11px] lg:text-xs font-bold flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5 text-indigo-400" /> {course.duration}h <span className="hidden sm:inline">total</span>
                                     </span>
-                                </>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Tab Bar */}
-            <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
-                <div className="max-w-6xl mx-auto px-4 lg:px-10">
+            {/* Tab Bar Container */}
+            <div className="bg-white border-b border-slate-200 sticky top-16 lg:top-20 z-20">
+                <div className="max-w-6xl mx-auto px-2 lg:px-10">
                     <div className="flex gap-1 overflow-x-auto scrollbar-hide">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-5 py-5 text-xs font-black uppercase tracking-widest whitespace-nowrap border-b-2 transition-all ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-700'}`}
+                                className={`flex items-center gap-2 px-4 lg:px-5 py-4 lg:py-5 text-[10px] lg:text-xs font-black uppercase tracking-widest whitespace-nowrap border-b-2 transition-all ${activeTab === tab.id ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-700'}`}
                             >
-                                <tab.icon className="w-4 h-4" />
+                                <tab.icon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                 {tab.label}
                             </button>
                         ))}
@@ -463,16 +505,16 @@ const CourseManagement = () => {
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="max-w-6xl mx-auto px-4 lg:px-10 py-8 lg:py-12">
+            {/* Content Area */}
+            <div className="max-w-6xl mx-auto px-3.5 lg:px-10 py-6 lg:py-12">
 
                 {/* ─── OVERVIEW TAB ──────────────────────────────────────────────── */}
                 {activeTab === 'overview' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-6">
                             {/* Description */}
-                            <div className="bg-white rounded-[28px] p-8 border border-slate-100">
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs mb-6 flex items-center gap-2">
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100">
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs mb-6 flex items-center gap-2">
                                     <BookOpen className="w-4 h-4 text-indigo-500" /> Course Description
                                 </h3>
                                 {canEdit ? (
@@ -483,17 +525,19 @@ const CourseManagement = () => {
                             </div>
 
                             {/* Objectives */}
-                            <div className="bg-white rounded-[28px] p-8 border border-slate-100">
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs mb-6 flex items-center gap-2">
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100">
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs mb-6 flex items-center gap-2">
                                     <Target className="w-4 h-4 text-emerald-500" /> Learning Objectives
                                 </h3>
                                 {canEdit ? (
                                     <TagInput label="Objectives" values={course.objectives || []} onSave={v => saveField('objectives', v)} />
                                 ) : (
-                                    <ul className="space-y-2">
+                                    <ul className="space-y-3">
                                         {(course.objectives || []).map((o, i) => (
                                             <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
-                                                <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                                                <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <CheckCircle className="w-3 h-3 text-emerald-500" />
+                                                </div>
                                                 {o}
                                             </li>
                                         ))}
@@ -505,17 +549,19 @@ const CourseManagement = () => {
                             </div>
 
                             {/* Prerequisites */}
-                            <div className="bg-white rounded-[28px] p-8 border border-slate-100">
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs mb-6 flex items-center gap-2">
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100">
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs mb-6 flex items-center gap-2">
                                     <Award className="w-4 h-4 text-amber-500" /> Prerequisites
                                 </h3>
                                 {canEdit ? (
                                     <TagInput label="Prerequisites" values={course.prerequisites || []} onSave={v => saveField('prerequisites', v)} />
                                 ) : (
-                                    <ul className="space-y-2">
+                                    <ul className="space-y-3">
                                         {(course.prerequisites || []).map((p, i) => (
                                             <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
-                                                <Star className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                                                <div className="w-5 h-5 rounded-full bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <Star className="w-3 h-3 text-amber-400" />
+                                                </div>
                                                 {p}
                                             </li>
                                         ))}
@@ -529,23 +575,23 @@ const CourseManagement = () => {
 
                         {/* Right Column: Quick Info */}
                         <div className="space-y-6">
-                            <div className="bg-white rounded-[28px] p-8 border border-slate-100 space-y-6">
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100 space-y-6">
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs flex items-center gap-2">
                                     <BarChart2 className="w-4 h-4 text-indigo-500" /> Course Details
                                 </h3>
 
                                 {/* Stats */}
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-3 lg:gap-4">
                                     {[
                                         { label: 'Students', value: course.enrolledStudents?.length || 0, icon: Users, color: 'indigo' },
                                         { label: 'Lectures', value: course.lectures?.length || 0, icon: Video, color: 'violet' },
                                         { label: 'Chapters', value: course.chapters?.length || 0, icon: BookOpen, color: 'emerald' },
                                         { label: 'Duration', value: `${course.duration || 0}h`, icon: Clock, color: 'amber' },
                                     ].map(({ label, value, icon: Icon, color }) => (
-                                        <div key={label} className={`bg-${color}-50 rounded-2xl p-4 flex flex-col gap-1`}>
-                                            <Icon className={`w-4 h-4 text-${color}-500`} />
-                                            <span className="text-xl font-black text-slate-900">{value}</span>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+                                        <div key={label} className={`bg-${color}-50/50 border border-${color}-100 rounded-2xl p-3 lg:p-4 flex flex-col gap-1`}>
+                                            <Icon className={`w-3.5 h-3.5 lg:w-4 lg:h-4 text-${color}-500`} />
+                                            <span className="text-lg lg:text-xl font-black text-slate-900 leading-none">{value}</span>
+                                            <span className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -594,8 +640,8 @@ const CourseManagement = () => {
                             </div>
 
                             {/* Tags */}
-                            <div className="bg-white rounded-[28px] p-8 border border-slate-100 space-y-4">
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100 space-y-4">
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs flex items-center gap-2">
                                     <Tag className="w-4 h-4 text-violet-500" /> Tags
                                 </h3>
                                 {canEdit ? (
@@ -603,7 +649,7 @@ const CourseManagement = () => {
                                 ) : (
                                     <div className="flex flex-wrap gap-2">
                                         {(course.tags || []).map((t, i) => (
-                                            <span key={i} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold">#{t}</span>
+                                            <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-wider">#{t}</span>
                                         ))}
                                         {(!course.tags || course.tags.length === 0) && <p className="text-slate-300 text-xs italic">No tags.</p>}
                                     </div>
@@ -616,13 +662,13 @@ const CourseManagement = () => {
                 {/* ─── CHAPTERS & LECTURES TAB ────────────────────────────────────── */}
                 {activeTab === 'chapters' && (
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
-                                <h2 className="font-black text-slate-900 text-xl tracking-tight">Chapters & Lectures</h2>
-                                <p className="text-slate-400 text-xs font-bold mt-1">{course.chapters?.length || 0} chapters · {course.lectures?.length || 0} lectures</p>
+                                <h2 className="font-black text-slate-900 text-lg lg:text-xl tracking-tight">Chapters & Lectures</h2>
+                                <p className="text-slate-400 text-[10px] lg:text-xs font-bold mt-1 uppercase tracking-widest">{course.chapters?.length || 0} chapters · {course.lectures?.length || 0} lectures</p>
                             </div>
                             {canEdit && (
-                                <div className="flex gap-3">
+                                <div className="flex gap-2 lg:gap-3">
                                     <button
                                         onClick={() => {
                                             if (!course.chapters || course.chapters.length === 0) {
@@ -631,15 +677,15 @@ const CourseManagement = () => {
                                             }
                                             setLectureForm({ show: true, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: 0, youtubeUrl: '' });
                                         }}
-                                        className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-2xl text-xs font-black flex items-center gap-2 hover:bg-slate-200 transition-all"
+                                        className="flex-1 sm:flex-none px-3 py-2 lg:px-4 lg:py-2.5 bg-slate-100 text-slate-700 rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
                                     >
-                                        <Video className="w-4 h-4" /> Add Lecture
+                                        <Video className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> Add Lecture
                                     </button>
                                     <button
                                         onClick={() => setChapterForm({ show: true, title: '', description: '', order: course.chapters?.length || 0 })}
-                                        className="px-4 py-2.5 bg-indigo-600 text-white rounded-2xl text-xs font-black flex items-center gap-2 hover:bg-indigo-700 transition-all"
+                                        className="flex-1 sm:flex-none px-3 py-2 lg:px-4 lg:py-2.5 bg-indigo-600 text-white rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"
                                     >
-                                        <Plus className="w-4 h-4" /> Add Chapter
+                                        <Plus className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> Add Chapter
                                     </button>
                                 </div>
                             )}
@@ -676,42 +722,45 @@ const CourseManagement = () => {
                                     return (
                                         <div key={chapter._id} className="bg-white rounded-[24px] border border-slate-100 overflow-hidden">
                                             <div
-                                                className="flex items-center gap-4 p-6 cursor-pointer hover:bg-slate-50 transition-colors"
+                                                className="flex items-center gap-3 lg:gap-4 p-4 lg:p-6 cursor-pointer hover:bg-slate-50 transition-colors"
                                                 onClick={() => setExpandedChapters(prev => ({ ...prev, [chapter._id]: !isExpanded }))}
                                             >
-                                                <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0">
+                                                <div className="w-7 h-7 lg:w-8 lg:h-8 bg-indigo-600 rounded-lg lg:rounded-xl flex items-center justify-center text-white font-black text-[10px] lg:text-xs shrink-0">
                                                     {ci + 1}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="font-black text-slate-900">{chapter.title}</h4>
-                                                    {chapter.description && <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">{chapter.description}</p>}
-                                                    <p className="text-[10px] text-slate-300 font-bold mt-1 uppercase tracking-widest">{chLectures.length} lecture{chLectures.length !== 1 ? 's' : ''}</p>
+                                                    <h4 className="font-black text-slate-900 text-sm lg:text-base tracking-tight truncate">{chapter.title}</h4>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">{chLectures.length} {chLectures.length === 1 ? 'lecture' : 'lectures'}</span>
+                                                        {chapter.description && <span className="w-1 h-1 bg-slate-200 rounded-full shrink-0" />}
+                                                        {chapter.description && <p className="text-[10px] text-slate-400 font-medium truncate leading-none">{chapter.description}</p>}
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex items-center gap-0.5 lg:gap-2 shrink-0">
                                                     {canEdit && (
                                                         <>
                                                             <button
                                                                 onClick={e => { e.stopPropagation(); if (!course.chapters || course.chapters.length === 0) { showToast('Create at least one chapter first.', 'error'); return; } setLectureForm({ show: true, chapterId: chapter._id, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: chLectures.length, youtubeUrl: '' }); }}
-                                                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                                                className="p-1.5 lg:p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg lg:rounded-xl transition-all"
                                                                 title="Add Lecture to Chapter"
                                                             >
-                                                                <Plus className="w-4 h-4" />
+                                                                <Plus className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                                             </button>
                                                             <button
                                                                 onClick={e => { e.stopPropagation(); setEditChapter({ ...chapter }); }}
-                                                                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
+                                                                className="p-1.5 lg:p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg lg:rounded-xl transition-all"
                                                             >
-                                                                <Edit3 className="w-4 h-4" />
+                                                                <Edit3 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                                             </button>
                                                             <button
                                                                 onClick={e => { e.stopPropagation(); handleDeleteChapter(chapter._id); }}
-                                                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                                className="p-1.5 lg:p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg lg:rounded-xl transition-all"
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
+                                                                <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                                             </button>
                                                         </>
                                                     )}
-                                                    {isExpanded ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                                                    {isExpanded ? <ChevronDown className="w-4 h-4 lg:w-5 lg:h-5 text-slate-400" /> : <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5 text-slate-400" />}
                                                 </div>
                                             </div>
 
@@ -761,60 +810,65 @@ const CourseManagement = () => {
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="font-black text-slate-900 text-xl tracking-tight">Enrolled Students</h2>
-                                <p className="text-slate-400 text-xs font-bold mt-1">{course.enrolledStudents?.length || 0} students enrolled</p>
+                                <h2 className="font-black text-slate-900 text-lg lg:text-xl tracking-tight">Enrolled Students</h2>
+                                <p className="text-slate-400 text-[10px] lg:text-xs font-bold mt-1 uppercase tracking-widest">{course.enrolledStudents?.length || 0} students enrolled</p>
                             </div>
                         </div>
 
                         {(!course.enrolledStudents || course.enrolledStudents.length === 0) ? (
-                            <div className="bg-white rounded-[28px] p-16 border border-slate-100 flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-                                    <Users className="w-8 h-8 text-slate-400" />
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-10 lg:p-16 border border-slate-100 flex flex-col items-center text-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <Users className="w-8 h-8 text-slate-300" />
                                 </div>
                                 <h3 className="font-black text-slate-900 text-lg mb-2">No Students Yet</h3>
-                                <p className="text-slate-400 text-sm">Students will appear here once they enroll.</p>
+                                <p className="text-slate-400 text-sm max-w-xs px-4">Students will appear here once they enroll in your course.</p>
                             </div>
                         ) : (
-                            <div className="bg-white rounded-[28px] border border-slate-100 overflow-hidden">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-slate-100">
-                                            <th className="text-left px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                                            <th className="text-left px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Email</th>
-                                            {canEdit && <th className="px-8 py-5" />}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {course.enrolledStudents.map((student, i) => (
-                                            <tr key={student._id || i} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-sm overflow-hidden shrink-0">
-                                                            {student.avatar
-                                                                ? <img src={getImageUrl(student.avatar)} className="w-full h-full object-cover" />
-                                                                : (student.name?.[0] || 'S')
-                                                            }
-                                                        </div>
-                                                        <span className="font-bold text-slate-900 text-sm">{student.name || 'Unknown'}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5 hidden md:table-cell">
-                                                    <span className="text-sm text-slate-400 font-medium">{student.email || '—'}</span>
-                                                </td>
-                                                {canEdit && (
-                                                    <td className="px-8 py-5 text-right">
-                                                        <button
-                                                            onClick={() => handleRemoveStudent(student._id)}
-                                                            className="px-4 py-2 text-xs font-black text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    </td>
-                                                )}
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] border border-slate-100 overflow-hidden">
+                                <div className="overflow-x-auto scrollbar-hide">
+                                    <table className="w-full min-w-[500px] md:min-w-0">
+                                        <thead>
+                                            <tr className="border-b border-slate-100">
+                                                <th className="text-left px-5 lg:px-8 py-4 lg:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
+                                                <th className="text-left px-5 lg:px-8 py-4 lg:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Email</th>
+                                                {canEdit && <th className="px-5 lg:px-8 py-4 lg:py-5" />}
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {course.enrolledStudents.map((student, i) => (
+                                                <tr key={student._id || i} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-5 lg:px-8 py-4 lg:py-5">
+                                                        <div className="flex items-center gap-3 lg:gap-4">
+                                                            <div className="w-9 h-9 lg:w-11 lg:h-11 rounded-full bg-indigo-600 overflow-hidden shrink-0 border-2 border-white shadow-sm ring-1 ring-slate-100">
+                                                                {student.avatar
+                                                                    ? <img src={getImageUrl(student.avatar)} className="w-full h-full object-cover" />
+                                                                    : <span className="w-full h-full flex items-center justify-center text-[10px] lg:text-xs font-black text-white">{(student.name?.[0] || 'S')}</span>
+                                                                }
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-black text-slate-900 truncate tracking-tight">{student.name || 'Unknown student'}</p>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5 md:hidden truncate">{student.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 lg:px-8 py-4 lg:py-5 hidden md:table-cell">
+                                                        <span className="text-sm text-slate-400 font-medium">{student.email || '—'}</span>
+                                                    </td>
+                                                    {canEdit && (
+                                                        <td className="px-5 lg:px-8 py-4 lg:py-5 text-right">
+                                                            <button
+                                                                onClick={() => handleRemoveStudent(student._id)}
+                                                                className="px-3 py-1.5 lg:px-4 lg:py-2 text-[10px] lg:text-xs font-black text-rose-500 hover:bg-rose-50 rounded-lg lg:rounded-xl transition-all uppercase tracking-widest border border-slate-100 hover:border-rose-100"
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -822,10 +876,10 @@ const CourseManagement = () => {
 
                 {/* ─── SETTINGS TAB ───────────────────────────────────────────────── */}
                 {activeTab === 'settings' && canEdit && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                         {/* Basic Info */}
-                        <div className="bg-white rounded-[28px] p-8 border border-slate-100 space-y-6">
-                            <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
+                        <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100 space-y-6">
+                            <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs flex items-center gap-2">
                                 <Settings className="w-4 h-4 text-indigo-500" /> Course Info
                             </h3>
                             <EditableField label="Title" value={course.title} onSave={v => saveField('title', v)} />
@@ -857,8 +911,8 @@ const CourseManagement = () => {
 
                         {/* Cover Image */}
                         <div className="space-y-6">
-                            <div className="bg-white rounded-[28px] p-8 border border-slate-100 space-y-6">
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100 space-y-6">
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs flex items-center gap-2">
                                     <UploadCloud className="w-4 h-4 text-indigo-500" /> Cover Image
                                 </h3>
                                 <div className="h-48 rounded-2xl overflow-hidden bg-slate-100 relative group">
@@ -895,20 +949,20 @@ const CourseManagement = () => {
                             </div>
 
                             {/* Publish Toggle */}
-                            <div className="bg-white rounded-[28px] p-8 border border-slate-100 space-y-4">
-                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
+                            <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100 space-y-4">
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs flex items-center gap-2">
                                     <Globe className="w-4 h-4 text-indigo-500" /> Visibility
                                 </h3>
-                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                                    <div>
+                                <div className="flex items-center justify-between p-4 lg:p-5 bg-slate-50 rounded-2xl">
+                                    <div className="min-w-0 pr-4">
                                         <p className="font-black text-slate-900 text-sm">{course.isPublished ? 'Published' : 'Draft'}</p>
-                                        <p className="text-xs text-slate-400 font-medium mt-0.5">{course.isPublished ? 'Visible to students' : 'Not visible to students'}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{course.isPublished ? 'Visible to students' : 'Private to you'}</p>
                                     </div>
                                     <button
                                         onClick={handleTogglePublish}
-                                        className={`relative w-14 h-7 rounded-full transition-all ${course.isPublished ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                        className={`relative w-12 h-6 lg:w-14 lg:h-7 rounded-full transition-all shrink-0 ${course.isPublished ? 'bg-emerald-500' : 'bg-slate-300'}`}
                                     >
-                                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${course.isPublished ? 'left-8' : 'left-1'}`} />
+                                        <div className={`absolute top-1 w-4 h-4 lg:w-5 lg:h-5 bg-white rounded-full shadow transition-all ${course.isPublished ? 'left-7 lg:left-8' : 'left-1'}`} />
                                     </button>
                                 </div>
                             </div>
@@ -1162,79 +1216,63 @@ const Modal = ({ title, children, onClose }) => (
 );
 
 const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) => (
-    <div className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none group">
-        <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400 shrink-0">
-            {index + 1}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-            {lecture.type === 'LIVE'
-                ? <Radio className="w-4 h-4 text-rose-500" />
-                : <Video className="w-4 h-4 text-indigo-400" />
-            }
-        </div>
-        <div className="flex-1 min-w-0">
-            <button
-                onClick={onPreview}
-                className="text-sm font-bold text-slate-800 hover:text-indigo-600 truncate block text-left w-full transition-colors"
-                title="Click to preview as student"
-            >
-                {lecture.title}
-            </button>
-            <div className="flex items-center gap-3 mt-0.5">
-                {lecture.duration > 0 && (
-                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {lecture.duration}m
-                    </span>
-                )}
-                {lecture.scheduledAt && (
-                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {new Date(lecture.scheduledAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                )}
-                {lecture.isPreview && (
-                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Preview</span>
-                )}
-                {(() => {
-                    const isLiveType = lecture.type === 'LIVE';
-                    const startTime = new Date(lecture.scheduledAt || lecture.createdAt).getTime();
-                    const duration = (lecture.liveDuration || 60) * 60 * 1000;
-                    const isExpired = Date.now() > (startTime + duration);
-                    const isCurrentlyLive = isLiveType && lecture.status === 'LIVE' && !isExpired;
-
-                    return (
-                        <>
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${isCurrentlyLive ? 'text-rose-600 bg-rose-50' : 'text-indigo-600 bg-indigo-50'}`}>
-                                {isCurrentlyLive ? 'LIVE SESSION' : isLiveType ? 'Past Live' : 'RECORDED'}
-                            </span>
-                            {isCurrentlyLive && (
-                                <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
-                            )}
-                        </>
-                    );
-                })()}
-                {lecture.notesUrl && (
-                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" /> Notes Attached
-                    </span>
-                )}
+    <div className="px-4 lg:px-6 py-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none group">
+        <div className="flex items-start gap-4">
+            <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg lg:rounded-xl bg-slate-100 flex items-center justify-center text-[10px] lg:text-xs font-black text-slate-400 shrink-0 mt-0.5">
+                {index + 1}
             </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-            {lecture.videoIdentifier && (
-                <button onClick={onPreview} title="Preview video" className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-                    <Play className="w-3.5 h-3.5" />
-                </button>
-            )}
-            {canEdit && (
-                <>
-                    <button onClick={onEdit} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all opacity-0 flex-none group-hover:opacity-100 transition-opacity">
-                        <Edit3 className="w-3.5 h-3.5" />
+            <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                    <button
+                        onClick={onPreview}
+                        className="text-[13px] lg:text-sm font-bold text-slate-800 hover:text-indigo-600 truncate block text-left transition-colors"
+                        title="Click to preview as student"
+                    >
+                        {lecture.title}
                     </button>
-                    <button onClick={onDelete} className="p-2 text-slate-400 hover:text-rose-600 flex-none hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                </>
-            )}
+                    <div className="flex items-center gap-1 shrink-0 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+                        {lecture.videoIdentifier && (
+                            <button onClick={onPreview} title="Preview video" className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                                <Play className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                            </button>
+                        )}
+                        {canEdit && (
+                            <>
+                                <button onClick={onEdit} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all">
+                                    <Edit3 className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                                </button>
+                                <button onClick={onDelete} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
+                                    <Trash2 className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        {lecture.type === 'LIVE'
+                            ? <Radio className="w-3 h-3 text-rose-500" />
+                            : <Video className="w-3 h-3 text-indigo-400" />
+                        }
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${lecture.type === 'LIVE' ? 'text-rose-600 bg-rose-50' : 'text-indigo-600 bg-indigo-50'}`}>
+                            {lecture.type}
+                        </span>
+                    </div>
+                    {lecture.duration > 0 && (
+                        <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {lecture.duration}m
+                        </span>
+                    )}
+                    {lecture.isPreview && (
+                        <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md uppercase tracking-widest">Free</span>
+                    )}
+                    {lecture.notesUrl && (
+                        <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" /> Notes
+                        </span>
+                    )}
+                </div>
+            </div>
         </div>
     </div>
 );

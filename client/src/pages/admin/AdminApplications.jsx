@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from '../../utils/axios';
 import clsx from 'clsx';
+import Skeleton from '../../components/ui/Skeleton';
 
 const AdminApplications = () => {
     const { search } = useLocation();
@@ -26,19 +27,31 @@ const AdminApplications = () => {
     }, [fetchApplications]);
 
     const TableSkeleton = () => (
-        <div className="bg-white rounded-[40px] border border-slate-100 animate-pulse overflow-hidden">
-            <div className="p-8 h-20 bg-slate-50/50" />
-            <div className="p-8 space-y-6">
+        <div className="bg-white rounded-[32px] lg:rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
+            <div className="p-6 lg:p-8 border-b border-slate-50 bg-slate-50/20 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="w-4 h-4 rounded-full" />
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                </div>
+            </div>
+            <div className="p-6 lg:p-8 space-y-8">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className="flex justify-between items-center h-12 border-b border-slate-50">
-                        <div className="flex gap-4">
-                            <div className="w-10 h-10 rounded-full bg-slate-100" />
-                            <div className="space-y-2">
-                                <div className="h-4 w-32 bg-slate-100 rounded" />
-                                <div className="h-3 w-48 bg-slate-50 rounded" />
+                    <div key={i} className="flex justify-between items-center gap-4">
+                        <div className="flex gap-4 items-center flex-1">
+                            <Skeleton className="w-10 h-10 rounded-full" />
+                            <div className="space-y-2 flex-1">
+                                <Skeleton className="h-4 w-1/4" />
+                                <Skeleton className="h-2 w-1/2" />
                             </div>
                         </div>
-                        <div className="h-4 w-24 bg-slate-50 rounded" />
+                        <div className="hidden sm:block flex-1">
+                            <Skeleton className="h-4 w-3/4" />
+                        </div>
+                        <div className="hidden md:block w-24">
+                            <Skeleton className="h-3 w-full" />
+                        </div>
+                        <Skeleton className="h-7 w-20 rounded-lg" />
                     </div>
                 ))}
             </div>

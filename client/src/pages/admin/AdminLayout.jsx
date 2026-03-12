@@ -119,21 +119,21 @@ const AdminLayout = () => {
 
             {/* Main Content */}
             <div className="flex-1 min-w-0 flex flex-col">
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 lg:px-10 flex items-center justify-between sticky top-0 z-30">
-                    <div className="flex items-center gap-4 overflow-hidden">
+                <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 lg:px-10 flex items-center justify-between sticky top-0 z-30">
+                    <div className="flex items-center gap-3 lg:gap-4 overflow-hidden">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
-                            className="lg:hidden w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shrink-0"
+                            className="lg:hidden w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shrink-0"
                         >
-                            <Menu className="w-5 h-5 text-white" />
+                            <Menu className="w-4 h-4 text-white" />
                         </button>
-                        <h2 className="font-black text-slate-900 text-sm lg:text-lg tracking-tight uppercase truncate">
+                        <h2 className="font-black text-slate-900 text-[11px] lg:text-lg tracking-tight uppercase truncate">
                             {getPageTitle()}
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-6">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-indigo-600 border-2 border-white shadow-sm">
+                    <div className="flex items-center gap-4 lg:gap-6">
+                        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-[10px] lg:text-xs text-indigo-600 border-2 border-white shadow-sm">
                             SA
                         </div>
                     </div>
