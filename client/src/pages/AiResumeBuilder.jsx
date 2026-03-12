@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
     FileText, Sparkles, Download, Loader2, Briefcase, Code,
     User, BookOpen, Layers, Award, ChevronDown, ChevronUp,
     Trash2, Plus, ZoomIn, ZoomOut, Eye
 } from 'lucide-react';
 import axios from '../utils/axios';
+import Skeleton from '../components/ui/Skeleton';
 
 // ─── Reusable input styles ─────────────────────────────────────────────────
 // font-size ≥16px prevents iOS auto-zoom on input focus
@@ -78,20 +79,12 @@ const AddBtn = ({ onClick, label, color = 'blue' }) => (
 
 // ══════════════════════════════════════════════════════════════════════════════
 const AiResumeBuilder = () => {
+    const [loading, setLoading] = useState(true);
     const [loadingSummary, setLoadingSummary] = useState(false);
     const [loadingExp, setLoadingExp] = useState(null);
     const [zoom, setZoom] = useState(75);
     const [mobileTab, setMobileTab] = useState('edit');
 
-    // When switching to preview on mobile, auto-fit the A4 page to screen width
-    const handleMobileTabChange = (tab) => {
-        setMobileTab(tab);
-        if (tab === 'preview' && window.innerWidth < 1280) {
-            // A4 page is 794px wide; subtract padding
-            const screenZoom = Math.floor(((window.innerWidth - 24) / 794) * 100);
-            setZoom(Math.max(30, Math.min(screenZoom, 100)));
-        }
-    };
     const [resumeData, setResumeData] = useState({
         personal: { name: '', email: '', phone: '', linkedin: '', github: '', leetcode: '', gfg: '', location: '' },
         summary: '',
@@ -101,6 +94,46 @@ const AiResumeBuilder = () => {
         certifications: [{ name: '', link: '' }],
         skills: [{ category: '', items: '' }]
     });
+
+    useEffect(() => {
+        fetchInitialData();
+    }, []);
+
+    const fetchInitialData = async () => {
+        try {
+            const res = await axios.get('/student/me');
+            if (res.data.status === 'success' && res.data.data.profile) {
+                const p = res.data.data.profile;
+                setResumeData(prev => ({
+                    ...prev,
+                    personal: {
+                        name: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
+                        email: p.email || '',
+                        phone: p.phoneNumber || '',
+                        location: p.address || '',
+                        linkedin: '', github: '', leetcode: '', gfg: ''
+                    },
+                    summary: p.summary || '',
+                    education: p.education?.length > 0 ? p.education : prev.education,
+                    experience: p.experience?.length > 0 ? p.experience : prev.experience,
+                    projects: p.projects?.length > 0 ? p.projects : prev.projects,
+                    skills: p.skills?.length > 0 ? [{ category: 'Skills', items: p.skills.join(', ') }] : prev.skills
+                }));
+            }
+        } catch (err) {
+            console.error("Failed to fetch profile for resume", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleMobileTabChange = (tab) => {
+        setMobileTab(tab);
+        if (tab === 'preview' && window.innerWidth < 1280) {
+            const screenZoom = Math.floor(((window.innerWidth - 24) / 794) * 100);
+            setZoom(Math.max(30, Math.min(screenZoom, 100)));
+        }
+    };
     const printRef = useRef(null);
 
     const handlePersonalChange = useCallback((e) => {
@@ -167,6 +200,30 @@ const AiResumeBuilder = () => {
         resumeData.skills.some(s => s.items),
     ].filter(Boolean).length;
     const progress = Math.round((filled / 8) * 100);
+
+    if (loading) {
+        return (
+            <div className="max-w-[1500px] mx-auto xl:h-[calc(100vh-140px)] flex flex-col xl:flex-row gap-5 pb-16 md:pb-0 p-4">
+                <div className="w-full xl:w-[44%] bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-6">
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-6 w-32" />
+                    <div className="grid grid-cols-2 gap-4">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="space-y-3 pt-4">
+                            <Skeleton className="h-6 w-40" />
+                            <Skeleton className="h-32 w-full" />
+                        </div>
+                    ))}
+                </div>
+                <div className="hidden xl:flex w-full xl:w-[56%] flex-col bg-slate-50 rounded-3xl p-8 items-center">
+                    <Skeleton className="h-[1056px] w-[794px] shadow-xl" />
+                </div>
+            </div>
+        );
+    }
 
     const zoomStyle = { transform: `scale(${zoom / 100})`, transformOrigin: 'top center' };
 

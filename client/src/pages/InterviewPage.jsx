@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import InterviewRoom from '../components/interview/InterviewRoom';
 import { startInterview } from '../services/interviewApi';
+import Skeleton from '../components/ui/Skeleton';
 const ScoreRing = ({ score, label, color }) => {
     const r = 36;
     const circ = 2 * Math.PI * r;
@@ -280,6 +281,7 @@ const SuggestionModal = ({ isOpen, onClose, roleSuggestions, onSelect }) => {
     );
 };
 const InterviewPage = () => {
+    const [loading, setLoading] = useState(true);
     const [jobRole, setJobRole] = useState('');
     const [interviewType, setInterviewType] = useState('behavioral');
     const [resume, setResume] = useState(null);
@@ -287,6 +289,12 @@ const InterviewPage = () => {
     const [questions, setQuestions] = useState([]);
     const [finalReport, setFinalReport] = useState(null);
     const [suggestionData, setSuggestionData] = useState({ open: false, roles: [] });
+
+    useEffect(() => {
+        // Simulate initial check
+        const timer = setTimeout(() => setLoading(false), 800);
+        return () => clearTimeout(timer);
+    }, []);
     const handleStart = async (e) => {
         if (e) e.preventDefault();
         if (!jobRole.trim() || jobRole.trim().length < 3) {
@@ -318,6 +326,35 @@ const InterviewPage = () => {
         setJobRole(role);
         setSuggestionData({ open: false, roles: [] });
     };
+    if (loading || (isStarting && questions.length === 0)) {
+        return (
+            <div className="min-h-full w-full bg-slate-50 flex items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-[32px] shadow-xl max-w-lg w-full space-y-8">
+                    <div className="flex flex-col items-center space-y-4">
+                        <Skeleton className="w-20 h-20 rounded-2xl" />
+                        <Skeleton className="h-10 w-48" />
+                        <Skeleton className="h-4 w-64" />
+                    </div>
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-12 w-full" />
+                        </div>
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <div className="grid grid-cols-3 gap-2">
+                                <Skeleton className="h-16 w-full" />
+                                <Skeleton className="h-16 w-full" />
+                                <Skeleton className="h-16 w-full" />
+                            </div>
+                        </div>
+                        <Skeleton className="h-14 w-full rounded-2xl" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (finalReport) {
         return (
             <FinalReport

@@ -630,50 +630,27 @@ const StudentProfile = () => {
                                 </>
                             )}
                             <div>
-                                <h4 className="font-semibold text-slate-400 mb-2 pl-2 text-sm uppercase">Account</h4>
-                                <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1">
-                                    {[
-                                        { l: 'Personal Information', i: <User className="w-5 h-5" /> },
-                                        { l: 'Linked Accounts', i: <Globe className="w-5 h-5" /> }
-                                    ].map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-50 rounded-2xl">
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-slate-500 p-1">{item.i}</div>
-                                                <span className="font-bold text-slate-800 text-[15px]">{item.l}</span>
-                                            </div>
-                                            <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div>
                                 <h4 className="font-semibold text-slate-400 mb-2 pl-2 text-sm uppercase">General</h4>
-                                <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1">
+                                <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1 border border-slate-100/50">
                                     {[
                                         { l: 'Notification', i: <Award className="w-5 h-5" /> },
-                                        { l: 'Application Issues', i: <Award className="w-5 h-5" /> },
-                                        { l: 'Timezone', i: <Globe className="w-5 h-5" /> },
                                         { l: 'Security', i: <Award className="w-5 h-5" /> },
                                         { l: 'Language', i: <Globe className="w-5 h-5" />, v: 'English (US)' },
-                                        { l: 'Dark Mode', i: <Star className="w-5 h-5" />, toggle: true },
+                                        { l: 'Application Issues', i: <Award className="w-5 h-5" /> },
                                         { l: 'Help Center', i: <User className="w-5 h-5" /> }
                                     ].map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-50 rounded-2xl" onClick={() => {
+                                        <div key={idx} className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-50 transition-colors rounded-2xl" onClick={() => {
                                             if (item.l === 'Help Center') {
                                                 navigate('/app/help');
                                             }
                                         }}>
                                             <div className="flex items-center gap-3">
-                                                <div className="text-slate-500 p-1">{item.i}</div>
+                                                <div className="text-slate-500 p-1 bg-slate-50 rounded-xl">{item.i}</div>
                                                 <span className="font-bold text-slate-800 text-[15px]">{item.l}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {item.v && <span className="text-slate-400 text-sm font-medium">{item.v}</span>}
-                                                {item.toggle ? (
-                                                    <div className="w-10 h-6 bg-slate-200 rounded-full cursor-pointer relative">
-                                                        <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full"></div>
-                                                    </div>
-                                                ) : <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />}
+                                                <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
                                             </div>
                                         </div>
                                     ))}

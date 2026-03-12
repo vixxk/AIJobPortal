@@ -55,17 +55,21 @@ const HelpCenter = () => {
     return (
         <div className="bg-[#F8F9FA] min-h-[100dvh] text-slate-800 flex flex-col md:p-6 lg:p-8">
             <div className="max-w-[1000px] w-full mx-auto md:bg-white md:rounded-[36px] md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] md:border md:border-slate-100 flex flex-col overflow-hidden relative min-h-[100dvh] md:min-h-[85vh] lg:min-h-[800px]">
-                <div className="bg-white px-5 md:px-8 pt-safe md:pt-8 pb-0 flex flex-col z-10 md:rounded-t-[36px] relative">
-                    <div className="flex items-center justify-between py-4 md:py-2 pb-4">
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => navigate(-1)} className="hover:bg-slate-100 p-1 rounded-full md:hidden">
-                                <ArrowLeft className="w-6 h-6 text-slate-800" />
+                <div className="bg-white px-5 md:px-10 pt-safe md:pt-10 pb-0 flex flex-col z-10 md:rounded-t-[48px] relative">
+                    <div className="flex items-center justify-between py-6 md:py-4 pb-6">
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={() => navigate(-1)} 
+                                className="w-12 h-12 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-2xl hover:bg-slate-100 active:scale-90 transition-all md:hidden shrink-0"
+                            >
+                                <ArrowLeft className="w-6 h-6 text-slate-900" />
                             </button>
-                            <h1 className="text-[22px] md:text-3xl font-bold tracking-tight text-slate-900">
-                                Help Center
-                            </h1>
-                        </div>
-                        <div className="flex items-center gap-4 text-slate-600">
+                            <div>
+                                <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 leading-tight">
+                                    Help Center
+                                </h1>
+                                <p className="text-slate-400 text-xs md:text-sm font-bold uppercase tracking-widest mt-1">Frequently Asked Questions</p>
+                            </div>
                         </div>
                     </div>
                 </div>

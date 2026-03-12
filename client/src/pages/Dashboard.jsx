@@ -344,11 +344,11 @@ const Dashboard = () => {
                 </div>
             </div>
             <div className="md:hidden w-full min-h-screen bg-white pb-24 pt-2 animate-in fade-in duration-500 font-sans">
-                <div className="flex items-center justify-between mb-6 px-5 mt-4">
-                    <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mb-8 px-5 mt-6">
+                    <div className="flex items-center gap-4">
                         <button
-                            onClick={toggleSidebar}
-                            className="w-11 h-11 rounded-full overflow-hidden border-2 border-slate-100 shadow-sm active:scale-90 transition-all"
+                            onClick={() => navigate('/app/profile')}
+                            className="w-14 h-14 rounded-[20px] overflow-hidden border-2 border-white shadow-lg active:scale-90 transition-all bg-white"
                         >
                             <img
                                 src={profile?.profileImage || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f1f5f9&color=0f172a&bold=true`}
@@ -357,13 +357,13 @@ const Dashboard = () => {
                             />
                         </button>
                         <div className="flex flex-col">
-                            <p className="text-[11px] text-slate-500 font-medium mb-0">{greeting} 👋</p>
-                            <h2 className="text-[15px] font-bold text-slate-900 leading-none">{name}</h2>
+                            <p className="text-[12px] text-slate-500 font-bold mb-0.5 opacity-70 uppercase tracking-wider">{greeting} 👋</p>
+                            <h2 className="text-xl font-black text-slate-900 leading-none tracking-tight">{firstName}</h2>
                         </div>
                     </div>
-                    <button className="relative w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center bg-white shadow-sm hover:bg-slate-50 transition-colors">
-                        <div className="absolute top-[8px] right-[10px] w-2 h-2 bg-red-500 border border-white rounded-full z-10"></div>
-                        <Bell className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
+                    <button className="relative w-12 h-12 rounded-[18px] border border-slate-100 flex items-center justify-center bg-white shadow-sm active:scale-90 transition-all">
+                        <div className="absolute top-[10px] right-[10px] w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full z-10"></div>
+                        <Bell className="w-6 h-6 text-slate-800" strokeWidth={2} />
                     </button>
                 </div>
                 <div className="px-5 mb-7">

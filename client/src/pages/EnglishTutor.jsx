@@ -4,6 +4,7 @@ import { getTutorDashboard } from '../services/englishTutorApi';
 import SpeakingTest from '../components/english-tutor/SpeakingTest';
 import LessonFlow from '../components/english-tutor/LessonFlow';
 import TutorStats from '../components/english-tutor/TutorStats';
+import Skeleton from '../components/ui/Skeleton';
 
 const ROADMAP_LEVELS = [
     { level: 1, name: 'Beginner', desc: 'Basic greetings & common objects' },
@@ -39,14 +40,19 @@ const EnglishTutor = () => {
     };
 
     const TutorSkeleton = () => (
-        <div className="min-h-screen bg-[#FCFDFF] animate-pulse">
-            <div className="max-w-6xl mx-auto px-8 pt-8 space-y-6">
-                <div className="bg-white rounded-2xl h-[280px] border border-slate-200" />
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 h-[400px] bg-white rounded-2xl border border-slate-200" />
-                    <div className="h-[400px] bg-white rounded-2xl border border-slate-200" />
+        <div className="min-h-screen bg-[#FCFDFF]">
+            <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 md:pt-8 space-y-4 md:space-y-6">
+                <Skeleton className="h-[200px] md:h-[280px] w-full" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <div className="lg:col-span-2 space-y-4 md:space-y-6">
+                        <Skeleton className="h-[300px] md:h-[400px] w-full" />
+                    </div>
+                    <div className="space-y-4 md:space-y-6">
+                        <Skeleton className="h-[200px] md:h-[250px] w-full" />
+                        <Skeleton className="h-[200px] md:h-[250px] w-full" />
+                    </div>
                 </div>
-                <div className="bg-white rounded-xl h-[120px] border border-slate-200" />
+                <Skeleton className="h-[150px] md:h-[200px] w-full" />
             </div>
         </div>
     );
