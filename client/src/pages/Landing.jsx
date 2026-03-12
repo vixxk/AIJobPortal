@@ -10,6 +10,12 @@ const Landing = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     useEffect(() => {
+        if (user) {
+            navigate('/app', { replace: true });
+        }
+    }, [user, navigate]);
+    
+    useEffect(() => {
         if (user && step === 3) {
             navigate('/app');
         }

@@ -166,14 +166,14 @@ const Register = () => {
                     </div>
                     <div className="flex-1 flex items-center justify-center px-8 xl:px-16 py-6">
                         <div className="w-full max-w-[420px]">
-                            <div className="mb-6">
-                                <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-5">
-                                    <User className="w-7 h-7 text-blue-600" />
+                            <div className="mb-8 flex flex-col items-center text-center">
+                                <div className="w-16 h-16 rounded-[22px] bg-blue-50 flex items-center justify-center mb-6 shadow-sm border border-blue-100/50">
+                                    <User className="w-8 h-8 text-blue-600" />
                                 </div>
-                                <h2 className="text-[28px] font-extrabold text-slate-900 tracking-tight leading-tight">
+                                <h2 className="text-[32px] font-[900] text-slate-900 tracking-tight leading-tight">
                                     Create your account
                                 </h2>
-                                <p className="text-slate-500 text-[14px] mt-1">Fill in the details below to get started</p>
+                                <p className="text-slate-400 text-[15px] mt-2 font-medium">Fill in the details below to get started</p>
                             </div>
                             {formContent()}
                         </div>

@@ -157,7 +157,6 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
     const logout = useCallback(() => {
-        setUser(null);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/';
