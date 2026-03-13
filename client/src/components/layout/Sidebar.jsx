@@ -72,6 +72,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     }
     const bottomLinks = [
         { name: 'Profile', path: '/app/profile', icon: User },
+        { name: 'Help Center', path: '/app/help', icon: HelpCircle },
     ];
     return (
         <div className={clsx(

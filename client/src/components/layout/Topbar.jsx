@@ -23,7 +23,7 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
         return null;
     }
 
-    if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/help' || location.pathname === '/app/contact')) {
+    if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/contact')) {
         return null;
     }
     let pageTitle = "Student Dashboard";
@@ -36,7 +36,7 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
     else if (location.pathname === '/app/contact') pageTitle = "Customer Service";
     else if (location.pathname === '/app/competitions') pageTitle = "Competitions";
     else if (location.pathname !== '/app') pageTitle = "Feature Details";
-    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/competitions'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
+    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/competitions', '/app/help'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
     return (
         <div className={`h-16 md:h-24 px-4 md:px-10 flex items-center justify-between z-40 sticky top-0 transition-all duration-500 ${customTitle && isMobile ? 'bg-white' : 'bg-white/70 md:bg-background/60 backdrop-blur-xl border-b border-slate-200/50 md:border-none'}`}>
             {}

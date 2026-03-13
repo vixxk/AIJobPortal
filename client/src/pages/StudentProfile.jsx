@@ -273,9 +273,9 @@ const StudentProfile = () => {
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex justify-center mb-6">
                 <div className="relative w-24 h-24">
-                    <SmartImage 
-                        src={profile.profileImage || user?.avatar} 
-                        alt="Avatar" 
+                    <SmartImage
+                        src={profile.profileImage || user?.avatar}
+                        alt="Avatar"
                         containerClassName="w-24 h-24 rounded-full border-4 border-white shadow-md relative z-10"
                         className={saving ? 'opacity-50' : 'opacity-100'}
                         fallbackIcon={() => (
@@ -679,9 +679,9 @@ const StudentProfile = () => {
                                 <div className="px-4 flex-1 overflow-y-auto hide-scrollbar h-full pb-20">
                                     <div className="flex items-center justify-between mt-4 mb-8">
                                         <div className="flex items-center gap-4">
-                                            <SmartImage 
-                                                src={profile.profileImage || user?.avatar} 
-                                                alt="User" 
+                                            <SmartImage
+                                                src={profile.profileImage || user?.avatar}
+                                                alt="User"
                                                 containerClassName="w-12 h-12 rounded-full border-2 border-white shadow-sm"
                                                 fallbackIcon={() => (
                                                     user?.role === 'RECRUITER' ? (
@@ -735,9 +735,9 @@ const StudentProfile = () => {
                     <div className="w-[340px] shrink-0 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
                         <div className="p-8 border-b border-slate-100 flex flex-col items-center gap-4 bg-gradient-to-b from-blue-50/50 to-white text-center">
                             <div className="relative">
-                                <SmartImage 
-                                    src={profile.profileImage || user?.avatar} 
-                                    alt="User" 
+                                <SmartImage
+                                    src={profile.profileImage || user?.avatar}
+                                    alt="User"
                                     containerClassName="w-24 h-24 rounded-full border-4 border-white shadow-md relative z-10"
                                     fallbackIcon={() => (
                                         user?.role === 'RECRUITER' ? (
