@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import InterviewRoom from '../components/interview/InterviewRoom';
 import { startInterview } from '../services/interviewApi';
 import Skeleton from '../components/ui/Skeleton';
@@ -29,6 +30,7 @@ const ScoreRing = ({ score, label, color }) => {
     );
 };
 const FinalReport = ({ report, jobRole, onRestart }) => {
+    const navigate = useNavigate();
     const { overall_score = 0, confidence_score = 0, fluency_score = 0, technical_accuracy = 0, suggestions = [] } = report;
     const grade = overall_score >= 85 ? { label: 'Excellent', emoji: '🌟', color: 'text-green-600', bg: 'from-green-50 to-emerald-50', border: 'border-green-200' }
         : overall_score >= 70 ? { label: 'Good', emoji: '👍', color: 'text-blue-600', bg: 'from-blue-50 to-indigo-50', border: 'border-blue-200' }
@@ -178,15 +180,45 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                                                     </div>
                                                 </div>
 
-                                                {ans.evaluation.answer_score < 70 && ans.evaluation.suggestions && ans.evaluation.suggestions.length > 0 && (
+                                                {ans.evaluation.strengths && ans.evaluation.strengths.length > 0 && (
+                                                    <div className="p-3 sm:p-4 bg-emerald-50/40 rounded-xl border border-emerald-100/50">
+                                                        <div className="flex items-center gap-1.5 mb-2 text-[9px] font-black uppercase tracking-widest text-emerald-600">
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                            Feedback - Strengths
+                                                        </div>
+                                                        <ul className="text-[11px] sm:text-xs text-emerald-800 leading-relaxed list-disc list-inside">
+                                                            {(Array.isArray(ans.evaluation.strengths) ? ans.evaluation.strengths : [ans.evaluation.strengths]).map((strength, i) => (
+                                                                <li key={i}>{strength}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+
+                                                {ans.evaluation.weaknesses && ans.evaluation.weaknesses.length > 0 && (
+                                                    <div className="p-3 sm:p-4 bg-rose-50/40 rounded-xl border border-rose-100/50">
+                                                        <div className="flex items-center gap-1.5 mb-2 text-[9px] font-black uppercase tracking-widest text-rose-600">
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                            Feedback - Areas to Improve
+                                                        </div>
+                                                        <ul className="text-[11px] sm:text-xs text-rose-800 leading-relaxed list-disc list-inside">
+                                                            {(Array.isArray(ans.evaluation.weaknesses) ? ans.evaluation.weaknesses : [ans.evaluation.weaknesses]).map((weakness, i) => (
+                                                                <li key={i}>{weakness}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+
+                                                {ans.evaluation.suggestions && ans.evaluation.suggestions.length > 0 && (
                                                     <div className="p-3 sm:p-4 bg-amber-50/40 rounded-xl border border-amber-100/50">
                                                         <div className="flex items-center gap-1.5 mb-2 text-[9px] font-black uppercase tracking-widest text-amber-600">
                                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                             Suggestion for Improvement
                                                         </div>
-                                                        <p className="text-[11px] sm:text-xs text-amber-800 leading-relaxed italic">
-                                                            "{Array.isArray(ans.evaluation.suggestions) ? ans.evaluation.suggestions[0] : ans.evaluation.suggestions}"
-                                                        </p>
+                                                        <ul className="text-[11px] sm:text-xs text-amber-800 leading-relaxed italic list-disc list-inside">
+                                                            {(Array.isArray(ans.evaluation.suggestions) ? ans.evaluation.suggestions : [ans.evaluation.suggestions]).map((suggestion, i) => (
+                                                                <li key={i}>{suggestion}</li>
+                                                            ))}
+                                                        </ul>
                                                     </div>
                                                 )}
                                             </div>
@@ -199,6 +231,12 @@ const FinalReport = ({ report, jobRole, onRestart }) => {
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pb-8 print:hidden">
+                    <button
+                        onClick={() => navigate('/app')}
+                        className="flex-1 py-3 sm:py-4 bg-white border-2 border-gray-200 hover:border-slate-300 text-gray-700 font-bold text-sm sm:text-base rounded-xl sm:rounded-2xl transition-all hover:-translate-y-0.5"
+                    >
+                        🏠 Back to Dashboard
+                    </button>
                     <button
                         onClick={onRestart}
                         className="flex-1 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm sm:text-base rounded-xl sm:rounded-2xl shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5"
