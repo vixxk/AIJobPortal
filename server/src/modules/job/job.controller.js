@@ -135,8 +135,8 @@ exports.getJob = catchAsync(async (req, res, next) => {
 });
 
 exports.searchJobs = catchAsync(async (req, res, next) => {
-  const { role, location, type } = req.query;
-  const jobs = await externalJobService.searchExternalJobs(role, location, type);
+  const { role, location, type, salaryRange, experience } = req.query;
+  const jobs = await externalJobService.searchExternalJobs(role, location, type, salaryRange, experience);
   res.status(200).json({
     status: 'success',
     results: jobs.length,

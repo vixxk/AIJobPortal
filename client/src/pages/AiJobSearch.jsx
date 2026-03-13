@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, MapPin, Loader2, Bookmark, ArrowLeft, SlidersHorizontal, ArrowDownUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MapPin, Loader2, Bookmark, ArrowLeft, SlidersHorizontal, ArrowDownUp, ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import JobDetailsModal from '../components/JobDetailsModal';
@@ -93,6 +93,11 @@ const AiJobSearch = () => {
     const [showMobileSearch, setShowMobileSearch] = useState(false);
     const [sortBy, setSortBy] = useState('');
     const [showSortMenu, setShowSortMenu] = useState(false);
+    
+    // Filter states
+    const [salaryRange, setSalaryRange] = useState('any');
+    const [experience, setExperience] = useState('any');
+    const [openDropdown, setOpenDropdown] = useState(null); // 'type', 'salary', 'experience'
     const sortAllJobs = (jobsArray, sortType) => {
         let sorted = [...jobsArray];
         if (sortType === 'name-asc') {
@@ -119,7 +124,13 @@ const AiJobSearch = () => {
         if (!isInitial) setHasSearched(true);
         try {
             const res = await axios.get('/jobs/search', {
-                params: { role, location, type }
+                params: { 
+                    role, 
+                    location, 
+                    type,
+                    salaryRange,
+                    experience
+                }
             });
             const fetched = res.data.jobs || [];
             if (isInitial && fetched.length > 0) {
@@ -138,7 +149,7 @@ const AiJobSearch = () => {
         } finally {
             setLoading(false);
         }
-    }, [role, location, type, scrollToResults]);
+    }, [role, location, type, salaryRange, experience, scrollToResults]);
     const fetchInitialData = useCallback(async () => {
         try {
             const savedRes = await axios.get('/jobs/saved');
@@ -156,6 +167,12 @@ const AiJobSearch = () => {
     useEffect(() => {
         fetchInitialData();
     }, []); // Run only once on mount
+
+    useEffect(() => {
+        if (hasSearched) {
+            handleSearch();
+        }
+    }, [type, salaryRange, experience, handleSearch]);
     const goToPage = (page) => {
         const p = Math.max(1, Math.min(page, totalPages));
         setCurrentPage(p);
@@ -220,13 +237,81 @@ const AiJobSearch = () => {
                         <button type="submit" className="hidden">Search</button>
                     </form>
                 </div>
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mt-1">
+                    <button 
+                        onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${type !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                    >
+                        {type === 'any' ? 'Job Type' : <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>}
+                        <ArrowDownUp className="w-3 h-3" />
+                    </button>
+                    <button 
+                        onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${salaryRange !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                    >
+                        {salaryRange === 'any' ? 'Salary' : salaryRange}
+                        <ArrowDownUp className="w-3 h-3" />
+                    </button>
+                    <button 
+                        onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${experience !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                    >
+                        {experience === 'any' ? 'Experience' : experience}
+                        <ArrowDownUp className="w-3 h-3" />
+                    </button>
+                </div>
+                
+                {/* Mobile Dropdowns */}
+                <div className="relative">
+                    {openDropdown === 'type' && (
+                        <div className="absolute top-0 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-44 z-30 animate-in fade-in slide-in-from-top-2 duration-200 mt-1">
+                            {['any', 'fulltime', 'contract', 'internship', 'parttime'].map((v) => (
+                                <button
+                                    key={v}
+                                    onClick={() => { setType(v); setOpenDropdown(null); }}
+                                    className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 capitalize ${type === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                >
+                                    {v === 'any' ? 'Any Type' : v === 'fulltime' ? 'Full Time' : v}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {openDropdown === 'salary' && (
+                        <div className="absolute top-0 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-52 z-30 animate-in fade-in slide-in-from-top-2 duration-200 mt-1">
+                            {['any', '< $40k', '$40k - $80k', '$80k - $120k', '$120k - $160k', '> $160k'].map((v) => (
+                                <button
+                                    key={v}
+                                    onClick={() => { setSalaryRange(v); setOpenDropdown(null); }}
+                                    className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${salaryRange === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                >
+                                    {v === 'any' ? 'Any Salary' : v}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {openDropdown === 'experience' && (
+                        <div className="absolute top-0 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-44 z-30 animate-in fade-in slide-in-from-top-2 duration-200 mt-1">
+                            {['any', 'Entry Level', 'Junior', 'Mid-Level', 'Senior', 'Lead'].map((v) => (
+                                <button
+                                    key={v}
+                                    onClick={() => { setExperience(v); setOpenDropdown(null); }}
+                                    className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${experience === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                >
+                                    {v === 'any' ? 'Any Experience' : v}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
             <div className="flex-1 bg-slate-50 px-5 pt-6 pb-12 md:max-w-5xl md:mx-auto md:w-full md:bg-white md:px-8">
-                <div className="hidden md:flex bg-[linear-gradient(135deg,#2563eb,#4f46e5)] rounded-3xl p-10 text-white relative flex-col items-center text-center overflow-hidden mb-12 shadow-xl shadow-blue-900/10">
-                    <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-                        <svg width="240" height="240" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
-                        </svg>
+                <div className="hidden md:flex min-h-[300px] p-10 text-white relative flex-col items-center text-center mb-12">
+                    <div className="absolute inset-0 bg-[linear-gradient(135deg,#2563eb,#4f46e5)] rounded-[32px] overflow-hidden shadow-xl shadow-blue-900/10">
+                        <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+                            <svg width="240" height="240" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+                            </svg>
+                        </div>
                     </div>
                     <h2 className="text-4xl font-extrabold mb-4 tracking-tight relative z-10">AI-Powered Job Search</h2>
                     <p className="text-blue-100 max-w-xl mx-auto mb-10 text-base relative z-10 font-medium">
@@ -237,7 +322,7 @@ const AiJobSearch = () => {
                             <Search className="w-5 h-5 text-slate-400 shrink-0 mr-3" />
                             <input
                                 type="text"
-                                placeholder="Job Role (e.g. Frontend Developer)"
+                                placeholder="Job titles, companies, or keywords"
                                 value={role}
                                 onChange={(e) => setRole(e.target.value)}
                                 className="bg-transparent border-none w-full text-slate-800 placeholder-slate-400 focus:outline-none text-[15px] font-semibold"
@@ -257,25 +342,109 @@ const AiJobSearch = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-[160px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-base"
+                            className="w-[160px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-base shadow-lg shadow-blue-500/20"
                         >
                             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Find Jobs'}
                         </button>
                     </form>
-                    <div className="flex gap-4 mt-8 flex-wrap justify-center text-sm font-semibold z-10 relative w-full">
-                        {['any', 'fulltime', 'contract', 'internship'].map((v) => (
-                            <label
-                                key={v}
-                                className={`flex items-center justify-center cursor-pointer transition-all px-5 py-2 rounded-full border ${type === v
-                                    ? 'bg-white text-blue-700 border-white shadow-md scale-105'
-                                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                                    }`}
+
+                    <div className="flex gap-3 mt-8 flex-wrap justify-center z-20 relative w-full">
+                        {/* Job Type Dropdown */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all text-sm font-semibold ${type !== 'any' ? 'bg-white text-blue-700 border-white shadow-md' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
                             >
-                                <input type="radio" name="jobType" value={v} checked={type === v} onChange={() => setType(v)} className="sr-only" />
-                                <span className="capitalize">{v === 'any' ? 'Any Type' : v === 'fulltime' ? 'Full Time' : v}</span>
-                            </label>
-                        ))}
+                                {type === 'any' ? 'Job Type' : <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>}
+                                <ArrowDownUp className={`w-3.5 h-3.5 transition-transform ${openDropdown === 'type' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {openDropdown === 'type' && (
+                                <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                    {['any', 'fulltime', 'contract', 'internship', 'parttime'].map((v) => (
+                                        <button
+                                            key={v}
+                                            onClick={() => { setType(v); setOpenDropdown(null); }}
+                                            className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 capitalize ${type === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                        >
+                                            {v === 'any' ? 'Any Type' : v === 'fulltime' ? 'Full Time' : v}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Salary Range Dropdown */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all text-sm font-semibold ${salaryRange !== 'any' ? 'bg-white text-blue-700 border-white shadow-md' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
+                            >
+                                {salaryRange === 'any' ? 'Salary Range' : salaryRange}
+                                <ArrowDownUp className={`w-3.5 h-3.5 transition-transform ${openDropdown === 'salary' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {openDropdown === 'salary' && (
+                                <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-56 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                    {['any', '< $40k', '$40k - $80k', '$80k - $120k', '$120k - $160k', '> $160k'].map((v) => (
+                                        <button
+                                            key={v}
+                                            onClick={() => { setSalaryRange(v); setOpenDropdown(null); }}
+                                            className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${salaryRange === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                        >
+                                            {v === 'any' ? 'Any Salary' : v}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Experience Dropdown */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all text-sm font-semibold ${experience !== 'any' ? 'bg-white text-blue-700 border-white shadow-md' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
+                            >
+                                {experience === 'any' ? 'Experience' : experience}
+                                <ArrowDownUp className={`w-3.5 h-3.5 transition-transform ${openDropdown === 'experience' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {openDropdown === 'experience' && (
+                                <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                    {['any', 'Entry Level', 'Junior', 'Mid-Level', 'Senior', 'Lead'].map((v) => (
+                                        <button
+                                            key={v}
+                                            onClick={() => { setExperience(v); setOpenDropdown(null); }}
+                                            className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${experience === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                        >
+                                            {v === 'any' ? 'Any Experience' : v}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Filter Chips */}
+                    {(type !== 'any' || salaryRange !== 'any' || experience !== 'any') && (
+                        <div className="flex gap-2 mt-6 flex-wrap justify-center z-10 relative w-full">
+                            {type !== 'any' && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100/20 border border-white/30 rounded-lg text-xs font-bold text-white transition-all hover:bg-white/20">
+                                    <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>
+                                    <button onClick={() => setType('any')} className="hover:text-blue-200"><X className="w-3 h-3" /></button>
+                                </div>
+                            )}
+                            {salaryRange !== 'any' && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100/20 border border-white/30 rounded-lg text-xs font-bold text-white transition-all hover:bg-white/20">
+                                    <span>{salaryRange}</span>
+                                    <button onClick={() => setSalaryRange('any')} className="hover:text-blue-200"><X className="w-3 h-3" /></button>
+                                </div>
+                            )}
+                            {experience !== 'any' && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100/20 border border-white/30 rounded-lg text-xs font-bold text-white transition-all hover:bg-white/20">
+                                    <span>{experience}</span>
+                                    <button onClick={() => setExperience('any')} className="hover:text-blue-200"><X className="w-3 h-3" /></button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <div ref={resultsRef}>
                     {loading && (
@@ -299,34 +468,67 @@ const AiJobSearch = () => {
                     )}
                     {!loading && allJobs.length > 0 && (
                         <>
-                            <div className="hidden md:flex justify-between items-center mb-6 mt-4 relative">
-                                <span className="text-lg font-bold text-slate-900 tracking-tight">{totalCount.toLocaleString()} <span className="text-slate-500 font-semibold text-base">found</span></span>
-                                <div>
-                                    <button onClick={() => setShowSortMenu(!showSortMenu)} className="flex items-center gap-2 text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors border border-slate-200 px-4 py-2 rounded-xl">
-                                        <ArrowDownUp className="w-[16px] h-[16px]" strokeWidth={2} />
-                                        Sort
-                                    </button>
-                                    {showSortMenu && (
-                                        <div className="absolute right-0 top-12 bg-white shadow-xl border border-slate-100 rounded-xl py-2 w-48 z-10 flex flex-col overflow-hidden">
-                                            <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-asc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (A-Z)</button>
-                                            <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-desc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (Z-A)</button>
+                            <div className="hidden md:flex flex-col mb-8 mt-4 relative">
+                                <div className="flex justify-between items-center w-full">
+                                    <span className="text-2xl font-black text-slate-900 tracking-tight">
+                                        {role || location ? (
+                                            <>{totalCount.toLocaleString()} <span className="text-slate-500 font-bold text-lg ml-1">Results Found</span></>
+                                        ) : (
+                                            <span className="flex items-center gap-2">
+                                                <Sparkles className="w-6 h-6 text-blue-600" />
+                                                Trending Global Jobs
+                                            </span>
+                                        )}
+                                    </span>
+                                    {allJobs.length > 0 && (
+                                        <div className="flex items-center gap-4">
+                                            <button onClick={() => setShowSortMenu(!showSortMenu)} className="flex items-center gap-2 text-slate-600 hover:text-blue-600 font-bold text-sm transition-all border border-slate-200 px-5 py-2.5 rounded-2xl bg-white shadow-sm hover:shadow-md active:scale-95">
+                                                <ArrowDownUp className="w-4 h-4" strokeWidth={2.5} />
+                                                Sort By
+                                            </button>
+                                            {showSortMenu && (
+                                                <div className="absolute right-0 top-14 bg-white/80 backdrop-blur-xl shadow-2xl border border-slate-100 rounded-[20px] py-3 w-56 z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    <div className="px-4 py-2 border-b border-slate-50 mb-1">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Order by</span>
+                                                    </div>
+                                                    <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2.5 text-[13px] font-bold hover:bg-blue-50/50 transition-colors ${sortBy === 'name-asc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>TItle (A-Z)</button>
+                                                    <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2.5 text-[13px] font-bold hover:bg-blue-50/50 transition-colors ${sortBy === 'name-desc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>Title (Z-A)</button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
+                                {!role && !location && (
+                                    <p className="text-slate-500 font-medium text-sm mt-1">Based on global trending roles. Start searching to narrow down your preferences.</p>
+                                )}
                             </div>
-                            <div className="md:hidden flex justify-between items-center mb-4 mt-2 relative">
-                                <span className="text-[15px] font-bold text-slate-800 tracking-tight">{totalCount.toLocaleString()} <span className="text-slate-500 font-semibold text-[13px]">found</span></span>
-                                <div>
-                                    <button onClick={() => setShowSortMenu(!showSortMenu)} className="text-blue-500 p-1 -mr-1">
-                                        <ArrowDownUp className="w-[18px] h-[18px] font-bold" strokeWidth={2.5} />
-                                    </button>
-                                    {showSortMenu && (
-                                        <div className="absolute right-0 top-8 bg-white shadow-xl border border-slate-100 rounded-xl py-2 w-48 z-10 flex flex-col overflow-hidden">
-                                            <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-asc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (A-Z)</button>
-                                            <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${sortBy === 'name-desc' ? 'text-blue-600' : 'text-slate-600'}`}>Name (Z-A)</button>
-                                        </div>
-                                    )}
+                            <div className="md:hidden flex flex-col mb-6 mt-2 relative">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[17px] font-black text-slate-900 tracking-tight">
+                                        {role || location ? (
+                                            <>{totalCount.toLocaleString()} <span className="text-slate-500 font-bold text-[13px] ml-0.5">Results</span></>
+                                        ) : (
+                                            <span className="flex items-center gap-1.5">
+                                                <Sparkles className="w-4 h-4 text-blue-600" />
+                                                Trending Global Jobs
+                                            </span>
+                                        )}
+                                    </span>
+                                    <div>
+                                        <button onClick={() => setShowSortMenu(!showSortMenu)} className="text-blue-600 p-1 bg-blue-50 rounded-lg active:scale-90 transition-transform">
+                                            <ArrowDownUp className="w-[18px] h-[18px]" strokeWidth={2.5} />
+                                        </button>
+                                        {showSortMenu && (
+                                            <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md shadow-2xl border border-slate-100 rounded-2xl py-2 w-48 z-50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                                                <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2.5 text-xs font-bold ${sortBy === 'name-asc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>Name (A-Z)</button>
+                                                <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2.5 text-xs font-bold ${sortBy === 'name-desc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>Name (Z-A)</button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+                                {!role && !location && (
+                                    <p className="text-slate-500 font-bold text-[11px] mt-0.5 opacity-80">Top picks for you across the globe</p>
+                                )}
                             </div>
                             <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6">
                                 {jobs.map((job) => {

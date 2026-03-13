@@ -40,11 +40,11 @@ const Section = ({ icon: Icon, title, number, color, children, accent }) => {
 
 // ─── Card wrapper for array items ─────────────────────────────────────────
 const ItemCard = ({ onDelete, children, accentColor = 'blue' }) => (
-    <div className={`relative p-4 bg-slate-50/80 border border-slate-200 rounded-2xl mb-3 group hover:border-${accentColor}-200 hover:bg-white transition-all`}>
+    <div className={`relative p-5 bg-slate-50/50 border border-slate-200 rounded-2xl mb-4 group hover:border-${accentColor}-200 hover:bg-white transition-all`}>
         {children}
         <button
             onClick={onDelete}
-            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 text-slate-300 transition-all"
+            className="absolute -top-2.5 -right-2.5 p-2 rounded-xl bg-white shadow-md border border-slate-100 hover:bg-red-50 hover:text-red-500 hover:border-red-100 text-slate-400 transition-all z-20 flex items-center justify-center"
             title="Remove"
         >
             <Trash2 className="w-3.5 h-3.5" />
@@ -244,7 +244,7 @@ const AiResumeBuilder = () => {
 
             {/* ── LEFT: Form Panel ───────────────────────────────────────── */}
             {/* On mobile: hidden when preview tab active */}
-            <div className={`w-full xl:w-[44%] bg-white rounded-3xl shadow-sm border border-slate-100
+            <div className={`w-full xl:w-[42%] bg-white rounded-3xl shadow-sm border border-slate-100
                 overflow-y-auto scrollbar-hide max-h-full print:hidden flex flex-col
                 ${mobileTab === 'edit' ? 'flex' : 'hidden xl:flex'}`}>
 
@@ -421,22 +421,30 @@ const AiResumeBuilder = () => {
                         <AddBtn onClick={() => addArrayItem('projects', { name: '', github: '', liveLink: '', techStack: '', duration: '', description: '' })} label="Add Project" color="orange" />
                     </Section>
 
-                    {/* 6. Certifications */}
                     <Section icon={Award} title="Certifications" number="6" color="text-yellow-500" accent="bg-yellow-500">
-                        <div className="space-y-2.5 mb-3">
+                        <div className="space-y-3 mb-3">
                             {resumeData.certifications.map((cert, i) => (
-                                <div key={i} className="flex gap-2 items-center group">
-                                    <input
-                                        value={cert.name}
-                                        onChange={e => handleArrayChange('certifications', i, 'name', e.target.value)}
-                                        className={`${inputCls} flex-1`}
-                                        placeholder="Certification name (e.g. AWS Certified)"
-                                    />
+                                <div key={i} className="flex gap-2 items-start group">
+                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        <input
+                                            value={cert.name}
+                                            onChange={e => handleArrayChange('certifications', i, 'name', e.target.value)}
+                                            className={inputCls}
+                                            placeholder="Certification Name (e.g. AWS Solutions Architect)"
+                                        />
+                                        <input
+                                            value={cert.link}
+                                            onChange={e => handleArrayChange('certifications', i, 'link', e.target.value)}
+                                            className={inputCls}
+                                            placeholder="Credential URL / Link (Optional)"
+                                        />
+                                    </div>
                                     <button
                                         onClick={() => removeArrayItem('certifications', i)}
-                                        className="p-2 rounded-lg hover:bg-red-50 hover:text-red-500 text-slate-300 opacity-0 group-hover:opacity-100 transition-all"
+                                        className="shrink-0 p-2.5 rounded-xl hover:bg-red-50 hover:text-red-500 text-slate-300 transition-all bg-white shadow-sm border border-slate-100 hover:border-red-100 flex items-center justify-center h-[42px] w-[42px]"
+                                        title="Remove"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}
@@ -444,28 +452,30 @@ const AiResumeBuilder = () => {
                         <AddBtn onClick={() => addArrayItem('certifications', { name: '', link: '' })} label="Add Certification" color="yellow" />
                     </Section>
 
-                    {/* 7. Skills */}
                     <Section icon={Code} title="Technical Skills" number="7" color="text-pink-500" accent="bg-pink-500">
-                        <div className="space-y-2.5 mb-3">
+                        <div className="space-y-3 mb-3">
                             {resumeData.skills.map((skill, i) => (
                                 <div key={i} className="flex gap-2 items-center group">
-                                    <input
-                                        value={skill.category}
-                                        onChange={e => handleArrayChange('skills', i, 'category', e.target.value)}
-                                        className={`${inputCls} w-[35%] shrink-0 font-semibold`}
-                                        placeholder="Category"
-                                    />
-                                    <input
-                                        value={skill.items}
-                                        onChange={e => handleArrayChange('skills', i, 'items', e.target.value)}
-                                        className={`${inputCls} flex-1`}
-                                        placeholder="Skill 1, Skill 2, Skill 3..."
-                                    />
+                                    <div className="flex-1 grid grid-cols-[110px_1fr] gap-2">
+                                        <input
+                                            value={skill.category}
+                                            onChange={e => handleArrayChange('skills', i, 'category', e.target.value)}
+                                            className={`${inputCls} font-semibold !px-2`}
+                                            placeholder="AI:"
+                                        />
+                                        <input
+                                            value={skill.items}
+                                            onChange={e => handleArrayChange('skills', i, 'items', e.target.value)}
+                                            className={inputCls}
+                                            placeholder="Gemini, Claude, GPT-4..."
+                                        />
+                                    </div>
                                     <button
                                         onClick={() => removeArrayItem('skills', i)}
-                                        className="p-2 rounded-lg hover:bg-red-50 hover:text-red-500 text-slate-300 opacity-0 group-hover:opacity-100 transition-all"
+                                        className="shrink-0 p-2.5 rounded-xl hover:bg-red-50 hover:text-red-500 text-slate-300 transition-all bg-white shadow-sm border border-slate-100 hover:border-red-100 flex items-center justify-center h-[42px] w-[42px]"
+                                        title="Remove"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}
@@ -698,7 +708,7 @@ const AiResumeBuilder = () => {
                                                 <span className="font-bold mr-1.5">•</span>
                                                 <span className="font-bold">{skill.category}{skill.category ? ':' : ''}</span> {skill.items}
                                             </div>
-                        ))}
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -712,10 +722,9 @@ const AiResumeBuilder = () => {
 
                 {/* Edit tab */}
                 <button
-                    onClick={() => handleMobileTabChange('edit')}    
-                    className={`relative flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${
-                        mobileTab === 'edit' ? 'text-blue-600' : 'text-slate-400'
-                    }`}
+                    onClick={() => handleMobileTabChange('edit')}
+                    className={`relative flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${mobileTab === 'edit' ? 'text-blue-600' : 'text-slate-400'
+                        }`}
                 >
                     <FileText className="w-5 h-5" />
                     <span className="text-[11px] font-semibold">Edit</span>
@@ -733,10 +742,9 @@ const AiResumeBuilder = () => {
 
                 {/* Preview tab */}
                 <button
-                    onClick={() => handleMobileTabChange('preview')}  
-                    className={`relative flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${
-                        mobileTab === 'preview' ? 'text-blue-600' : 'text-slate-400'
-                    }`}
+                    onClick={() => handleMobileTabChange('preview')}
+                    className={`relative flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition-colors ${mobileTab === 'preview' ? 'text-blue-600' : 'text-slate-400'
+                        }`}
                 >
                     <Eye className="w-5 h-5" />
                     <span className="text-[11px] font-semibold">Preview</span>

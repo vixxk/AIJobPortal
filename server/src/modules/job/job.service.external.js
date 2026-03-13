@@ -14,8 +14,8 @@ const SERPAPI_KEY = process.env.SERPAPI_KEY;
 const cache = new Map();
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
-function getCacheKey(role, location, type) {
-    return `${(role || '').toLowerCase()}|${(location || '').toLowerCase()}|${(type || '')}`;
+function getCacheKey(role, location, type, salaryRange, experience) {
+    return `${(role || '').toLowerCase()}|${(location || '').toLowerCase()}|${(type || '')}|${(salaryRange || '')}|${(experience || '')}`;
 }
 
 const healthMap = {};
@@ -100,9 +100,67 @@ async function safeFetch(name, fn) {
     }
 }
 
-exports.searchExternalJobs = async (role = '', location = '', type = '') => {
+function parseSalaryValue(salaryStr) {
+    if (!salaryStr || salaryStr === 'Not specified') return null;
+    const clean = salaryStr.replace(/[^\d]/g, '');
+    if (!clean) return null;
+    // If it's a range, take the average or min? Let's try to find all numbers.
+    const nums = salaryStr.match(/\d+/g);
+    if (!nums) return null;
+    let val = parseInt(nums[nums.length - 1]); // Take the max or the only number
+    if (salaryStr.includes('k') || salaryStr.includes('K')) val *= 1000;
+    // Handle USD vs INR (rough heuristic)
+    if (salaryStr.includes('$')) val *= 83; // Convert USD to INR for uniform comparison if needed, or just handle both
+    return val;
+}
+
+function matchesExperience(job, level) {
+    if (level === 'any') return true;
+    const text = `${job.title} ${job.snippet} ${job.type}`.toLowerCase();
+    const l = level.toLowerCase();
+    if (l === 'entry level') return text.includes('entry') || text.includes('junior') || text.includes('0-1') || text.includes('fresher') || text.includes('intern');
+    if (l === 'junior') return text.includes('junior') || (text.includes('1-') && !text.includes('10-'));
+    if (l === 'mid-level') return text.includes('mid') || text.includes('associate') || text.includes('2-4') || text.includes('3-5');
+    if (l === 'senior') return text.includes('senior') || text.includes('sr.') || text.includes('sde 2') || text.includes('sde 3') || text.includes('5+') || text.includes('lead');
+    if (l === 'lead') return text.includes('lead') || text.includes('staff') || text.includes('principal') || text.includes('manager') || text.includes('architect') || text.includes('head');
+    return true;
+}
+
+function matchesSalary(salaryStr, range) {
+    if (range === 'any') return true;
+    const val = parseSalaryValue(salaryStr);
+    if (!val) return false;
+    
+    // Range format: '< $40k', '$40k - $80k', '$80k - $120k', '$120k - $160k', '> $160k'
+    // This expects USD usually, so let's check if the salary is in USD or convert range to INR
+    const isUSD = salaryStr.includes('$');
+    let targetVal = val;
+    if (!isUSD && salaryStr.includes('₹')) targetVal = val / 83; // Convert INR to USD for comparison with range
+
+    if (range === '< $40k') return targetVal < 40000;
+    if (range === '$40k - $80k') return targetVal >= 40000 && targetVal <= 80000;
+    if (range === '$80k - $120k') return targetVal >= 80000 && targetVal <= 120000;
+    if (range === '$120k - $160k') return targetVal >= 120000 && targetVal <= 160000;
+    if (range === '> $160k') return targetVal > 160000;
+    
+    return true;
+}
+
+exports.searchExternalJobs = async (role = '', location = '', type = '', salaryRange = 'any', experience = 'any') => {
     const isRecent = (!role && !location);
-    const cacheKey = getCacheKey(role, location, type);
+    
+    let searchRole = role;
+    if (isRecent) {
+        const trending = [
+            'Software Engineer', 'Marketing Manager', 'Product Designer', 
+            'Data Scientist', 'Sales Executive', 'Financial Analyst', 
+            'Content Writer', 'HR Generalist', 'Project Manager', 
+            'Customer Success Manager', 'DevOps Engineer', 'Operations Lead'
+        ];
+        searchRole = trending[Math.floor(Date.now() / (1000 * 60 * 60)) % trending.length]; // Rotate every hour
+    }
+
+    const cacheKey = getCacheKey(role, location, type, salaryRange, experience);
     const cached = cache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
@@ -116,14 +174,14 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
     const indiaLoc = !isRemote && location ? `${location}, India` : 'India';
     const pool = [];
 
-    if (ADZUNA_APP_ID && ADZUNA_API_KEY && !isRecent) {
+    if (ADZUNA_APP_ID && ADZUNA_API_KEY) {
         pool.push({
             name: 'Adzuna', region: 'IN',
             fetch: () => axios.get('https://api.adzuna.com/v1/api/jobs/in/search/1', {
                 params: {
                     app_id: ADZUNA_APP_ID, app_key: ADZUNA_API_KEY,
-                    what: role, where: !isRemote ? location : undefined,
-                    results_per_page: 20, sort_by: 'date',
+                    what: searchRole, where: !isRemote ? location : undefined,
+                    results_per_page: isRecent ? 10 : 20, sort_by: 'date',
                 },
                 httpsAgent: new https.Agent({ family: 4 }),
             }).then(r => {
@@ -146,12 +204,12 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
         });
     }
 
-    if (JOOBLE_KEY && !isRecent) {
+    if (JOOBLE_KEY) {
         pool.push({
             name: 'Jooble', region: 'IN',
             fetch: () => axios.post(
                 `https://jooble.org/api/${JOOBLE_KEY}`,
-                { keywords: role, location: indiaLoc, page: '1', resultonpage: '20' },
+                { keywords: searchRole, location: indiaLoc, page: '1', resultonpage: isRecent ? '10' : '20' },
                 { headers: { 'Content-Type': 'application/json' } }
             ).then(r => {
                 if (!r.data?.jobs?.length) return [];
@@ -169,15 +227,15 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
         });
     }
 
-    if (CAREERJET_KEY && !isRecent) {
+    if (CAREERJET_KEY) {
         pool.push({
             name: 'Careerjet', region: 'IN',
             fetch: () => axios.get('http://public.api.careerjet.net/search', {
                 params: {
-                    keywords: role,
+                    keywords: searchRole,
                     location: isRemote ? 'India' : indiaLoc,
                     affid: CAREERJET_KEY,
-                    pagesize: 20,
+                    pagesize: isRecent ? 10 : 20,
                     page: 1,
                     sort: 'date',
                     locale_code: 'en_IN',
@@ -198,11 +256,11 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
         });
     }
 
-    if (FINDWORK_KEY && !isRecent) {
+    if (FINDWORK_KEY) {
         pool.push({
             name: 'FindWork', region: 'IN',
             fetch: () => axios.get('https://findwork.dev/api/jobs/', {
-                params: { search: role, ...(isRemote ? { remote: true } : { location }), sort_by: 'date' },
+                params: { search: searchRole, ...(isRemote ? { remote: true } : { location }), sort_by: 'date' },
                 headers: { Authorization: `Token ${FINDWORK_KEY}` },
             }).then(r => {
                 if (!r.data?.results?.length) return [];
@@ -220,13 +278,13 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
         });
     }
 
-    if (RAPIDAPI_KEY && !isRecent) {
+    if (RAPIDAPI_KEY) {
         pool.push({
             name: 'JSearch', region: 'IN',
             fetch: () => axios.request({
                 method: 'GET',
                 url: `https://${RAPIDAPI_HOST}/search`,
-                params: { query: isRemote ? role : `${role} ${indiaLoc}`, page: '1', num_pages: '2' },
+                params: { query: isRemote ? searchRole : `${searchRole} ${indiaLoc}`, page: '1', num_pages: isRecent ? '1' : '2' },
                 headers: { 'X-RapidAPI-Key': RAPIDAPI_KEY, 'X-RapidAPI-Host': RAPIDAPI_HOST },
             }).then(r => {
                 if (!r.data?.data?.length) return [];
@@ -252,7 +310,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
             return axios.get('https://www.themuse.com/api/public/jobs', { params }).then(r => {
                 if (!r.data?.results?.length) return [];
                 return r.data.results
-                    .filter(item => titleMatchesRole(item.name, role))
+                    .filter(item => titleMatchesRole(item.name, searchRole))
                     .slice(0, 15)
                     .map(item => ({
                         title: item.name,
@@ -271,7 +329,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
     pool.push({
         name: 'Arbeitnow', region: 'IN',
         fetch: () => axios.get('https://www.arbeitnow.com/api/job-board-api', {
-            params: { search: role, ...(isRemote ? { remote: true } : {}) },
+            params: { search: searchRole, ...(isRemote ? { remote: true } : {}) },
         }).then(r => {
             if (!r.data?.data?.length) return [];
             return r.data.data.slice(0, 20).map(item => ({
@@ -287,13 +345,13 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
         }),
     });
 
-    if (SERPAPI_KEY && !isRecent) {
+    if (SERPAPI_KEY) {
         pool.push({
             name: 'Google Jobs', region: 'IN',
             fetch: () => axios.get('https://serpapi.com/search', {
                 params: {
                     engine: 'google_jobs',
-                    q: isRemote ? role : `${role} ${indiaLoc}`,
+                    q: isRemote ? searchRole : `${searchRole} ${indiaLoc}`,
                     location: isRemote ? 'India' : indiaLoc,
                     api_key: SERPAPI_KEY,
                     hl: 'en',
@@ -316,7 +374,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
 
     pool.push({
         name: 'RemoteOK', region: 'GLB',
-        fetch: () => axios.get(`https://remoteok.com/api?tags=${encodeURIComponent(role)}`).then(r => {
+        fetch: () => axios.get(`https://remoteok.com/api?tags=${encodeURIComponent(searchRole)}`).then(r => {
             if (!Array.isArray(r.data) || r.data.length <= 1) return [];
             return r.data.slice(1, 21).map(item => ({
                 title: item.position,
@@ -334,7 +392,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
     pool.push({
         name: 'Jobicy', region: 'GLB',
         fetch: () => axios.get('https://jobicy.com/api/v2/remote-jobs', {
-            params: { count: 20, tag: role.split(' ')[0] },
+            params: { count: 20, tag: searchRole.split(' ')[0] },
         }).then(r => {
             if (!r.data?.jobs?.length) return [];
             return r.data.jobs.slice(0, 20).map(item => ({
@@ -391,6 +449,15 @@ exports.searchExternalJobs = async (role = '', location = '', type = '') => {
     }
 
     allJobs = allJobs.sort(() => Math.random() - 0.5);
+
+    // Apply additional filters
+    if (salaryRange && salaryRange !== 'any') {
+        allJobs = allJobs.filter(j => matchesSalary(j.salary, salaryRange));
+    }
+    if (experience && experience !== 'any') {
+        allJobs = allJobs.filter(j => matchesExperience(j, experience));
+    }
+
     cache.set(cacheKey, { jobs: allJobs, timestamp: Date.now() });
     return allJobs;
 };

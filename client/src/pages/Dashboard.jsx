@@ -154,7 +154,7 @@ const Dashboard = () => {
             const cacheKey = `dashboard_recent_jobs_${activeCategory}`;
             const cachedJobs = sessionStorage.getItem(cacheKey);
             if (cachedJobs) {
-                setRecentJobs(JSON.parse(cachedJobs));
+                setRecentJobs(JSON.parse(cachedJobs).slice(0, 3));
             } else {
                 const roleQuery = activeCategory === 'All' ? '' : activeCategory;
                 try {
