@@ -79,44 +79,6 @@ const AdminCourses = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="space-y-4 lg:space-y-8">
-                <div className="bg-white rounded-[32px] p-6 lg:p-8 border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4 w-full sm:w-auto">
-                        <div className="flex items-center gap-4">
-                            <Skeleton className="w-12 h-12 rounded-2xl" />
-                            <div className="space-y-2">
-                                <Skeleton className="h-6 w-32" />
-                                <Skeleton className="h-4 w-24 rounded-full" />
-                            </div>
-                        </div>
-                        <Skeleton className="h-11 w-64 rounded-2xl" />
-                    </div>
-                    <Skeleton className="h-11 w-48 rounded-2xl" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                        <div key={i} className="bg-white rounded-[28px] overflow-hidden border border-slate-100 shadow-sm space-y-4">
-                            <Skeleton className="h-44 w-full" />
-                            <div className="p-6 space-y-4">
-                                <Skeleton className="h-6 w-3/4" />
-                                <div className="flex justify-between items-center">
-                                    <div className="flex gap-2 items-center">
-                                        <Skeleton className="w-8 h-8 rounded-full" />
-                                        <Skeleton className="h-3 w-20" />
-                                    </div>
-                                    <Skeleton className="h-3 w-10" />
-                                </div>
-                                <Skeleton className="h-12 w-full rounded-2xl" />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
     return (
         <>
             <div className="space-y-4 lg:space-y-8 animate-in fade-in duration-500">
@@ -127,9 +89,13 @@ const AdminCourses = () => {
                             <h3 className="font-black text-slate-900 tracking-tighter uppercase text-sm whitespace-nowrap">Course Registry</h3>
                             <div className="flex items-center gap-2.5 px-3 py-1 bg-gradient-to-r from-amber-600 to-orange-600 rounded-full shadow-lg shadow-amber-100 animate-in zoom-in-95 duration-500">
                                 <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
-                                <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
-                                    {courses.length} <span className="text-amber-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">active</span>
-                                </span>
+                                <div className="text-[12px] font-black text-white tracking-[0.05em] uppercase flex items-center">
+                                    {loading ? (
+                                        <Skeleton className="inline-block h-4 w-6 bg-white/40 rounded ml-1" />
+                                    ) : (
+                                        courses.length
+                                    )} <span className="text-amber-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">active</span>
+                                </div>
                             </div>
                         </div>
                         <input
@@ -138,6 +104,7 @@ const AdminCourses = () => {
                             className="w-full sm:w-72 h-11 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
+                            disabled={loading}
                         />
                     </div>
                     <button
@@ -148,49 +115,70 @@ const AdminCourses = () => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {courses.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(course => (
-                        <div key={course._id} className="bg-white rounded-[28px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group">
-                            <div className="h-44 bg-slate-100 relative overflow-hidden">
-                                <img src={getImageUrl(course.coverImage)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-80" />
-                                <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black text-indigo-600 tracking-widest uppercase">
-                                    {course.category || 'Skill'}
+                {loading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="bg-white rounded-[28px] overflow-hidden border border-slate-100 shadow-sm space-y-4">
+                                <Skeleton className="h-44 w-full" />
+                                <div className="p-6 space-y-4">
+                                    <Skeleton className="h-6 w-3/4" />
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex gap-2 items-center">
+                                            <Skeleton className="w-8 h-8 rounded-full" />
+                                            <Skeleton className="h-3 w-20" />
+                                        </div>
+                                        <Skeleton className="h-3 w-10" />
+                                    </div>
+                                    <Skeleton className="h-12 w-full rounded-2xl" />
                                 </div>
-                                <div className="absolute top-4 right-4 flex gap-2">
-                                    <button onClick={() => handleDeleteCourse(course._id)} className="p-2.5 bg-rose-600 text-white rounded-xl transition-all shadow-xl">
-                                        <Trash2 className="w-4 h-4" />
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {courses.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(course => (
+                            <div key={course._id} className="bg-white rounded-[28px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all group">
+                                <div className="h-44 bg-slate-100 relative overflow-hidden">
+                                    <img src={getImageUrl(course.coverImage)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-80" />
+                                    <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black text-indigo-600 tracking-widest uppercase">
+                                        {course.category || 'Skill'}
+                                    </div>
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <button onClick={() => handleDeleteCourse(course._id)} className="p-2.5 bg-rose-600 text-white rounded-xl transition-all shadow-xl">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-5 md:p-6">
+                                    <h4 className="font-black text-slate-900 text-base mb-3 line-clamp-1">{course.title}</h4>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px] overflow-hidden shrink-0">
+                                                {course.teacher?.avatar ? (
+                                                    <img src={getImageUrl(course.teacher.avatar)} alt={course.teacher.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    course.teacher?.name?.[0] || 'T'
+                                                )}
+                                            </div>
+                                            <span className="text-[11px] font-black text-slate-400 tracking-tight uppercase line-clamp-1">{course.teacher?.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-indigo-600">
+                                            <Users className="w-4 h-4" />
+                                            <span className="text-[11px] font-black">{course.enrolledStudents?.length || 0}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate(`/app/admin/courses/${course._id}`)}
+                                        className="w-full py-3 md:py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all"
+                                    >
+                                        VIEW MANAGEMENT
                                     </button>
                                 </div>
                             </div>
-                            <div className="p-5 md:p-6">
-                                <h4 className="font-black text-slate-900 text-base mb-3 line-clamp-1">{course.title}</h4>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px] overflow-hidden shrink-0">
-                                            {course.teacher?.avatar ? (
-                                                <img src={getImageUrl(course.teacher.avatar)} alt={course.teacher.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                course.teacher?.name?.[0] || 'T'
-                                            )}
-                                        </div>
-                                        <span className="text-[11px] font-black text-slate-400 tracking-tight uppercase line-clamp-1">{course.teacher?.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-indigo-600">
-                                        <Users className="w-4 h-4" />
-                                        <span className="text-[11px] font-black">{course.enrolledStudents?.length || 0}</span>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => navigate(`/app/admin/courses/${course._id}`)}
-                                    className="w-full py-3 md:py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all"
-                                >
-                                    VIEW MANAGEMENT
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {courseForm.show && (

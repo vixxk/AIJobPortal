@@ -14,6 +14,7 @@ import { useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import SmartImage from '../components/ui/SmartImage';
+import Skeleton from '../components/ui/Skeleton';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const getImgUrl = (p) => {
@@ -36,9 +37,9 @@ const CourseCard = ({ course, isEnrolled }) => (
     >
         {/* Cover */}
         <div className="relative h-48 overflow-hidden shrink-0">
-            <SmartImage 
-                src={getImgUrl(course.coverImage)} 
-                alt={course.title} 
+            <SmartImage
+                src={getImgUrl(course.coverImage)}
+                alt={course.title}
                 className="group-hover:scale-105 transition-transform duration-500"
                 containerClassName="w-full h-full"
                 fallbackIcon={BookOpen}
@@ -66,8 +67,8 @@ const CourseCard = ({ course, isEnrolled }) => (
 
             {/* teacher */}
             <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                <SmartImage 
-                    src={getImgUrl(course.teacher?.avatar)} 
+                <SmartImage
+                    src={getImgUrl(course.teacher?.avatar)}
                     alt={course.teacher?.name}
                     containerClassName="w-6 h-6 rounded-full bg-white/20 border border-white/40 overflow-hidden shrink-0"
                     fallbackIcon={User}
@@ -190,7 +191,11 @@ const VideoPlayer = ({ lecture }) => {
     const [currentTime, setCurrentTime] = useState(0);
     const [showControls, setShowControls] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
+    const [playbackRate, setPlaybackRate] = useState(1);
+    const [isPlayerReady, setIsPlayerReady] = useState(false);
     const timeoutRef = useRef(null);
+
+    const rates = [1, 1.25, 1.5, 2];
 
     useEffect(() => {
         if (showControls && isPlaying) {
@@ -198,39 +203,92 @@ const VideoPlayer = ({ lecture }) => {
             timeoutRef.current = setTimeout(() => setShowControls(false), 3000);
         }
     }, [showControls, isPlaying]);
+    // Use refs for values needed in event listeners to avoid re-binding
+    const currentTimeRef = useRef(0);
+    const playbackRateRef = useRef(1);
+    const isMutedRef = useRef(false);
+    const isPlayingRef = useRef(false);
+    const lastSeekManualRef = useRef(0);
+
+    useEffect(() => {
+        currentTimeRef.current = currentTime;
+        playbackRateRef.current = playbackRate;
+        isMutedRef.current = isMuted;
+        isPlayingRef.current = isPlaying;
+    }, [currentTime, playbackRate, isMuted, isPlaying]);
 
     // Unified message listener for YouTube API
     useEffect(() => {
         const handleMessage = (event) => {
-            if (!event.origin.includes("youtube")) return;
+            if (!event.origin.includes("youtube.com") && !event.origin.includes("youtube-nocookie.com")) return;
             try {
                 const data = JSON.parse(event.data);
 
-                // Track current time from various YouTube message types
+                // Readiness signals
+                if (data.event === 'onReady' || data.event === 'initialDelivery' || (data.event === 'infoDelivery' && data.info)) {
+                    if (!isPlayerReady) setIsPlayerReady(true);
+                }
+
                 if (data.event === 'infoDelivery' && data.info) {
-                    if (data.info.currentTime !== undefined) {
-                        setCurrentTime(data.info.currentTime);
+                    const info = data.info;
+
+                    // Gated time updates: ignore incoming time if we just performed a manual seek
+                    // YouTube often sends several frames of "stale" time before the seek is confirmed
+                    const isRecentlySought = Date.now() - lastSeekManualRef.current < 2000;
+
+                    if (info.currentTime !== undefined && !isRecentlySought) {
+                        if (Math.abs(info.currentTime - currentTimeRef.current) > 1) {
+                            setCurrentTime(info.currentTime);
+                        }
                     }
-                    if (data.info.playerState !== undefined) {
-                        setIsPlaying(data.info.playerState === 1);
+                    if (info.playerState !== undefined) {
+                        const newPlaying = info.playerState === 1;
+                        if (newPlaying !== isPlayingRef.current) setIsPlaying(newPlaying);
+                    }
+                    if (info.playbackRate !== undefined && info.playbackRate !== playbackRateRef.current) {
+                        setPlaybackRate(info.playbackRate);
+                    }
+                    if (info.muted !== undefined && info.muted !== isMutedRef.current) {
+                        setIsMuted(info.muted);
                     }
                 }
             } catch (e) { }
         };
 
-        // Poll for time updates every second to ensure seek state is fresh
-        const timePoll = setInterval(() => {
-            if (isPlaying) {
-                sendCommand('addEventListener', 'onStateChange');
-            }
-        }, 1000);
-
         window.addEventListener('message', handleMessage);
-        return () => {
-            window.removeEventListener('message', handleMessage);
-            clearInterval(timePoll);
-        };
-    }, [isPlaying]);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [isPlayerReady]);
+
+    const sendCommand = (func, args = []) => {
+        if (iframeRef.current) {
+            // YouTube IFrame API expects 'args' to be an array for most commands
+            const formattedArgs = Array.isArray(args) ? args : [args];
+            iframeRef.current.contentWindow.postMessage(JSON.stringify({
+                event: 'command',
+                func: func,
+                args: formattedArgs
+            }), '*');
+        }
+    };
+
+    // Set up listeners once when player is ready
+    useEffect(() => {
+        if (isPlayerReady) {
+            sendCommand('addEventListener', ['onStateChange']);
+            sendCommand('addEventListener', ['onPlaybackRateChange']);
+            if (playbackRateRef.current !== 1) {
+                sendCommand('setPlaybackRate', [playbackRateRef.current]);
+            }
+        }
+    }, [isPlayerReady]);
+
+    // Reset state when lecture changes
+    useEffect(() => {
+        setIsPlayerReady(false);
+        setIsPlaying(false);
+        setCurrentTime(0);
+        setPlaybackRate(1);
+    }, [lecture?._id]);
 
     useEffect(() => {
         const handleFsChange = () => {
@@ -239,6 +297,93 @@ const VideoPlayer = ({ lecture }) => {
         document.addEventListener('fullscreenchange', handleFsChange);
         return () => document.removeEventListener('fullscreenchange', handleFsChange);
     }, []);
+
+    const togglePlay = (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const newState = !isPlayingRef.current;
+        setIsPlaying(newState); // Optimistic UI update
+        if (isPlayingRef.current) {
+            sendCommand('pauseVideo');
+        } else {
+            sendCommand('unMute');
+            sendCommand('playVideo');
+        }
+    };
+
+    const toggleMute = (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const nextMuted = !isMutedRef.current;
+        setIsMuted(nextMuted); // Optimistic UI update
+        if (isMutedRef.current) sendCommand('unMute');
+        else sendCommand('mute');
+    };
+
+    const seek = (e, delta) => {
+        // Handle cases where delta is the first argument (from keyboard shortcuts)
+        const actualDelta = typeof e === 'number' ? e : delta;
+        const event = typeof e === 'number' ? null : e;
+        if (event && event.stopPropagation) event.stopPropagation();
+
+        // Mark the time of manual seek to block snapback from stale messages
+        lastSeekManualRef.current = Date.now();
+
+        const targetTime = Math.max(0, currentTimeRef.current + actualDelta);
+        setCurrentTime(targetTime); // Optimistic UI update
+
+        // If the player is unstarted, we need to kickstart it so seekTo works
+        if (!isPlayingRef.current) {
+            sendCommand('playVideo');
+            // Small timeout to let play command register before seeking if needed,
+            // but YouTube is usually fine with simultaneous commands.
+        }
+
+        sendCommand('seekTo', [targetTime, true]);
+    };
+
+    const togglePlaybackRate = (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const nextIndex = (rates.indexOf(playbackRateRef.current) + 1) % rates.length;
+        const nextRate = rates[nextIndex];
+        setPlaybackRate(nextRate);
+        sendCommand('setPlaybackRate', [nextRate]);
+    };
+
+    const toggleFullScreen = (e) => {
+        if (e) e.stopPropagation();
+        if (!document.fullscreenElement) {
+            playerContainerRef.current?.requestFullscreen?.();
+        } else {
+            document.exitFullscreen?.();
+        }
+    };
+
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+            const key = e.key.toLowerCase();
+            if (key === ' ' || key === 'k') {
+                e.preventDefault();
+                togglePlay();
+            } else if (key === 'j' || key === 'arrowleft') {
+                e.preventDefault();
+                seek(-10);
+            } else if (key === 'l' || key === 'arrowright') {
+                e.preventDefault();
+                seek(10);
+            } else if (key === 'm') {
+                e.preventDefault();
+                toggleMute();
+            } else if (key === 'f') {
+                e.preventDefault();
+                toggleFullScreen();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []); // Empty dependency array because we use refs inside
 
     if (!lecture) return (
         <div className="aspect-video bg-slate-900 rounded-3xl flex flex-col items-center justify-center text-white p-8">
@@ -271,57 +416,10 @@ const VideoPlayer = ({ lecture }) => {
         </div>
     );
 
-    const embedUrl = `https://www.youtube-nocookie.com/embed/${cleanVideoId}?rel=0&modestbranding=1&enablejsapi=1&controls=0&iv_load_policy=3&fs=0`;
-
-    const sendCommand = (func, args = '') => {
-        if (iframeRef.current) {
-            iframeRef.current.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: func,
-                args: args
-            }), '*');
-        }
-    };
-
-    const togglePlay = () => {
-        if (isPlaying) {
-            sendCommand('pauseVideo');
-        } else {
-            sendCommand('unMute'); // Force unmute on YT side
-            sendCommand('playVideo');
-        }
-        setIsPlaying(!isPlaying);
-    };
-
-    const toggleMute = () => {
-        if (isMuted) sendCommand('unMute');
-        else sendCommand('mute');
-        setIsMuted(!isMuted);
-    };
-
-    const seek = (delta) => {
-        const targetTime = Math.max(0, currentTime + delta);
-        if (iframeRef.current) {
-            iframeRef.current.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: 'seekTo',
-                args: [targetTime, true]
-            }), '*');
-        }
-        setCurrentTime(targetTime);
-    };
-
-    const toggleFullScreen = (e) => {
-        e.stopPropagation();
-        if (!document.fullscreenElement) {
-            playerContainerRef.current?.requestFullscreen?.();
-        } else {
-            document.exitFullscreen?.();
-        }
-    };
+    const embedUrl = `https://www.youtube-nocookie.com/embed/${cleanVideoId}?rel=0&modestbranding=1&enablejsapi=1&controls=0&iv_load_policy=3&fs=0&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`;
 
     return (
-        <div 
+        <div
             ref={playerContainerRef}
             className={clsx(
                 "relative group overflow-hidden shadow-2xl bg-black border border-white/5 transition-all duration-300",
@@ -354,11 +452,13 @@ const VideoPlayer = ({ lecture }) => {
 
                 {/* Custom Control Bar - Floating at the bottom */}
                 <div className={clsx(
-                    "absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-6 py-3 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl transition-all duration-300 transform",
+                    "absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl transition-all duration-300 transform",
                     showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0"
-                )}>
+                )}
+                    onClick={(e) => e.stopPropagation()} // Prevent clicking the bar itself from toggling visibility
+                >
                     <button
-                        onClick={() => seek(-10)}
+                        onClick={(e) => seek(e, -10)}
                         className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all active:scale-90"
                         title="Backward 10s"
                     >
@@ -366,14 +466,14 @@ const VideoPlayer = ({ lecture }) => {
                     </button>
 
                     <button
-                        onClick={togglePlay}
+                        onClick={(e) => togglePlay(e)}
                         className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all active:scale-95"
                     >
                         {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
                     </button>
 
                     <button
-                        onClick={() => seek(10)}
+                        onClick={(e) => seek(e, 10)}
                         className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all active:scale-90"
                         title="Forward 10s"
                     >
@@ -383,14 +483,24 @@ const VideoPlayer = ({ lecture }) => {
                     <div className="w-px h-6 bg-white/10 mx-1" />
 
                     <button
-                        onClick={toggleMute}
+                        onClick={(e) => togglePlaybackRate(e)}
+                        className="px-3 py-2 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all text-[11px] font-black tracking-tighter min-w-[44px]"
+                        title="Playback Speed"
+                    >
+                        {playbackRate}x
+                    </button>
+
+                    <div className="w-px h-6 bg-white/10 mx-1" />
+
+                    <button
+                        onClick={(e) => toggleMute(e)}
                         className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all"
                     >
                         {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
 
                     <button
-                        onClick={toggleFullScreen}
+                        onClick={(e) => toggleFullScreen(e)}
                         className="p-2.5 bg-white/5 hover:bg-white/15 text-white/70 hover:text-white rounded-xl transition-all active:scale-90"
                         title="Fullscreen"
                     >
@@ -456,9 +566,6 @@ const CourseListingPage = () => {
             {/* ── Hero / Search Strip */}
             <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 px-4 pt-10 pb-16">
                 <div className="max-w-4xl mx-auto text-center">
-                    <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-white/80 text-xs font-black tracking-widest uppercase mb-5">
-                        {courses.length} courses available
-                    </span>
                     <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-3">
                         Expand Your Skills
                     </h1>
@@ -508,7 +615,9 @@ const CourseListingPage = () => {
                                 <Icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${color}-500`} />
                             </div>
                             <div>
-                                <p className={`text-lg sm:text-xl font-black text-${color}-600`}>{value}</p>
+                                <div className={`text-lg sm:text-xl font-black text-${color}-600 leading-none`}>
+                                    {loading ? <Skeleton className="h-6 w-8" /> : value}
+                                </div>
                                 <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">{label}</p>
                             </div>
                         </div>
@@ -625,7 +734,7 @@ const CourseDetailPage = () => {
             // Default: closed on mobile, open on desktop
             setShowSidebar(!mobile);
         };
-        
+
         handleResize(); // Initial check
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
@@ -636,9 +745,42 @@ const CourseDetailPage = () => {
             const res = await axios.get(`/courses/${id}`);
             setCourse(res.data.data.course);
             setIsEnrolled(res.data.data.isEnrolled);
-            setCompletedLectures(res.data.data.completedLectures || []);
-            if (res.data.data.course.lectures?.length > 0)
-                setActiveLecture(res.data.data.course.lectures[0]);
+            if (res.data.data.isEnrolled) {
+                localStorage.setItem(`course_enrolled_${id}`, 'true');
+            }
+            const completed = res.data.data.completedLectures || [];
+            setCompletedLectures(completed);
+
+            const allLectures = res.data.data.course.lectures || [];
+            const allChapters = res.data.data.course.chapters || [];
+
+            if (allLectures.length > 0) {
+                // To find the TRULY first incomplete lesson, we must respect the visual order:
+                // 1. Sort chapters by order
+                // 2. For each chapter, find its lectures and sort them (assuming they have an 'order' or by title)
+                // 3. Flatten this list and find the first incomplete one.
+
+                const sortedChapters = [...allChapters].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                const curriculumOrderedLectures = [];
+
+                // Add lectures belonging to chapters in order
+                sortedChapters.forEach(ch => {
+                    const chLects = allLectures
+                        .filter(l => l.chapter?.toString() === ch._id?.toString())
+                        .sort((a, b) => (a.order || 0) - (b.order || 0));
+                    curriculumOrderedLectures.push(...chLects);
+                });
+
+                // Add lectures that have no chapter (Supplementary)
+                const uncategorized = allLectures
+                    .filter(l => !l.chapter)
+                    .sort((a, b) => (a.order || 0) - (b.order || 0));
+                curriculumOrderedLectures.push(...uncategorized);
+
+                const firstIncomplete = curriculumOrderedLectures.find(l => !completed.includes(l._id)) || curriculumOrderedLectures[0];
+                setActiveLecture(firstIncomplete);
+            }
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     }, [id]);
@@ -689,7 +831,56 @@ const CourseDetailPage = () => {
         </div>
     );
 
-    if (loading) return <CourseDetailSkeleton />;
+    const MasterclassSkeleton = () => (
+        <div className="flex bg-slate-950 h-screen overflow-hidden">
+            <div className="flex-1 flex flex-col h-full min-w-0">
+                <div className="h-14 bg-slate-900/40 border-b border-white/5 flex items-center px-6 gap-4 shrink-0">
+                    <div className="w-8 h-8 bg-white/5 rounded-xl animate-pulse" />
+                    <div className="w-48 h-3.5 bg-white/5 rounded animate-pulse" />
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 lg:p-12 space-y-6 lg:space-y-10 animate-pulse">
+                    <div className="max-w-6xl mx-auto space-y-4 lg:space-y-10">
+                        <div className="aspect-video bg-white/5 rounded-[24px] lg:rounded-[40px] shadow-2xl" />
+                        <div className="bg-white/5 backdrop-blur-md border border-white/5 p-4 lg:p-10 rounded-3xl lg:rounded-[48px] space-y-3 lg:space-y-8">
+                            <div className="flex flex-col gap-4 pb-4 lg:pb-8 border-b border-white/5">
+                                <div className="w-32 h-5 bg-white/5 rounded-lg" />
+                                <div className="w-3/4 h-8 bg-white/10 rounded-xl" />
+                            </div>
+                            <div className="space-y-3">
+                                <div className="w-full h-3 bg-white/5 rounded-full" />
+                                <div className="w-full h-3 bg-white/5 rounded-full" />
+                                <div className="w-2/3 h-3 bg-white/5 rounded-full" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="hidden lg:flex w-[400px] border-l border-white/5 flex-col p-8 space-y-8 animate-pulse">
+                <div className="space-y-4">
+                    <div className="w-32 h-3 bg-white/5 rounded" />
+                    <div className="w-48 h-5 bg-white/5 rounded" />
+                    <div className="w-full h-2 bg-white/5 rounded-full" />
+                </div>
+                <div className="space-y-6 pt-8">
+                    {[1, 2, 3, 4, 5].map(i => (
+                        <div key={i} className="flex gap-4">
+                            <div className="w-10 h-10 bg-white/5 rounded-xl" />
+                            <div className="space-y-2 flex-1">
+                                <div className="w-3/4 h-3 bg-white/5 rounded" />
+                                <div className="w-1/2 h-2 bg-white/5 rounded" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        // Simple heuristic: if we previously saw they were enrolled, or if we want to be dark-first
+        const prefDark = localStorage.getItem(`course_enrolled_${id}`);
+        return prefDark ? <MasterclassSkeleton /> : <CourseDetailSkeleton />;
+    }
     if (!course) return <div className="p-8 text-center text-slate-400 font-bold">Course not found</div>;
 
     /* ─── PRE-ENROLLMENT ────────────────────────────────── */
@@ -700,8 +891,8 @@ const CourseDetailPage = () => {
             <div className="min-h-screen bg-[#F8FAFC]">
                 {/* Full-bleed hero */}
                 <div className="relative h-72 md:h-[420px] overflow-hidden">
-                    <SmartImage 
-                        src={getImgUrl(course.coverImage)} 
+                    <SmartImage
+                        src={getImgUrl(course.coverImage)}
                         alt={course.title}
                         containerClassName="w-full h-full"
                     />
@@ -731,8 +922,8 @@ const CourseDetailPage = () => {
                         <div className="lg:col-span-2 space-y-5">
                             {/* Instructor */}
                             <div className="bg-white rounded-[24px] p-5 border border-slate-100 flex items-center gap-4">
-                                <SmartImage 
-                                    src={getImgUrl(course.teacher?.avatar)} 
+                                <SmartImage
+                                    src={getImgUrl(course.teacher?.avatar)}
                                     alt={course.teacher?.name}
                                     containerClassName="w-14 h-14 rounded-2xl bg-indigo-50 overflow-hidden shrink-0"
                                     fallbackIcon={User}
@@ -908,11 +1099,11 @@ const CourseDetailPage = () => {
                     {/* Glowing highlight behind player */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[60%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-12 space-y-6 lg:space-y-10 relative z-10">
+                    <div className="max-w-6xl mx-auto px-4 lg:px-6 py-4 lg:py-12 space-y-4 lg:space-y-10 relative z-10">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)]"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="shadow-2xl shadow-black/50 rounded-2xl lg:rounded-[40px] overflow-hidden bg-black"
                         >
                             <VideoPlayer lecture={activeLecture} />
                         </motion.div>
@@ -921,12 +1112,12 @@ const CourseDetailPage = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-5 lg:p-8 rounded-[30px] lg:rounded-[40px] space-y-4 lg:space-y-6"
+                            className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-4 lg:p-10 rounded-3xl lg:rounded-[48px] space-y-4 lg:space-y-8"
                         >
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-500/20">Module Overview</span>
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-4 lg:pb-8 border-b border-white/5">
+                                <div className="space-y-2 lg:space-y-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] border border-indigo-500/20">Module Overview</span>
                                         {(() => {
                                             const isLiveType = activeLecture?.type === 'LIVE';
                                             const startTime = new Date(activeLecture?.scheduledAt || activeLecture?.createdAt).getTime();
@@ -936,45 +1127,45 @@ const CourseDetailPage = () => {
 
                                             if (isCurrentlyLive) {
                                                 return (
-                                                    <span className="flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-rose-500/20 animate-pulse">
-                                                        <Radio className="w-3 h-3" /> Live Event
+                                                    <span className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 text-rose-500 rounded-lg text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] border border-rose-500/20 animate-pulse">
+                                                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse mr-0.5" /> LIVE SESSION
                                                     </span>
                                                 );
                                             }
                                             return null;
                                         })()}
                                     </div>
-                                    <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight">{activeLecture?.title}</h3>
+                                    <h3 className="text-xl lg:text-4xl font-black text-white tracking-tight leading-tight">{activeLecture?.title}</h3>
                                 </div>
-                                <div className="flex items-center gap-4">
+                                <div className="flex flex-wrap items-center gap-3">
                                     {activeLecture?.notesUrl && (
                                         <a
                                             href={activeLecture.notesUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                                            className="px-4 lg:px-6 py-2.5 lg:py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl lg:rounded-2xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border border-white/5"
                                         >
-                                            <BookOpen className="w-4 h-4" /> Download Notes
+                                            <BookOpen className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-indigo-400" /> Notes
                                         </a>
                                     )}
                                     <button
                                         onClick={handleMarkComplete}
                                         className={clsx(
-                                            "px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl transition-all",
+                                            "px-5 lg:px-8 py-2.5 lg:py-4 rounded-xl lg:rounded-2xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest shadow-2xl transition-all grow lg:grow-0",
                                             completedLectures.includes(activeLecture?._id)
-                                                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/20"
-                                                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-900/20"
+                                                ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                                                : "bg-indigo-600 text-white shadow-indigo-600/20 hover:bg-indigo-500"
                                         )}
                                     >
-                                        {completedLectures.includes(activeLecture?._id) ? 'Completed' : 'Mark as Complete'}
+                                        {completedLectures.includes(activeLecture?._id) ? 'Completed ✓' : 'Finish Lesson'}
                                     </button>
                                 </div>
                             </div>
 
-                            <p className="text-slate-400 font-medium text-lg leading-relaxed max-w-4xl">
+                            <div className="text-slate-400 font-medium text-sm lg:text-lg leading-relaxed max-w-4xl">
                                 {activeLecture?.description || "In this intensive module, we explore high-level industry patterns and implementation details that will sharpen your professional skills."}
-                            </p>
-                            <div className="h-20 lg:hidden" /> {/* Mobile Spacer */}
+                            </div>
+                            <div className="h-10 lg:hidden" />
                         </motion.div>
                     </div>
                 </div>
@@ -999,13 +1190,22 @@ const CourseDetailPage = () => {
                                 <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Course Curriculum</h3>
                                 <div className="flex items-center gap-3">
                                     <h4 className="text-lg font-black text-white leading-tight">Masters Program</h4>
-                                    <div className="px-3 py-1 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
-                                        <span className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">{progress}%</span>
+                                    <div className={clsx(
+                                        "px-3 py-1.5 rounded-xl border-2 transition-all duration-700 flex items-center justify-center min-w-[50px]",
+                                        progress === 0
+                                            ? "bg-slate-900 text-slate-600 border-slate-800/50"
+                                            : progress === 100
+                                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.15)]"
+                                                : "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 shadow-[0_0_25px_rgba(99,102,241,0.15)]"
+                                    )}>
+                                        <span className="text-[11px] font-black tracking-tighter tabular-nums leading-none">
+                                            {progress}%
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             {isMobile && (
-                                <button 
+                                <button
                                     onClick={() => setShowSidebar(false)}
                                     className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors"
                                 >
@@ -1022,7 +1222,7 @@ const CourseDetailPage = () => {
                         </div>
 
                         {/* Chapters Scrollable */}
-                        <div 
+                        <div
                             className="flex-1 overflow-y-auto p-4 custom-scrollbar-dark space-y-6 lg:space-y-10 overscroll-contain"
                             style={{ WebkitOverflowScrolling: 'touch' }}
                         >

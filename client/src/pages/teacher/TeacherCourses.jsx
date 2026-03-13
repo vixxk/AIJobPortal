@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
 import { Search, BookOpen, Video, Users, Settings, Globe, EyeOff, Eye, Clock } from 'lucide-react';
+import Skeleton from '../../components/ui/Skeleton';
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -34,15 +35,6 @@ const TeacherCourses = () => {
         c.title?.toLowerCase().includes((searchQuery || '').toLowerCase())
     );
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="text-slate-500 font-bold animate-pulse">Loading Courses...</p>
-            </div>
-        </div>
-    );
-
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-700">
 
@@ -50,9 +42,13 @@ const TeacherCourses = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <div>
                     <h2 className="font-black text-slate-900 text-xl sm:text-2xl tracking-tight uppercase mb-0.5 sm:mb-1">My Courses</h2>
-                    <p className="text-slate-400 text-xs sm:text-sm font-semibold">
-                        {courses.length} course{courses.length !== 1 ? 's' : ''} — tap any card to manage
-                    </p>
+                    <div className="text-slate-400 text-xs sm:text-sm font-semibold flex items-center gap-2">
+                        {loading ? (
+                            <Skeleton className="h-4 w-16" />
+                        ) : (
+                            <>{courses.length} course{courses.length !== 1 ? 's' : ''}</>
+                        )} — tap any card to manage
+                    </div>
                 </div>
 
                 {/* Search */}
@@ -63,12 +59,29 @@ const TeacherCourses = () => {
                         placeholder="Search courses..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
+                        disabled={loading}
                     />
                 </div>
             </div>
 
             {/* Courses Grid */}
-            {filteredCourses.length === 0 ? (
+            {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="bg-white rounded-[28px] overflow-hidden border border-slate-100 shadow-sm space-y-4">
+                            <Skeleton className="h-44 w-full" />
+                            <div className="p-6 space-y-4">
+                                <Skeleton className="h-6 w-3/4" />
+                                <Skeleton className="h-4 w-full" />
+                                <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50">
+                                    <Skeleton className="h-3 w-32" />
+                                    <Skeleton className="h-6 w-12 rounded-xl" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : filteredCourses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                     <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
                         <BookOpen className="w-8 h-8 text-slate-400" />
