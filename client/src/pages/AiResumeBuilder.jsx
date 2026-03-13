@@ -132,6 +132,9 @@ const AiResumeBuilder = () => {
         if (tab === 'preview' && window.innerWidth < 1280) {
             const screenZoom = Math.floor(((window.innerWidth - 24) / 794) * 100);
             setZoom(Math.max(30, Math.min(screenZoom, 100)));
+            // Scroll to top so the preview renders from the beginning
+            const container = document.getElementById('main-scroll-container');
+            if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
     const printRef = useRef(null);
