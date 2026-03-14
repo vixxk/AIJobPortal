@@ -8,6 +8,8 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
 const sendEmail = require('../../config/mailer');
+const RecruiterProfile = require('../recruiter/recruiter.model');
+const CollegeProfile = require('../college/college.model');
 exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
   const totalUsers = await User.countDocuments();
   const totalJobs = await Job.countDocuments();
@@ -55,6 +57,14 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
   if (action === 'approve') {
     user.approvalStatus = 'APPROVED';
     await user.save({ validateBeforeSave: false });
+
+    // Sync approval to profiles
+    if (user.role === 'RECRUITER') {
+      await RecruiterProfile.findOneAndUpdate({ userId: user._id }, { approved: true });
+    } else if (user.role === 'COLLEGE_ADMIN') {
+      await CollegeProfile.findOneAndUpdate({ userId: user._id }, { approved: true });
+    }
+
     try {
       await Notification.create({
         userId: user._id,
@@ -133,6 +143,9 @@ exports.banUser = catchAsync(async (req, res, next) => {
     return next(new AppError('User not found', 404));
   }
   user.isActive = !user.isActive;
+  if (!user.isActive) {
+    user.approvalStatus = 'REJECTED';
+  }
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: 'success',
@@ -190,7 +203,7 @@ exports.createTeacher = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllJobs = catchAsync(async (req, res, next) => {
-  const jobs = await Job.find().sort('-createdAt').populate('postedBy', 'name email');
+  const jobs = await Job.find().sort('-createdAt').populate('recruiterId', 'name email companyName');
   res.status(200).json({
     status: 'success',
     results: jobs.length,
@@ -201,7 +214,7 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
 exports.createJob = catchAsync(async (req, res, next) => {
   const newJob = await Job.create({
     ...req.body,
-    recruiterId: req.user.id
+    recruiterId: req.user._id
   });
   res.status(201).json({
     status: 'success',
@@ -260,7 +273,7 @@ exports.deleteCourse = catchAsync(async (req, res, next) => {
 
 exports.getAllApplications = catchAsync(async (req, res, next) => {
   const applications = await Application.find()
-    .populate('jobId', 'title')
+    .populate('jobId', 'title description location salaryRange responsibilities skillsRequired experienceRange status createdAt')
     .populate('studentId', 'name email');
   res.status(200).json({
     status: 'success',
@@ -277,6 +290,19 @@ exports.getAllCompetitions = catchAsync(async (req, res, next) => {
     status: 'success',
     results: competitions.length,
     data: { competitions }
+  });
+});
+
+exports.getCompetitionDetails = catchAsync(async (req, res, next) => {
+  const competition = await Competition.findById(req.params.id)
+    .populate('participants', 'name email avatar studentProfile')
+    .lean();
+
+  if (!competition) return next(new AppError('Competition not found', 404));
+
+  res.status(200).json({
+    status: 'success',
+    data: { competition }
   });
 });
 
@@ -308,6 +334,34 @@ exports.createCompetition = catchAsync(async (req, res, next) => {
   const competition = await Competition.create(data);
 
   res.status(201).json({
+    status: 'success',
+    data: { competition }
+  });
+});
+
+exports.updateCompetition = catchAsync(async (req, res, next) => {
+  const data = { ...req.body };
+  
+  if (req.file) {
+    data.bannerImage = `/uploads/avatars/${req.file.filename}`;
+  }
+  
+  if (typeof data.rounds === 'string') {
+    try {
+      data.rounds = JSON.parse(data.rounds);
+    } catch (e) {
+      data.rounds = [];
+    }
+  }
+
+  const competition = await Competition.findByIdAndUpdate(req.params.id, data, {
+    new: true,
+    runValidators: true
+  });
+
+  if (!competition) return next(new AppError('Competition not found', 404));
+
+  res.status(200).json({
     status: 'success',
     data: { competition }
   });

@@ -46,7 +46,7 @@ const competitionSchema = new mongoose.Schema({
     ref: 'User'
   }],
   createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'User'
   },
   rounds: [{

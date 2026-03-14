@@ -8,6 +8,7 @@ const ROLE_CONFIG = {
     STUDENT: { label: 'Student', color: 'blue', text: 'text-blue-600', bg: 'bg-blue-50' },
     RECRUITER: { label: 'Recruiter', color: 'violet', text: 'text-violet-600', bg: 'bg-violet-50' },
     TEACHER: { label: 'Teacher', color: 'amber', text: 'text-amber-600', bg: 'bg-amber-50' },
+    COLLEGE_ADMIN: { label: 'College', color: 'emerald', text: 'text-emerald-600', bg: 'bg-emerald-50' },
 };
 
 const getImageUrl = (path) => {
@@ -220,11 +221,11 @@ const AdminUsers = ({ role }) => {
                                         ) : (
                                             <span className={clsx(
                                                 "inline-flex px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
-                                                u.approvalStatus === 'APPROVED' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                                                    u.approvalStatus === 'REJECTED' ? "bg-rose-50 text-rose-700 border-rose-100" :
+                                                !u.isActive || u.approvalStatus === 'REJECTED' ? "bg-rose-50 text-rose-700 border-rose-100" :
+                                                    u.approvalStatus === 'APPROVED' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
                                                         "bg-amber-50 text-amber-700 border-amber-100"
                                             )}>
-                                                {u.approvalStatus || 'PENDING'}
+                                                {!u.isActive ? 'REJECTED' : (u.approvalStatus || 'PENDING')}
                                             </span>
                                         )}
                                     </td>

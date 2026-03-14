@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import {
     Trophy, Calendar, Search, Filter,
-    Clock, Tag, ArrowRight, Sparkles, CheckCircle2, Circle
+    Clock, Tag, ArrowRight, Sparkles, CheckCircle2, Circle, Users
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS = {
@@ -19,81 +21,111 @@ const TYPE_ICONS = {
     CODING: '💻',
 };
 
+const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    return `${base}${path}`;
+};
+
 // ─── Competition Card ─────────────────────────────────────────────────────────
-const CompCard = ({ comp, registered, onRegister }) => {
+const CompCard = ({ comp, registered, onRegister, onUnregister, onClick }) => {
     const status = STATUS[comp.status] || STATUS.UPCOMING;
-    const typeIcon = TYPE_ICONS[comp.type] || '🏆';
+    const typeIcon = TYPE_ICONS[comp.type?.toUpperCase()] || '🏆';
     const isEnded = comp.status === 'ENDED';
 
     return (
-        <div className="group relative bg-white rounded-3xl border border-slate-100 p-6 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_-6px_rgba(59,130,246,0.15)] hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
-            {/* Hover glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-indigo-50/0 group-hover:from-blue-50/50 group-hover:to-indigo-50/30 transition-all duration-300 rounded-3xl pointer-events-none" />
-
-            {/* Header */}
-            <div className="flex items-start justify-between mb-4 relative">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-md shadow-blue-200/50">
+        <div 
+            onClick={onClick}
+            className="group relative bg-white rounded-3xl border border-slate-100 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_-6px_rgba(59,130,246,0.15)] hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 flex flex-col lg:flex-col overflow-hidden cursor-pointer"
+        >
+            {/* Banner Section */}
+            <div className="h-40 md:h-48 lg:h-32 bg-slate-100 relative overflow-hidden shrink-0">
+                {comp.bannerImage ? (
+                    <img 
+                        src={getImageUrl(comp.bannerImage)} 
+                        alt={comp.title} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center opacity-80" />
+                )}
+                
+                {/* Overlay Icon */}
+                <div className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-xl shadow-lg shadow-black/5">
                     {typeIcon}
                 </div>
-                <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${status.bg} ${status.border} ${status.color}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-                    {status.label}
-                </span>
-            </div>
 
-            {/* Content */}
-            <div className="flex-1 relative">
-                <h3 className="font-extrabold text-slate-900 text-[16px] leading-tight mb-2 line-clamp-2">
-                    {comp.title}
-                </h3>
-                <p className="text-[13px] text-slate-500 font-medium leading-relaxed line-clamp-2 mb-4">
-                    {comp.description || 'No description provided.'}
-                </p>
-
-                {/* Meta chips */}
-                <div className="flex flex-wrap gap-2 mb-5">
-                    {comp.type && (
-                        <span className="flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600">
-                            <Tag className="w-3 h-3 text-slate-400" />
-                            {comp.type}
-                        </span>
-                    )}
-                    <span className="flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600">
-                        <Calendar className="w-3 h-3 text-slate-400" />
-                        {comp.startDate
-                            ? new Date(comp.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-                            : 'Date TBD'}
+                <div className="absolute top-4 right-4 md:top-auto md:bottom-4 md:left-4 md:right-auto lg:top-4 lg:right-4 lg:bottom-auto lg:left-auto">
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border backdrop-blur-md uppercase tracking-wider ${status.bg.replace('bg-', 'bg-')}/40 ${status.border} ${status.color.replace('text-', 'text-white')} border-white/20`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                        {status.label}
                     </span>
-                    {comp.endDate && (
-                        <span className="flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600">
-                            <Clock className="w-3 h-3 text-slate-400" />
-                            Ends {new Date(comp.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                        </span>
-                    )}
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="relative pt-4 border-t border-slate-50">
-                {isEnded ? (
-                    <span className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-400">
-                        Competition Ended
-                    </span>
-                ) : registered ? (
-                    <span className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-50 border border-green-200 rounded-xl text-xs font-bold text-green-600">
-                        <CheckCircle2 className="w-4 h-4" /> Registered
-                    </span>
-                ) : (
-                    <button
-                        onClick={() => onRegister(comp._id)}
-                        className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500
-                            text-white rounded-xl text-xs font-bold tracking-wide transition-all
-                            shadow-md shadow-blue-200/50 flex items-center justify-center gap-2
-                            active:scale-95"
-                    >
-                        Register Now <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                )}
+            {/* Content Area */}
+            <div className="p-5 flex-1 relative bg-white flex flex-col lg:flex-col lg:gap-0">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-indigo-50/0 group-hover:from-blue-50/50 group-hover:to-indigo-50/30 transition-all duration-300 pointer-events-none" />
+                
+                <div className="flex-1 min-w-0 relative">
+                    <h3 className="font-extrabold text-slate-900 text-[16px] md:text-lg lg:text-[16px] leading-tight mb-2 line-clamp-1">
+                        {comp.title}
+                    </h3>
+                    <p className="text-[13px] text-slate-500 font-medium leading-relaxed line-clamp-2 mb-4 md:mb-2 lg:mb-4">
+                        {comp.description || 'No description provided.'}
+                    </p>
+
+                    {/* Meta chips */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        <span className="flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            {comp.startDate
+                                ? new Date(comp.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+                                : 'Date TBD'}
+                        </span>
+                        {comp.mode && (
+                            <span className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-[11px] font-semibold text-blue-600">
+                                 {comp.mode}
+                            </span>
+                        )}
+                        <span className="flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600">
+                            <Users className="w-3.5 h-3.5 text-slate-400" />
+                            {comp.participants?.length || 0} 
+                        </span>
+                    </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="relative pt-4 border-t border-slate-50 lg:border-t lg:pt-4 lg:w-full shrink-0">
+                    {isEnded ? (
+                        <span className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-400">
+                            Ended
+                        </span>
+                    ) : registered ? (
+                        <button
+                            onClick={(e) => onUnregister(e, comp._id)}
+                            className="group/btn relative w-full py-2.5 bg-green-50 border border-green-200 rounded-xl text-xs font-bold text-green-600 transition-all hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600"
+                        >
+                            <span className="flex items-center justify-center gap-2 group-hover/btn:hidden">
+                                <CheckCircle2 className="w-4 h-4" /> Registered
+                            </span>
+                            <span className="hidden group-hover/btn:flex items-center justify-center gap-2">
+                                Unregister?
+                            </span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={(e) => onRegister(e, comp._id)}
+                            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500
+                                text-white rounded-xl text-xs font-bold tracking-wide transition-all
+                                shadow-md shadow-blue-200/50 flex items-center justify-center gap-2
+                                active:scale-95"
+                        >
+                            Register <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -104,8 +136,8 @@ const Pill = ({ active, onClick, children }) => (
     <button
         onClick={onClick}
         className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${active
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-200 hover:text-blue-600'
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+            : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-200 hover:text-blue-600'
             }`}
     >
         {children}
@@ -116,29 +148,51 @@ const Pill = ({ active, onClick, children }) => (
 const FILTERS = ['All', 'Upcoming', 'Live', 'Ended'];
 
 const StudentCompetitions = () => {
+    const navigate = useNavigate();
     const [competitions, setCompetitions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
-    const [registered, setRegistered] = useState(new Set());
+    const [user, setUser] = useState(null);
 
-    const fetchCompetitions = useCallback(async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/competitions');
-            setCompetitions(res.data.data.competitions || []);
+            const [compRes, userRes] = await Promise.all([
+                axios.get('/competitions'),
+                axios.get('/auth/me')
+            ]);
+            setCompetitions(compRes.data.data.competitions || []);
+            setUser(userRes.data.data.user);
         } catch (err) {
-            console.error('Failed to fetch competitions', err);
+            console.error('Failed to fetch data', err);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => { fetchCompetitions(); }, [fetchCompetitions]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleRegister = (id) => {
-        setRegistered(prev => new Set([...prev, id]));
-        // TODO: POST /competitions/:id/register when endpoint is ready
+    const handleRegister = async (e, id) => {
+        e.stopPropagation();
+        try {
+            await axios.post(`/competitions/${id}/register`);
+            toast.success('Registered successfully!');
+            fetchData();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Registration failed');
+        }
+    };
+
+    const handleUnregister = async (e, id) => {
+        e.stopPropagation();
+        try {
+            await axios.post(`/competitions/${id}/unregister`);
+            toast.success('Unregistered successfully');
+            fetchData();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Unregistration failed');
+        }
     };
 
     // Filter & search
@@ -171,7 +225,7 @@ const StudentCompetitions = () => {
                     <div className="absolute -bottom-16 -left-10 w-80 h-80 rounded-full bg-white/5" />
                     <div className="absolute top-1/2 right-1/4 w-40 h-40 rounded-full bg-white/5" />
                 </div>
-                
+
                 {/* Large decorative trophy icon */}
                 <Trophy className="absolute bottom-2 right-8 w-36 h-36 text-white/20 -rotate-6 pointer-events-none select-none" fill="currentColor" />
 
@@ -280,13 +334,15 @@ const StudentCompetitions = () => {
                             {searchTerm && <> matching "<span className="text-blue-500">{searchTerm}</span>"</>}
                         </p>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
                         {filtered.map(comp => (
                             <CompCard
                                 key={comp._id}
                                 comp={comp}
-                                registered={registered.has(comp._id)}
+                                registered={comp.participants?.includes(user?.id)}
                                 onRegister={handleRegister}
+                                onUnregister={handleUnregister}
+                                onClick={() => navigate(`/app/competitions/${comp._id}`)}
                             />
                         ))}
                     </div>

@@ -41,6 +41,7 @@ const AdminLayout = () => {
         if (path === '/app/admin') return 'Administration Overview';
         if (path.includes('/students')) return 'Students Control';
         if (path.includes('/recruiters')) return 'Recruiters Control';
+        if (path.includes('/colleges')) return 'Colleges Control';
         if (path.includes('/teachers')) return 'Teachers Control';
         if (path.includes('/jobs')) return 'Jobs Control';
         if (/\/courses\/[^/]+/.test(path)) return 'Course Management';
@@ -89,6 +90,7 @@ const AdminLayout = () => {
                     <div className="px-5 mb-2"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">User Management</span></div>
                     <SidebarItem to="/app/admin/students" label="STUDENTS" icon={Users} />
                     <SidebarItem to="/app/admin/recruiters" label="RECRUITERS" icon={Building2} />
+                    <SidebarItem to="/app/admin/colleges" label="COLLEGES" icon={Building2} />
                     <SidebarItem to="/app/admin/teachers" label="TEACHERS" icon={GraduationCap} />
 
                     <div className="h-px bg-slate-100 my-4 mx-2" />
@@ -127,13 +129,13 @@ const AdminLayout = () => {
                         >
                             <Menu className="w-4 h-4 text-white" />
                         </button>
-                        <h2 className="font-black text-slate-900 text-[11px] lg:text-lg tracking-tight uppercase truncate">
+                        <h2 className="font-black text-slate-900 text-[11px] md:text-sm lg:text-lg tracking-tight uppercase truncate">
                             {getPageTitle()}
                         </h2>
                     </div>
 
                     <div className="flex items-center gap-4 lg:gap-6">
-                        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-[10px] lg:text-xs text-indigo-600 border-2 border-white shadow-sm">
+                        <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-[10px] md:text-xs text-indigo-600 border-2 border-white shadow-sm">
                             SA
                         </div>
                     </div>

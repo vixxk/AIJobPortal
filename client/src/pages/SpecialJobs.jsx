@@ -140,6 +140,7 @@ const SpecialJobs = () => {
         company: job.recruiterId?.companyName || 'Verified Partner',
         logo: job.recruiterId?.logo,
         salary: job.salaryRange,
+        isInternal: true
     });
 
     return (

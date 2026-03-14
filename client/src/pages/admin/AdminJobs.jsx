@@ -16,7 +16,8 @@ const AdminJobs = () => {
         salaryRange: '',
         skillsRequired: '',
         experienceRange: '',
-        jobType: 'Full-time'
+        jobType: 'Full-time',
+        responsibilities: ''
     });
     const [submitting, setSubmitting] = useState(false);
 
@@ -52,7 +53,8 @@ const AdminJobs = () => {
         try {
             const payload = {
                 ...formData,
-                skillsRequired: formData.skillsRequired.split(',').map(s => s.trim()).filter(Boolean)
+                skillsRequired: formData.skillsRequired.split(',').map(s => s.trim()).filter(Boolean),
+                responsibilities: formData.responsibilities.split('\n').map(s => s.trim()).filter(Boolean)
             };
             await axios.post('/admin/jobs', payload);
             setShowModal(false);
@@ -63,7 +65,8 @@ const AdminJobs = () => {
                 salaryRange: '',
                 skillsRequired: '',
                 experienceRange: '',
-                jobType: 'Full-time'
+                jobType: 'Full-time',
+                responsibilities: ''
             });
             fetchJobs();
         } catch (err) {
@@ -215,6 +218,10 @@ const AdminJobs = () => {
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Skills Required</label>
                                 <input required type="text" className="w-full h-12 px-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm" value={formData.skillsRequired} onChange={e => setFormData({...formData, skillsRequired: e.target.value})} placeholder="e.g. React, Node.js, MongoDB (comma separated)" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Key Responsibilities (One per line)</label>
+                                <textarea className="w-full p-4 rounded-xl border border-slate-200 focus:border-indigo-500 outline-none font-medium text-sm min-h-[100px]" value={formData.responsibilities} onChange={e => setFormData({...formData, responsibilities: e.target.value})} placeholder="e.g. Develop APIs&#10;Lead team meetings..." />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Description</label>

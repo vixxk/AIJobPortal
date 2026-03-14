@@ -30,7 +30,9 @@ router.delete('/courses/:courseId', adminController.deleteCourse);
 
 router.get('/applications', adminController.getAllApplications);
 router.get('/competitions', adminController.getAllCompetitions);
+router.get('/competitions/:id', adminController.getCompetitionDetails);
 router.post('/competitions', upload.uploadImage, adminController.createCompetition);
+router.patch('/competitions/:id', upload.uploadImage, adminController.updateCompetition);
 router.delete('/competitions/:id', adminController.deleteCompetition);
 
 router.patch('/approve-recruiter/:userId', (req, res, next) => {

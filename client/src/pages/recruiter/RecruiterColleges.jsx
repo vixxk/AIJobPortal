@@ -35,8 +35,7 @@ const RecruiterColleges = () => {
         <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">College Connect</h1>
-                    <p className="text-slate-500 text-sm font-medium mt-1">Discover placement cells and invite top institutions for hiring.</p>
+                    <p className="text-slate-500 text-sm font-medium">Discover placement cells and invite top institutions for hiring.</p>
                 </div>
                 <input 
                     type="text" 

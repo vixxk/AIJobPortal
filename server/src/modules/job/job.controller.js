@@ -7,12 +7,16 @@ const catchAsync = require('../../utils/catchAsync');
 const externalJobService = require('./job.service.external');
 exports.createJob = catchAsync(async (req, res, next) => {
   const profile = await RecruiterProfile.findOne({ userId: req.user.id });
-  if (!profile || !profile.approved) {
+  
+  // Use either the profile boolean or the User's approvalStatus from middleware
+  const isApproved = profile?.approved || req.user.approvalStatus === 'APPROVED';
+  
+  if (!isApproved) {
     return next(new AppError('Only approved recruiters can post jobs', 403));
   }
   const newJob = await Job.create({
     ...req.body,
-    recruiterId: req.user.id
+    recruiterId: req.user._id || req.user.id
   });
   res.status(201).json({
     status: 'success',
@@ -65,7 +69,8 @@ exports.deleteJob = catchAsync(async (req, res, next) => {
 });
 
 exports.getMyJobs = catchAsync(async (req, res, next) => {
-  const jobs = await Job.find({ recruiterId: req.user._id }).sort('-createdAt');
+  const userId = req.user._id || req.user.id;
+  const jobs = await Job.find({ recruiterId: userId }).sort('-createdAt');
   
   res.status(200).json({
     status: 'success',
@@ -75,11 +80,13 @@ exports.getMyJobs = catchAsync(async (req, res, next) => {
 });
 
 exports.getRecruiterStats = catchAsync(async (req, res, next) => {
-  const activeJobs = await Job.countDocuments({ recruiterId: req.user._id, status: 'OPEN' });
+  const userId = req.user._id;
   
-  // Aggregate applications for all jobs of this recruiter
-  const jobs = await Job.find({ recruiterId: req.user._id }).select('_id');
-  const jobIds = jobs.map(j => j._id);
+  // Get counts for active jobs
+  const activeJobs = await Job.countDocuments({ recruiterId: userId, status: 'OPEN' });
+  
+  // Get all job IDs for this recruiter to count applicants
+  const jobIds = await Job.find({ recruiterId: userId }).distinct('_id');
   
   const totalApplicants = await Application.countDocuments({ jobId: { $in: jobIds } });
 

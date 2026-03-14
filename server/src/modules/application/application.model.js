@@ -33,11 +33,10 @@ const applicationSchema = new mongoose.Schema({
 applicationSchema.index({ studentId: 1, jobId: 1 }, { unique: true });
 applicationSchema.index({ studentId: 1 });
 applicationSchema.index({ jobId: 1 });
-applicationSchema.pre('save', function(next) {
+applicationSchema.pre('save', function() {
   if (this.isNew) {
     this.timeline.push({ status: 'APPLIED' });
   }
-  next();
 });
 const Application = mongoose.model('Application', applicationSchema);
 module.exports = Application;

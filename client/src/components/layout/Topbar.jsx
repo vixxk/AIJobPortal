@@ -26,17 +26,40 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
     if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/contact')) {
         return null;
     }
-    let pageTitle = "Student Dashboard";
-    if (customTitle) pageTitle = customTitle;
-    else if (location.pathname === '/app/jobs') pageTitle = "Job Search";
-    else if (location.pathname === '/app/resume') pageTitle = "AI Resume Builder";
-    else if (location.pathname === '/app/saved') pageTitle = "Saved Jobs";
-    else if (location.pathname === '/app/profile') pageTitle = "Profile";
-    else if (location.pathname === '/app/help') pageTitle = "Help Center";
-    else if (location.pathname === '/app/contact') pageTitle = "Customer Service";
-    else if (location.pathname === '/app/competitions') pageTitle = "Competitions";
-    else if (location.pathname !== '/app') pageTitle = "Feature Details";
-    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/competitions', '/app/help'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
+    const getPageTitle = () => {
+        if (customTitle) return customTitle;
+        const path = location.pathname;
+
+        // Base Dashboard titles based on role
+        if (path === '/app') {
+            if (user?.role === 'RECRUITER') return 'Recruiter Hub';
+            if (user?.role === 'COLLEGE_ADMIN') return 'College Portal';
+            return 'Student Dashboard';
+        }
+
+        // Student & Shared Paths
+        if (path === '/app/jobs') return 'Job Search';
+        if (path === '/app/resume') return 'AI Resume Builder';
+        if (path === '/app/saved') return 'Saved Jobs';
+        if (path === '/app/profile') return 'Profile';
+        if (path.startsWith('/app/profile/')) return 'Profile';
+        if (path === '/app/help') return 'Help Center';
+        if (path === '/app/contact') return 'Customer Service';
+        if (path === '/app/competitions') return 'Competitions';
+        if (path.startsWith('/app/competitions/')) return 'Competition Details';
+
+        // Recruiter Specific Paths
+        if (path === '/app/recruiter') return 'Recruiter Hub';
+        if (path === '/app/recruiter/post-job') return 'Post New Job';
+        if (path === '/app/recruiter/competitions') return 'Competitions Control';
+        if (path === '/app/recruiter/colleges') return 'College Connect';
+        if (path.startsWith('/app/recruiter/manage/')) return 'Applicant Management';
+
+        return '';
+    };
+
+    const pageTitle = getPageTitle();
+    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/competitions', '/app/help', '/app/recruiter'].includes(location.pathname) || location.pathname.startsWith('/app/profile')));
     return (
         <div className={`h-16 md:h-24 px-4 md:px-10 flex items-center justify-between z-40 sticky top-0 transition-all duration-500 ${customTitle && isMobile ? 'bg-white' : 'bg-white/70 md:bg-background/60 backdrop-blur-xl border-b border-slate-200/50 md:border-none'}`}>
             {}

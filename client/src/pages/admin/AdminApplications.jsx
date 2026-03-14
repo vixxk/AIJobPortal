@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Eye } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import axios from '../../utils/axios';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
+import JobDetailsModal from '../../components/JobDetailsModal';
 
 const AdminApplications = () => {
     const { search } = useLocation();
     const jobIdFilter = new URLSearchParams(search).get('job');
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedJob, setSelectedJob] = useState(null);
 
     const fetchApplications = useCallback(async () => {
         setLoading(true);
@@ -103,11 +106,29 @@ const AdminApplications = () => {
                                         <div className="min-w-0">
                                             <p className="font-black text-slate-900 text-[11px] lg:text-sm truncate uppercase">{app.studentId?.name}</p>
                                             <p className="text-[9px] lg:text-[10px] text-slate-400 font-bold truncate max-w-[100px] lg:max-w-none">{app.studentId?.email}</p>
-                                            <p className="sm:hidden text-[9px] text-indigo-500 font-black mt-0.5 truncate">{app.jobId?.title}</p>
+                                            <p
+                                                className="sm:hidden text-[9px] text-indigo-500 font-black mt-0.5 truncate flex items-center gap-1 cursor-pointer group/item"
+                                                onClick={() => setSelectedJob({ ...app.jobId, isInternal: true })}
+                                            >
+                                                {app.jobId?.title}
+                                                <Eye className="w-3 h-3 group-hover/item:scale-110 transition-transform" />
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
-                                <td className="p-6 lg:p-8 font-black text-slate-900 text-sm hidden sm:table-cell">{app.jobId?.title}</td>
+                                <td className="p-6 lg:p-8 font-black text-slate-900 text-sm hidden sm:table-cell">
+                                    <div 
+                                        className="flex items-center gap-2 cursor-pointer group/job hover:text-indigo-600 transition-colors"
+                                        onClick={() => setSelectedJob({ ...app.jobId, isInternal: true })}
+                                    >
+                                        <span className="truncate max-w-[150px] lg:max-w-[250px]">
+                                            {app.jobId?.title}
+                                        </span>
+                                        <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center group-hover/job:bg-indigo-50 group-hover/job:text-indigo-600 text-slate-400 border border-slate-100 group-hover/job:border-indigo-100 transition-all">
+                                            <Eye className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                </td>
                                 <td className="p-6 lg:p-8 text-[11px] font-bold text-slate-400 hidden md:table-cell">
                                     {new Date(app.createdAt).toLocaleDateString()}
                                 </td>
@@ -126,6 +147,11 @@ const AdminApplications = () => {
                     </tbody>
                 </table>
             </div>
+            <JobDetailsModal
+                job={selectedJob}
+                onClose={() => setSelectedJob(null)}
+                hideActions={true}
+            />
         </div>
     );
 };

@@ -4,8 +4,9 @@ const authMiddleware = require('../../middleware/auth');
 const roleMiddleware = require('../../middleware/role');
 const router = express.Router();
 router.use(authMiddleware.protect);
-router.post('/', roleMiddleware.restrictTo('STUDENT'), applicationController.applyToJob);
-router.get('/me', roleMiddleware.restrictTo('STUDENT'), applicationController.getMyApplications);
+router.post('/', roleMiddleware.restrictTo('STUDENT', 'RECRUITER'), applicationController.applyToJob);
+router.get('/me', roleMiddleware.restrictTo('STUDENT', 'RECRUITER'), applicationController.getMyApplications);
+router.get('/student', roleMiddleware.restrictTo('STUDENT', 'RECRUITER'), applicationController.getMyApplications); // Compatibility with current frontend
 router.get('/job/:jobId', roleMiddleware.restrictTo('RECRUITER'), applicationController.getJobApplicants);
 router.patch('/:id', roleMiddleware.restrictTo('RECRUITER'), applicationController.updateApplicationStatus);
 module.exports = router;

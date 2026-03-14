@@ -13,7 +13,8 @@ const PostJob = () => {
         salary: '',
         type: 'Full-time',
         skills: '',
-        experienceLevel: 'Entry Level'
+        experienceLevel: 'Entry Level',
+        responsibilities: ''
     });
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,6 +30,7 @@ const PostJob = () => {
                 location: formData.location,
                 salaryRange: formData.salary,
                 skillsRequired: formData.skills.split(',').map(s => s.trim()).filter(s => s),
+                responsibilities: formData.responsibilities.split('\n').map(s => s.trim()).filter(s => s),
                 experienceRange: formData.experienceLevel,
                 type: formData.type // This might not be in the model but it's good to keep if added later
             };
@@ -44,10 +46,7 @@ const PostJob = () => {
     };
     return (
         <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
-            <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Post a New Job</h1>
-                <p className="text-slate-500 mt-1">Fill out the details below to publish an opening to students.</p>
-            </div>
+            {/* Top heading removed as it is now displayed in the Topbar */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 md:p-8">
                 {error && (
                     <div className="p-4 mb-6 bg-red-50 text-red-700 text-sm font-medium rounded-xl border border-red-200">
@@ -150,6 +149,17 @@ const PostJob = () => {
                                     placeholder="e.g. React, Node.js, Typescript"
                                 />
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Key Responsibilities (One per line)</label>
+                            <textarea
+                                name="responsibilities"
+                                rows="4"
+                                value={formData.responsibilities}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                placeholder="e.g. Design user interfaces&#10;Develop core logic&#10;Collaborate with teams..."
+                            ></textarea>
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Job Description</label>

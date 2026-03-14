@@ -8,12 +8,13 @@ exports.applyToJob = catchAsync(async (req, res, next) => {
   if (!job || job.status === 'CLOSED') {
       return next(new AppError('Job not found or is closed to applications', 404));
   }
-  const existingApp = await Application.findOne({ studentId: req.user.id, jobId: req.body.jobId });
+  const userId = req.user._id;
+  const existingApp = await Application.findOne({ studentId: userId, jobId: req.body.jobId });
   if (existingApp) {
     return next(new AppError('You have already applied to this job', 400));
   }
   const newApp = await Application.create({
-    studentId: req.user.id,
+    studentId: userId,
     jobId: req.body.jobId
   });
   await Notification.create({
@@ -30,7 +31,7 @@ exports.applyToJob = catchAsync(async (req, res, next) => {
   });
 });
 exports.getJobApplicants = catchAsync(async (req, res, next) => {
-  const job = await Job.findOne({ _id: req.params.jobId, recruiterId: req.user.id });
+  const job = await Job.findOne({ _id: req.params.jobId, recruiterId: req.user._id });
   if (!job) {
     return next(new AppError('Job not found or permission denied', 404));
   }
@@ -42,7 +43,7 @@ exports.getJobApplicants = catchAsync(async (req, res, next) => {
   // Manual populate for now or using aggregation for better performance.
   // 1. Get Applications
   const applications = await Application.find({ jobId: req.params.jobId })
-    .populate('studentId', 'name email avatar')
+    .populate('studentId', 'name email avatar phoneNumber gender country')
     .sort('-createdAt')
     .skip(skip)
     .limit(limit)
@@ -79,7 +80,7 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
   if (!application) {
     return next(new AppError('Application not found', 404));
   }
-  const job = await Job.findOne({ _id: application.jobId, recruiterId: req.user.id });
+  const job = await Job.findOne({ _id: application.jobId, recruiterId: req.user._id });
   if (!job) {
        return next(new AppError('Permission denied', 403));
   }
@@ -104,12 +105,13 @@ exports.getMyApplications = catchAsync(async (req, res, next) => {
     const page = req.query.page * 1 || 1;
     const limit = req.query.limit * 1 || 10;
     const skip = (page - 1) * limit;
-    const applications = await Application.find({ studentId: req.user.id })
+    const userId = req.user._id;
+    const applications = await Application.find({ studentId: userId })
       .populate('jobId', 'title company location status')
       .skip(skip)
       .limit(limit)
       .lean();
-    const total = await Application.countDocuments({ studentId: req.user.id });
+    const total = await Application.countDocuments({ studentId: userId });
     res.status(200).json({
       status: 'success',
       results: applications.length,

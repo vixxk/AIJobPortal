@@ -111,7 +111,7 @@ const AdminOverview = () => {
                             <h3 className="text-2xl lg:text-4xl font-black text-slate-900 tracking-tighter mb-1 lg:mb-2 italic">{s.value || 0}</h3>
                         )}
                         <p className="text-slate-900 font-black text-[9px] lg:text-xs uppercase tracking-widest">{s.label}</p>
-                        <p className="hidden lg:block text-slate-400 text-[10px] font-bold mt-1">{s.desc}</p>
+                        <p className="text-slate-400 text-[10px] font-bold mt-1 line-clamp-1">{s.desc}</p>
                     </div>
                 ))}
             </div>

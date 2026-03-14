@@ -1,8 +1,10 @@
 import { useLocation, Link } from 'react-router-dom';
 import { Home, Bookmark, User, HelpCircle, Trophy } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
 const MobileNavbar = () => {
     const location = useLocation();
+    const { user } = useAuth();
     if (location.pathname.startsWith('/app/job/') || location.pathname === '/app/interview') {
         return null;
     }
@@ -12,7 +14,12 @@ const MobileNavbar = () => {
         { name: 'Saved', path: '/app/saved', icon: Bookmark },
         { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
-    ];
+    ].filter(item => {
+        if (user?.role === 'RECRUITER') {
+            return item.name !== 'Contest' && item.name !== 'Saved';
+        }
+        return true;
+    });
     return (
         <div
             className="fixed bottom-0 left-0 right-0 h-[80px] bg-white z-50 flex items-center justify-around px-2 pb-safe shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.05)] border-t border-slate-100"

@@ -13,13 +13,17 @@ const jobSchema = new mongoose.Schema({
     required: [true, 'Job location is required']
   },
   salaryRange: String,
+  responsibilities: {
+    type: [String],
+    default: []
+  },
   skillsRequired: {
     type: [String],
     required: true
   },
   experienceRange: String,
   recruiterId: {
-    type: mongoose.Schema.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },

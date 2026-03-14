@@ -45,14 +45,17 @@ import TeacherOverview from './pages/teacher/TeacherOverview';
 import TeacherCourses from './pages/teacher/TeacherCourses';
 import SpecialJobs from './pages/SpecialJobs';
 import StudentCompetitions from './pages/StudentCompetitions';
+import StudentCompetitionDetail from './pages/StudentCompetitionDetail';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID_HERE'}>
       <Router>
         <AuthProvider>
+          <Toaster position="top-center" reverseOrder={false} />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
@@ -90,6 +93,7 @@ function App() {
                 <Route index element={<AdminOverview />} />
                 <Route path="students" element={<AdminUsers role="STUDENT" />} />
                 <Route path="recruiters" element={<AdminUsers role="RECRUITER" />} />
+                <Route path="colleges" element={<AdminUsers role="COLLEGE_ADMIN" />} />
                 <Route path="teachers" element={<AdminUsers role="TEACHER" />} />
                 <Route path="jobs" element={<AdminJobs />} />
                 <Route path="courses" element={<AdminCourses />} />
@@ -109,6 +113,7 @@ function App() {
               <Route path="learning/*" element={<ProtectedRoute allowedRoles={['STUDENT']}><SkillLearning /></ProtectedRoute>} />
               <Route path="community" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Community" /></ProtectedRoute>} />
               <Route path="competitions" element={<ProtectedRoute allowedRoles={['STUDENT']}><StudentCompetitions /></ProtectedRoute>} />
+              <Route path="competitions/:id" element={<ProtectedRoute allowedRoles={['STUDENT']}><StudentCompetitionDetail /></ProtectedRoute>} />
               <Route path="notifications" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Notifications" /></ProtectedRoute>} />
               <Route path="messages" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Messages" /></ProtectedRoute>} />
               <Route path="help" element={<HelpCenter />} />
