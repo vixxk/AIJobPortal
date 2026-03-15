@@ -7,7 +7,7 @@ import {
     AlertTriangle, Activity, Clock, RefreshCw, GraduationCap, UserX,
     BarChart3, TrendingUp, Search, Filter, MoreVertical, Edit2, Trash2,
     BookOpen, Video, FileText, LayoutDashboard, Settings, Globe, Mail,
-    MapPin, DollarSign, Calendar, ChevronRight, ArrowUpRight, Ban, Plus
+    MapPin, IndianRupee, Calendar, ChevronRight, ArrowUpRight, Ban, Plus
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -460,7 +460,7 @@ const AdminDashboard = () => {
                                                     <Clock className="w-3 h-3" /> {job.jobType}
                                                 </div>
                                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-xl text-[10px] font-black text-emerald-600 tracking-wider">
-                                                    <DollarSign className="w-3 h-3" /> {job.salary?.min ? `$${job.salary.min}k - $${job.salary.max}k` : 'Not specified'}
+                                                    <IndianRupee className="w-3 h-3" /> {job.salary?.min ? `₹${job.salary.min}L - ₹${job.salary.max}L` : 'Not specified'}
                                                 </div>
                                             </div>
 

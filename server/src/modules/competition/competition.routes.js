@@ -6,7 +6,7 @@ const router = express.Router();
 const upload = require('../../middleware/upload');
 router.get('/', competitionController.getAllCompetitions);
 router.get('/me', authMiddleware.protect, roleMiddleware.restrictTo('RECRUITER'), competitionController.getMyCompetitions);
-router.get('/:id', competitionController.getCompetition);
+router.get('/:id', authMiddleware.isLoggedIn, competitionController.getCompetition);
 router.use(authMiddleware.protect);
 router.post('/:id/register', roleMiddleware.restrictTo('STUDENT'), competitionController.registerCompetition);
 router.post('/:id/unregister', roleMiddleware.restrictTo('STUDENT'), competitionController.unregisterCompetition);

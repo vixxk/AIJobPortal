@@ -3,13 +3,10 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 exports.getMe = catchAsync(async (req, res, next) => {
   const profile = await CollegeProfile.findOne({ userId: req.user.id });
-  if (!profile) {
-    return next(new AppError('No profile found. Please create one.', 404));
-  }
   res.status(200).json({
     status: 'success',
     data: {
-      profile
+      profile: profile || {}
     }
   });
 });

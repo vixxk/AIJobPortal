@@ -22,7 +22,9 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const handleSave = async (e) => {
         e.stopPropagation();
         try {
-            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+            const title = job.title || 'Untitled Position';
+            const company = job.company || job.companyName || 'Organization';
+            const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
             if (saved) {
                 await axios.delete('/jobs/unsave', {
                     data: { jobId }
@@ -135,9 +137,11 @@ const Dashboard = () => {
             const savedRes = await axios.get('/jobs/saved')
                 .catch(() => ({ data: { jobs: [] } }));
             const savedIds = new Set(
-                (savedRes.data.jobs || []).map(sj =>
-                    sj.link || `${sj.title}-${sj.company}`.replace(/\s+/g, '-').toLowerCase()
-                )
+                (savedRes.data.jobs || []).map(sj => {
+                    const title = sj.title || 'Untitled Position';
+                    const company = sj.company || sj.companyName || 'Organization';
+                    return sj._id || sj.id || sj.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
+                })
             );
             setSavedJobsIds(savedIds);
         } catch (err) { }
@@ -287,7 +291,7 @@ const Dashboard = () => {
                                 const internalJob = {
                                     ...job,
                                     jobId: job._id,
-                                    company: job.recruiterId?.companyName || 'Top Recruiter', // Recruiters display company
+                                    company: job.companyName || job.recruiterId?.companyName || 'Organization', // Recruiters display company
                                     logo: job.recruiterId?.logo,
                                     salary: job.salaryRange,
                                     type: 'full-time', // Defaulting for display
@@ -299,6 +303,12 @@ const Dashboard = () => {
                                         job={internalJob}
                                         onClick={setSelectedJob}
                                         initiallySaved={savedJobsIds.has(job._id)}
+                                        onToggleSave={(id, isSaved) => {
+                                            const newIds = new Set(savedJobsIds);
+                                            if (isSaved) newIds.add(id);
+                                            else newIds.delete(id);
+                                            setSavedJobsIds(newIds);
+                                        }}
                                     />
                                 );
                             })}
@@ -336,6 +346,12 @@ const Dashboard = () => {
                                         job={job}
                                         onClick={setSelectedJob}
                                         initiallySaved={savedJobsIds.has(jobId)}
+                                        onToggleSave={(id, isSaved) => {
+                                            const newIds = new Set(savedJobsIds);
+                                            if (isSaved) newIds.add(id);
+                                            else newIds.delete(id);
+                                            setSavedJobsIds(newIds);
+                                        }}
                                     />
                                 );
                             })}
@@ -409,6 +425,53 @@ const Dashboard = () => {
                         ))}
                     </div>
                 </div>
+                <div className="mb-8 px-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Gradnex Job Postings</h3>
+                        <Link to="/app/gradnex-jobs" className="text-[13px] font-bold text-rose-600">See All</Link>
+                    </div>
+                    {loadingSpecial ? (
+                        <div className="flex flex-col gap-4">
+                            {[1, 2].map((i) => (
+                                <SkeletonJobCard key={i} />
+                            ))}
+                        </div>
+                    ) : specialJobs.length > 0 ? (
+                        <div className="flex flex-col gap-4">
+                            {specialJobs.slice(0, 2).map((job) => {
+                                const internalJob = {
+                                    ...job,
+                                    jobId: job._id,
+                                    company: job.companyName || job.recruiterId?.companyName || 'Organization',
+                                    logo: job.recruiterId?.logo,
+                                    salary: job.salaryRange,
+                                    type: 'full-time',
+                                    isInternal: true
+                                };
+                                return (
+                                    <JobCard
+                                        key={job._id}
+                                        job={internalJob}
+                                        onClick={setSelectedJob}
+                                        initiallySaved={savedJobsIds.has(job._id)}
+                                        onToggleSave={(id, isSaved) => {
+                                            const newIds = new Set(savedJobsIds);
+                                            if (isSaved) newIds.add(id);
+                                            else newIds.delete(id);
+                                            setSavedJobsIds(newIds);
+                                        }}
+                                    />
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
+                            <Sparkles className="w-8 h-8 text-rose-300 mx-auto mb-2" />
+                            <p className="text-slate-500 text-xs font-medium">No special postings at the moment.</p>
+                        </div>
+                    )}
+                </div>
+
                 <div className="pl-5 pb-8">
                     <div className="flex items-center justify-between mb-4 pr-5">
                         <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
@@ -447,6 +510,12 @@ const Dashboard = () => {
                                     job={job}
                                     onClick={setSelectedJob}
                                     initiallySaved={savedJobsIds.has(jobId)}
+                                    onToggleSave={(id, isSaved) => {
+                                        const newIds = new Set(savedJobsIds);
+                                        if (isSaved) newIds.add(id);
+                                        else newIds.delete(id);
+                                        setSavedJobsIds(newIds);
+                                    }}
                                 />
                             );
                         })
@@ -456,7 +525,7 @@ const Dashboard = () => {
             <JobDetailsModal
                 job={selectedJob}
                 onClose={() => setSelectedJob(null)}
-                initiallySaved={selectedJob ? savedJobsIds.has(selectedJob.link || `${selectedJob.title}-${selectedJob.company}`.replace(/\s+/g, '-').toLowerCase()) : false}
+                initiallySaved={selectedJob ? savedJobsIds.has(selectedJob._id || selectedJob.id || selectedJob.link || `${selectedJob.title || 'Untitled Position'}-${selectedJob.company || selectedJob.companyName || selectedJob.recruiterId?.companyName || 'Organization'}`.replace(/\s+/g, '-').toLowerCase()) : false}
                 onToggleSave={(jobId, isSaved) => {
                     const newIds = new Set(savedJobsIds);
                     if (isSaved) newIds.add(jobId);

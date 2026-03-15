@@ -15,7 +15,8 @@ const buildUserPayload = (user) => ({
   needsRole: !user.role,
   pendingApproval:
     (user.role === 'RECRUITER' || user.role === 'COLLEGE_ADMIN') &&
-    user.approvalStatus === 'PENDING'
+    user.approvalStatus === 'PENDING',
+  notificationSettings: user.notificationSettings || { platform: true, email: true }
 });
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -439,6 +440,23 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
     data: { user: buildUserPayload(user) }
   });
 });
+
+exports.updateSettings = catchAsync(async (req, res, next) => {
+  const { platform, email } = req.body;
+  const user = await User.findById(req.user._id || req.user.id);
+  if (!user) return next(new AppError('User not found', 404));
+
+  if (typeof platform === 'boolean') user.notificationSettings.platform = platform;
+  if (typeof email === 'boolean') user.notificationSettings.email = email;
+
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: 'success',
+    data: { user: buildUserPayload(user) }
+  });
+});
+
 exports.uploadAvatar = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError('Please provide an image file.', 400));

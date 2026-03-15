@@ -8,15 +8,15 @@ const router = express.Router();
 router.get('/me', authMiddleware.protect, roleMiddleware.restrictTo('RECRUITER'), jobController.getMyJobs);
 router.get('/stats', authMiddleware.protect, roleMiddleware.restrictTo('RECRUITER'), jobController.getRecruiterStats);
 
-// Shared/Public routes
-router.get('/search', jobController.searchJobs);
-router.get('/', jobController.getAllJobs);
-router.get('/:id', jobController.getJob);
-
 // Protected student routes
 router.get('/saved', authMiddleware.protect, jobController.getSavedJobs);
 router.post('/save', authMiddleware.protect, jobController.saveJob);
 router.delete('/unsave', authMiddleware.protect, jobController.unsaveJob);
+
+// Shared/Public routes
+router.get('/search', jobController.searchJobs);
+router.get('/', jobController.getAllJobs);
+router.get('/:id', authMiddleware.isLoggedIn, jobController.getJob);
 
 // Modification routes (Recruiter restricted)
 router.use(authMiddleware.protect);

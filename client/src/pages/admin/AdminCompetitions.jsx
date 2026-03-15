@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
-import { Globe, Trash2, Calendar, Users, Plus, Pencil, XCircle, MapPin, Award, BookOpen, Layers, Building2, BarChart3, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
+import { Globe, Trash2, Calendar, Users, Plus, Pencil, XCircle, MapPin, Award, BookOpen, Layers, Building2, BarChart3, ChevronRight, ExternalLink, Loader2, CheckCircle2 } from 'lucide-react';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 
@@ -167,6 +167,16 @@ const AdminCompetitions = () => {
         }
     };
 
+    const handleApproveCompetition = async (id) => {
+        try {
+            await axios.patch(`/admin/competitions/${id}`, { status: 'APPROVED' });
+            fetchCompetitions();
+            alert('Competition approved!');
+        } catch (err) {
+            alert('Approval failed');
+        }
+    };
+
     const handleDeleteCompetition = async (id) => {
         if (!confirm('Delete this competition?')) return;
         try {
@@ -271,10 +281,24 @@ const AdminCompetitions = () => {
                         <div className="p-6 lg:p-8 flex-1 flex flex-col">
                             <div className="flex items-start justify-between mb-3 gap-2">
                                 <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handleEditCompetition(comp)}>
-                                    <h4 className="font-black text-slate-900 text-sm lg:text-xl tracking-tight leading-tight group-hover:text-indigo-600 transition-colors uppercase truncate">{comp.title}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-black text-slate-900 text-sm lg:text-xl tracking-tight leading-tight group-hover:text-indigo-600 transition-colors uppercase truncate">{comp.title}</h4>
+                                        <div className={`px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase shrink-0 ${
+                                            comp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600' : 
+                                            comp.status === 'PENDING' ? 'bg-amber-50 text-amber-600 animate-pulse' : 
+                                            'bg-slate-50 text-slate-600'
+                                        }`}>
+                                            {comp.status || 'PENDING'}
+                                        </div>
+                                    </div>
                                     <p className="text-slate-400 text-[9px] lg:text-[10px] font-black uppercase tracking-widest mt-1 truncate">{comp.organizer}</p>
                                 </div>
                                 <div className="flex gap-2 shrink-0">
+                                    {comp.status === 'PENDING' && (
+                                        <button onClick={(e) => { e.stopPropagation(); handleApproveCompetition(comp._id); }} className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl transition-all hover:bg-emerald-100" title="Approve Competition">
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
                                     <button onClick={(e) => { e.stopPropagation(); handleEditCompetition(comp); }} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl transition-all hover:bg-indigo-100">
                                         <Pencil className="w-3.5 h-3.5" />
                                     </button>

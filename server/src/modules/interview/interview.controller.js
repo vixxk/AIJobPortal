@@ -31,6 +31,21 @@ exports.generateReport = catchAsync(async (req, res, next) => {
         answers,
         job_role
     });
+
+    // Send notification after report generation
+    try {
+        const Notification = require('../notification/notification.model');
+        await Notification.create({
+            userId: req.user.id,
+            title: 'Interview Report Generated',
+            message: `Your AI interview for ${job_role} is complete. Overall Score: ${result.overall_score || 'N/A'}/100.`,
+            type: 'INTERVIEW_REPORT',
+            link: '/app/interview'
+        });
+    } catch (err) {
+        console.error('Notification Error:', err);
+    }
+
     res.status(200).json(result);
 });
 exports.transcribeAudio = catchAsync(async (req, res, next) => {

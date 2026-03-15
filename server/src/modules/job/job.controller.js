@@ -5,6 +5,7 @@ const Application = require('../application/application.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const externalJobService = require('./job.service.external');
+const Course = require('../course/course.model');
 exports.createJob = catchAsync(async (req, res, next) => {
   const profile = await RecruiterProfile.findOne({ userId: req.user.id });
   
@@ -16,7 +17,9 @@ exports.createJob = catchAsync(async (req, res, next) => {
   }
   const newJob = await Job.create({
     ...req.body,
-    recruiterId: req.user._id || req.user.id
+    companyName: req.body.companyName || profile?.companyName || 'Organization',
+    recruiterId: req.user._id || req.user.id,
+    status: 'PENDING'
   });
   res.status(201).json({
     status: 'success',
@@ -26,9 +29,12 @@ exports.createJob = catchAsync(async (req, res, next) => {
   });
 });
 exports.updateJob = catchAsync(async (req, res, next) => {
+  const updateData = { ...req.body };
+  updateData.status = 'PENDING';
+  
   const job = await Job.findOneAndUpdate(
     { _id: req.params.id, recruiterId: req.user.id },
-    req.body,
+    updateData,
     { new: true, runValidators: true }
   );
   if (!job) {
@@ -70,20 +76,25 @@ exports.deleteJob = catchAsync(async (req, res, next) => {
 
 exports.getMyJobs = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
-  const jobs = await Job.find({ recruiterId: userId }).sort('-createdAt');
+  const jobs = await Job.find({ recruiterId: userId }).sort('-createdAt').lean();
+  
+  const jobsWithApplicants = await Promise.all(jobs.map(async (job) => {
+      const applicants = await Application.find({ jobId: job._id }).select('_id').lean();
+      return { ...job, applicants };
+  }));
   
   res.status(200).json({
     status: 'success',
-    results: jobs.length,
-    data: jobs
+    results: jobsWithApplicants.length,
+    data: jobsWithApplicants
   });
 });
 
 exports.getRecruiterStats = catchAsync(async (req, res, next) => {
-  const userId = req.user._id;
+  const userId = req.user._id || req.user.id;
   
   // Get counts for active jobs
-  const activeJobs = await Job.countDocuments({ recruiterId: userId, status: 'OPEN' });
+  const activeJobs = await Job.countDocuments({ recruiterId: userId, status: 'APPROVED' });
   
   // Get all job IDs for this recruiter to count applicants
   const jobIds = await Job.find({ recruiterId: userId }).distinct('_id');
@@ -105,9 +116,24 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
   if (queryObj.skillsRequired) {
     queryObj.skillsRequired = { $in: queryObj.skillsRequired.split(',') };
   }
-  if (!queryObj.status) {
-      queryObj.status = 'OPEN';
+  if (queryObj.isSpecial) {
+    queryObj.isSpecial = queryObj.isSpecial === 'true';
   }
+  if (!queryObj.status) {
+      queryObj.status = 'APPROVED';
+  }
+
+  // Filter special jobs for students
+  if (req.user && req.user.role === 'STUDENT') {
+    const enrolledCourses = await Course.find({ enrolledStudents: req.user._id }).select('_id');
+    const enrolledCourseIds = enrolledCourses.map(c => c._id);
+    
+    queryObj.$or = [
+      { isSpecial: { $ne: true } },
+      { isSpecial: true, courseId: { $in: enrolledCourseIds } }
+    ];
+  }
+
   let query = Job.find(queryObj).populate('recruiterId', 'companyName logo');
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 10;
@@ -133,6 +159,17 @@ exports.getJob = catchAsync(async (req, res, next) => {
   if (!job) {
     return next(new AppError('No job found with that ID', 404));
   }
+
+  // If not approved, only recruiter or admin can see it
+  if (job.status !== 'APPROVED') {
+      const isRecruiter = req.user && job.recruiterId && req.user.id === job.recruiterId._id.toString();
+      const isAdmin = req.user && (req.user.role === 'SUPER_ADMIN');
+      
+      if (!isRecruiter && !isAdmin) {
+          return next(new AppError('This job is pending approval.', 403));
+      }
+  }
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -152,49 +189,83 @@ exports.searchJobs = catchAsync(async (req, res, next) => {
 });
 
 exports.getSavedJobs = catchAsync(async (req, res, next) => {
-  const currentId = req.user._id;
-  if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+  const currentId = req.user?._id;
+  if (!currentId) return next(new AppError('Unauthorized', 401));
+
+  if (currentId.toString() === (process.env.SUPER_ADMIN_ID || 'super_admin_001')) {
     return res.status(200).json({ status: 'success', results: 0, jobs: [] });
   }
-  const savedJobs = await SavedJob.find({ userId: currentId }).sort({ createdAt: -1 });
+
+  const savedJobs = await SavedJob.find({ userId: currentId }).sort({ createdAt: -1 }).lean();
+  
+  const validJobs = savedJobs
+    .filter(sj => sj && sj.jobData)
+    .map(sj => {
+        try {
+            return {
+                ...sj.jobData,
+                _id: sj.jobId || (sj.jobData._id ? sj.jobData._id.toString() : sj._id.toString()),
+                mappingId: sj._id,
+                savedAt: sj.createdAt
+            };
+        } catch (e) {
+            return null;
+        }
+    })
+    .filter(Boolean);
+    
   res.status(200).json({
     status: 'success',
-    results: savedJobs.length,
-    jobs: savedJobs.map(sj => sj.jobData)
+    results: validJobs.length,
+    jobs: validJobs
   });
 });
 
 exports.saveJob = catchAsync(async (req, res, next) => {
   const { job } = req.body;
+  console.log('--- SAVE JOB ---');
+  console.log('Body:', JSON.stringify(req.body).slice(0, 500));
   if (!job) return next(new AppError('Job data is required', 400));
   
-  const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
-  const currentId = req.user._id;
+  const title = job.title || 'Untitled Position';
+  const company = job.company || job.companyName || job.recruiterId?.companyName || 'Organization';
+  const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
+  const currentId = req.user?._id || req.user?.id;
   
-  if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+  console.log('--- SAVE JOB ---');
+  console.log('User:', currentId);
+  console.log('Calculated JobId:', jobId);
+
+  if (currentId.toString() === (process.env.SUPER_ADMIN_ID || 'super_admin_001')) {
     return next(new AppError('Super Admin cannot save jobs', 400));
   }
   
-  const newSavedJob = await SavedJob.findOneAndUpdate(
-    { userId: currentId, jobId },
-    { jobData: job },
-    { upsert: true, new: true }
-  );
-  
-  res.status(200).json({
-    status: 'success',
-    data: {
-      savedJob: newSavedJob
-    }
-  });
+  try {
+    const newSavedJob = await SavedJob.findOneAndUpdate(
+      { userId: currentId, jobId },
+      { jobData: job },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    console.log('SAVE RESULT:', !!newSavedJob);
+    if (newSavedJob) console.log('DOC ID:', newSavedJob._id);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        savedJob: newSavedJob
+      }
+    });
+  } catch (err) {
+    console.error('ERROR SAVING JOB:', err);
+    return next(err);
+  }
 });
 
 exports.unsaveJob = catchAsync(async (req, res, next) => {
   const { jobId } = req.body;
   if (!jobId) return next(new AppError('jobId is required', 400));
   
-  const currentId = req.user._id;
-  if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
+  const currentId = req.user?._id || req.user?.id;
+  if (currentId.toString() === (process.env.SUPER_ADMIN_ID || 'super_admin_001')) {
     return next(new AppError('Super Admin cannot unsave jobs', 400));
   }
   

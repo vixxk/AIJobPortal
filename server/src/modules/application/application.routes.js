@@ -9,4 +9,5 @@ router.get('/me', roleMiddleware.restrictTo('STUDENT', 'RECRUITER'), application
 router.get('/student', roleMiddleware.restrictTo('STUDENT', 'RECRUITER'), applicationController.getMyApplications); // Compatibility with current frontend
 router.get('/job/:jobId', roleMiddleware.restrictTo('RECRUITER'), applicationController.getJobApplicants);
 router.patch('/:id', roleMiddleware.restrictTo('RECRUITER'), applicationController.updateApplicationStatus);
+router.post('/notify', roleMiddleware.restrictTo('RECRUITER'), applicationController.sendNotificationToApplicant);
 module.exports = router;

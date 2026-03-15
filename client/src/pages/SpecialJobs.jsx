@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
-import { Sparkles, Search, MapPin, Briefcase, DollarSign, Clock, ChevronRight, Building2 } from 'lucide-react';
+import { Sparkles, Search, MapPin, Briefcase, IndianRupee, Clock, ChevronRight, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
@@ -85,7 +85,7 @@ const JobCard = ({ job, onClick }) => {
                 )}
                 {job.salary && (
                     <span className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-lg text-[11px] font-semibold text-emerald-700">
-                        <DollarSign className="w-3 h-3" />
+                        <IndianRupee className="w-3 h-3" />
                         {job.salary}
                     </span>
                 )}
@@ -113,11 +113,12 @@ const SpecialJobs = () => {
     const [loading, setLoading] = useState(true);
     const [selectedJob, setSelectedJob] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [savedJobsIds, setSavedJobsIds] = useState(new Set());
 
     const fetchSpecialJobs = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/jobs');
+            const res = await axios.get('/jobs?isSpecial=true');
             if (res.data.status === 'success') setJobs(res.data.data.jobs);
         } catch (err) {
             console.error('Failed to fetch special jobs', err);
@@ -128,6 +129,19 @@ const SpecialJobs = () => {
 
     useEffect(() => { fetchSpecialJobs(); }, [fetchSpecialJobs]);
 
+    useEffect(() => {
+        const fetchSaved = async () => {
+            try {
+                const res = await axios.get('/jobs/saved');
+                const ids = new Set((res.data.jobs || []).map(j => j._id || j.id || j.link || `${j.title || 'Untitled Position'}-${j.company || j.companyName || j.recruiterId?.companyName || 'Organization'}`.replace(/\s+/g, '-').toLowerCase()));
+                setSavedJobsIds(ids);
+            } catch (err) {
+                console.error('Failed to fetch saved jobs', err);
+            }
+        };
+        fetchSaved();
+    }, []);
+
     const filteredJobs = jobs.filter(job =>
         job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (job.recruiterId?.companyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,7 +151,7 @@ const SpecialJobs = () => {
     // Normalize job shape
     const normalise = (job) => ({
         ...job,
-        company: job.recruiterId?.companyName || 'Verified Partner',
+        company: job.companyName || job.recruiterId?.companyName || 'Organization',
         logo: job.recruiterId?.logo,
         salary: job.salaryRange,
         isInternal: true
@@ -253,6 +267,13 @@ const SpecialJobs = () => {
             <JobDetailsModal
                 job={selectedJob}
                 onClose={() => setSelectedJob(null)}
+                initiallySaved={selectedJob ? savedJobsIds.has(selectedJob._id || selectedJob.id || selectedJob.link || `${selectedJob.title || 'Untitled Position'}-${selectedJob.company || selectedJob.companyName || selectedJob.recruiterId?.companyName || 'Organization'}`.replace(/\s+/g, '-').toLowerCase()) : false}
+                onToggleSave={(jobId, isSaved) => {
+                    const newIds = new Set(savedJobsIds);
+                    if (isSaved) newIds.add(jobId);
+                    else newIds.delete(jobId);
+                    setSavedJobsIds(newIds);
+                }}
             />
         </div>
     );

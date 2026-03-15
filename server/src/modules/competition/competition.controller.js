@@ -16,6 +16,7 @@ exports.createCompetition = catchAsync(async (req, res, next) => {
   }
 
   data.createdBy = req.user.id;
+  data.status = 'PENDING';
   const newCompetition = await Competition.create(data);
   
   res.status(201).json({
@@ -30,12 +31,13 @@ exports.getAllCompetitions = catchAsync(async (req, res, next) => {
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 10;
   const skip = (page - 1) * limit;
-  const competitions = await Competition.find()
+  const queryObj = { status: 'APPROVED' };
+  const competitions = await Competition.find(queryObj)
     .skip(skip)
     .limit(limit)
     .sort('-createdAt')
     .lean();
-  const total = await Competition.countDocuments();
+  const total = await Competition.countDocuments(queryObj);
   res.status(200).json({
     status: 'success',
     results: competitions.length,
@@ -75,6 +77,18 @@ exports.getCompetition = catchAsync(async (req, res, next) => {
   if (!competition) {
     return next(new AppError('No competition found with that ID', 404));
   }
+  
+  // If not approved, only creator or admin can see it
+  if (competition.status !== 'APPROVED') {
+      // Check if user is logged in and is either creator or admin
+      const isCreator = req.user && competition.createdBy && req.user.id === competition.createdBy.toString();
+      const isAdmin = req.user && (req.user.role === 'SUPER_ADMIN');
+      
+      if (!isCreator && !isAdmin) {
+          return next(new AppError('This competition is pending approval.', 403));
+      }
+  }
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -96,6 +110,8 @@ exports.updateCompetition = catchAsync(async (req, res, next) => {
             // Keep existing if error
         }
     }
+
+    data.status = 'PENDING';
 
     const competition = await Competition.findOneAndUpdate(
         { _id: req.params.id, createdBy: req.user.id },

@@ -156,6 +156,20 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, []);
+    const updateSettings = useCallback(async (settings) => {
+        try {
+            const response = await api.patch('/auth/update-settings', settings);
+            const { data } = response.data;
+            const currentToken = localStorage.getItem('token');
+            persistUser(currentToken, data.user);
+            return { success: true, user: data.user };
+        } catch (error) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to update settings'
+            };
+        }
+    }, [persistUser]);
     const logout = useCallback(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -189,6 +203,7 @@ export const AuthProvider = ({ children }) => {
             assignRole,
             adminLogin,
             updateProfile,
+            updateSettings,
             uploadAvatar,
             logout,
             refreshUser

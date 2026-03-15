@@ -3,11 +3,23 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
 const Job = require('../job/job.model');
+const sendEmail = require('../../config/mailer');
+const User = require('../user/user.model');
 exports.applyToJob = catchAsync(async (req, res, next) => {
   const job = await Job.findById(req.body.jobId);
   if (!job || job.status === 'CLOSED') {
       return next(new AppError('Job not found or is closed to applications', 404));
   }
+
+  // Check enrollment for special jobs
+  if (job.isSpecial && job.courseId) {
+    const Course = require('../course/course.model');
+    const course = await Course.findById(job.courseId);
+    if (!course || !course.enrolledStudents.includes(req.user.id)) {
+      return next(new AppError('You must be enrolled in the related course to apply for this job.', 403));
+    }
+  }
+
   const userId = req.user._id;
   const existingApp = await Application.findOne({ studentId: userId, jobId: req.body.jobId });
   if (existingApp) {
@@ -123,5 +135,85 @@ exports.getMyApplications = catchAsync(async (req, res, next) => {
       data: {
         applications
       }
+    });
+});
+
+exports.sendNotificationToApplicant = catchAsync(async (req, res, next) => {
+    const { applicationId, message, type, meetingLink, scheduledDate, scheduledTime } = req.body;
+    
+    const application = await Application.findById(applicationId)
+        .populate('studentId', 'name email')
+        .populate('jobId', 'title');
+        
+    if (!application) {
+        return next(new AppError('Application not found', 404));
+    }
+
+    const job = await Job.findOne({ _id: application.jobId, recruiterId: req.user._id });
+    if (!job) {
+        return next(new AppError('You do not have permission to send notifications for this job', 403));
+    }
+
+    let notificationMessage = message;
+    let emailSubject = `Update regarding your application for ${job.title}`;
+    let emailHtml = '';
+
+    if (type === 'MEETING') {
+        const meetingInfo = `Meeting scheduled for ${scheduledDate} at ${scheduledTime}. Link: ${meetingLink}`;
+        notificationMessage = message || `A meeting has been scheduled for your application. ${meetingInfo}`;
+        emailSubject = `Interview Scheduled: ${job.title}`;
+        emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #1e293b;">Interview Scheduled</h2>
+                <p>Hi ${application.studentId.name},</p>
+                <p>Great news! An interview has been scheduled for the <strong>${job.title}</strong> position.</p>
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                    <p><strong>Date:</strong> ${scheduledDate}</p>
+                    <p><strong>Time:</strong> ${scheduledTime}</p>
+                    <p><strong>Meeting Link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
+                </div>
+                ${message ? `<p><strong>Recruiter's Message:</strong><br>${message}</p>` : ''}
+                <p>Good luck!</p>
+            </div>
+        `;
+    } else {
+        emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <h2 style="color: #1e293b;">Message from ${job.companyName || 'Recruiter'}</h2>
+                <p>Hi ${application.studentId.name},</p>
+                <p>You have received a new message regarding your application for <strong>${job.title}</strong>:</p>
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                    <p>${message}</p>
+                </div>
+                <p>Please check the candidate portal for more details.</p>
+            </div>
+        `;
+    }
+
+    // 1. Create Platform Notification
+    await Notification.create({
+        userId: application.studentId._id,
+        title: type === 'MEETING' ? 'Interview Scheduled' : 'New Message from Recruiter',
+        message: notificationMessage,
+        type: type === 'MEETING' ? 'INTERVIEW_SCHEDULE' : 'APPLICATION_UPDATE'
+    });
+
+    // 2. Send Email
+    try {
+        await sendEmail({
+            email: application.studentId.email,
+            subject: emailSubject,
+            message: notificationMessage,
+            html: emailHtml
+        });
+    } catch (err) {
+        console.error('Failed to send email:', err);
+        // We don't necessarily want to fail the whole request if email fails, 
+        // as the platform notification was created.
+    }
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Notification sent successfully'
     });
 });

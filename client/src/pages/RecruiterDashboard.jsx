@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
-import { Briefcase, Users, PlusCircle, Calendar, Eye, MapPin, Trophy, GraduationCap } from 'lucide-react';
+import { Briefcase, Users, PlusCircle, Calendar, Eye, MapPin, Trophy, GraduationCap, XCircle } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
 import clsx from 'clsx';
 const StatCard = ({ title, value, icon: Icon, color, loading }) => (
@@ -55,7 +55,20 @@ const RecruiterDashboard = () => {
         fetchDashboardData();
     }, []);
 
+    const handleCloseJob = async (id) => {
+        if (!confirm('Are you sure you want to close this job listing?')) return;
+        try {
+            const res = await axios.patch(`/jobs/${id}/close`);
+            if (res.data.status === 'success') {
+                window.location.reload(); // Refresh to update stats and list
+            }
+        } catch (err) {
+            console.error('Failed to close job', err);
+        }
+    };
+
     const firstName = (user?.name || "Recruiter").split(' ')[0];
+    const activeJobsList = recentJobs.filter(job => job.status === 'APPROVED' || job.status === 'OPEN');
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 px-4 sm:px-6 lg:px-8">
@@ -80,13 +93,15 @@ const RecruiterDashboard = () => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <StatCard 
-                    title="Active Listings" 
-                    value={stats.activeJobs} 
-                    icon={Briefcase} 
-                    loading={loading}
-                    color={{ bg: 'bg-indigo-50', text: 'text-indigo-600' }} 
-                />
+                <Link to="/app/recruiter/listings" className="block transition-transform hover:scale-[1.02]">
+                    <StatCard 
+                        title="Active Listings" 
+                        value={stats.activeJobs} 
+                        icon={Briefcase} 
+                        loading={loading}
+                        color={{ bg: 'bg-indigo-50', text: 'text-indigo-600' }} 
+                    />
+                </Link>
                 <StatCard 
                     title="Total Applicants" 
                     value={stats.totalApplicants} 
@@ -162,7 +177,7 @@ const RecruiterDashboard = () => {
                             <h3 className="text-lg font-bold text-slate-800">{error}</h3>
                             <button onClick={() => window.location.reload()} className="mt-4 text-indigo-600 font-bold text-sm uppercase tracking-widest">Retry Connection</button>
                         </div>
-                    ) : recentJobs.length === 0 ? (
+                    ) : activeJobsList.length === 0 ? (
                         <div className="p-12 sm:p-20 text-center flex flex-col items-center justify-center max-w-lg mx-auto">
                             <div className="relative mb-8">
                                 <div className="w-24 h-24 bg-indigo-50 rounded-[32px] flex items-center justify-center animate-bounce-slow">
@@ -185,7 +200,7 @@ const RecruiterDashboard = () => {
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-50">
-                            {recentJobs.slice(0, 5).map((job) => (
+                            {activeJobsList.slice(0, 5).map((job) => (
                                 <div key={job._id} className="group p-4 sm:p-6 md:p-8 hover:bg-slate-50/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 border-l-[4px] sm:border-l-[6px] border-l-transparent hover:border-l-indigo-500">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between md:justify-start md:items-center gap-2 sm:gap-3 mb-2 capitalize relative">
@@ -194,9 +209,11 @@ const RecruiterDashboard = () => {
                                                 <div className="flex flex-wrap items-center gap-2 mt-1">
                                                     <span className={clsx(
                                                         "px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest border",
-                                                        job.status === 'OPEN' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-600 border-slate-200'
+                                                        (job.status === 'APPROVED' || job.status === 'OPEN') ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 
+                                                        job.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse' : 
+                                                        'bg-slate-100 text-slate-600 border-slate-200'
                                                     )}>
-                                                        {job.status}
+                                                        {job.status === 'APPROVED' ? 'OPEN' : (job.status || 'PENDING')}
                                                     </span>
                                                     {job.salaryRange && (
                                                         <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-indigo-100">
@@ -240,8 +257,17 @@ const RecruiterDashboard = () => {
                                             to={`/app/recruiter/manage/${job._id}`}
                                             className="flex-1 md:flex-none px-6 py-3 bg-indigo-600 rounded-xl md:rounded-[18px] text-[10px] md:text-[11px] font-black text-white uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md active:scale-[0.98] text-center"
                                         >
-                                            Manage Applicants
+                                            Manage Applicants ({job.applicants?.length || 0})
                                         </Link>
+                                        {job.status !== 'CLOSED' && (
+                                            <button
+                                                onClick={() => handleCloseJob(job._id)}
+                                                className="p-3 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all border border-rose-100"
+                                                title="Close Listing"
+                                            >
+                                                <XCircle className="w-5 h-5" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}

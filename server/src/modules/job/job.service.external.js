@@ -109,8 +109,9 @@ function parseSalaryValue(salaryStr) {
     if (!nums) return null;
     let val = parseInt(nums[nums.length - 1]); // Take the max or the only number
     if (salaryStr.includes('k') || salaryStr.includes('K')) val *= 1000;
+    if (salaryStr.includes('L') || salaryStr.includes('l')) val *= 100000;
     // Handle USD vs INR (rough heuristic)
-    if (salaryStr.includes('$')) val *= 83; // Convert USD to INR for uniform comparison if needed, or just handle both
+    if (salaryStr.includes('$')) val *= 83; // Convert USD to INR for uniform comparison in INR
     return val;
 }
 
@@ -131,18 +132,26 @@ function matchesSalary(salaryStr, range) {
     const val = parseSalaryValue(salaryStr);
     if (!val) return false;
     
-    // Range format: '< $40k', '$40k - $80k', '$80k - $120k', '$120k - $160k', '> $160k'
-    // This expects USD usually, so let's check if the salary is in USD or convert range to INR
-    const isUSD = salaryStr.includes('$');
-    let targetVal = val;
-    if (!isUSD && salaryStr.includes('₹')) targetVal = val / 83; // Convert INR to USD for comparison with range
+    // Range format: '< ₹ 5L', '₹ 5L - 10L', '₹ 10L - 20L', '₹ 20L - 40L', '> ₹ 40L'
+    // This expects INR usually now
+    const targetVal = val; // Already in INR from parseSalaryValue
 
-    if (range === '< $40k') return targetVal < 40000;
-    if (range === '$40k - $80k') return targetVal >= 40000 && targetVal <= 80000;
-    if (range === '$80k - $120k') return targetVal >= 80000 && targetVal <= 120000;
-    if (range === '$120k - $160k') return targetVal >= 120000 && targetVal <= 160000;
-    if (range === '> $160k') return targetVal > 160000;
+    if (range === '< ₹ 5L') return targetVal < 500000;
+    if (range === '₹ 5L - 10L') return targetVal >= 500000 && targetVal <= 1000000;
+    if (range === '₹ 10L - 20L') return targetVal >= 1000000 && targetVal <= 2000000;
+    if (range === '₹ 20L - 40L') return targetVal >= 2000000 && targetVal <= 4000000;
+    if (range === '> ₹ 40L') return targetVal > 4000000;
     
+    // Legacy support or fallback
+    if (range && range.includes('$')) {
+        const usdVal = targetVal / 83;
+        if (range === '< $40k') return usdVal < 40000;
+        if (range === '$40k - $80k') return usdVal >= 40000 && usdVal <= 80000;
+        if (range === '$80k - $120k') return usdVal >= 80000 && usdVal <= 120000;
+        if (range === '$120k - $160k') return usdVal >= 120000 && usdVal <= 160000;
+        if (range === '> $160k') return usdVal > 160000;
+    }
+
     return true;
 }
 
@@ -293,7 +302,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
                     company: item.employer_name,
                     location: item.job_city ? `${item.job_city}, ${item.job_country}` : 'Remote',
                     type: item.job_employment_type || 'Full-time',
-                    salary: item.job_min_salary ? `$${item.job_min_salary} – $${item.job_max_salary}` : 'Not specified',
+                    salary: item.job_min_salary ? `₹${(item.job_min_salary * 83).toLocaleString('en-IN')} – ₹${(item.job_max_salary * 83).toLocaleString('en-IN')}` : 'Not specified',
                     link: item.job_apply_link || item.job_google_link || item.employer_website,
                     snippet: snippet(item.job_description),
                     source: 'JSearch', logo: item.employer_logo || null,
@@ -381,7 +390,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
                 company: item.company,
                 location: item.location || 'Remote',
                 type: 'Full-time',
-                salary: item.salary_min ? `$${item.salary_min} – $${item.salary_max}` : 'Not specified',
+                salary: item.salary_min ? `₹${(item.salary_min * 83).toLocaleString('en-IN')} – ₹${(item.salary_max * 83).toLocaleString('en-IN')}` : 'Not specified',
                 link: item.url,
                 snippet: snippet(item.description),
                 source: 'RemoteOK', logo: item.company_logo || null,
@@ -401,7 +410,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
                 location: item.jobGeo || 'Remote',
                 type: item.jobType || 'Full-time',
                 salary: item.annualSalaryMin
-                    ? `$${item.annualSalaryMin} – $${item.annualSalaryMax} ${item.salaryCurrency || 'USD'}`
+                    ? `₹${(item.annualSalaryMin * 83).toLocaleString('en-IN')} – ₹${(item.annualSalaryMax * 83).toLocaleString('en-IN')}`
                     : 'Not specified',
                 link: item.url,
                 snippet: snippet(item.jobExcerpt),

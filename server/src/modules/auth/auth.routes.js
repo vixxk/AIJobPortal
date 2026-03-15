@@ -18,4 +18,5 @@ router.post('/assign-role', authController.assignRole);
 router.post('/upload-avatar', uploadImage, authController.uploadAvatar);
 router.get('/me', authController.getMe);
 router.post('/update-profile', authController.updateProfile);
+router.patch('/update-settings', authController.updateSettings);
 module.exports = router;

@@ -20,6 +20,7 @@ const adminRoutes = require('./modules/admin/admin.routes');
 const interviewRoutes = require('./modules/interview/interview.routes');
 const englishTutorRoutes = require('./modules/english-tutor/english-tutor.routes');
 const courseRoutes = require('./modules/course/course.routes');
+const issueRoutes = require('./modules/issue/issue.routes');
 const legacyJobsRouter = require('../routes/jobs');
 const legacyResumeRouter = require('../routes/resume');
 
@@ -35,8 +36,8 @@ app.use(cors({
 }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api', apiLimiter);
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
@@ -56,7 +57,10 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/recruiter', recruiterRoutes);
 app.use('/api/v1/college', collegeRoutes);
-app.use('/api/v1/jobs', jobRoutes);
+app.use('/api/v1/jobs', (req, res, next) => {
+  console.log(`[JOBS API] ${req.method} ${req.url}`);
+  next();
+}, jobRoutes);
 app.use('/api/v1/applications', applicationRoutes);
 app.use('/api/v1/competitions', competitionRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
@@ -64,6 +68,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/interview', interviewRoutes);
 app.use('/api/v1/english-tutor', englishTutorRoutes);
 app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/issues', issueRoutes);
 
 app.use('/api/jobs', legacyJobsRouter);
 app.use('/api/v1/resume', legacyResumeRouter);

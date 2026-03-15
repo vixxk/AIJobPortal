@@ -22,6 +22,7 @@ import StudentProfile from './pages/StudentProfile';
 import RecruiterDashboard from './pages/RecruiterDashboard';
 import PostJob from './pages/PostJob';
 import ManageApplicants from './pages/ManageApplicants';
+import RecruiterJobs from './pages/recruiter/RecruiterJobs';
 import RecruiterCompetitions from './pages/recruiter/RecruiterCompetitions';
 import RecruiterColleges from './pages/recruiter/RecruiterColleges';
 import CollegeLayout from './pages/college/CollegeLayout';
@@ -33,7 +34,7 @@ import CollegeEmails from './pages/college/CollegeEmails';
 import CollegePlacement from './pages/college/CollegePlacement';
 import {
   AdminLayout, AdminOverview, AdminUsers, AdminJobs,
-  AdminCourses, AdminApplications, AdminCompetitions, CourseManagement
+  AdminCourses, AdminApplications, AdminCompetitions, AdminIssues, CourseManagement
 } from './pages/admin';
 
 import MyApplications from './pages/MyApplications';
@@ -76,6 +77,7 @@ function App() {
               <Route path="applications" element={<ProtectedRoute allowedRoles={['STUDENT']}><MyApplications /></ProtectedRoute>} />
               <Route path="gradnex-jobs" element={<ProtectedRoute allowedRoles={['STUDENT']}><SpecialJobs /></ProtectedRoute>} />
               <Route path="recruiter" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterDashboard /></ProtectedRoute>} />
+              <Route path="recruiter/listings" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterJobs /></ProtectedRoute>} />
               <Route path="recruiter/post-job" element={<ProtectedRoute allowedRoles={['RECRUITER']}><PostJob /></ProtectedRoute>} />
               <Route path="recruiter/manage/:jobId" element={<ProtectedRoute allowedRoles={['RECRUITER']}><ManageApplicants /></ProtectedRoute>} />
               <Route path="recruiter/competitions" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterCompetitions /></ProtectedRoute>} />
@@ -101,6 +103,7 @@ function App() {
 
                 <Route path="applications" element={<AdminApplications />} />
                 <Route path="competitions" element={<AdminCompetitions />} />
+                <Route path="issues" element={<AdminIssues />} />
               </Route>
               <Route path="teacher" element={<ProtectedRoute allowedRoles={['TEACHER', 'SUPER_ADMIN']}><TeacherLayout /></ProtectedRoute>}>
                 <Route index element={<TeacherOverview />} />

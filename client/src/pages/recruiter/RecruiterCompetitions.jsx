@@ -265,7 +265,16 @@ const RecruiterCompetitions = () => {
                         <div className="p-6 lg:p-8 flex-1 flex flex-col font-jakarta">
                             <div className="flex items-start justify-between mb-3 gap-2">
                                 <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handleEditCompetition(comp)}>
-                                    <h4 className="font-black text-slate-900 text-sm lg:text-xl tracking-tight leading-tight group-hover:text-indigo-600 transition-colors uppercase truncate">{comp.title}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-black text-slate-900 text-sm lg:text-xl tracking-tight leading-tight group-hover:text-indigo-600 transition-colors uppercase truncate">{comp.title}</h4>
+                                        <div className={`px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase shrink-0 ${
+                                            comp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600' : 
+                                            comp.status === 'PENDING' ? 'bg-amber-50 text-amber-600 animate-pulse' : 
+                                            'bg-slate-50 text-slate-600'
+                                        }`}>
+                                            {comp.status || 'PENDING'}
+                                        </div>
+                                    </div>
                                     <p className="text-slate-400 text-[9px] lg:text-[10px] font-black uppercase tracking-widest mt-1 truncate">{comp.organizer}</p>
                                 </div>
                                 <div className="flex gap-2 shrink-0">

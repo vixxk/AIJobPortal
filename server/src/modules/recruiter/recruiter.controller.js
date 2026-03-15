@@ -4,13 +4,10 @@ const catchAsync = require('../../utils/catchAsync');
 const { uploadImageToCloudinary } = require('../../config/cloudinary');
 exports.getMe = catchAsync(async (req, res, next) => {
   const profile = await RecruiterProfile.findOne({ userId: req.user.id });
-  if (!profile) {
-    return next(new AppError('No profile found. Please create one.', 404));
-  }
   res.status(200).json({
     status: 'success',
     data: {
-      profile
+      profile: profile || {}
     }
   });
 });

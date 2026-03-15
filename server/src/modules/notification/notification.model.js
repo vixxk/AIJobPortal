@@ -15,12 +15,15 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['APPLICATION_UPDATE', 'ACCOUNT_APPROVAL', 'SYSTEM_ALERT'],
+    enum: ['APPLICATION_UPDATE', 'ACCOUNT_APPROVAL', 'SYSTEM_ALERT', 'JOB_POSTING', 'COURSE_UPDATE', 'INTERVIEW_REPORT', 'INTERVIEW_SCHEDULE'],
     default: 'SYSTEM_ALERT'
   },
   read: {
     type: Boolean,
     default: false
+  },
+  link: {
+    type: String
   }
 }, { timestamps: true });
 notificationSchema.index({ userId: 1, read: 1 });

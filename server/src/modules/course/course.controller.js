@@ -3,6 +3,7 @@ const Lecture = require('./lecture.model');
 const LectureProgress = require('./progress.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
+const Notification = require('../notification/notification.model');
 
 exports.createCourse = catchAsync(async (req, res, next) => {
   if (!['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role)) {
@@ -74,6 +75,23 @@ exports.updateCourse = catchAsync(async (req, res, next) => {
     status: 'success',
     data: { course: updatedCourse }
   });
+
+  // If newly published, notify all students
+  if (updateData.isPublished === true && !course.isPublished) {
+    try {
+        const User = require('../user/user.model');
+        const students = await User.find({ role: 'STUDENT' }).select('_id');
+        if (students.length > 0) {
+            const notifications = students.map(s => ({
+                userId: s._id,
+                title: 'New Course Available! 📚',
+                message: `A new course "${updatedCourse.title}" has been published. Enroll now to start learning!`,
+                type: 'COURSE_UPDATE'
+            }));
+            await Notification.insertMany(notifications);
+        }
+    } catch (err) { }
+  }
 });
 
 exports.deleteCourse = catchAsync(async (req, res, next) => {
@@ -167,6 +185,16 @@ exports.enrollInCourse = catchAsync(async (req, res, next) => {
     status: 'success',
     data: { course }
   });
+
+  // Background notification
+  try {
+      await Notification.create({
+          userId: req.user.id,
+          title: 'Successfully Enrolled! 🎓',
+          message: `You have successfully enrolled in the course: ${course.title}. Happy learning!`,
+          type: 'COURSE_UPDATE'
+      });
+  } catch (err) { }
 });
 
 exports.unenrollFromCourse = catchAsync(async (req, res, next) => {

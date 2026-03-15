@@ -10,6 +10,8 @@ const Notification = require('../notification/notification.model');
 const sendEmail = require('../../config/mailer');
 const RecruiterProfile = require('../recruiter/recruiter.model');
 const CollegeProfile = require('../college/college.model');
+const Issue = require('../issue/issue.model');
+
 exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
   const totalUsers = await User.countDocuments();
   const totalJobs = await Job.countDocuments();
@@ -17,6 +19,10 @@ exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
   const totalCompetitions = await Competition.countDocuments();
   const totalCourses = await Course.countDocuments();
   const pendingApprovals = await User.countDocuments({ approvalStatus: 'PENDING' });
+  const pendingJobs = await Job.countDocuments({ status: 'PENDING' });
+  const pendingCompetitions = await Competition.countDocuments({ status: 'PENDING' });
+  const pendingIssues = await Issue.countDocuments({ status: 'pending' });
+  
   res.status(200).json({
     status: 'success',
     data: {
@@ -26,7 +32,10 @@ exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
         totalApplications,
         totalCompetitions,
         totalCourses,
-        pendingApprovals
+        pendingApprovals,
+        pendingJobs,
+        pendingCompetitions,
+        pendingIssues
       }
     }
   });
@@ -214,7 +223,8 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
 exports.createJob = catchAsync(async (req, res, next) => {
   const newJob = await Job.create({
     ...req.body,
-    recruiterId: req.user._id
+    recruiterId: req.body.recruiterId || req.user._id,
+    status: 'APPROVED'
   });
   res.status(201).json({
     status: 'success',
@@ -227,6 +237,32 @@ exports.createJob = catchAsync(async (req, res, next) => {
 exports.updateJob = catchAsync(async (req, res, next) => {
   const job = await Job.findByIdAndUpdate(req.params.jobId, req.body, { new: true });
   if (!job) return next(new AppError('Job not found', 404));
+
+  // If status is updated to APPROVED, send notification
+  if (req.body.status === 'APPROVED') {
+    if (job.isSpecial && job.courseId) {
+      // Notify students enrolled in the course
+      const course = await Course.findById(job.courseId);
+      if (course && course.enrolledStudents.length > 0) {
+        const notifications = course.enrolledStudents.map(studentId => ({
+          userId: studentId,
+          title: 'Special Job Posting! 🚀',
+          message: `A new special job "${job.title}" has been posted specifically for students of ${course.title}.`,
+          type: 'JOB_POSTING'
+        }));
+        await Notification.insertMany(notifications);
+      }
+    } else {
+      // Notify the recruiter that their job is approved
+      await Notification.create({
+        userId: job.recruiterId,
+        title: 'Job Approved',
+        message: `Your job posting "${job.title}" has been approved and is now live.`,
+        type: 'JOB_POSTING'
+      });
+    }
+  }
+
   res.status(200).json({
     status: 'success',
     data: { job }
@@ -330,6 +366,7 @@ exports.createCompetition = catchAsync(async (req, res, next) => {
   }
 
   data.createdBy = req.user._id;
+  data.status = 'APPROVED';
 
   const competition = await Competition.create(data);
 

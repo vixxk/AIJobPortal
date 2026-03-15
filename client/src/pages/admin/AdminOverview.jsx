@@ -93,7 +93,7 @@ const AdminOverview = () => {
                     { label: 'Platform Users', value: stats?.totalUsers, icon: Users, color: 'blue', desc: 'Registered accounts' },
                     { label: 'Active Jobs', value: stats?.totalJobs, icon: Briefcase, color: 'emerald', desc: 'Live opportunities' },
                     { label: 'Course Catalog', value: stats?.totalCourses, icon: BookOpen, color: 'amber', desc: 'Available modules' },
-                    { label: 'Pending Safety', value: stats?.pendingApprovals, icon: Shield, color: 'rose', desc: 'Required actions' },
+                    { label: 'Pending Actions', value: (stats?.pendingApprovals || 0) + (stats?.pendingJobs || 0) + (stats?.pendingCompetitions || 0) + (stats?.pendingIssues || 0), icon: Shield, color: 'rose', desc: 'Approvals, Jobs & Issues' },
                 ].map(s => (
                     <div key={s.label} className="bg-white p-5 lg:p-8 rounded-[24px] lg:rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all group overflow-hidden relative">
                         <div className={`w-10 h-10 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl flex items-center justify-center mb-4 lg:mb-6 group-hover:scale-110 transition-transform ${s.color === 'blue' ? 'bg-blue-50' :

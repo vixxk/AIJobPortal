@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bookmark, MapPin, Briefcase, DollarSign, Clock, ChevronRight, Search, Building2, Trash2 } from 'lucide-react';
+import { Bookmark, MapPin, Briefcase, IndianRupee, Clock, ChevronRight, Search, Building2, Trash2 } from 'lucide-react';
 import axios from '../utils/axios';
 import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
@@ -25,7 +25,9 @@ const JobCard = ({ job, onClick, onUnsave }) => {
         e.stopPropagation();
         setRemoving(true);
         try {
-            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+            const title = job.title || 'Untitled Position';
+            const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
+            const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
             await axios.delete('/jobs/unsave', { data: { jobId } });
             onUnsave(jobId);
         } catch (err) {
@@ -103,7 +105,7 @@ const JobCard = ({ job, onClick, onUnsave }) => {
                 </span>
                 {job.salary && job.salary !== 'Not specified' && job.salary !== 'Salary Undisclosed' && (
                     <span className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-lg text-[11px] font-semibold text-emerald-700">
-                        <DollarSign className="w-3 h-3" />
+                        <IndianRupee className="w-3 h-3" />
                         {job.salary}
                     </span>
                 )}
@@ -148,7 +150,9 @@ const SavedJobs = () => {
 
     const handleUnsave = (jobId) => {
         setJobs(prev => prev.filter(job => {
-            const jId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+            const title = job.title || 'Untitled Position';
+            const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
+            const jId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
             return jId !== jobId;
         }));
     };
@@ -264,7 +268,9 @@ const SavedJobs = () => {
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {filtered.map(job => {
-                            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+                            const title = job.title || 'Untitled Position';
+                            const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
+                            const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
                             return (
                                 <JobCard
                                     key={jobId}

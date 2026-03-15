@@ -10,8 +10,8 @@ const MobileNavbar = () => {
     }
     const bottomNavItems = [
         { name: 'Home', path: '/app', icon: Home },
-        { name: 'Contest', path: '/app/competitions', icon: Trophy },
         { name: 'Saved', path: '/app/saved', icon: Bookmark },
+        { name: 'Contest', path: '/app/competitions', icon: Trophy },
         { name: 'Help', path: '/app/help', icon: HelpCircle },
         { name: 'Profile', path: '/app/profile', icon: User },
     ].filter(item => {

@@ -10,6 +10,7 @@ const ManageApplicants = () => {
     const [error, setError] = useState(null);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [statusUpdating, setStatusUpdating] = useState(null);
+    const [notifyAppId, setNotifyAppId] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -132,6 +133,12 @@ const ManageApplicants = () => {
                                         >
                                             <User className="w-4 h-4" /> View Full Profile
                                         </button>
+                                        <button 
+                                            onClick={() => setNotifyAppId(app._id)}
+                                            className="w-full py-2 bg-indigo-50 text-indigo-600 text-[13px] font-bold rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 border border-indigo-200"
+                                        >
+                                            <Mail className="w-4 h-4" /> Send Notification
+                                        </button>
                                         {app.studentProfile?.resumeUrl && (
                                             <a href={app.studentProfile.resumeUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-2 text-[13px] font-bold text-blue-600 hover:bg-blue-50 rounded-xl border border-blue-100 transition-colors">
                                                 <Download className="w-4 h-4" /> View Resume
@@ -191,6 +198,11 @@ const ManageApplicants = () => {
             <StudentProfileModal 
                 student={selectedStudent} 
                 onClose={() => setSelectedStudent(null)} 
+            />
+
+            <NotificationModal 
+                applicationId={notifyAppId}
+                onClose={() => setNotifyAppId(null)}
             />
         </div>
     );
@@ -399,4 +411,136 @@ const StudentProfileModal = ({ student, onClose }) => {
         </div>
     );
 };
+
+const NotificationModal = ({ applicationId, onClose }) => {
+    const [type, setType] = useState('MESSAGE'); // MESSAGE or MEETING
+    const [message, setMessage] = useState('');
+    const [meetingLink, setMeetingLink] = useState('');
+    const [scheduledDate, setScheduledDate] = useState('');
+    const [scheduledTime, setScheduledTime] = useState('');
+    const [sending, setSending] = useState(false);
+
+    if (!applicationId) return null;
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSending(true);
+        try {
+            const res = await axios.post('/applications/notify', {
+                applicationId,
+                type,
+                message,
+                meetingLink,
+                scheduledDate,
+                scheduledTime
+            });
+            if (res.data.status === 'success') {
+                alert('Notification sent successfully!');
+                onClose();
+            }
+        } catch (error) {
+            console.error("Failed to send notification", error);
+            alert(error.response?.data?.message || "Failed to send notification");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl flex flex-col p-8" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-black text-slate-900">Send Notification</h2>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                        <XCircle className="w-6 h-6" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="flex p-1 bg-slate-100 rounded-2xl mb-4">
+                        <button
+                            type="button"
+                            onClick={() => setType('MESSAGE')}
+                            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${type === 'MESSAGE' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Custom Message
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setType('MEETING')}
+                            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${type === 'MEETING' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Schedule Interview
+                        </button>
+                    </div>
+
+                    {type === 'MEETING' && (
+                        <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Meeting Link</label>
+                                <input
+                                    required
+                                    type="url"
+                                    placeholder="https://zoom.us/j/..."
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    value={meetingLink}
+                                    onChange={(e) => setMeetingLink(e.target.value)}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Date</label>
+                                    <input
+                                        required
+                                        type="date"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={scheduledDate}
+                                        onChange={(e) => setScheduledDate(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Time</label>
+                                    <input
+                                        required
+                                        type="time"
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={scheduledTime}
+                                        onChange={(e) => setScheduledTime(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">
+                            {type === 'MESSAGE' ? 'Your Message' : 'Additional Message (Optional)'}
+                        </label>
+                        <textarea
+                            required={type === 'MESSAGE'}
+                            rows="4"
+                            placeholder={type === 'MESSAGE' ? "Enter your custom message here..." : "Any additional details for the student..."}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                        />
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 text-center px-4 font-medium italic">
+                        The student will receive this as both a platform notification and an email.
+                    </p>
+
+                    <button
+                        disabled={sending}
+                        type="submit"
+                        className="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
+                    >
+                        {sending ? 'Sending...' : 'Send Notification'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 export default ManageApplicants;

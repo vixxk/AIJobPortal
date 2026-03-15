@@ -13,6 +13,7 @@ const jobSchema = new mongoose.Schema({
     required: [true, 'Job location is required']
   },
   salaryRange: String,
+  companyName: String,
   responsibilities: {
     type: [String],
     default: []
@@ -29,10 +30,29 @@ const jobSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['OPEN', 'CLOSED'],
-    default: 'OPEN'
+    enum: ['PENDING', 'APPROVED', 'CLOSED'],
+    default: 'PENDING'
+  },
+  isSpecial: {
+    type: Boolean,
+    default: false
+  },
+  courseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+jobSchema.virtual('applicants', {
+  ref: 'Application',
+  foreignField: 'jobId',
+  localField: '_id'
+});
+
 jobSchema.index({ skillsRequired: 1 });
 jobSchema.index({ location: 1 });
 jobSchema.index({ recruiterId: 1 });

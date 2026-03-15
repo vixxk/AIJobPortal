@@ -1,4 +1,4 @@
-import { X, MapPin, Briefcase, Building, DollarSign, ExternalLink, Calendar, Users, Globe, Copy, Check, AlertCircle, ArrowRight, UserCheck } from 'lucide-react';
+import { X, MapPin, Briefcase, Building, IndianRupee, ExternalLink, Calendar, Users, Globe, Copy, Check, AlertCircle, ArrowRight, UserCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,11 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
     const [error, setError] = useState(null);
     const [profileCompleteness, setProfileCompleteness] = useState({ complete: true, missing: [] });
     const [showWarning, setShowWarning] = useState(false);
+    
+    // Explicitly hide actions for recruiters and admins
+    const isRestrictedRole = user?.role === 'RECRUITER' || user?.role === 'SUPER_ADMIN';
+    const effectiveHideActions = hideActions || isRestrictedRole;
+    
     const timeSince = (date) => {
         if (!date) return 'Recently';
         const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -27,7 +32,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
         if (interval > 1) return Math.floor(interval) + " minutes ago";
         return "Just now";
     };
-    const companyDisplayName = job?.company || job?.recruiterId?.companyName || job?.recruiterId?.name || 'Verified Recruiter';
+    const companyDisplayName = job?.company || job?.companyName || job?.recruiterId?.companyName || job?.recruiterId?.name || 'Organization';
     const companyLogo = job?.logo || job?.recruiterId?.logo || job?.recruiterId?.avatar;
 
     const handleCopyLink = () => {
@@ -158,7 +163,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                             {(job.salary || job.salaryRange) && (
                                 <div className="flex items-center gap-2">
                                     <div className="p-1 px-1.5 bg-emerald-50 rounded-md">
-                                        <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                                        <IndianRupee className="w-3.5 h-3.5 text-emerald-600" />
                                     </div>
                                     <span className="text-emerald-600">{job.salary || job.salaryRange}</span>
                                 </div>
@@ -199,7 +204,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                         </div>
                     </div>
                 </div>
-                {!hideActions && (
+                {!effectiveHideActions && (
                     <div className="p-4 md:p-5 border-t border-slate-100 bg-white flex flex-col gap-3 shrink-0 relative">
                         {showWarning && (
                             <div className="mb-1 p-4 bg-amber-50 border border-amber-100 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
@@ -246,7 +251,9 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                                 onClick={async () => {
                                     setIsSaving(true);
                                     try {
-                                        const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+                                        const title = job.title || 'Untitled Position';
+                                        const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
+                                        const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
                                         if (didSave) {
                                             await axios.delete('/jobs/unsave', {
                                                 data: { jobId }
@@ -299,7 +306,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                         </div>
                     </div>
                 )}
-                {error && !hideActions && (
+                {error && !effectiveHideActions && (
                     <div className="px-8 pb-4 text-center">
                         <p className="text-rose-500 text-xs font-semibold">{error}</p>
                     </div>

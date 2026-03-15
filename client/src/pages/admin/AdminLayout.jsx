@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Shield, Users, Briefcase, Building2, GraduationCap,
-    LayoutDashboard, FileText, Globe, Search, Plus, BookOpen, Menu, X
+    LayoutDashboard, FileText, Globe, Search, Plus, BookOpen, Menu, X, AlertCircle
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -48,6 +48,7 @@ const AdminLayout = () => {
         if (path.includes('/courses')) return 'Courses Control';
         if (path.includes('/applications')) return 'Applications Control';
         if (path.includes('/competitions')) return 'Competitions Control';
+        if (path.includes('/issues')) return 'Reported Issues';
         return 'Admin Control';
     };
 
@@ -99,6 +100,7 @@ const AdminLayout = () => {
                     <SidebarItem to="/app/admin/courses" label="ACADEMY CONTENT" icon={BookOpen} />
                     <SidebarItem to="/app/admin/applications" label="APPLICATIONS" icon={FileText} />
                     <SidebarItem to="/app/admin/competitions" label="COMPETITIONS" icon={Globe} />
+                    <SidebarItem to="/app/admin/issues" label="APP ISSUES" icon={AlertCircle} />
                 </div>
 
                 <div className="mt-auto pt-10">

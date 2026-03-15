@@ -6,13 +6,30 @@ import SmartImage from '../components/ui/SmartImage';
 import {
     User, Mail, GraduationCap, Briefcase, FileText, Plus, X, UploadCloud, CheckCircle,
     Settings, ChevronLeft, Trash2, Edit2, ChevronDown, Check,
-    Award, FileBadge, Globe, Link, Heart, Phone, BookOpen, Star, DollarSign, Home
+    Award, FileBadge, Globe, Link, Heart, Phone, BookOpen, Star, IndianRupee, Home, AlertCircle, Bell
 } from 'lucide-react';
+import ReportIssueModal from '../components/ReportIssueModal';
+import toast from 'react-hot-toast';
+
+const Toggle = ({ label, description, enabled, onChange }) => (
+    <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mb-3">
+        <div>
+            <h4 className="font-bold text-slate-800 text-[15px]">{label}</h4>
+            {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+        </div>
+        <button 
+            onClick={() => onChange(!enabled)}
+            className={`w-12 h-6 rounded-full transition-all relative ${enabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+        >
+            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${enabled ? 'left-7' : 'left-1'}`} />
+        </button>
+    </div>
+);
 const icons = {
     BASIC: <User className="w-5 h-5 text-blue-500" />,
     CONTACT: <User className="w-5 h-5 text-blue-500" />,
     SUMMARY: <FileText className="w-5 h-5 text-blue-500" />,
-    SALARY: <DollarSign className="w-5 h-5 text-blue-500" />,
+    SALARY: <IndianRupee className="w-5 h-5 text-blue-500" />,
     EXPERIENCE: <Briefcase className="w-5 h-5 text-blue-500" />,
     EDUCATION: <GraduationCap className="w-5 h-5 text-blue-500" />,
     PROJECTS: <Star className="w-5 h-5 text-blue-500" />,
@@ -28,6 +45,7 @@ const icons = {
     RESUME: <FileText className="w-5 h-5 text-blue-500" />,
     SETTINGS: <Settings className="w-5 h-5 text-blue-500" />,
     STATUS: <User className="w-5 h-5 text-blue-500" />,
+    NOTIFICATIONS: <Bell className="w-5 h-5 text-blue-500" />,
 };
 const Input = ({ label, type = 'text', value, onChange, placeholder, disabled, icon, onKeyDown }) => (
     <div className="mb-3">
@@ -41,7 +59,11 @@ const Input = ({ label, type = 'text', value, onChange, placeholder, disabled, i
                 onKeyDown={onKeyDown}
                 placeholder={placeholder}
                 disabled={disabled}
-                className={`w-full py-2 px-3 bg-white border border-slate-200 rounded-2xl text-[13px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] ${icon ? 'pl-11' : ''}`}
+                className={`w-full py-2 px-3 rounded-2xl text-[13px] font-medium transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] ${icon ? 'pl-11' : ''} ${
+                    disabled 
+                        ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed' 
+                        : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'
+                }`}
             />
         </div>
     </div>
@@ -100,7 +122,7 @@ const DatePicker = ({ label, value, onChange }) => (
     </div>
 );
 const StudentProfile = () => {
-    const { user, refreshUser } = useAuth();
+    const { user, updateSettings } = useAuth();
     const { section } = useParams();
     const navigate = useNavigate();
     const currentView = section ? section.toUpperCase() : 'MAIN';
@@ -109,6 +131,27 @@ const StudentProfile = () => {
     const [saving, setSaving] = useState(false);
     const [editIndex, setEditIndex] = useState(-1);
     const [localItem, setLocalItem] = useState({});
+    const [showIssueModal, setShowIssueModal] = useState(false);
+    const [notificationSettings, setNotificationSettings] = useState(user?.notificationSettings || { platform: true, email: true });
+
+    useEffect(() => {
+        if (user?.notificationSettings) {
+            setNotificationSettings(user.notificationSettings);
+        }
+    }, [user?.notificationSettings]);
+
+    const updateNotificationSettings = async (type, value) => {
+        const newSettings = { ...notificationSettings, [type]: value };
+        setNotificationSettings(newSettings);
+        const res = await updateSettings(newSettings);
+        if (res.success) {
+            toast.success('Notification settings updated');
+        } else {
+            toast.error(res.message || 'Failed to update settings');
+            setNotificationSettings(notificationSettings);
+        }
+    };
+
     useEffect(() => {
         fetchProfile();
         const handleOpenSettings = () => {
@@ -133,9 +176,9 @@ const StudentProfile = () => {
         let backEvent = null;
         if (currentView !== 'MAIN') {
             const titles = {
-                'BASIC': 'Edit Profile',
+                'BASIC': user?.role === 'RECRUITER' ? 'Recruiter Profile' : user?.role === 'COLLEGE_ADMIN' ? 'College Profile' : 'Edit Profile',
                 'CONTACT': 'Contact Information',
-                'SUMMARY': 'Summary',
+                'SUMMARY': user?.role === 'RECRUITER' ? 'Company Details' : user?.role === 'COLLEGE_ADMIN' ? 'About College' : 'Summary',
                 'SALARY': 'Expected Salary',
                 'CERTIFICATIONS': 'Certification and Licenses',
                 'EXAMS': 'Professional Exams',
@@ -171,7 +214,11 @@ const StudentProfile = () => {
     }, [currentView, editIndex]);
     const fetchProfile = async () => {
         try {
-            const res = await axios.get('/student/me');
+            let endpoint = '/student/me';
+            if (user?.role === 'RECRUITER') endpoint = '/recruiter/me';
+            else if (user?.role === 'COLLEGE_ADMIN') endpoint = '/college/me';
+
+            const res = await axios.get(endpoint);
             if (res.data.success || res.data.status === 'success') {
                 if (res.data.data && res.data.data.profile) {
                     setProfile(res.data.data.profile);
@@ -186,7 +233,11 @@ const StudentProfile = () => {
     const saveProfile = async (updates) => {
         setSaving(true);
         try {
-            const res = await axios.post('/student/profile', updates);
+            let endpoint = '/student/profile';
+            if (user?.role === 'RECRUITER') endpoint = '/recruiter/profile';
+            else if (user?.role === 'COLLEGE_ADMIN') endpoint = '/college/profile';
+
+            const res = await axios.post(endpoint, updates);
             if (res.data.status === 'success') {
                 setProfile(res.data.data.profile);
             }
@@ -236,7 +287,7 @@ const StudentProfile = () => {
         if (profile.currentPosition) score += 5;
         if (profile.address && profile.phoneNumber && profile.email) score += 10;
         if (profile.summary) score += 10;
-        if (profile.profileImage) score += 10;
+        if (profile.profileImage || profile.logo) score += 10;
         if (profile.expectedSalary?.minimum || profile.expectedSalary?.maximum) score += 5;
         if (profile.skills?.length > 0) score += 10;
         if (profile.education?.length > 0) score += 10;
@@ -274,7 +325,7 @@ const StudentProfile = () => {
             <div className="flex justify-center mb-6">
                 <div className="relative w-24 h-24">
                     <SmartImage
-                        src={profile.profileImage || user?.avatar}
+                        src={profile.logo || profile.profileImage || user?.avatar}
                         alt="Avatar"
                         containerClassName="w-24 h-24 rounded-full border-4 border-white shadow-md relative z-10"
                         className={saving ? 'opacity-50' : 'opacity-100'}
@@ -296,9 +347,14 @@ const StudentProfile = () => {
                                 fm.append('image', file);
                                 setSaving(true);
                                 try {
-                                    const res = await axios.patch('/student/profile/image', fm);
+                                    const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/logo' : '/student/profile/image';
+                                    const res = await axios.patch(endpoint, fm);
                                     if (res.data.status === 'success') {
-                                        setProfile({ ...profile, profileImage: res.data.data.profileImage });
+                                        if (user?.role === 'RECRUITER') {
+                                            setProfile({ ...profile, logo: res.data.data.logo });
+                                        } else {
+                                            setProfile({ ...profile, profileImage: res.data.data.profileImage });
+                                        }
                                         if (refreshUser) await refreshUser();
                                     }
                                 } catch (error) {
@@ -311,10 +367,24 @@ const StudentProfile = () => {
                 </div>
             </div>
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
-                <Input label="First Name" value={profile.firstName} onChange={e => handleUpdateField('firstName', e.target.value)} />
-                <Input label="Middle Name" value={profile.middleName} onChange={e => handleUpdateField('middleName', e.target.value)} />
-                <Input label="Last Name" value={profile.lastName} onChange={e => handleUpdateField('lastName', e.target.value)} />
-                <Input label="Current Position" value={profile.currentPosition} onChange={e => handleUpdateField('currentPosition', e.target.value)} />
+                {user?.role === 'RECRUITER' ? (
+                    <>
+                        <Input label="Company Name" value={profile.companyName} onChange={e => handleUpdateField('companyName', e.target.value)} />
+                        <Input label="Company Website" value={profile.website} onChange={e => handleUpdateField('website', e.target.value)} />
+                    </>
+                ) : user?.role === 'COLLEGE_ADMIN' ? (
+                    <>
+                        <Input label="College Name" value={profile.collegeName} onChange={e => handleUpdateField('collegeName', e.target.value)} />
+                        <Input label="Location" value={profile.location} onChange={e => handleUpdateField('location', e.target.value)} />
+                    </>
+                ) : (
+                    <>
+                        <Input label="First Name" value={profile.firstName} onChange={e => handleUpdateField('firstName', e.target.value)} />
+                        <Input label="Middle Name" value={profile.middleName} onChange={e => handleUpdateField('middleName', e.target.value)} />
+                        <Input label="Last Name" value={profile.lastName} onChange={e => handleUpdateField('lastName', e.target.value)} />
+                        <Input label="Current Position" value={profile.currentPosition} onChange={e => handleUpdateField('currentPosition', e.target.value)} />
+                    </>
+                )}
             </div>
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
         </div>
@@ -324,7 +394,7 @@ const StudentProfile = () => {
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
                 <Input label="Address" value={profile.address} onChange={e => handleUpdateField('address', e.target.value)} icon={<Globe className="w-4 h-4" />} />
                 <Input label="Phone Number" value={profile.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
-                <Input label="Email" value={profile.email || user?.email} onChange={e => handleUpdateField('email', e.target.value)} icon={<Mail className="w-4 h-4" />} />
+                <Input label="Email" value={user?.email} disabled={true} icon={<Mail className="w-4 h-4" />} />
             </div>
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
         </div>
@@ -332,7 +402,13 @@ const StudentProfile = () => {
     const renderSummary = () => (
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
-                <Textarea label="Summary (Max. 500 characters)" maxLength={500} rows={10} value={profile.summary} onChange={e => handleUpdateField('summary', e.target.value)} />
+                <Textarea 
+                    label={user?.role === 'RECRUITER' ? "Company Description" : user?.role === 'COLLEGE_ADMIN' ? "About College" : "Summary (Max. 500 characters)"} 
+                    maxLength={500} 
+                    rows={10} 
+                    value={user?.role === 'RECRUITER' ? profile.companyDescription : user?.role === 'COLLEGE_ADMIN' ? profile.about : profile.summary} 
+                    onChange={e => handleUpdateField(user?.role === 'RECRUITER' ? 'companyDescription' : user?.role === 'COLLEGE_ADMIN' ? 'about' : 'summary', e.target.value)} 
+                />
             </div>
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
         </div>
@@ -342,7 +418,7 @@ const StudentProfile = () => {
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
                 <Input label="Minimum" type="number" value={profile.expectedSalary?.minimum} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, minimum: e.target.value })} />
                 <Input label="Maximum" type="number" value={profile.expectedSalary?.maximum} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, maximum: e.target.value })} />
-                <Select label="Currency" options={['USD', 'EUR', 'GBP', 'INR']} value={profile.expectedSalary?.currency} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, currency: e.target.value })} />
+                <Select label="Currency" options={['INR', 'USD', 'EUR', 'GBP']} value={profile.expectedSalary?.currency || 'INR'} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, currency: e.target.value })} />
                 <Select label="Frequency" options={['per hour', 'per month', 'per year']} value={profile.expectedSalary?.frequency} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, frequency: e.target.value })} />
             </div>
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
@@ -579,7 +655,8 @@ const StudentProfile = () => {
                                         fm.append('resume', file);
                                         setSaving(true);
                                         try {
-                                            const { data } = await axios.post('/student/me/upload-resume', fm);
+                                            const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/resume' : '/student/me/upload-resume';
+                                            const { data } = await axios.post(endpoint, fm);
                                             if (data.success || data.status === 'success') {
                                                 setProfile({ ...profile, resumeUrl: data.data.resumeUrl });
                                             }
@@ -633,15 +710,18 @@ const StudentProfile = () => {
                                 <h4 className="font-semibold text-slate-400 mb-2 pl-2 text-sm uppercase">General</h4>
                                 <div className="bg-white rounded-3xl shadow-sm p-2 space-y-1 border border-slate-100/50">
                                     {[
-                                        { l: 'Notification', i: <Award className="w-5 h-5" /> },
+                                        { l: 'Notification', i: <Bell className="w-5 h-5" />, s: 'NOTIFICATIONS' },
                                         { l: 'Security', i: <Award className="w-5 h-5" /> },
-                                        { l: 'Language', i: <Globe className="w-5 h-5" />, v: 'English (US)' },
-                                        { l: 'Application Issues', i: <Award className="w-5 h-5" /> },
+                                        { l: 'Report Issues', i: <AlertCircle className="w-5 h-5 text-rose-500" /> },
                                         { l: 'Help Center', i: <User className="w-5 h-5" /> }
                                     ].map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center p-3 cursor-pointer hover:bg-slate-50 transition-colors rounded-2xl" onClick={() => {
                                             if (item.l === 'Help Center') {
                                                 navigate('/app/help');
+                                            } else if (item.l === 'Report Issues') {
+                                                setShowIssueModal(true);
+                                            } else if (item.s) {
+                                                navigate(`/app/profile/${item.s.toLowerCase()}`);
                                             }
                                         }}>
                                             <div className="flex items-center gap-3">
@@ -657,8 +737,30 @@ const StudentProfile = () => {
                                 </div>
                             </div>
                         </div>
+                        <ReportIssueModal isOpen={showIssueModal} onClose={() => setShowIssueModal(false)} />
                     </div>
                 );
+            case 'NOTIFICATIONS':
+                return (
+                    <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                        <div className="flex-1 space-y-2 overflow-y-auto hide-scrollbar pr-2 pb-16">
+                            <Toggle 
+                                label="Platform Notifications" 
+                                description="Get real-time updates within the app dashboard." 
+                                enabled={notificationSettings.platform} 
+                                onChange={(val) => updateNotificationSettings('platform', val)} 
+                            />
+                            <Toggle 
+                                label="Email Notifications" 
+                                description="Receive updates and alerts via your registered email." 
+                                enabled={notificationSettings.email} 
+                                onChange={(val) => updateNotificationSettings('email', val)} 
+                            />
+                        </div>
+                        <button onClick={() => navigate('/app/profile/settings')} className="w-full py-2.5 shrink-0 mt-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-indigo-500/20 transition-all">Back to Settings</button>
+                    </div>
+                );
+
             default:
                 break;
         }
@@ -680,7 +782,7 @@ const StudentProfile = () => {
                                     <div className="flex items-center justify-between mt-4 mb-8">
                                         <div className="flex items-center gap-4">
                                             <SmartImage
-                                                src={profile.profileImage || user?.avatar}
+                                                src={profile.logo || profile.profileImage || user?.avatar}
                                                 alt="User"
                                                 containerClassName="w-12 h-12 rounded-full border-2 border-white shadow-sm"
                                                 fallbackIcon={() => (
@@ -694,7 +796,7 @@ const StudentProfile = () => {
                                                 )}
                                             />
                                             <div>
-                                                <h2 className="text-xl font-bold tracking-tight">{profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name')}</h2>
+                                                    <h2 className="text-xl font-bold tracking-tight">{user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}</h2>
                                                 <p className="text-slate-500 text-sm mt-0.5">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
                                             </div>
                                         </div>
@@ -736,7 +838,7 @@ const StudentProfile = () => {
                         <div className="p-8 border-b border-slate-100 flex flex-col items-center gap-4 bg-gradient-to-b from-blue-50/50 to-white text-center">
                             <div className="relative">
                                 <SmartImage
-                                    src={profile.profileImage || user?.avatar}
+                                    src={profile.logo || profile.profileImage || user?.avatar}
                                     alt="User"
                                     containerClassName="w-24 h-24 rounded-full border-4 border-white shadow-md relative z-10"
                                     fallbackIcon={() => (
@@ -751,7 +853,7 @@ const StudentProfile = () => {
                                 />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold tracking-tight text-slate-800">{profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name')}</h2>
+                                <h2 className="text-xl font-bold tracking-tight text-slate-800">{user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}</h2>
                                 <p className="text-slate-500 text-sm mt-1 font-medium">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
                             </div>
                         </div>

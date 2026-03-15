@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema({
   profileCompleted: {
     type: Boolean,
     default: false
+  },
+  notificationSettings: {
+    platform: { type: Boolean, default: true },
+    email: { type: Boolean, default: true }
   }
 }, { timestamps: true });
 

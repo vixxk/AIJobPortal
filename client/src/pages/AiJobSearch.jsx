@@ -16,7 +16,9 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
     const handleSave = async (e) => {
         e.stopPropagation();
         try {
-            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+            const title = job.title || 'Untitled Position';
+            const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
+            const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
             if (saved) {
                 await axios.delete('/jobs/unsave', {
                     data: { jobId }
@@ -154,9 +156,11 @@ const AiJobSearch = () => {
         try {
             const savedRes = await axios.get('/jobs/saved');
             const savedIds = new Set(
-                (savedRes.data.jobs || []).map(sj =>
-                    sj.link || `${sj.title}-${sj.company}`.replace(/\s+/g, '-').toLowerCase()
-                )
+                (savedRes.data.jobs || []).map(sj => {
+                    const title = sj.title || 'Untitled Position';
+                    const company = sj.company || sj.companyName || (sj.recruiterId?.companyName) || 'Organization';
+                    return sj._id || sj.id || sj.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
+                })
             );
             setSavedJobsIds(savedIds);
         } catch {
@@ -278,7 +282,7 @@ const AiJobSearch = () => {
                     )}
                     {openDropdown === 'salary' && (
                         <div className="absolute top-0 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-52 z-30 animate-in fade-in slide-in-from-top-2 duration-200 mt-1">
-                            {['any', '< $40k', '$40k - $80k', '$80k - $120k', '$120k - $160k', '> $160k'].map((v) => (
+                            {['any', '< ₹ 5L', '₹ 5L - 10L', '₹ 10L - 20L', '₹ 20L - 40L', '> ₹ 40L'].map((v) => (
                                 <button
                                     key={v}
                                     onClick={() => { setSalaryRange(v); setOpenDropdown(null); }}
@@ -384,7 +388,7 @@ const AiJobSearch = () => {
                             </button>
                             {openDropdown === 'salary' && (
                                 <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-56 z-50 animate-in fade-in zoom-in-95 duration-100">
-                                    {['any', '< $40k', '$40k - $80k', '$80k - $120k', '$120k - $160k', '> $160k'].map((v) => (
+                                    {['any', '< ₹ 5L', '₹ 5L - 10L', '₹ 10L - 20L', '₹ 20L - 40L', '> ₹ 40L'].map((v) => (
                                         <button
                                             key={v}
                                             onClick={() => { setSalaryRange(v); setOpenDropdown(null); }}
@@ -532,7 +536,9 @@ const AiJobSearch = () => {
                             </div>
                             <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6">
                                 {jobs.map((job) => {
-                                    const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+                                    const title = job.title || 'Untitled Position';
+                                    const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
+                                    const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
                                     return (
                                         <JobCard
                                             key={jobId}
@@ -584,7 +590,7 @@ const AiJobSearch = () => {
             <JobDetailsModal
                 job={selectedJob}
                 onClose={() => setSelectedJob(null)}
-                initiallySaved={selectedJob ? savedJobsIds.has(selectedJob.link || `${selectedJob.title}-${selectedJob.company}`.replace(/\s+/g, '-').toLowerCase()) : false}
+                initiallySaved={selectedJob ? savedJobsIds.has(selectedJob._id || selectedJob.id || selectedJob.link || `${selectedJob.title || 'Untitled Position'}-${selectedJob.company || selectedJob.companyName || selectedJob.recruiterId?.companyName || 'Organization'}`.replace(/\s+/g, '-').toLowerCase()) : false}
                 onToggleSave={(jobId, isSaved) => {
                     const newIds = new Set(savedJobsIds);
                     if (isSaved) newIds.add(jobId);

@@ -65,3 +65,35 @@ exports.protectAny = catchAsync(async (req, res, next) => {
   req.user = currentUser;
   next();
 });
+
+exports.isLoggedIn = async (req, res, next) => {
+    try {
+        let token;
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+        
+        if (!token) return next();
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        let currentUser;
+        if (decoded.role === 'SUPER_ADMIN') {
+            currentUser = {
+                _id: process.env.SUPER_ADMIN_ID || 'super_admin',
+                role: 'SUPER_ADMIN',
+                name: 'Super Admin',
+                isActive: true
+            };
+        } else {
+            currentUser = await User.findById(decoded.id);
+        }
+
+        if (currentUser) {
+            req.user = currentUser;
+        }
+        return next();
+    } catch (err) {
+        return next();
+    }
+};

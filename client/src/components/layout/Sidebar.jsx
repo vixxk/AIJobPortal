@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
     Home, Briefcase, BookOpen, Trophy,
     Users, Settings, LogOut, Bell,
-    MessageSquare, FileText, CheckCircle, Orbit,
+    MessageSquare, FileText, CheckCircle, Orbit, Sparkles,
     PanelLeftClose, PanelLeft, PlusCircle, ClipboardList, Shield, User, HelpCircle, Bookmark
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -27,6 +27,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         mainLinks = [
             { name: 'Dashboard', path: '/app', icon: Home, exact: true },
             { name: 'Jobs & Internships', path: '/app/jobs', icon: Briefcase },
+            { name: 'Gradnex Jobs', path: '/app/gradnex-jobs', icon: Sparkles },
             { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
             { name: 'Competitions', path: '/app/competitions', icon: Trophy },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
