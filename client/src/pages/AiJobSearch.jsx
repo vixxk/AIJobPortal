@@ -39,8 +39,8 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
             <div className="flex justify-between items-start">
                 <div className="flex gap-3 md:gap-4">
                     <div className="w-[42px] h-[42px] md:w-[52px] md:h-[52px] rounded-xl md:rounded-2xl border border-slate-100 flex items-center justify-center bg-white shadow-sm shrink-0 overflow-hidden relative">
-                        <SmartImage 
-                            src={job.logo} 
+                        <SmartImage
+                            src={job.logo}
                             alt={job.company}
                             className="w-[22px] h-[22px] md:w-[26px] md:h-[26px] object-contain rounded-md"
                             containerClassName="w-full h-full flex items-center justify-center"
@@ -52,7 +52,7 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
                         <p className="text-[12px] md:text-[13px] font-semibold text-slate-500 leading-none truncate">{job.company}</p>
                     </div>
                 </div>
-                <button onClick={handleSave} className={`${saved ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-blue-500 hover:bg-blue-50'} p-1 md:p-1.5 rounded-lg -mt-1 md:mt-0 transition-colors`}>
+                <button onClick={handleSave} className={`${saved ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-blue-500 hover:bg-blue-50'} p-1 md:p-1.5 rounded-lg -mt-1 md:mt-0 z-10 transition-colors`}>
                     <Bookmark className="w-[16px] h-[16px] md:w-[18px] md:h-[18px]" strokeWidth={2.5} fill={saved ? 'currentColor' : 'none'} />
                 </button>
             </div>
@@ -95,7 +95,7 @@ const AiJobSearch = () => {
     const [showMobileSearch, setShowMobileSearch] = useState(false);
     const [sortBy, setSortBy] = useState('');
     const [showSortMenu, setShowSortMenu] = useState(false);
-    
+
     // Filter states
     const [salaryRange, setSalaryRange] = useState('any');
     const [experience, setExperience] = useState('any');
@@ -126,9 +126,9 @@ const AiJobSearch = () => {
         if (!isInitial) setHasSearched(true);
         try {
             const res = await axios.get('/jobs/search', {
-                params: { 
-                    role, 
-                    location, 
+                params: {
+                    role,
+                    location,
                     type,
                     salaryRange,
                     experience
@@ -242,21 +242,21 @@ const AiJobSearch = () => {
                     </form>
                 </div>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mt-1">
-                    <button 
+                    <button
                         onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${type !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                     >
                         {type === 'any' ? 'Job Type' : <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>}
                         <ArrowDownUp className="w-3 h-3" />
                     </button>
-                    <button 
+                    <button
                         onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${salaryRange !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                     >
                         {salaryRange === 'any' ? 'Salary' : salaryRange}
                         <ArrowDownUp className="w-3 h-3" />
                     </button>
-                    <button 
+                    <button
                         onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${experience !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                     >
@@ -264,7 +264,7 @@ const AiJobSearch = () => {
                         <ArrowDownUp className="w-3 h-3" />
                     </button>
                 </div>
-                
+
                 {/* Mobile Dropdowns */}
                 <div className="relative">
                     {openDropdown === 'type' && (
@@ -355,7 +355,7 @@ const AiJobSearch = () => {
                     <div className="flex gap-3 mt-8 flex-wrap justify-center z-20 relative w-full">
                         {/* Job Type Dropdown */}
                         <div className="relative">
-                            <button 
+                            <button
                                 onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all text-sm font-semibold ${type !== 'any' ? 'bg-white text-blue-700 border-white shadow-md' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
                             >
@@ -379,7 +379,7 @@ const AiJobSearch = () => {
 
                         {/* Salary Range Dropdown */}
                         <div className="relative">
-                            <button 
+                            <button
                                 onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all text-sm font-semibold ${salaryRange !== 'any' ? 'bg-white text-blue-700 border-white shadow-md' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
                             >
@@ -403,7 +403,7 @@ const AiJobSearch = () => {
 
                         {/* Experience Dropdown */}
                         <div className="relative">
-                            <button 
+                            <button
                                 onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all text-sm font-semibold ${experience !== 'any' ? 'bg-white text-blue-700 border-white shadow-md' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
                             >

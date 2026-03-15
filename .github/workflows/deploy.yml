@@ -27,9 +27,19 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-            # Navigate to project directory (Assuming the repo name is AIJobPortal on EC2)
-            # You might need to change this folder name to match your EC2 setup
+            # Navigation to project directory
             cd ~/AIJobPortal
+
+            # --- 🧹 Disk Cleanup ---
+            echo "🧹 Cleaning up disk space on EC2..."
+            # Clear PM2 logs to free up space
+            pm2 flush || true
+            # Clear npm cache
+            npm cache clean --force || true
+            # Optimize git storage
+            git gc --prune=now || true
+            # Show current disk usage for debugging
+            df -h
 
             echo "📥 Pulling latest changes from main..."
             git pull origin main

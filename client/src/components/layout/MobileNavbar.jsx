@@ -22,7 +22,7 @@ const MobileNavbar = () => {
     });
     return (
         <div
-            className="fixed bottom-0 left-0 right-0 h-[80px] bg-white z-50 flex items-center justify-around px-2 pb-safe shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.05)] border-t border-slate-100"
+            className="fixed bottom-0 left-0 right-0 h-[80px] bg-white z-[100] flex items-center justify-around px-2 pb-safe shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.05)] border-t border-slate-100"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 20px)' }}
         >
             {bottomNavItems.map((item) => {

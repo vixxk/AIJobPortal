@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 import axios from '../utils/axios';
 import {
     Trophy, Calendar, Search, Filter,
@@ -29,10 +30,38 @@ const getImageUrl = (path) => {
 };
 
 // ─── Competition Card ─────────────────────────────────────────────────────────
-const CompCard = ({ comp, registered, onRegister, onUnregister, onClick }) => {
-    const status = STATUS[comp.status] || STATUS.UPCOMING;
+const CompCard = ({ comp, registered, onRegister, onUnregister, onClick, isProcessing }) => {
+    const [isConfirming, setIsConfirming] = useState(false);
+
+    useEffect(() => {
+        if (isConfirming) {
+            const timer = setTimeout(() => setIsConfirming(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isConfirming]);
+
+    const handleUnregisterClick = (e) => {
+        e.stopPropagation();
+        if (!isConfirming) {
+            setIsConfirming(true);
+        } else {
+            onUnregister(e, comp._id);
+            setIsConfirming(false);
+        }
+    };
+    const getStatus = () => {
+        const now = new Date();
+        const start = new Date(comp.startDate);
+        const end = new Date(comp.endDate);
+        if (now < start) return 'UPCOMING';
+        if (now >= start && now <= end) return 'ONGOING';
+        return 'ENDED';
+    };
+
+    const temporalStatus = getStatus();
+    const status = STATUS[temporalStatus] || STATUS.UPCOMING;
     const typeIcon = TYPE_ICONS[comp.type?.toUpperCase()] || '🏆';
-    const isEnded = comp.status === 'ENDED';
+    const isEnded = temporalStatus === 'ENDED';
 
     return (
         <div 
@@ -104,25 +133,48 @@ const CompCard = ({ comp, registered, onRegister, onUnregister, onClick }) => {
                         </span>
                     ) : registered ? (
                         <button
-                            onClick={(e) => onUnregister(e, comp._id)}
-                            className="group/btn relative w-full py-2.5 bg-green-50 border border-green-200 rounded-xl text-xs font-bold text-green-600 transition-all hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600"
+                            disabled={isProcessing}
+                            onClick={handleUnregisterClick}
+                            className={clsx(
+                                "relative w-full py-2.5 rounded-xl text-xs font-bold transition-all duration-300 disabled:opacity-50",
+                                isConfirming 
+                                    ? "bg-rose-600 text-white shadow-lg shadow-rose-200" 
+                                    : "bg-green-50 border border-green-200 text-green-600 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600"
+                            )}
                         >
-                            <span className="flex items-center justify-center gap-2 group-hover/btn:hidden">
-                                <CheckCircle2 className="w-4 h-4" /> Registered
-                            </span>
-                            <span className="hidden group-hover/btn:flex items-center justify-center gap-2">
-                                Unregister?
+                            <span className="flex items-center justify-center gap-2">
+                                {isProcessing ? (
+                                    <>
+                                        <div className={clsx("w-3.5 h-3.5 border-2 rounded-full animate-spin", isConfirming ? "border-white/30 border-t-white" : "border-green-600/30 border-t-green-600")} /> 
+                                        {isConfirming ? 'Unregistering...' : 'Processing...'}
+                                    </>
+                                ) : isConfirming ? (
+                                    'Confirm Unregister?'
+                                ) : (
+                                    <>
+                                        <CheckCircle2 className="w-4 h-4" /> Registered
+                                    </>
+                                )}
                             </span>
                         </button>
                     ) : (
                         <button
+                            disabled={isProcessing}
                             onClick={(e) => onRegister(e, comp._id)}
                             className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500
                                 text-white rounded-xl text-xs font-bold tracking-wide transition-all
                                 shadow-md shadow-blue-200/50 flex items-center justify-center gap-2
-                                active:scale-95"
+                                active:scale-95 disabled:opacity-50"
                         >
-                            Register <ArrowRight className="w-3.5 h-3.5" />
+                            {isProcessing ? (
+                                <>
+                                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Registering...
+                                </>
+                            ) : (
+                                <>
+                                    Register <ArrowRight className="w-3.5 h-3.5" />
+                                </>
+                            )}
                         </button>
                     )}
                 </div>
@@ -154,6 +206,7 @@ const StudentCompetitions = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
     const [user, setUser] = useState(null);
+    const [processingId, setProcessingId] = useState(null);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -175,23 +228,31 @@ const StudentCompetitions = () => {
 
     const handleRegister = async (e, id) => {
         e.stopPropagation();
+        setProcessingId(id);
         try {
-            await axios.post(`/competitions/${id}/register`);
+            const res = await axios.post(`/competitions/${id}/register`);
+            const updatedComp = res.data.data.competition;
+            setCompetitions(prev => prev.map(c => c._id === id ? { ...c, participants: updatedComp.participants } : c));
             toast.success('Registered successfully!');
-            fetchData();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Registration failed');
+        } finally {
+            setProcessingId(null);
         }
     };
 
     const handleUnregister = async (e, id) => {
         e.stopPropagation();
+        setProcessingId(id);
         try {
-            await axios.post(`/competitions/${id}/unregister`);
+            const res = await axios.post(`/competitions/${id}/unregister`);
+            const updatedComp = res.data.data.competition;
+            setCompetitions(prev => prev.map(c => c._id === id ? { ...c, participants: updatedComp.participants } : c));
             toast.success('Unregistered successfully');
-            fetchData();
         } catch (err) {
             toast.error(err.response?.data?.message || 'Unregistration failed');
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -202,18 +263,36 @@ const StudentCompetitions = () => {
             c.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.type?.toLowerCase().includes(searchTerm.toLowerCase());
 
+        const getStatus = (comp) => {
+            const now = new Date();
+            const start = new Date(comp.startDate);
+            const end = new Date(comp.endDate);
+            if (now < start) return 'UPCOMING';
+            if (now >= start && now <= end) return 'ONGOING';
+            return 'ENDED';
+        };
+
+        const temporalStatus = getStatus(c);
         const statusMap = { 'Upcoming': 'UPCOMING', 'Live': 'ONGOING', 'Ended': 'ENDED' };
-        const matchFilter = activeFilter === 'All' || c.status === statusMap[activeFilter];
+        const matchFilter = activeFilter === 'All' || temporalStatus === statusMap[activeFilter];
 
         return matchSearch && matchFilter;
     });
 
-    const counts = {
-        All: competitions.length,
-        Upcoming: competitions.filter(c => c.status === 'UPCOMING').length,
-        Live: competitions.filter(c => c.status === 'ONGOING').length,
-        Ended: competitions.filter(c => c.status === 'ENDED').length,
+    const getTemporalCounts = () => {
+        const counts = { All: competitions.length, Upcoming: 0, Live: 0, Ended: 0 };
+        const now = new Date();
+        competitions.forEach(c => {
+            const start = new Date(c.startDate);
+            const end = new Date(c.endDate);
+            if (now < start) counts.Upcoming++;
+            else if (now >= start && now <= end) counts.Live++;
+            else counts.Ended++;
+        });
+        return counts;
     };
+
+    const counts = getTemporalCounts();
 
     return (
         <div className="max-w-6xl mx-auto animate-in fade-in duration-500 pb-16 px-4 md:px-0">
@@ -343,6 +422,7 @@ const StudentCompetitions = () => {
                                 onRegister={handleRegister}
                                 onUnregister={handleUnregister}
                                 onClick={() => navigate(`/app/competitions/${comp._id}`)}
+                                isProcessing={processingId === comp._id}
                             />
                         ))}
                     </div>

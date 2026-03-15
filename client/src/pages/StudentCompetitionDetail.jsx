@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import clsx from 'clsx';
 import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -30,6 +31,14 @@ const StudentCompetitionDetail = () => {
     const [comp, setComp] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isRegistering, setIsRegistering] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
+
+    useEffect(() => {
+        if (isConfirming) {
+            const timer = setTimeout(() => setIsConfirming(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isConfirming]);
 
     const fetchDetail = useCallback(async () => {
         try {
@@ -46,12 +55,28 @@ const StudentCompetitionDetail = () => {
 
     useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
+    const getTemporalStatus = () => {
+        if (!comp) return 'UPCOMING';
+        const now = new Date();
+        const start = new Date(comp.startDate);
+        const end = new Date(comp.endDate);
+        if (now < start) return 'UPCOMING';
+        if (now >= start && now <= end) return 'ONGOING';
+        return 'ENDED';
+    };
+
     const isRegistered = comp?.participants?.includes(user?.id);
-    const status = STATUS_MAP[comp?.status] || STATUS_MAP.UPCOMING;
+    const temporalStatus = getTemporalStatus();
+    const status = STATUS_MAP[temporalStatus] || STATUS_MAP.UPCOMING;
 
     const handleRegisterAction = async () => {
         if (!user) {
             toast.error('Please login to register');
+            return;
+        }
+
+        if (isRegistered && !isConfirming) {
+            setIsConfirming(true);
             return;
         }
 
@@ -61,10 +86,10 @@ const StudentCompetitionDetail = () => {
                 ? `/competitions/${id}/unregister` 
                 : `/competitions/${id}/register`;
             
-            await axios.post(endpoint);
-            
+            const res = await axios.post(endpoint);
+            setComp(res.data.data.competition);
             toast.success(isRegistered ? 'Unregistered successfully' : 'Registered successfully!');
-            fetchDetail(); // Refresh state
+            setIsConfirming(false);
         } catch (err) {
             toast.error(err.response?.data?.message || 'Action failed');
         } finally {
@@ -276,7 +301,7 @@ const StudentCompetitionDetail = () => {
                             </div>
                         </div>
 
-                        {comp.status === 'ENDED' ? (
+                        {temporalStatus === 'ENDED' ? (
                             <button className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl text-sm font-black uppercase tracking-widest cursor-not-allowed">
                                 Competition Ended
                             </button>
@@ -288,10 +313,20 @@ const StudentCompetitionDetail = () => {
                                 <button 
                                     onClick={handleRegisterAction}
                                     disabled={isRegistering}
-                                    className="w-full py-4 bg-white border-2 border-rose-100 text-rose-500 hover:bg-rose-50 hover:border-rose-200 rounded-2xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                                    className={clsx(
+                                        "w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50",
+                                        isConfirming 
+                                            ? "bg-rose-600 text-white shadow-lg shadow-rose-200" 
+                                            : "bg-white border-2 border-rose-100 text-rose-500 hover:bg-rose-50 hover:border-rose-200"
+                                    )}
                                 >
                                     {isRegistering ? (
-                                        <div className="w-4 h-4 border-2 border-rose-500/30 border-t-rose-500 rounded-full animate-spin" />
+                                        <div className="flex items-center gap-2">
+                                            <div className={clsx("w-4 h-4 border-2 rounded-full animate-spin", isConfirming ? "border-white/30 border-t-white" : "border-rose-500/30 border-t-rose-500")} /> 
+                                            {isRegistered ? 'Unregistering...' : 'Registering...'}
+                                        </div>
+                                    ) : isConfirming ? (
+                                        'Confirm Unregister?'
                                     ) : (
                                         <>Unregister from Competition</>
                                     )}
@@ -304,7 +339,9 @@ const StudentCompetitionDetail = () => {
                                 className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 {isRegistering ? (
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Registering...
+                                    </div>
                                 ) : (
                                     <>Register Now <ChevronRight className="w-4 h-4" /></>
                                 )}
