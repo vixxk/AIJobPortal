@@ -75,7 +75,7 @@ const RecruiterDashboard = () => {
     };
 
     const firstName = (user?.name || "Recruiter").split(' ')[0];
-    const activeJobsList = recentJobs.filter(job => job.status === 'APPROVED' || job.status === 'OPEN');
+    const allJobsList = [...recentJobs];
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 px-4 sm:px-6 lg:px-8">
@@ -102,8 +102,8 @@ const RecruiterDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Link to="/app/recruiter/listings" className="block">
                     <StatCard 
-                        title="Active Listings" 
-                        value={stats.activeJobs} 
+                        title="All Listings" 
+                        value={stats.totalJobs || 0} 
                         icon={Briefcase} 
                         loading={loading}
                         color={{ bg: 'bg-indigo-50', text: 'text-indigo-600' }} 
@@ -156,7 +156,7 @@ const RecruiterDashboard = () => {
                 <div className="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center bg-slate-50/50 gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-1.5 h-5 sm:w-2 sm:h-6 bg-indigo-600 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.4)]" />
-                        <h2 className="text-lg sm:text-xl font-black text-slate-800 tracking-tight uppercase whitespace-nowrap">Active Recruitment Nodes</h2>
+                        <h2 className="text-lg sm:text-xl font-black text-slate-800 tracking-tight uppercase whitespace-nowrap">All Recruitment Nodes</h2>
                     </div>
                     <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-white border border-indigo-100 rounded-full shadow-sm">
                         <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
@@ -185,7 +185,7 @@ const RecruiterDashboard = () => {
                             <h3 className="text-lg font-bold text-slate-800">{error}</h3>
                             <button onClick={() => window.location.reload()} className="mt-4 text-indigo-600 font-bold text-sm uppercase tracking-widest">Retry Connection</button>
                         </div>
-                    ) : activeJobsList.length === 0 ? (
+                    ) : allJobsList.length === 0 ? (
                         <div className="p-12 sm:p-20 text-center flex flex-col items-center justify-center max-w-lg mx-auto">
                             <div className="relative mb-8">
                                 <div className="w-24 h-24 bg-indigo-50 rounded-[32px] flex items-center justify-center animate-bounce-slow">
@@ -208,7 +208,7 @@ const RecruiterDashboard = () => {
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-50">
-                            {activeJobsList.slice(0, 5).map((job) => (
+                            {allJobsList.slice(0, 10).map((job) => (
                                 <div key={job._id} className="group p-4 sm:p-6 md:p-8 hover:bg-slate-50/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 border-l-[4px] sm:border-l-[6px] border-l-transparent hover:border-l-indigo-500">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between md:justify-start md:items-center gap-2 sm:gap-3 mb-2 capitalize relative">

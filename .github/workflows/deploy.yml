@@ -32,13 +32,21 @@ jobs:
 
             # --- 🧹 Disk Cleanup ---
             echo "🧹 Cleaning up disk space on EC2..."
-            # Clear PM2 logs to free up space
+            # Clear PM2 logs & temp
             pm2 flush || true
-            # Clear npm cache
+            rm -rf ~/.pm2/logs/* || true
+            rm -rf /tmp/* || true
+            
+            # Clear caches
             npm cache clean --force || true
+            
+            # Remove python bytecode
+            find . -name "__pycache__" -type d -exec rm -rf {} + || true
+            find . -name "*.pyc" -delete || true
+            
             # Optimize git storage
             git gc --prune=now || true
-            # Show current disk usage for debugging
+            # Show current disk usage
             df -h
 
             echo "📥 Pulling latest changes from main..."

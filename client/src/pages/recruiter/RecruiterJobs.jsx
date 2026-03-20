@@ -155,6 +155,18 @@ const RecruiterJobs = () => {
                                                     {job.salaryRange}
                                                 </div>
                                             )}
+                                            {job.jobType && (
+                                                <div className="flex items-center gap-1.5 text-emerald-600">
+                                                    <Briefcase className="w-3.5 h-3.5" />
+                                                    {job.jobType}
+                                                </div>
+                                            )}
+                                            {job.experienceRange && (
+                                                <div className="flex items-center gap-1.5 text-amber-600">
+                                                    <Clock className="w-3.5 h-3.5" />
+                                                    {job.experienceRange}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3 shrink-0">

@@ -7,18 +7,24 @@ const catchAsync = require('../../utils/catchAsync');
 const externalJobService = require('./job.service.external');
 const Course = require('../course/course.model');
 exports.createJob = catchAsync(async (req, res, next) => {
-  const profile = await RecruiterProfile.findOne({ userId: req.user.id });
+  const userId = req.user._id || req.user.id;
+  const profile = await RecruiterProfile.findOne({ userId });
   
   // Use either the profile boolean or the User's approvalStatus from middleware
-  const isApproved = profile?.approved || req.user.approvalStatus === 'APPROVED';
+  // Also allow SUPER_ADMIN to bypass this check
+  const isApproved = 
+    req.user.role === 'SUPER_ADMIN' || 
+    profile?.approved === true || 
+    req.user.approvalStatus === 'APPROVED';
   
   if (!isApproved) {
-    return next(new AppError('Only approved recruiters can post jobs', 403));
+    return next(new AppError('Only approved recruiters can post jobs. Your account may be pending approval.', 403));
   }
+
   const newJob = await Job.create({
     ...req.body,
     companyName: req.body.companyName || profile?.companyName || 'Organization',
-    recruiterId: req.user._id || req.user.id,
+    recruiterId: userId,
     status: 'PENDING'
   });
   res.status(201).json({
@@ -29,11 +35,21 @@ exports.createJob = catchAsync(async (req, res, next) => {
   });
 });
 exports.updateJob = catchAsync(async (req, res, next) => {
+  const userId = req.user._id || req.user.id;
+  
+  // Check if recruiter is still approved
+  const profile = await RecruiterProfile.findOne({ userId });
+  const isApproved = req.user.role === 'SUPER_ADMIN' || profile?.approved === true || req.user.approvalStatus === 'APPROVED';
+  
+  if (!isApproved) {
+    return next(new AppError('Your account approval is required to update jobs.', 403));
+  }
+
   const updateData = { ...req.body };
   updateData.status = 'PENDING';
   
   const job = await Job.findOneAndUpdate(
-    { _id: req.params.id, recruiterId: req.user.id },
+    { _id: req.params.id, recruiterId: userId },
     updateData,
     { new: true, runValidators: true }
   );
@@ -93,9 +109,12 @@ exports.getMyJobs = catchAsync(async (req, res, next) => {
 exports.getRecruiterStats = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
   
-  // Get counts for active jobs
-  const activeJobs = await Job.countDocuments({ recruiterId: userId, status: 'APPROVED' });
+  // Get counts for active jobs (Approved and live)
+  const activeJobs = await Job.countDocuments({ recruiterId: userId, status: { $in: ['APPROVED', 'OPEN'] } });
   
+  // Get all jobs regardless of status
+  const totalJobs = await Job.countDocuments({ recruiterId: userId });
+
   // Get all job IDs for this recruiter to count applicants
   const jobIds = await Job.find({ recruiterId: userId }).distinct('_id');
   
@@ -105,6 +124,7 @@ exports.getRecruiterStats = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       activeJobs,
+      totalJobs,
       totalApplicants: totalApplicants || 0
     }
   });

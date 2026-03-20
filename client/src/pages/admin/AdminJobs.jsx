@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
-import { MapPin, IndianRupee, Trash2, Users, Eye, Plus, X, Briefcase, List, Building2, CheckCircle2 } from 'lucide-react';
+import { MapPin, IndianRupee, Trash2, Users, Eye, Plus, X, Briefcase, List, Building2, CheckCircle2, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Skeleton from '../../components/ui/Skeleton';
 import JobDetailsModal from '../../components/JobDetailsModal';
@@ -186,9 +186,19 @@ const AdminJobs = () => {
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-xl text-[10px] font-black text-slate-500 tracking-wider">
                                     <MapPin className="w-3 h-3" /> {job.location}
                                 </div>
-                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-xl text-[9px] lg:text-[10px] font-black text-emerald-600 tracking-wider">
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-xl text-[10px] font-black text-emerald-600 tracking-wider">
                                     <IndianRupee className="w-3 h-3" /> {job.salaryRange || 'TBD'}
                                 </div>
+                                {job.jobType && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-xl text-[10px] font-black text-indigo-600 tracking-wider uppercase">
+                                        <Briefcase className="w-3 h-3" /> {job.jobType}
+                                    </div>
+                                )}
+                                {job.experienceRange && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-xl text-[10px] font-black text-amber-600 tracking-wider uppercase">
+                                        <Clock className="w-3 h-3" /> {job.experienceRange}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex items-center justify-between mt-4">

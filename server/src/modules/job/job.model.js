@@ -23,6 +23,11 @@ const jobSchema = new mongoose.Schema({
     required: true
   },
   experienceRange: String,
+  jobType: {
+    type: String,
+    enum: ['Full-time', 'Part-time', 'Internship', 'Contract'],
+    default: 'Full-time'
+  },
   recruiterId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

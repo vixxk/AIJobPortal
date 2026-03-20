@@ -23,6 +23,41 @@ const getImgUrl = (p) => {
     return `${API_BASE}/${p.replace(/^\//, '')}`;
 };
 
+const PreviewModal = ({ lecture, onClose }) => (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            onClick={onClose}
+            className="absolute inset-0 bg-slate-900/90 backdrop-blur-xl" 
+        />
+        <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }} 
+            animate={{ scale: 1, opacity: 1 }} 
+            exit={{ scale: 0.95, opacity: 0 }} 
+            className="relative w-full max-w-5xl bg-black rounded-[32px] overflow-hidden shadow-2xl border border-white/10"
+        >
+            <div className="p-4 md:p-6 flex items-center justify-between border-b border-white/5 bg-slate-900/50">
+                <div className="flex items-center gap-3">
+                    <div className="px-3 py-1 bg-indigo-500 rounded-lg text-[10px] font-black text-white uppercase tracking-widest">Free Preview</div>
+                    <h3 className="text-white font-bold text-sm md:text-lg truncate">{lecture.title}</h3>
+                </div>
+                <button onClick={onClose} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white hover:bg-white/10">
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
+            <VideoPlayer lecture={lecture} />
+            <div className="p-6 bg-slate-900/50 flex items-center justify-between">
+                <p className="text-slate-400 text-xs font-medium">To access all lessons, please enroll in the course.</p>
+                <div className="flex gap-4">
+                     <span className="text-indigo-400 font-black text-xs uppercase tracking-widest">Enrolling...</span>
+                </div>
+            </div>
+        </motion.div>
+    </div>
+);
+
 const LEVEL_COLORS = {
     Beginner: 'bg-emerald-100 text-emerald-700',
     Intermediate: 'bg-amber-100   text-amber-700',
@@ -553,10 +588,10 @@ const CourseListingPage = () => {
 
     // Enrolled IDs from user (backend sends isEnrolled per course on getCourse, but listing may not)
     // We'll mark enrolled if user._id appears in enrolledStudents
-    const userId = user?._id;
+    const userId = user?._id || user?.id;
     const isEnrolled = (course) =>
-        Array.isArray(course.enrolledStudents) &&
-        course.enrolledStudents.some(s => (s._id || s) === userId);
+        Array.isArray(course.enrolledStudents) && userId &&
+        course.enrolledStudents.some(s => (s._id || s).toString() === userId.toString());
 
     const enrolledCount = courses.filter(isEnrolled).length;
 
@@ -721,6 +756,7 @@ const CourseDetailPage = () => {
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeLecture, setActiveLecture] = useState(null);
+    const [previewLecture, setPreviewLecture] = useState(null);
     const [isEnrolled, setIsEnrolled] = useState(false);
     const [completedLectures, setCompletedLectures] = useState([]);
     const [showSidebar, setShowSidebar] = useState(true);
@@ -966,45 +1002,79 @@ const CourseDetailPage = () => {
                                 </div>
                             )}
 
-                            {/* Content preview — chapter names + counts only, individual lectures hidden */}
-                            {(chapters.length > 0 || lectures.filter(l => !l.chapter).length > 0) && (
+                            {/* Content preview — chapter + lecture list with lock icons */}
+                            {(chapters.length > 0 || lectures.length > 0) && (
                                 <div className="bg-white rounded-[24px] p-6 border border-slate-100">
-                                    <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center justify-between mb-6">
                                         <h2 className="font-black text-slate-900 uppercase tracking-widest text-xs flex items-center gap-2">
-                                            <Video className="w-4 h-4 text-indigo-500" />Course Content
+                                            <Video className="w-4 h-4 text-indigo-500" />Full Program Curriculum
                                         </h2>
                                         <span className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 bg-slate-50 px-3 py-1 rounded-xl border border-slate-100">
-                                            <Lock className="w-3 h-3" /> Enroll to unlock
+                                            <Lock className="w-3 h-3" /> Enroll to unlock all
                                         </span>
                                     </div>
-                                    <div className="space-y-2">
-                                        {chapters.sort((a, b) => a.order - b.order).map((ch, ci) => {
-                                            const n = lectures.filter(l => l.chapter?.toString() === ch._id?.toString()).length;
+                                    <div className="space-y-6">
+                                        {chapters.sort((a, b) => (a.order || 0) - (b.order || 0)).map((ch, ci) => {
+                                            const chLects = lectures.filter(l => l.chapter?.toString() === ch._id?.toString())
+                                                .sort((a, b) => (a.order || 0) - (b.order || 0));
+                                            if (chLects.length === 0) return null;
                                             return (
-                                                <div key={ch._id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                                                    <div className="w-8 h-8 bg-indigo-100 rounded-xl flex items-center justify-center text-xs font-black text-indigo-600 shrink-0">{ci + 1}</div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-black text-slate-900 text-sm truncate">{ch.title}</p>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{n} lecture{n !== 1 ? 's' : ''}</p>
+                                                <div key={ch._id} className="space-y-3">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 w-6 h-6 rounded flex items-center justify-center">{ci + 1}</span>
+                                                        <h3 className="font-black text-slate-700 text-xs uppercase tracking-widest">{ch.title}</h3>
                                                     </div>
-                                                    <Lock className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                                    <div className="space-y-1 pl-9">
+                                                        {chLects.map((l, li) => (
+                                                            <div key={l._id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-all group border border-transparent hover:border-slate-100">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-indigo-400 transition-colors" />
+                                                                    <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{l.title}</span>
+                                                                </div>
+                                                                {l.isPreview ? (
+                                                                    <button 
+                                                                        onClick={() => setPreviewLecture(l)}
+                                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                                                                    >
+                                                                        <Play className="w-3 h-3" /> Preview
+                                                                    </button>
+                                                                ) : (
+                                                                    <Lock className="w-3.5 h-3.5 text-slate-300" />
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             );
                                         })}
-                                        {/* Uncategorized lectures count — no titles revealed */}
-                                        {(() => {
-                                            const un = lectures.filter(l => !l.chapter).length;
-                                            return un > 0 ? (
-                                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                                                    <div className="w-8 h-8 bg-slate-200 rounded-xl flex items-center justify-center shrink-0"><Video className="w-4 h-4 text-slate-400" /></div>
-                                                    <div className="flex-1">
-                                                        <p className="font-black text-slate-700 text-sm">Additional Content</p>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{un} lecture{un !== 1 ? 's' : ''}</p>
-                                                    </div>
-                                                    <Lock className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                        {/* Supplementary Modules */}
+                                        {lectures.filter(l => !l.chapter).length > 0 && (
+                                            <div className="space-y-3 pt-2">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                     <h3 className="font-black text-slate-400 text-xs uppercase tracking-widest pl-9">Supplementary Content</h3>
                                                 </div>
-                                            ) : null;
-                                        })()}
+                                                <div className="space-y-1 pl-9">
+                                                    {lectures.filter(l => !l.chapter).sort((a, b) => (a.order || 0) - (b.order || 0)).map((l) => (
+                                                        <div key={l._id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-all group border border-transparent hover:border-slate-100">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-2 h-2 rounded-full bg-slate-200 group-hover:bg-indigo-400 transition-colors" />
+                                                                <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{l.title}</span>
+                                                            </div>
+                                                            {l.isPreview ? (
+                                                                <button 
+                                                                    onClick={() => setPreviewLecture(l)}
+                                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                                                                >
+                                                                    <Play className="w-3 h-3" /> Preview
+                                                                </button>
+                                                            ) : (
+                                                                <Lock className="w-3.5 h-3.5 text-slate-300" />
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -1057,6 +1127,15 @@ const CourseDetailPage = () => {
                         </div>
                     </div>
                 </div>
+                {/* Preview Modal for un-enrolled students */}
+                <AnimatePresence>
+                    {previewLecture && (
+                        <PreviewModal 
+                            lecture={previewLecture} 
+                            onClose={() => setPreviewLecture(null)} 
+                        />
+                    )}
+                </AnimatePresence>
             </div>
         );
     }

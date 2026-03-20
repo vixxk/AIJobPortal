@@ -68,7 +68,7 @@ const PostJob = () => {
                 skillsRequired: formData.skills.split(',').map(s => s.trim()).filter(s => s),
                 responsibilities: formData.responsibilities.split('\n').map(s => s.trim()).filter(s => s),
                 experienceRange: formData.experienceLevel,
-                type: formData.type,
+                jobType: formData.type,
                 isSpecial: formData.isSpecial,
                 courseId: formData.isSpecial ? formData.courseId : undefined
             };

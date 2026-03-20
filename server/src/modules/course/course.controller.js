@@ -151,8 +151,8 @@ exports.getCourse = catchAsync(async (req, res, next) => {
   }
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher?._id?.toString() === req.user.id;
-  const isEnrolled = course.enrolledStudents?.some(s => s?._id?.toString() === req.user.id);
+  const isTeacher = (course.teacher?._id || course.teacher)?.toString() === (req.user._id || req.user.id)?.toString();
+  const isEnrolled = course.enrolledStudents?.some(s => (s?._id || s)?.toString() === (req.user._id || req.user.id)?.toString());
 
   let completedLectures = [];
   if (isEnrolled || isTeacher || isAdmin) {
@@ -163,11 +163,27 @@ exports.getCourse = catchAsync(async (req, res, next) => {
     completedLectures = progress.map(p => p.lecture);
   }
 
+  const hasFullAccess = isEnrolled || isTeacher || isAdmin;
+
+  // Protect sensitive content if user doesn't have full access
+  if (!hasFullAccess && course.lectures) {
+    course.lectures = course.lectures.map(lecture => {
+      // If it's not a preview, redact video identifier and stream key
+      if (!lecture.isPreview) {
+        const leanLecture = lecture.toObject ? lecture.toObject() : { ...lecture };
+        delete leanLecture.videoIdentifier;
+        delete leanLecture.streamKey;
+        return leanLecture;
+      }
+      return lecture;
+    });
+  }
+
   res.status(200).json({
     status: 'success',
     data: {
       course,
-      isEnrolled: isEnrolled || isTeacher || isAdmin,
+      isEnrolled: hasFullAccess,
       canEdit: isTeacher || isAdmin,
       completedLectures
     }
@@ -296,11 +312,11 @@ exports.getLectures = catchAsync(async (req, res, next) => {
   if (!course) return next(new AppError('Course not found', 404));
 
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = course.teacher?.toString() === req.user.id;
-  const isEnrolled = course.enrolledStudents.includes(req.user.id);
+  const isTeacher = (course.teacher?._id || course.teacher)?.toString() === (req.user._id || req.user.id)?.toString();
+  const isEnrolled = course.enrolledStudents?.some(s => (s?._id || s)?.toString() === (req.user._id || req.user.id)?.toString());
 
   if (!isEnrolled && !isTeacher && !isAdmin) {
-    return next(new AppError('You must be enrolled in this course to view lectures', 403));
+    return next(new AppError('You must be enrolled in this course to view the full content', 403));
   }
 
   const lectures = await Lecture.find({ course: courseId }).sort({ order: 1, createdAt: 1 });
@@ -343,7 +359,14 @@ exports.deleteLecture = catchAsync(async (req, res, next) => {
 
 exports.markLectureComplete = catchAsync(async (req, res, next) => {
   const lecture = await Lecture.findById(req.params.id);
-  if (!lecture) return next(new AppError('Lecture not found', 404));
+  const course = await Course.findById(lecture.course);
+  const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
+  const isTeacher = (course?.teacher?._id || course?.teacher)?.toString() === (req.user._id || req.user.id)?.toString();
+  const isEnrolled = course?.enrolledStudents?.some(s => (s?._id || s)?.toString() === (req.user._id || req.user.id)?.toString());
+
+  if (!isEnrolled && !isTeacher && !isAdmin) {
+    return next(new AppError('You must be enrolled in this course to track progress', 403));
+  }
 
   await LectureProgress.findOneAndUpdate(
     { user: req.user.id, lecture: lecture._id },
@@ -356,8 +379,19 @@ exports.markLectureComplete = catchAsync(async (req, res, next) => {
     message: 'Lecture marked as complete'
   });
 });
-
 exports.unmarkLectureComplete = catchAsync(async (req, res, next) => {
+  const lecture = await Lecture.findById(req.params.id);
+  if (!lecture) return next(new AppError('Lecture not found', 404));
+
+  const course = await Course.findById(lecture.course);
+  const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
+  const isTeacher = (course?.teacher?._id || course?.teacher)?.toString() === (req.user._id || req.user.id)?.toString();
+  const isEnrolled = course?.enrolledStudents?.some(s => (s?._id || s)?.toString() === (req.user._id || req.user.id)?.toString());
+
+  if (!isEnrolled && !isTeacher && !isAdmin) {
+    return next(new AppError('Unauthorized', 403));
+  }
+
   await LectureProgress.findOneAndDelete({
     user: req.user.id,
     lecture: req.params.id
