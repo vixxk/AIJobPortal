@@ -65,7 +65,7 @@ jobs:
             echo "📦 Setting up Python Service..."
             cd python-service
             
-            # Create venv if missing on EC2
+            # Creates venv if missing on EC2
             if [ ! -d "venv" ]; then
                 echo "🔧 Creating virtual environment..."
                 python3 -m venv venv
