@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/layout/ProtectedRoute';
+import ProtectedRoute, { RoleRedirect } from './components/layout/ProtectedRoute';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -71,7 +71,8 @@ function App() {
             <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-              <Route index element={<ProtectedRoute allowedRoles={['STUDENT']}><Dashboard /></ProtectedRoute>} />
+              <Route index element={<RoleRedirect />} />
+              <Route path="dashboard" element={<ProtectedRoute allowedRoles={['STUDENT']}><Dashboard /></ProtectedRoute>} />
               <Route path="jobs" element={<ProtectedRoute allowedRoles={['STUDENT']}><AiJobSearch /></ProtectedRoute>} />
               <Route path="saved" element={<ProtectedRoute allowedRoles={['STUDENT']}><SavedJobs /></ProtectedRoute>} />
               <Route path="job/:id" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER']}><JobDetails /></ProtectedRoute>} />
@@ -94,6 +95,7 @@ function App() {
                 <Route path="companies" element={<CollegeCompanies />} />
                 <Route path="emails" element={<CollegeEmails />} />
                 <Route path="placement" element={<CollegePlacement />} />
+                <Route path="help" element={<HelpCenter />} />
               </Route>
               <Route path="admin" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminLayout /></ProtectedRoute>}>
                 <Route index element={<AdminOverview />} />

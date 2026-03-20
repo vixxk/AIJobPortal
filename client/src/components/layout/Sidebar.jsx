@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     let toolLinks = [];
     if (role === 'STUDENT') {
         mainLinks = [
-            { name: 'Dashboard', path: '/app', icon: Home, exact: true },
+            { name: 'Dashboard', path: '/app/dashboard', icon: Home, exact: true },
             { name: 'Global Job Search', path: '/app/jobs', icon: Briefcase },
             { name: 'Gradnex Jobs', path: '/app/gradnex-jobs', icon: Rocket },
             { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
@@ -46,13 +46,9 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         toolLinks = [];
     } else if (role === 'COLLEGE_ADMIN') {
         mainLinks = [
-            { name: 'Dashboard', path: '/app', icon: Home, exact: true },
-            { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
-            { name: 'Student Data', path: '/app/admin', icon: Shield },
+            { name: 'College Dashboard', path: '/app/college', icon: Home },
         ];
-        toolLinks = [
-            { name: 'College Profile', path: '/app/profile', icon: User },
-        ];
+        toolLinks = [];
     } else if (role === 'TEACHER') {
         mainLinks = [
             { name: 'Dashboard', path: '/app', icon: Home, exact: true },
@@ -73,8 +69,8 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         mainLinks = [{ name: 'Dashboard', path: '/app', icon: Home, exact: true }];
     }
     const bottomLinks = [
-        { name: 'Profile', path: '/app/profile', icon: User },
-        { name: 'Help Center', path: '/app/help', icon: HelpCircle },
+        { name: 'My Account', path: role === 'COLLEGE_ADMIN' ? '/app/college/profile' : '/app/profile', icon: User },
+        { name: 'Help Center', path: role === 'COLLEGE_ADMIN' ? '/app/college/help' : '/app/help', icon: HelpCircle },
     ];
     return (
         <div className={clsx(
@@ -102,10 +98,10 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                         {mainLinks.map((link) => {
                             const currentPath = location.pathname.replace(/\/$/, "");
                             const linkPath = link.path.replace(/\/$/, "");
-                            const isActive = link.exact 
-                                ? currentPath === linkPath 
+                            const isActive = link.exact
+                                ? currentPath === linkPath
                                 : currentPath.startsWith(linkPath);
-                            
+
                             return (
                                 <li key={link.name}>
                                     <Link to={link.path} className={clsx("flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative", isActive ? "bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md shadow-blue-900/20" : "hover:bg-[#1E293B] hover:text-white")}>
@@ -142,7 +138,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                         {bottomLinks.map((link) => (
                             <li key={link.name}>
                                 <Link to={link.path} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#1E293B] hover:text-white transition-all group">
-                                    <link.icon className="w-5 h-5 shrink-0 text-slate-400" />
+                                    <link.icon className="w-5 h-5 shrink-0 text-slate-400 transition-transform group-hover:scale-110" />
                                     {!isCollapsed && (
                                         <div className="flex flex-1 justify-between">
                                             <span className="font-medium">{link.name}</span>
@@ -156,19 +152,22 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                 </div>
             </div>
             <div className={clsx("p-4 border-t border-[#1E293B]", isCollapsed ? "flex justify-center" : "")}>
-                <div className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30", isCollapsed ? "p-2" : "p-3")}>
+                <Link
+                    to={role === 'COLLEGE_ADMIN' ? '/app/college/profile' : '/app/profile'}
+                    className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30 hover:bg-[#1E293B]/50 transition-colors group", isCollapsed ? "p-2" : "p-3")}
+                >
                     <div className="w-10 h-10 rounded-full border-2 border-blue-500 flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative z-10">
-                        <SmartImage 
-                            src={getImageUrl(user?.avatar)} 
+                        <SmartImage
+                            src={getImageUrl(user?.avatar)}
                             alt={user?.name || "User"}
                             containerClassName="w-full h-full"
                             fallbackIcon={() => (
                                 <div className={clsx(
                                     "w-full h-full flex items-center justify-center text-white font-black",
-                                    user?.role === 'SUPER_ADMIN' ? "bg-rose-500 text-[10px]" : 
-                                    user?.role === 'RECRUITER' ? "bg-indigo-500 text-lg" : 
-                                    user?.role === 'COLLEGE_ADMIN' ? "bg-emerald-500 text-lg" :
-                                    "bg-blue-600 text-lg"
+                                    user?.role === 'SUPER_ADMIN' ? "bg-rose-500 text-[10px]" :
+                                        user?.role === 'RECRUITER' ? "bg-indigo-500 text-lg" :
+                                            user?.role === 'COLLEGE_ADMIN' ? "bg-emerald-500 text-lg" :
+                                                "bg-blue-600 text-lg"
                                 )}>
                                     {user?.role === 'SUPER_ADMIN' ? 'SA' : (user?.name ? user.name.charAt(0).toUpperCase() : 'U')}
                                 </div>
@@ -181,7 +180,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                             <p className="text-xs text-slate-400 truncate">{user?.role}</p>
                         </div>
                     )}
-                </div>
+                </Link>
                 {!isCollapsed && (
                     <button onClick={logout} className="w-full mt-3 flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white font-medium">
                         <LogOut className="w-4 h-4 mt-0.5" /> Sign Out
