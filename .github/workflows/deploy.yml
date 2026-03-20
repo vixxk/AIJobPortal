@@ -50,7 +50,7 @@ jobs:
             df -h
 
             echo "📥 Pulling latest changes from main..."
-            git pull origin main
+            git pull origin main --rebase
 
             # --- 🚀 Deploy Node.js (Server) ---
             echo "📦 Setting up Node.js Backend..."
