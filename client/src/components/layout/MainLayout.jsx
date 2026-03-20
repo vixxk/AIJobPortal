@@ -40,7 +40,7 @@ const MainLayout = () => {
             { }
             <div className="flex-1 flex flex-col relative w-full h-full overflow-hidden print:overflow-visible">
                 { }
-                {!['/app/learning', '/app/admin', '/app/teacher', '/app/college'].some(path => location.pathname.startsWith(path)) && (
+                {!['/app/learning', '/app/admin', '/app/teacher', '/app/college', '/app/english-tutor'].some(path => location.pathname.startsWith(path)) && (
                     <>
                         {isMobile && !isSidebarOpen && <MobileNavbar toggleSidebar={() => setIsSidebarOpen(true)} />}
                         <div className="print:hidden z-10 sticky top-0 bg-background">
@@ -49,7 +49,7 @@ const MainLayout = () => {
                     </>
                 )}
                 { }
-                <main id="main-scroll-container" className={`flex-1 overflow-y-auto relative scroll-smooth print:p-0 print:overflow-visible print:bg-white ${['/app/learning', '/app/admin', '/app/teacher', '/app/college'].some(path => location.pathname.startsWith(path)) ? 'p-0' : 'px-4 py-4 md:p-6 pb-24 md:pb-6'}`}>
+                <main id="main-scroll-container" className={`flex-1 overflow-y-auto relative scroll-smooth print:p-0 print:overflow-visible print:bg-white ${['/app/learning', '/app/admin', '/app/teacher', '/app/college', '/app/english-tutor'].some(path => location.pathname.startsWith(path)) ? 'p-0' : 'px-4 py-4 md:p-6 pb-24 md:pb-6'}`}>
                     <Outlet context={{ toggleSidebar: () => setIsSidebarOpen(true) }} />
                 </main>
             </div>

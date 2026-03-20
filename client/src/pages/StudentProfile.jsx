@@ -6,7 +6,8 @@ import SmartImage from '../components/ui/SmartImage';
 import {
     User, Mail, GraduationCap, Briefcase, FileText, Plus, X, UploadCloud, CheckCircle,
     Settings, ChevronLeft, Trash2, Edit2, ChevronDown, Check,
-    Award, FileBadge, Globe, Link, Heart, Phone, BookOpen, Star, IndianRupee, Home, AlertCircle, Bell
+    Award, FileBadge, Globe, Link, Heart, Phone, BookOpen, Star, IndianRupee, Home, AlertCircle, Bell,
+    MapPin, MoreVertical
 } from 'lucide-react';
 import ReportIssueModal from '../components/ReportIssueModal';
 import toast from 'react-hot-toast';
@@ -59,7 +60,7 @@ const Input = ({ label, type = 'text', value, onChange, placeholder, disabled, i
                 onKeyDown={onKeyDown}
                 placeholder={placeholder}
                 disabled={disabled}
-                className={`w-full py-2 px-3 rounded-2xl text-[13px] font-medium transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] ${icon ? 'pl-11' : ''} ${
+                className={`w-full py-2 px-3 border rounded-2xl text-[13px] font-medium transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] ${icon ? 'pl-11' : ''} ${
                     disabled 
                         ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed' 
                         : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'
@@ -779,53 +780,359 @@ const StudentProfile = () => {
                         <div className="bg-slate-50 flex flex-col h-[calc(100dvh-140px)] overflow-hidden">
                             <div className="w-full flex flex-col h-full bg-slate-50">
                                 <div className="px-4 flex-1 overflow-y-auto hide-scrollbar h-full pb-20">
-                                    <div className="flex items-center justify-between mt-4 mb-8">
-                                        <div className="flex items-center gap-4">
+                                    <div className="bg-white rounded-[32px] p-6 flex flex-col items-center shadow-sm border border-slate-100 mb-6 mt-4 relative">
+                                        <div className="relative mb-4 mt-2">
                                             <SmartImage
                                                 src={profile.logo || profile.profileImage || user?.avatar}
                                                 alt="User"
-                                                containerClassName="w-12 h-12 rounded-full border-2 border-white shadow-sm"
+                                                containerClassName="w-[100px] h-[100px] rounded-full border-4 border-white shadow-md"
                                                 fallbackIcon={() => (
-                                                    user?.role === 'RECRUITER' ? (
-                                                        <div className="w-full h-full bg-indigo-500 flex items-center justify-center text-white text-xl font-bold">
-                                                            {user?.name ? user.name.charAt(0).toUpperCase() : 'R'}
-                                                        </div>
-                                                    ) : (
-                                                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`} alt="User" className="w-full h-full object-cover" />
-                                                    )
+                                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=e2e8f0&color=64748b`} alt="User" className="w-full h-full object-cover" />
                                                 )}
                                             />
-                                            <div>
-                                                    <h2 className="text-xl font-bold tracking-tight">{user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}</h2>
-                                                <p className="text-slate-500 text-sm mt-0.5">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
+                                            <div onClick={() => navigate('/app/profile/basic')} className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center shadow-sm cursor-pointer z-10 transition-transform active:scale-95">
+                                                <Edit2 className="w-4 h-4 text-white" />
                                             </div>
                                         </div>
-                                        <button onClick={() => navigate('/app/profile/basic')} className="w-9 h-9 flex items-center justify-center border border-blue-200 bg-white rounded-full shrink-0 shadow-sm hover:bg-slate-50 transition-colors">
-                                            <Edit2 className="w-4 h-4 text-blue-500" />
+                                        <h2 className="text-[22px] font-bold tracking-tight text-slate-800 mb-1 text-center">
+                                            {user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}
+                                        </h2>
+                                        <p className="text-slate-500 text-[13px] font-medium text-center px-4 leading-relaxed">
+                                            {profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter')} {profile.experience?.length ? `| ${profile.experience.length}+ roles exp` : ''}
+                                        </p>
+                                        {(profile.location || profile.address) && (
+                                            <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs font-semibold mt-2">
+                                                <MapPin className="w-3.5 h-3.5" />
+                                                {profile.location || profile.address}
+                                            </div>
+                                        )}
+                                        <button onClick={() => navigate('/app/profile/basic')} className="w-full mt-6 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/20 text-sm">
+                                            <Edit2 className="w-4 h-4" /> Edit Profile
                                         </button>
                                     </div>
-                                    <NavButton sectionKey="CONTACT" label="Contact Information" />
-                                    <NavButton sectionKey="SUMMARY" label={user?.role === 'RECRUITER' ? 'Company Details' : 'Summary'} />
+
                                     {user?.role !== 'RECRUITER' && (
                                         <>
-                                            <NavButton sectionKey="SALARY" label="Expected Salary" />
-                                            <NavButton sectionKey="EXPERIENCE" label="Work Experience" />
-                                            <NavButton sectionKey="EDUCATION" label="Education" />
-                                            <NavButton sectionKey="PROJECTS" label="Projects" />
-                                            <NavButton sectionKey="CERTIFICATIONS" label="Certification and Licenses" />
-                                            <NavButton sectionKey="EXAMS" label="Professional Exams" />
-                                            <NavButton sectionKey="AWARDS" label="Awards & Achievements" />
-                                            <NavButton sectionKey="SEMINARS" label="Seminars & Trainings" />
-                                            <NavButton sectionKey="ORGANIZATIONS" label="Organization Activities" />
-                                            <NavButton sectionKey="LANGUAGES" label="Languages" />
-                                            <NavButton sectionKey="SKILLS" label="Skills" />
-                                            <NavButton sectionKey="AFFILIATIONS" label="Affiliations" />
-                                            <NavButton sectionKey="REFERENCES" label="References" />
-                                            <NavButton sectionKey="RESUME" label="CV/Resume" />
+                                            <div className="mb-6">
+                                                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">Contact Information</h3>
+                                                <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100">
+                                                    <div className="flex items-center gap-4 p-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 rounded-t-2xl transition-colors" onClick={() => navigate('/app/profile/contact')}>
+                                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                                            <Mail className="w-5 h-5 text-blue-600" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Email Address</p>
+                                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.email || user?.email || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-4 p-3 cursor-pointer hover:bg-slate-50 rounded-b-2xl transition-colors" onClick={() => navigate('/app/profile/contact')}>
+                                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                                            <Phone className="w-5 h-5 text-blue-600" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Phone Number</p>
+                                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.phoneNumber || '+1 Add Phone Number'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-6">
+                                                <div className="flex items-center justify-between px-2 mb-3">
+                                                    <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Work Experience</h3>
+                                                    <button onClick={() => navigate('/app/profile/experience')} className="text-[12px] font-bold text-blue-600">Add New</button>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {(profile.experience || []).slice(0, 3).map((exp, i) => (
+                                                        <div key={i} className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/experience')}>
+                                                            <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                                <Briefcase className="w-5 h-5 text-slate-400" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1 mt-0.5">
+                                                                <h4 className="text-[15px] font-bold text-slate-800 truncate">{exp.position}</h4>
+                                                                <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{exp.company} {exp.current ? '• Full-time' : '• Contract'}</p>
+                                                                <p className="text-[11px] text-slate-400 font-medium mt-1">
+                                                                    {exp.startDate ? exp.startDate.substring(0,4) : 'Past'} - {exp.current ? 'Present' : (exp.endDate ? exp.endDate.substring(0,4) : '')}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {!(profile.experience?.length) && (
+                                                        <div className="bg-white rounded-3xl border border-slate-100 p-6 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/experience')}>
+                                                            <Briefcase className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                                                            <p className="text-slate-400 text-xs font-semibold">No experience added yet.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-6">
+                                                <div className="flex items-center justify-between px-2 mb-3">
+                                                    <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Education</h3>
+                                                    <button onClick={() => navigate('/app/profile/education')} className="text-[12px] font-bold text-blue-600">Add</button>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {(profile.education || []).slice(0, 3).map((edu, i) => (
+                                                        <div key={i} className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/education')}>
+                                                            <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                                <GraduationCap className="w-5 h-5 text-slate-400" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1 mt-0.5">
+                                                                <h4 className="text-[15px] font-bold text-slate-800 leading-tight pr-2">{edu.degree}{edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}</h4>
+                                                                <p className="text-[13px] text-slate-500 font-medium mt-1 truncate">{edu.institution}</p>
+                                                                {edu.endDate && <p className="text-[11px] text-slate-400 font-medium mt-1">Graduated {edu.endDate.substring(0,4)}</p>}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {!(profile.education?.length) && (
+                                                        <div className="bg-white rounded-3xl border border-slate-100 p-6 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/education')}>
+                                                            <GraduationCap className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                                                            <p className="text-slate-400 text-xs font-semibold">No education added yet.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-6">
+                                                <div className="flex items-center justify-between px-2 mb-3">
+                                                    <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Skills</h3>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2.5 px-1 cursor-pointer" onClick={() => navigate('/app/profile/skills')}>
+                                                    {(profile.skills || []).map((skill, i) => (
+                                                        <span key={i} className="px-3.5 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[12px] font-bold tracking-wide border border-blue-100/50 shadow-sm active:scale-95 transition-transform">
+                                                            {skill}
+                                                        </span>
+                                                    ))}
+                                                    {!(profile.skills?.length) && (
+                                                        <span className="text-slate-400 text-xs font-semibold px-2">No skills added yet.</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-6">
+                                                <div className="flex items-center justify-between px-2 mb-3">
+                                                    <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Uploaded Resumes</h3>
+                                                    <button onClick={() => navigate('/app/profile/resume')} className="text-[12px] font-bold text-blue-600">Upload New</button>
+                                                </div>
+                                                {profile.resumeUrl ? (
+                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/resume')}>
+                                                        <div className="flex items-center gap-4 min-w-0">
+                                                            <div className="w-12 h-12 rounded-[20px] bg-red-50 flex items-center justify-center shrink-0 border border-red-50">
+                                                                <FileText className="w-5 h-5 text-red-500" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-[14px] font-bold text-slate-800 truncate pr-2">{profile.resumeUrl.substring(profile.resumeUrl.lastIndexOf('/') +   1) || 'document.pdf'}</p>
+                                                                <p className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">Updated recently • 1.2 MB</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-2 -mr-2 bg-transparent shrink-0">
+                                                            <MoreVertical className="w-5 h-5 text-slate-400" />
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-white rounded-3xl border border-slate-100 p-6 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/resume')}>
+                                                        <UploadCloud className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                                                        <p className="text-slate-400 text-xs font-semibold">No resume uploaded.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="mt-6 pt-6 border-t border-slate-100">
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Summary</h3>
+                                                        <button onClick={() => navigate('/app/profile/summary')} className="text-[12px] font-bold text-blue-600">Edit</button>
+                                                    </div>
+                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/summary')}>
+                                                        <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                            <FileText className="w-5 h-5 text-blue-400" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1 mt-0.5">
+                                                            {profile.summary ? (
+                                                                <p className="text-[13px] text-slate-600 font-medium line-clamp-2 leading-relaxed">{profile.summary}</p>
+                                                            ) : (
+                                                                <p className="text-[13px] text-slate-400 font-medium pt-1">No summary added yet.</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Expected Salary</h3>
+                                                        <button onClick={() => navigate('/app/profile/salary')} className="text-[12px] font-bold text-blue-600">Edit</button>
+                                                    </div>
+                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/salary')}>
+                                                        <div className="flex items-start gap-4 min-w-0">
+                                                            <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                                <IndianRupee className="w-5 h-5 text-emerald-500" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1 mt-1">
+                                                                {profile.expectedSalary ? (
+                                                                    <>
+                                                                        <h4 className="text-[15px] font-bold text-slate-800 truncate">{profile.expectedSalary}</h4>
+                                                                        <p className="text-[12px] text-slate-400 font-medium mt-0.5">Expectation</p>
+                                                                    </>
+                                                                ) : (
+                                                                    <p className="text-[13px] text-slate-400 font-medium mt-1">Not specified.</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Projects</h3>
+                                                        <button onClick={() => navigate('/app/profile/projects')} className="text-[12px] font-bold text-blue-600">Add New</button>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        {(profile.projects || []).slice(0, 3).map((proj, i) => (
+                                                            <div key={i} className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/projects')}>
+                                                                <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                                    <Star className="w-5 h-5 text-purple-400" />
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 mt-0.5">
+                                                                    <h4 className="text-[15px] font-bold text-slate-800 truncate">{proj.name || proj.title}</h4>
+                                                                    {proj.description && <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{proj.description}</p>}
+                                                                    {proj.link && <p className="text-[11px] text-blue-500 font-medium mt-1 truncate">{proj.link}</p>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {!(profile.projects?.length) && (
+                                                            <div className="bg-white rounded-3xl border border-slate-100 p-6 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/projects')}>
+                                                                <Star className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                                                                <p className="text-slate-400 text-xs font-semibold">No projects added yet.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Certification & Licenses</h3>
+                                                        <button onClick={() => navigate('/app/profile/certifications')} className="text-[12px] font-bold text-blue-600">Add New</button>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        {(profile.certifications || []).slice(0, 3).map((cert, i) => (
+                                                            <div key={i} className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/certifications')}>
+                                                                <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                                    <FileBadge className="w-5 h-5 text-amber-500" />
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 mt-0.5">
+                                                                    <h4 className="text-[15px] font-bold text-slate-800 truncate">{cert.name}</h4>
+                                                                    <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{cert.issuingOrganization}</p>
+                                                                    <p className="text-[11px] text-slate-400 font-medium mt-1">
+                                                                        {cert.issueDate && cert.issueDate.substring(0,4)} {cert.expirationDate ? `- ${cert.expirationDate.substring(0,4)}` : ''}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {!(profile.certifications?.length) && (
+                                                            <div className="bg-white rounded-3xl border border-slate-100 p-6 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/certifications')}>
+                                                                <FileBadge className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                                                                <p className="text-slate-400 text-xs font-semibold">No certifications added yet.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Awards & Achievements</h3>
+                                                        <button onClick={() => navigate('/app/profile/awards')} className="text-[12px] font-bold text-blue-600">Add New</button>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        {(profile.awards || []).slice(0, 3).map((award, i) => (
+                                                            <div key={i} className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/awards')}>
+                                                                <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                                    <Award className="w-5 h-5 text-rose-500" />
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 mt-0.5">
+                                                                    <h4 className="text-[15px] font-bold text-slate-800 truncate">{award.title}</h4>
+                                                                    <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{award.issuer}</p>
+                                                                    {award.date && <p className="text-[11px] text-slate-400 font-medium mt-1">{award.date.substring(0,4)}</p>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {!(profile.awards?.length) && (
+                                                            <div className="bg-white rounded-3xl border border-slate-100 p-6 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/awards')}>
+                                                                <Award className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                                                                <p className="text-slate-400 text-xs font-semibold">No awards added yet.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Languages</h3>
+                                                        <button onClick={() => navigate('/app/profile/languages')} className="text-[12px] font-bold text-blue-600">Edit</button>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2.5 px-1 cursor-pointer" onClick={() => navigate('/app/profile/languages')}>
+                                                        {(profile.languages || []).map((lang, i) => (
+                                                            <div key={i} className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-[14px] shadow-sm active:scale-95 transition-transform flex flex-col">
+                                                                <span className="text-[13px] font-bold text-slate-700">{lang.language}</span>
+                                                                <span className="text-[10px] text-blue-500 font-bold tracking-wide uppercase">{lang.proficiency || 'Intermediate'}</span>
+                                                            </div>
+                                                        ))}
+                                                         {!(profile.languages?.length) && (
+                                                            <span className="text-slate-400 text-xs font-semibold px-2">No languages added yet.</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-8">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Job Seeking Status</h3>
+                                                        <button onClick={() => navigate('/app/profile/status')} className="text-[12px] font-bold text-blue-600">Edit</button>
+                                                    </div>
+                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/status')}>
+                                                        <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                            <User className="w-5 h-5 text-cyan-500" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            {profile.jobSeekingStatus ? (
+                                                                <>
+                                                                    <h4 className="text-[14px] font-bold text-slate-800 pr-2 leading-tight">{profile.jobSeekingStatus}</h4>
+                                                                </>
+                                                            ) : (
+                                                                <p className="text-[13px] text-slate-400 font-medium">Not actively updated.</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </>
                                     )}
-                                    <NavButton sectionKey="SETTINGS" label="Settings" />
-                                    {user?.role !== 'RECRUITER' && <NavButton sectionKey="STATUS" label="Job Seeking Status" />}
+                                    {user?.role === 'RECRUITER' && (
+                                        <>
+                                            <div className="mt-6 pt-6 border-t border-slate-100 mb-8">
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Company Details</h3>
+                                                        <button onClick={() => navigate('/app/profile/summary')} className="text-[12px] font-bold text-blue-600">Edit</button>
+                                                    </div>
+                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/summary')}>
+                                                        <div className="w-12 h-12 rounded-[20px] bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                                            <FileText className="w-5 h-5 text-blue-400" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1 mt-0.5">
+                                                            {profile.summary ? (
+                                                                <p className="text-[13px] text-slate-600 font-medium line-clamp-2 leading-relaxed">{profile.summary}</p>
+                                                            ) : (
+                                                                <p className="text-[13px] text-slate-400 font-medium pt-1">No company details added.</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="pt-4 border-t border-slate-200 mt-6 pb-8 text-center px-4">
+                                                <p className="text-slate-400 text-xs font-medium mb-3">Recruiter Profile is active. All details are synchronized.</p>
+                                                <button onClick={() => navigate('/app/profile/settings')} className="text-sm font-bold text-blue-600 bg-blue-50 px-6 py-2.5 rounded-full hover:bg-blue-100 transition-colors">Go to Settings</button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -871,15 +1178,10 @@ const StudentProfile = () => {
                                     <NavButtonDesktop sectionKey="PROJECTS" label="Projects" />
                                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Qualifications</h4>
                                     <NavButtonDesktop sectionKey="CERTIFICATIONS" label="Certification & Licenses" />
-                                    <NavButtonDesktop sectionKey="EXAMS" label="Professional Exams" />
                                     <NavButtonDesktop sectionKey="AWARDS" label="Awards & Achievements" />
-                                    <NavButtonDesktop sectionKey="SEMINARS" label="Seminars & Trainings" />
-                                    <NavButtonDesktop sectionKey="ORGANIZATIONS" label="Organization Activities" />
                                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Other Information</h4>
                                     <NavButtonDesktop sectionKey="LANGUAGES" label="Languages" />
                                     <NavButtonDesktop sectionKey="SKILLS" label="Skills" />
-                                    <NavButtonDesktop sectionKey="AFFILIATIONS" label="Affiliations" />
-                                    <NavButtonDesktop sectionKey="REFERENCES" label="References" />
                                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">System</h4>
                                     <NavButtonDesktop sectionKey="RESUME" label="CV/Resume" />
                                     <NavButtonDesktop sectionKey="STATUS" label="Job Seeking Status" />

@@ -4,7 +4,8 @@ import {
     Home, Briefcase, BookOpen, Trophy,
     Users, Settings, LogOut, Bell,
     MessageSquare, FileText, CheckCircle, Orbit, Sparkles,
-    PanelLeftClose, PanelLeft, PlusCircle, ClipboardList, Shield, User, HelpCircle, Bookmark
+    PanelLeftClose, PanelLeft, PlusCircle, ClipboardList, Shield, User, HelpCircle, Bookmark,
+    Rocket, Headphones, Bot
 } from 'lucide-react';
 import clsx from 'clsx';
 import Logo from '../Logo';
@@ -26,16 +27,16 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     if (role === 'STUDENT') {
         mainLinks = [
             { name: 'Dashboard', path: '/app', icon: Home, exact: true },
-            { name: 'Jobs & Internships', path: '/app/jobs', icon: Briefcase },
-            { name: 'Gradnex Jobs', path: '/app/gradnex-jobs', icon: Sparkles },
+            { name: 'Global Job Search', path: '/app/jobs', icon: Briefcase },
+            { name: 'Gradnex Jobs', path: '/app/gradnex-jobs', icon: Rocket },
             { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
             { name: 'Competitions', path: '/app/competitions', icon: Trophy },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
-            { name: 'AI English Tutor', path: '/app/english-tutor', icon: Users },
+            { name: 'AI English Tutor', path: '/app/english-tutor', icon: Headphones },
         ];
         toolLinks = [
             { name: 'Resume Builder', path: '/app/resume', icon: FileText, highlight: true },
-            { name: 'Interview Prep', path: '/app/interview', icon: Orbit },
+            { name: 'AI Mock Interview', path: '/app/interview', icon: Bot },
         ];
     } else if (role === 'RECRUITER') {
         mainLinks = [
@@ -56,7 +57,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         mainLinks = [
             { name: 'Dashboard', path: '/app', icon: Home, exact: true },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
-            { name: 'AI English Tutor', path: '/app/english-tutor', icon: Users },
+            { name: 'AI English Tutor', path: '/app/english-tutor', icon: Headphones },
         ];
         toolLinks = [
             { name: 'My Profile', path: '/app/profile', icon: User },
@@ -94,7 +95,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                     </button>
                 )}
             </div>
-            <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-8 py-6 px-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-8 py-6 px-4 hide-scrollbar">
                 <div>
                     {!isCollapsed && <p className="text-xs font-semibold text-slate-500 mb-3 px-3 uppercase">Main</p>}
                     <ul className="space-y-1">

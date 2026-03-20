@@ -39,7 +39,11 @@ import {
 
 import MyApplications from './pages/MyApplications';
 import InterviewPage from './pages/InterviewPage';
-import EnglishTutor from './pages/EnglishTutor';
+import TutorLayout from './pages/english-tutor/TutorLayout';
+import TutorDashboard from './pages/english-tutor/TutorDashboard';
+import TutorWelcome from './pages/english-tutor/TutorWelcome';
+import TutorAssessment from './pages/english-tutor/TutorAssessment';
+import TutorLesson from './pages/english-tutor/TutorLesson';
 import SkillLearning from './pages/SkillLearning';
 import TeacherLayout from './pages/teacher/TeacherLayout';
 import TeacherOverview from './pages/teacher/TeacherOverview';
@@ -112,7 +116,12 @@ function App() {
 
               </Route>
               <Route path="interview" element={<ProtectedRoute allowedRoles={['STUDENT']}><InterviewPage /></ProtectedRoute>} />
-              <Route path="english-tutor" element={<ProtectedRoute allowedRoles={['STUDENT']}><EnglishTutor /></ProtectedRoute>} />
+              <Route path="english-tutor" element={<ProtectedRoute allowedRoles={['STUDENT']}><TutorLayout /></ProtectedRoute>}>
+                  <Route index element={<TutorDashboard />} />
+                  <Route path="welcome" element={<TutorWelcome />} />
+                  <Route path="assessment" element={<TutorAssessment />} />
+                  <Route path="lesson" element={<TutorLesson />} />
+              </Route>
               <Route path="learning/*" element={<ProtectedRoute allowedRoles={['STUDENT']}><SkillLearning /></ProtectedRoute>} />
               <Route path="community" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Community" /></ProtectedRoute>} />
               <Route path="competitions" element={<ProtectedRoute allowedRoles={['STUDENT']}><StudentCompetitions /></ProtectedRoute>} />

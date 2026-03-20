@@ -7,27 +7,27 @@ exports.getDashboard = catchAsync(async (req, res, next) => {
   let tutorData = await EnglishTutor.findOne({ user: req.user.id });
 
   if (!tutorData) {
-
     tutorData = await EnglishTutor.create({
       user: req.user.id,
       currentLevel: 1,
-      isInitialTestCompleted: true,
+      isInitialTestCompleted: false, // Changed to false to force placement test
       xp: 0,
       streak: 0,
       stats: {
-        overallFluency: 0,
-        overallGrammar: 0,
-        overallVocab: 0,
-        overallPronunciation: 0,
-        lessonsCompletedCount: 0,
-        totalXP: 0
+        overallFluency: 0, overallGrammar: 0, overallVocab: 0, overallPronunciation: 0,
+        lessonsCompletedCount: 0, totalXP: 0
       }
     });
   }
 
+  const dashboardData = tutorData.toObject();
+  const currentLevel = tutorData.currentLevel || 1;
+  dashboardData.lessonsInCurrentLevel = (tutorData.lessonsProgress || []).filter(l => l.level === currentLevel).length;
+  dashboardData.lessonsNeededForUpgrade = 5;
+
   res.status(200).json({
     status: 'success',
-    data: tutorData
+    data: dashboardData
   });
 });
 
@@ -71,33 +71,31 @@ exports.submitSpeakingTest = catchAsync(async (req, res, next) => {
     tutorData = new EnglishTutor({ user: req.user.id });
   }
 
-  if (evalData.assigned_level > 0) {
-    tutorData.currentLevel = evalData.assigned_level;
+  const assignedLevel = evalData.suggested_level || evalData.assigned_level || 1;
+
+  if (assignedLevel > 0) {
+    tutorData.currentLevel = assignedLevel;
     tutorData.isInitialTestCompleted = true;
-    tutorData.focusAreas = evalData.focus_areas;
+    tutorData.focusAreas = evalData.focus_areas || [];
 
     tutorData.testResults.push({
-      levelAssigned: evalData.assigned_level,
-      scores: evalData.scores,
-      errorDistribution: evalData.error_distribution,
-      feedback: evalData.overall_feedback
+      levelAssigned: assignedLevel,
+      scores: {
+        fluency: evalData.scores.fluency * 10,
+        grammar: evalData.scores.grammar * 10,
+        vocabulary: evalData.scores.vocabulary * 10,
+        pronunciation: evalData.scores.pronunciation * 10
+      },
+      feedback: evalData.analysis || evalData.overall_feedback || "Proficiency evaluation complete."
     });
-
-    if (evalData.error_distribution) {
-      evalData.error_distribution.forEach(err => {
-        if (tutorData.errorTracking[err.category] !== undefined) {
-          tutorData.errorTracking[err.category] += err.count;
-        }
-      });
-    }
 
     const initialXP = 250;
     tutorData.xp = (tutorData.xp || 0) + initialXP;
     tutorData.stats.totalXP = (tutorData.stats.totalXP || 0) + initialXP;
-    tutorData.stats.overallFluency = evalData.scores.fluency;
-    tutorData.stats.overallGrammar = evalData.scores.grammar;
-    tutorData.stats.overallVocab = evalData.scores.vocabulary;
-    tutorData.stats.overallPronunciation = evalData.scores.pronunciation;
+    tutorData.stats.overallFluency = evalData.scores.fluency * 10; 
+    tutorData.stats.overallGrammar = evalData.scores.grammar * 10;
+    tutorData.stats.overallVocab = evalData.scores.vocabulary * 10;
+    tutorData.stats.overallPronunciation = evalData.scores.pronunciation * 10;
 
     tutorData.lastActivityDate = new Date();
     tutorData.streak = (tutorData.streak || 0) >= 1 ? tutorData.streak : 1;
@@ -164,10 +162,15 @@ exports.submitLessonTask = catchAsync(async (req, res, next) => {
       tutorData.dailyGoals.speakingMinutes += parseFloat(estimatedMinutes.toFixed(2));
 
       const alpha = 0.2;
-      tutorData.stats.overallFluency = Math.round(tutorData.stats.overallFluency * (1 - alpha) + evaluation.scores.fluency * alpha);
-      tutorData.stats.overallGrammar = Math.round(tutorData.stats.overallGrammar * (1 - alpha) + evaluation.scores.grammar * alpha);
-      tutorData.stats.overallVocab = Math.round(tutorData.stats.overallVocab * (1 - alpha) + evaluation.scores.vocabulary * alpha);
-      tutorData.stats.overallPronunciation = Math.round(tutorData.stats.overallPronunciation * (1 - alpha) + evaluation.scores.pronunciation * alpha);
+      const fScore = evaluation.scores?.fluency ?? evaluation.score ?? tutorData.stats.overallFluency;
+      const gScore = evaluation.scores?.grammar ?? evaluation.score ?? tutorData.stats.overallGrammar;
+      const vScore = evaluation.scores?.vocabulary ?? evaluation.score ?? tutorData.stats.overallVocab;
+      const pScore = evaluation.scores?.pronunciation ?? evaluation.score ?? tutorData.stats.overallPronunciation;
+
+      tutorData.stats.overallFluency = Math.round(tutorData.stats.overallFluency * (1 - alpha) + fScore * alpha);
+      tutorData.stats.overallGrammar = Math.round(tutorData.stats.overallGrammar * (1 - alpha) + gScore * alpha);
+      tutorData.stats.overallVocab = Math.round(tutorData.stats.overallVocab * (1 - alpha) + vScore * alpha);
+      tutorData.stats.overallPronunciation = Math.round(tutorData.stats.overallPronunciation * (1 - alpha) + pScore * alpha);
 
       tutorData.lastActivityDate = new Date();
       await tutorData.save();
@@ -228,5 +231,57 @@ exports.completeLesson = catchAsync(async (req, res, next) => {
     res.status(200).json({
         status: 'success',
         data: tutorData
+    });
+});
+
+exports.skipAssessment = catchAsync(async (req, res, next) => {
+    let tutorData = await EnglishTutor.findOne({ user: req.user.id });
+    if (!tutorData) {
+        tutorData = new EnglishTutor({ user: req.user.id });
+    }
+
+    tutorData.currentLevel = 1;
+    tutorData.isInitialTestCompleted = true;
+    tutorData.lastActivityDate = new Date();
+    await tutorData.save();
+
+    res.status(200).json({
+        status: 'success',
+        data: tutorData
+    });
+});
+
+exports.resetProgression = catchAsync(async (req, res, next) => {
+    let tutorData = await EnglishTutor.findOne({ user: req.user.id });
+    if (!tutorData) {
+        return next(new AppError('No tutor data found to reset.', 404));
+    }
+
+    // Resetting to absolute baseline
+    tutorData.currentLevel = 1;
+    tutorData.isInitialTestCompleted = false;
+    tutorData.xp = 0;
+    tutorData.streak = 0;
+    tutorData.stats = {
+        overallFluency: 0, overallGrammar: 0, overallVocab: 0, overallPronunciation: 0,
+        lessonsCompletedCount: 0, totalXP: 0
+    };
+    tutorData.lessonsProgress = [];
+    tutorData.testResults = [];
+    tutorData.errorTracking = {
+        GRAMMAR_TENSE: 0, PRONUNCIATION_PHONEME: 0, VOCAB_REPETITION: 0, FLUENCY_PAUSE: 0,
+        articles: 0, sentence_structure: 0, frequent_mistakes: []
+    };
+    tutorData.dailyGoals = {
+        lessonCompleted: false,
+        speakingMinutes: 0,
+        newWordsLearned: 0
+    };
+    
+    await tutorData.save();
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Progression reset successfully'
     });
 });

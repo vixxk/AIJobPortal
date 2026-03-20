@@ -83,7 +83,7 @@ const MyApplications = () => {
                         <Search className="w-10 h-10 text-slate-300" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-800 mb-2">No Applications Found</h3>
-                    <p className="text-slate-500 mb-6 max-w-sm">You haven't applied to any positions yet. Head over to the Job Search page to find your next role.</p>
+                    <p className="text-slate-500 mb-6 max-w-sm">You haven't applied to any positions yet. Head over to the Global Job Search page to find your next role.</p>
                     <a href="/app/jobs" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm">
                         Find Jobs
                     </a>

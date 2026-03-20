@@ -9,7 +9,7 @@ import {
     MessageSquare, FileText, CheckCircle, Orbit,
     Search, MapPin, Bookmark, ChevronRight,
     Sparkles, ArrowRight, SlidersHorizontal, Menu,
-    MonitorPlay
+    MonitorPlay, Rocket, Headphones
 } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
@@ -213,12 +213,12 @@ const Dashboard = () => {
         fetchRecentData();
     }, [fetchRecentData]); // Run when activeCategory changes (since fetchRecentData depends on it)
     const features = [
-        { title: 'Job Search', desc: 'Find Best Matches', icon: Search, color: 'text-blue-600', bg: 'bg-blue-50', link: '/app/jobs' },
+        { title: 'Global Job Search', desc: 'Find Best Matches', icon: Search, color: 'text-blue-600', bg: 'bg-blue-50', link: '/app/jobs' },
         { title: 'Resume Builder', desc: 'Optimized for ATS', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', link: '/app/resume' },
-        { title: 'Mock Interviews', desc: 'Practice with AI', icon: MonitorPlay, color: 'text-orange-600', bg: 'bg-orange-50', link: '/app/interview' },
+        { title: 'AI Mock Interviews', desc: 'Practice with AI', icon: MonitorPlay, color: 'text-orange-600', bg: 'bg-orange-50', link: '/app/interview' },
         { title: 'Skill Learning', desc: 'Online Classes', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
-        { title: 'AI English Tutor', desc: 'Spoken Practice', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/app/english-tutor' },
-        { title: 'Gradnex Job Postings', desc: 'Top Companies', icon: Sparkles, color: 'text-rose-600', bg: 'bg-rose-50', link: '/app/gradnex-jobs' },
+        { title: 'AI English Tutor', desc: 'Spoken Practice', icon: Headphones, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/app/english-tutor' },
+        { title: 'Gradnex Job Postings', desc: 'Top Companies', icon: Rocket, color: 'text-rose-600', bg: 'bg-rose-50', link: '/app/gradnex-jobs' },
     ];
     const name = user?.name || "Andrew Ainsley";
     const firstName = name.split(' ')[0];

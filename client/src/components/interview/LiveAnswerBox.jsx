@@ -25,7 +25,9 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
         streamRef.current?.getTracks().forEach(t => t.stop());
         streamRef.current = null;
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-        if (audioContextRef.current) audioContextRef.current.close();
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+            audioContextRef.current.close().catch(() => {});
+        }
         setAudioLevels(Array(15).fill(4));
         setIsRecording(false);
         try { recognitionRef.current?.stop(); } catch (_) { }
@@ -250,15 +252,17 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                             <span>{isSubmitting ? 'Syncing...' : 'Submit Answer'}</span>
                         </button>
 
-                        <button
-                            onClick={() => { stopAll(); onEndInterview?.(); }}
-                            className={`flex items-center justify-center gap-2 px-4 py-3.5 md:px-6 md:py-5 bg-white border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl md:rounded-[2rem] transition-all shadow-sm shrink-0 ${layout === 'sidebar' ? 'w-full' : 'w-auto'}`}
-                            title="End Session"
-                            type="button"
-                        >
-                            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
-                            <span className={layout === 'sidebar' ? 'inline' : 'hidden md:inline'}>End Session</span>
-                        </button>
+                        {onEndInterview && (
+                            <button
+                                onClick={() => { stopAll(); onEndInterview?.(); }}
+                                className={`flex items-center justify-center gap-2 px-4 py-3.5 md:px-6 md:py-5 bg-white border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl md:rounded-[2rem] transition-all shadow-sm shrink-0 ${layout === 'sidebar' ? 'w-full' : 'w-auto'}`}
+                                title="End Session"
+                                type="button"
+                            >
+                                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                                <span className={layout === 'sidebar' ? 'inline' : 'hidden md:inline'}>End Session</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

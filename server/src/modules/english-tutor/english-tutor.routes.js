@@ -9,8 +9,10 @@ router.use(protect);
 
 router.get('/dashboard', englishTutorController.getDashboard);
 router.post('/test/submit', englishTutorController.submitSpeakingTest);
+router.post('/test/skip', englishTutorController.skipAssessment);
 router.get('/lesson', englishTutorController.getLesson);
 router.post('/lesson/submit-task', upload.single('audio'), englishTutorController.submitLessonTask);
 router.post('/lesson/complete', englishTutorController.completeLesson);
+router.post('/test/reset', englishTutorController.resetProgression);
 
 module.exports = router;

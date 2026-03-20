@@ -5,17 +5,24 @@ import { useAuth } from '../context/AuthContext';
 import { Briefcase, Users, PlusCircle, Calendar, Eye, MapPin, Trophy, GraduationCap, XCircle } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
 import clsx from 'clsx';
-const StatCard = ({ title, value, icon: Icon, color, loading }) => (
-    <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 sm:gap-5 transition-all hover:shadow-md hover:border-slate-300">
-        <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${color.bg} flex items-center justify-center shrink-0`}>
-            <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${color.text}`} />
+const StatCard = ({ title, value, icon: Icon, color, loading, showEye }) => (
+    <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between transition-all hover:shadow-md hover:border-slate-300 group">
+        <div className="flex items-center gap-4 sm:gap-5">
+            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${color.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${color.text}`} />
+            </div>
+            <div>
+                <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{title}</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    {loading ? <div className="h-7 w-10 sm:h-8 sm:w-12 bg-slate-100 animate-pulse rounded-md" /> : value}
+                </h3>
+            </div>
         </div>
-        <div>
-            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{title}</p>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {loading ? <div className="h-7 w-10 sm:h-8 sm:w-12 bg-slate-100 animate-pulse rounded-md" /> : value}
-            </h3>
-        </div>
+        {showEye && (
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-50 flex items-center justify-center transition-colors group-hover:text-white ${color.text === 'text-indigo-600' ? 'group-hover:bg-indigo-600' : 'group-hover:bg-emerald-600'}`}>
+                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+        )}
     </div>
 );
 
@@ -93,13 +100,14 @@ const RecruiterDashboard = () => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Link to="/app/recruiter/listings" className="block transition-transform hover:scale-[1.02]">
+                <Link to="/app/recruiter/listings" className="block">
                     <StatCard 
                         title="Active Listings" 
                         value={stats.activeJobs} 
                         icon={Briefcase} 
                         loading={loading}
                         color={{ bg: 'bg-indigo-50', text: 'text-indigo-600' }} 
+                        showEye={true}
                     />
                 </Link>
                 <StatCard 

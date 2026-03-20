@@ -38,8 +38,8 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
         }
 
         // Student & Shared Paths
-        if (path === '/app/jobs') return 'Job Search';
-        if (path === '/app/resume') return 'AI Resume Builder';
+        if (path === '/app/jobs') return 'Global Job Search';
+        if (path === '/app/resume') return 'Resume Builder';
         if (path === '/app/saved') return 'Saved Jobs';
         if (path === '/app/profile') return 'Profile';
         if (path.startsWith('/app/profile/')) return 'Profile';

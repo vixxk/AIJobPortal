@@ -117,18 +117,44 @@ const AdminOverview = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-slate-900 rounded-[32px] lg:rounded-[40px] p-8 lg:p-10 text-white relative overflow-hidden h-[300px] lg:h-[400px]">
+                <div className="lg:col-span-2 bg-slate-900 rounded-[32px] lg:rounded-[40px] p-8 lg:p-10 text-white relative overflow-hidden h-auto min-h-[300px] lg:min-h-[400px]">
                     <div className="relative z-10 flex flex-col h-full">
                         <div className="bg-white/10 self-start px-4 py-1.5 rounded-full text-[9px] lg:text-[10px] font-black tracking-widest uppercase mb-4 lg:mb-6">Growth Analytics</div>
                         <h2 className="text-xl lg:text-4xl font-black tracking-tighter leading-tight mb-2 lg:mb-4 uppercase">Platform utilization<br className="hidden sm:block" /> is accelerating.</h2>
-                        <p className="text-slate-400 font-bold text-[10px] lg:text-sm max-w-sm uppercase tracking-wide opacity-80">Engagement growth: +140% this quarter.</p>
-                        <div className="mt-auto flex items-end justify-between gap-4">
-                            <div className="flex gap-2 lg:gap-4 flex-1">
-                                {[30, 60, 45, 80, 50, 95].map((h, i) => (
-                                    <div key={i} className="flex-1 max-w-[24px] lg:max-w-[32px] bg-indigo-500 rounded-t-lg transition-all hover:bg-white animate-in slide-in-from-bottom" style={{ height: `${h}px`, transitionDelay: `${i * 100}ms` }} />
-                                ))}
+                        <p className="text-slate-400 font-bold text-[10px] lg:text-sm max-w-sm uppercase tracking-wide opacity-80">
+                            Total Engagements: {(stats?.totalUsers || 0) + (stats?.totalJobs || 0) + (stats?.totalApplications || 0) + (stats?.totalCourses || 0)} across all sectors.
+                        </p>
+                        <div className="mt-8 lg:mt-auto flex items-end justify-between gap-4">
+                            <div className="flex gap-4 lg:gap-8 flex-1 h-[80px] lg:h-[120px] items-end">
+                                {[
+                                    { label: 'Users', val: stats?.totalUsers || 0 },
+                                    { label: 'Jobs', val: stats?.totalJobs || 0 },
+                                    { label: 'Apps', val: stats?.totalApplications || 0 },
+                                    { label: 'Courses', val: stats?.totalCourses || 0 },
+                                    { label: 'Events', val: stats?.totalCompetitions || 0 }
+                                ].map((item, i, arr) => {
+                                    const maxVal = Math.max(...arr.map(a => a.val), 10);
+                                    const heightPct = Math.max(10, (item.val / maxVal) * 100);
+                                    return (
+                                        <div key={item.label} className="flex flex-col items-center flex-1 gap-2 group">
+                                            <div className="w-full relative flex items-end justify-center h-full bg-white/5 rounded-t-lg overflow-hidden group-hover:bg-white/10 transition-colors">
+                                                <div 
+                                                    className="w-full bg-indigo-500 rounded-t-lg transition-all duration-1000 group-hover:bg-white animate-in slide-in-from-bottom flex justify-center pt-2"
+                                                    style={{ height: `${heightPct}%`, transitionDelay: `${i * 100}ms` }}
+                                                />
+                                            </div>
+                                            <p className="text-[8px] lg:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.label}</p>
+                                            <p className="text-[10px] lg:text-xs font-black text-white">{item.val}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            <button className="flex items-center gap-2 bg-white text-slate-900 px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-xs hover:bg-slate-100 transition-all shrink-0 uppercase tracking-widest">REPORT <ChevronRight className="w-4 h-4" /></button>
+                            <button 
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 bg-white text-slate-900 px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-xs hover:bg-slate-100 transition-all shrink-0 uppercase tracking-widest self-end"
+                            >
+                                GENERATE REPORT <ChevronRight className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
                     <div className="absolute -top-20 -right-20 w-80 h-80 bg-indigo-600/20 rounded-full blur-[100px]" />

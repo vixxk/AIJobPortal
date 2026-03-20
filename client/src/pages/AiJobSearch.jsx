@@ -201,9 +201,6 @@ const AiJobSearch = () => {
         <div className="bg-slate-50 md:bg-white flex flex-col font-sans relative">
             <div className="md:hidden bg-white px-5 pt-6 pb-2 sticky top-0 z-20 border-b border-slate-100 shadow-sm">
                 <div className="flex items-start gap-3 w-full mb-2">
-                    <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-slate-700 mt-1.5 shrink-0">
-                        <ArrowLeft className="w-6 h-6" strokeWidth={2} />
-                    </button>
                     <form onSubmit={(e) => { handleSearch(e); setShowMobileSearch(false); }} className="flex-1 flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                             <div className="flex-1 flex items-center bg-slate-100 rounded-xl px-3 py-2 border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
@@ -317,7 +314,7 @@ const AiJobSearch = () => {
                             </svg>
                         </div>
                     </div>
-                    <h2 className="text-4xl font-extrabold mb-4 tracking-tight relative z-10">AI-Powered Job Search</h2>
+                    <h2 className="text-4xl font-extrabold mb-4 tracking-tight relative z-10">Global Job Search</h2>
                     <p className="text-blue-100 max-w-xl mx-auto mb-10 text-base relative z-10 font-medium">
                         Connect with top employers. Our intelligent scanner finds the best roles matching your profile across the web.
                     </p>
@@ -472,68 +469,24 @@ const AiJobSearch = () => {
                     )}
                     {!loading && allJobs.length > 0 && (
                         <>
-                            <div className="hidden md:flex flex-col mb-8 mt-4 relative">
-                                <div className="flex justify-between items-center w-full">
-                                    <span className="text-2xl font-black text-slate-900 tracking-tight">
-                                        {role || location ? (
-                                            <>{totalCount.toLocaleString()} <span className="text-slate-500 font-bold text-lg ml-1">Results Found</span></>
-                                        ) : (
-                                            <span className="flex items-center gap-2">
-                                                <Sparkles className="w-6 h-6 text-blue-600" />
-                                                Trending Global Jobs
-                                            </span>
-                                        )}
-                                    </span>
-                                    {allJobs.length > 0 && (
-                                        <div className="flex items-center gap-4">
-                                            <button onClick={() => setShowSortMenu(!showSortMenu)} className="flex items-center gap-2 text-slate-600 hover:text-blue-600 font-bold text-sm transition-all border border-slate-200 px-5 py-2.5 rounded-2xl bg-white shadow-sm hover:shadow-md active:scale-95">
-                                                <ArrowDownUp className="w-4 h-4" strokeWidth={2.5} />
-                                                Sort By
-                                            </button>
-                                            {showSortMenu && (
-                                                <div className="absolute right-0 top-14 bg-white/80 backdrop-blur-xl shadow-2xl border border-slate-100 rounded-[20px] py-3 w-56 z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                                    <div className="px-4 py-2 border-b border-slate-50 mb-1">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Order by</span>
-                                                    </div>
-                                                    <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2.5 text-[13px] font-bold hover:bg-blue-50/50 transition-colors ${sortBy === 'name-asc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>TItle (A-Z)</button>
-                                                    <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2.5 text-[13px] font-bold hover:bg-blue-50/50 transition-colors ${sortBy === 'name-desc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>Title (Z-A)</button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                                {!role && !location && (
-                                    <p className="text-slate-500 font-medium text-sm mt-1">Based on global trending roles. Start searching to narrow down your preferences.</p>
-                                )}
-                            </div>
-                            <div className="md:hidden flex flex-col mb-6 mt-2 relative">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[17px] font-black text-slate-900 tracking-tight">
-                                        {role || location ? (
-                                            <>{totalCount.toLocaleString()} <span className="text-slate-500 font-bold text-[13px] ml-0.5">Results</span></>
-                                        ) : (
-                                            <span className="flex items-center gap-1.5">
-                                                <Sparkles className="w-4 h-4 text-blue-600" />
-                                                Trending Global Jobs
-                                            </span>
-                                        )}
-                                    </span>
-                                    <div>
-                                        <button onClick={() => setShowSortMenu(!showSortMenu)} className="text-blue-600 p-1 bg-blue-50 rounded-lg active:scale-90 transition-transform">
-                                            <ArrowDownUp className="w-[18px] h-[18px]" strokeWidth={2.5} />
-                                        </button>
-                                        {showSortMenu && (
-                                            <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-md shadow-2xl border border-slate-100 rounded-2xl py-2 w-48 z-50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                                                <button onClick={() => handleSort('name-asc')} className={`text-left px-4 py-2.5 text-xs font-bold ${sortBy === 'name-asc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>Name (A-Z)</button>
-                                                <button onClick={() => handleSort('name-desc')} className={`text-left px-4 py-2.5 text-xs font-bold ${sortBy === 'name-desc' ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>Name (Z-A)</button>
-                                            </div>
-                                        )}
+                            {((role || location) && totalCount > 0) && (
+                                <div className="hidden md:flex flex-col mb-8 mt-4 relative">
+                                    <div className="flex justify-between items-center w-full">
+                                        <span className="text-2xl font-black text-slate-900 tracking-tight">
+                                            {totalCount.toLocaleString()} <span className="text-slate-500 font-bold text-lg ml-1">Results Found</span>
+                                        </span>
                                     </div>
                                 </div>
-                                {!role && !location && (
-                                    <p className="text-slate-500 font-bold text-[11px] mt-0.5 opacity-80">Top picks for you across the globe</p>
-                                )}
-                            </div>
+                            )}
+                            {((role || location) && totalCount > 0) && (
+                                <div className="md:hidden flex flex-col mb-6 mt-2 relative">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[17px] font-black text-slate-900 tracking-tight">
+                                            {totalCount.toLocaleString()} <span className="text-slate-500 font-bold text-[13px] ml-0.5">Results</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:grid-cols-2 md:gap-6">
                                 {jobs.map((job) => {
                                     const title = job.title || 'Untitled Position';

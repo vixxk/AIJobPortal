@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Volume2, Mic, X } from 'lucide-react';
 import { submitSpeakingTest, speakText } from '../../services/englishTutorApi';
 import { transcribeAudio } from '../../services/interviewApi';
 import LiveAnswerBox from '../interview/LiveAnswerBox';
@@ -62,24 +63,45 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
     const [audioRef] = useState(useRef(null));
     const [showIntro, setShowIntro] = useState(true);
     const [isElenaSpeaking, setIsElenaSpeaking] = useState(false);
+    const [isAudioFetching, setIsAudioFetching] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState(60);
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [testResults, setTestResults] = useState(null);
     const [isProcessingTask, setIsProcessingTask] = useState(false);
+    const [isAudioLoading, setIsAudioLoading] = useState(false);
+    const [hasInteracted, setHasInteracted] = useState(false);
     const lastSpokenTaskRef = useRef(null);
 
     const currentTask = TASKS[currentStep];
 
-    const handleSpeak = async (text) => {
+    const handleSpeak = async (text, isAuto = false) => {
+        if (!text) return;
+        if (isAuto) {
+            setIsAudioFetching(true);
+            setIsAudioLoading(true);
+            // Safety timeout to prevent getting stuck
+            setTimeout(() => setIsAudioLoading(false), 5000);
+        } else {
+            setIsElenaSpeaking(true);
+        }
+
         try {
             const blob = await speakText(text);
             const url = URL.createObjectURL(blob.data);
+            if (isAuto) setIsAudioFetching(false);
+            
             if (audioRef.current) {
                 audioRef.current.src = url;
-                audioRef.current.play();
+                setIsElenaSpeaking(true);
+                audioRef.current.play().catch(err => {
+                    console.warn("Autoplay blocked:", err);
+                    setIsAudioLoading(false);
+                });
             }
         } catch (err) {
             console.error('TTS failed', err);
+            setIsAudioFetching(false);
+            setIsAudioLoading(false);
             setIsElenaSpeaking(false);
         }
     };
@@ -97,12 +119,12 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
         return () => clearInterval(interval);
     }, [isElenaSpeaking, showIntro, isSubmitting, timeRemaining]);
     useEffect(() => {
-        if (!showIntro && !isSubmitting && lastSpokenTaskRef.current !== currentTask.id) {
+        if (!showIntro && !isSubmitting && hasInteracted && lastSpokenTaskRef.current !== currentTask.id) {
             lastSpokenTaskRef.current = currentTask.id;
-            setIsElenaSpeaking(true);
-            handleSpeak(currentTask.prompt);
+            // Always speak the prompt/instruction for assessment tasks
+            handleSpeak(currentTask.prompt, true);
         }
-    }, [currentStep, showIntro, isSubmitting, currentTask.id, currentTask.prompt, handleSpeak]);
+    }, [currentStep, showIntro, isSubmitting, hasInteracted, currentTask.id, currentTask.prompt, handleSpeak]);
 
     const handleAnswerSubmit = async (transcript, blob) => {
         setIsProcessingTask(true);
@@ -172,12 +194,82 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#FCFDFF] flex flex-col items-center justify-center relative overflow-x-hidden pt-4 pb-20 md:py-0">
+        <div className="min-h-[100dvh] w-full bg-[#FCFDFF] flex flex-col items-center justify-center relative overflow-x-hidden pt-4 pb-20 md:py-0 px-4 md:px-0">
             <audio
                 ref={audioRef}
                 className="hidden"
                 onEnded={() => setIsElenaSpeaking(false)}
+                onPlay={() => {
+                    setIsAudioLoading(false);
+                    setIsElenaSpeaking(true);
+                }}
+                onError={() => {
+                    setIsAudioLoading(false);
+                    setIsElenaSpeaking(false);
+                }}
             />
+
+            {!hasInteracted ? (
+                <div className="fixed inset-0 z-50 bg-[#FCFDFF] flex flex-col items-center justify-center p-4">
+                    <motion.div
+                        key="ready-gate"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="w-full max-w-sm"
+                    >
+                        <div className="bg-white p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] shadow-xl border border-slate-100 text-center">
+                            <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 border border-indigo-100 shadow-sm">
+                                <Mic size={24} className="text-indigo-600" />
+                            </div>
+                            <h2 className="text-xl md:text-3xl font-black text-slate-900 mb-4 tracking-tight">Speaking Assessment</h2>
+                            <p className="text-sm md:text-lg text-slate-600 font-medium leading-relaxed mb-8">
+                                I'll guide you through 5 short tasks to find the perfect starting level for your journey.
+                            </p>
+                            <button
+                                onClick={() => {
+                                    setHasInteracted(true);
+                                    setIsAudioLoading(true);
+                                }}
+                                className="px-8 md:px-12 py-3.5 md:py-4 bg-indigo-600 hover:bg-slate-900 text-white rounded-xl md:rounded-2xl font-black transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                            >
+                                Let's Begin
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            ) : null}
+
+            {isAudioLoading ? (
+                <div className="fixed inset-0 z-50 bg-[#FCFDFF] flex flex-col items-center justify-center p-6 text-center">
+                    <motion.div
+                        key="preparing-audio"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 max-w-sm w-full flex flex-col items-center text-center"
+                    >
+                        <div className="w-14 h-14 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-8" />
+                        <h2 className="text-xl font-black text-slate-900 mb-2">Elena is Preparing</h2>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed text-center">Syncing your personalized assessment audio...</p>
+                    </motion.div>
+                </div>
+            ) : null}
+
+            {!isAudioLoading && hasInteracted && (
+                <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-40">
+                    <div className="flex-1 mr-4">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[9px] md:text-[11px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-md">Assessment</span>
+                            <span className="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest">• Task {currentStep + 1 || 1}/5</span>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => window.confirm('Exit assessment?') && onCancel()}
+                        className="p-1.5 md:p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
 
             <AnimatePresence mode="wait">
                 {showIntro ? (
@@ -325,21 +417,42 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                 />
                             </div>
 
-                            <div className="flex justify-between items-center mb-10">
-                                <div className="px-3 py-1 bg-indigo-50/50 rounded-full text-indigo-600 border border-indigo-100/30">
-                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">{currentTask.name}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Step</span>
-                                    <div className="flex items-baseline font-black">
-                                        <span className="text-sm text-slate-900 leading-none">{currentStep + 1}</span>
-                                        <span className="text-[10px] text-slate-300 mx-0.5">/</span>
-                                        <span className="text-[10px] text-slate-300">{TASKS.length}</span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <AnimatePresence mode="wait">
+                                {isAudioFetching ? (
+                                    <motion.div
+                                        key="fetching-audio"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        className="py-12 md:py-20 flex flex-col items-center justify-center text-center min-h-[400px]"
+                                    >
+                                        <div className="w-12 h-12 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mb-6" />
+                                        <h3 className="text-xl font-bold text-slate-900 mb-2 leading-relaxed max-w-lg">Elena is Preparing</h3>
+                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Generating audio instructions...</p>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="task-content"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="contents"
+                                    >
+                                        <div className="flex justify-between items-center mb-10">
+                                            <div className="px-3 py-1 bg-indigo-50/50 rounded-full text-indigo-600 border border-indigo-100/30">
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">{currentTask.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Step</span>
+                                                <div className="flex items-baseline font-black">
+                                                    <span className="text-sm text-slate-900 leading-none">{currentStep + 1}</span>
+                                                    <span className="text-[10px] text-slate-300 mx-0.5">/</span>
+                                                    <span className="text-[10px] text-slate-300">{TASKS.length}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <AnimatePresence mode="wait">
                                 {isProcessingTask ? (
                                     <motion.div
                                         key="processing"
@@ -364,9 +477,34 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                         className="contents"
                                     >
                                         <div className="max-w-2xl mx-auto text-center mb-6 md:mb-10">
-                                            <h3 className="text-lg md:text-3xl font-black text-slate-900 leading-tight mb-6 md:mb-8 tracking-tight">
-                                                {currentTask.prompt}
-                                            </h3>
+                                            <div className="flex flex-col items-center text-center max-w-xl mx-auto px-4">
+                                                <div className="px-3 py-1 bg-slate-50 rounded-full inline-block text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200 mb-6">
+                                                    Task {currentStep + 1} of 5
+                                                </div>
+                                                <h3 className="text-lg md:text-2xl font-black text-slate-900 mb-6 md:mb-8 leading-tight">
+                                                    {currentTask.prompt}
+                                                </h3>
+                                                <button
+                                                    onClick={() => { handleSpeak(currentTask.prompt, false); }}
+                                                    disabled={isElenaSpeaking}
+                                                    className={`p-3 md:p-4 rounded-xl md:rounded-2xl transition-all duration-300 flex items-center justify-center relative overflow-hidden group shadow-sm
+                                                        ${isElenaSpeaking 
+                                                            ? 'bg-indigo-600 text-white shadow-indigo-200' 
+                                                            : 'bg-white text-indigo-600 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50'
+                                                        } shrink-0 disabled:opacity-50 mb-4`}
+                                                    title="Listen to prompt"
+                                                >
+                                                    {isElenaSpeaking && (
+                                                        <motion.span 
+                                                            initial={{ scale: 0.8, opacity: 0 }}
+                                                            animate={{ scale: 1.5, opacity: 1 }}
+                                                            transition={{ repeat: Infinity, duration: 1.5 }}
+                                                            className="absolute inset-0 bg-indigo-400/20 rounded-full" 
+                                                        />
+                                                    )}
+                                                    <Volume2 size={24} className={isElenaSpeaking ? 'animate-pulse relative z-10' : 'group-hover:scale-110 transition-transform relative z-10'} />
+                                                </button>
+                                            </div>
 
                                             {currentTask.content && (
                                                 <div className="relative p-5 md:p-10 bg-[#F8FAFF] rounded-2xl md:rounded-[2rem] border border-blue-50/50">
@@ -418,6 +556,9 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                                 </motion.div>
                                             </AnimatePresence>
                                         </div>
+                                    </motion.div>
+                                )}
+                                        </AnimatePresence>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

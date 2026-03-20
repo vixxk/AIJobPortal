@@ -23,4 +23,7 @@ export const submitLessonTask = (formData) => api.post('/english-tutor/lesson/su
 });
 export const completeLesson = (lessonData) => api.post('/english-tutor/lesson/complete', lessonData);
 
+export const skipAssessment = () => api.post('/english-tutor/test/skip');
+export const resetProgression = () => api.post('/english-tutor/test/reset');
+
 export const speakText = (text, voice) => api.post('/interview/speak', { text, voice }, { responseType: 'blob' });
