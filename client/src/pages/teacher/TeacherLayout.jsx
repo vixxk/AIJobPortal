@@ -1,5 +1,6 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BookOpen, Video, LayoutDashboard } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { BookOpen, Video, LayoutDashboard, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
 
@@ -34,19 +35,44 @@ const SidebarLink = ({ to, label, icon: Icon }) => (
 
 const TeacherLayout = () => {
     const { logout, user } = useAuth();
+    const location = useLocation();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location.pathname]);
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAFC] font-sans selection:bg-indigo-100 selection:text-indigo-900">
+        <div className="flex min-h-screen bg-[#F8FAFC] font-sans selection:bg-indigo-100 selection:text-indigo-900 relative">
+            {/* Mobile Sidebar Overlay */}
+            {isMobileMenuOpen && (
+                <div 
+                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] lg:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <div className="w-72 bg-white border-r border-slate-200 p-8 flex flex-col gap-2 shrink-0 h-screen sticky top-0 overflow-y-auto hidden lg:flex">
-                <div className="flex items-center gap-4 px-2 mb-12">
-                    <div className="w-11 h-11 bg-indigo-600 rounded-[14px] flex items-center justify-center shadow-lg shadow-indigo-200 rotate-3">
-                        <BookOpen className="w-6 h-6 text-white" />
+            <div className={clsx(
+                "fixed lg:sticky top-0 left-0 z-[101] h-screen bg-white border-r border-slate-200 p-8 flex flex-col gap-2 shrink-0 overflow-y-auto transition-transform duration-300 lg:translate-x-0 lg:flex w-72",
+                isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+            )}>
+                <div className="flex items-center justify-between mb-12">
+                    <div className="flex items-center gap-4 px-2">
+                        <div className="w-11 h-11 bg-indigo-600 rounded-[14px] flex items-center justify-center shadow-lg shadow-indigo-200 rotate-3">
+                            <BookOpen className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <span className="font-black text-xl tracking-tighter text-slate-900 block leading-none">Gradnex</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] text-indigo-500 uppercase mt-1 block">Teacher Academy</span>
+                        </div>
                     </div>
-                    <div>
-                        <span className="font-black text-xl tracking-tighter text-slate-900 block leading-none">Gradnex</span>
-                        <span className="text-[10px] font-black tracking-[0.2em] text-indigo-500 uppercase mt-1 block">Teacher Academy</span>
-                    </div>
+                    <button 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="lg:hidden p-2 text-slate-400 hover:text-slate-900"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
 
                 <div className="space-y-2">
@@ -74,11 +100,14 @@ const TeacherLayout = () => {
 
             {/* Main Content */}
             <div className="flex-1 min-w-0 flex flex-col">
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-10 flex items-center justify-between sticky top-0 z-30">
+                <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 lg:px-10 flex items-center justify-between sticky top-0 z-30">
                     <div className="flex items-center gap-4">
-                        <div className="lg:hidden w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <BookOpen className="w-5 h-5 text-white" />
-                        </div>
+                        <button
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="lg:hidden w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+                        >
+                            <Menu className="w-5 h-5 text-white" />
+                        </button>
                     </div>
 
                     <div className="flex items-center gap-6">

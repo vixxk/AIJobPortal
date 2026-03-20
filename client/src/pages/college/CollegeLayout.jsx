@@ -1,7 +1,8 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Settings, Calendar, Search, Mail, Video,
-    GraduationCap, LogOut, User, HelpCircle, PanelLeftClose, PanelLeft, Bell
+    GraduationCap, LogOut, User, HelpCircle, PanelLeftClose, PanelLeft, Bell,
+    Menu, X
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from '../../utils/axios';
@@ -27,6 +28,11 @@ const CollegeLayout = () => {
     const navigate = useNavigate();
     const [pendingInvites, setPendingInvites] = useState(0);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location.pathname]);
 
     useEffect(() => {
         axios.get('/college/stats')
@@ -42,18 +48,27 @@ const CollegeLayout = () => {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50">
+        <div className="flex h-screen overflow-hidden bg-slate-50 relative">
+            {/* Mobile Overlay */}
+            {isMobileMenuOpen && (
+                <div 
+                    className="fixed inset-0 bg-[#0F172A]/60 backdrop-blur-sm z-40 md:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
             {/* ── Sidebar ─────────────────────────────────────────── */}
             <div className={clsx(
-                'hidden md:flex flex-col h-full bg-[#0F172A] text-slate-300 transition-all duration-300 ease-in-out border-r border-[#1E293B]',
-                isCollapsed ? 'w-[76px]' : 'w-[260px]'
+                'fixed md:relative inset-y-0 left-0 z-50 md:z-0 flex flex-col h-full bg-[#0F172A] text-slate-300 transition-all duration-300 ease-in-out border-r border-[#1E293B]',
+                isCollapsed ? 'md:w-[76px]' : 'md:w-[260px]',
+                isMobileMenuOpen ? 'translate-x-0 w-[280px]' : '-translate-x-full md:translate-x-0 w-[280px]'
             )}>
                 {/* Brand Header */}
                 <div className={clsx(
                     'flex items-center h-20 border-b border-[#1E293B]',
                     isCollapsed ? 'justify-center px-0' : 'justify-between px-5'
                 )}>
-                    {!isCollapsed && (
+                    {(!isCollapsed || isMobileMenuOpen) && (
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/50 shrink-0">
                                 <GraduationCap className="w-4 h-4 text-white" />
@@ -65,10 +80,23 @@ const CollegeLayout = () => {
                         </div>
                     )}
                     <button
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="p-1.5 rounded-md hover:bg-[#1E293B] text-slate-400 transition-colors"
+                        onClick={() => {
+                            if (isMobileMenuOpen) {
+                                setIsMobileMenuOpen(false);
+                            } else {
+                                setIsCollapsed(!isCollapsed);
+                            }
+                        }}
+                        className="p-1.5 rounded-md hover:bg-[#1E293B] text-slate-400 transition-colors md:block"
                     >
-                        {isCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+                        {isMobileMenuOpen ? (
+                            <X className="w-5 h-5" />
+                        ) : isCollapsed ? (
+                            <PanelLeft className="w-5 h-5" />
+                        ) : (
+                            <PanelLeftClose className="w-5 h-5 md:block hidden" />
+                        )}
+                        {!isMobileMenuOpen && !isCollapsed && <PanelLeftClose className="w-5 h-5 md:hidden" />}
                     </button>
                 </div>
 
@@ -194,9 +222,36 @@ const CollegeLayout = () => {
             </div>
 
             {/* ── Main Content ─────────────────────────────────────── */}
-            <div className="flex-1 overflow-y-auto bg-slate-50/80">
-                <div className="p-4 md:p-8">
-                    <Outlet />
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50/80">
+                {/* Mobile Header */}
+                <header className="h-16 md:hidden flex items-center justify-between px-4 bg-white border-b border-slate-200 shrink-0 z-30">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="p-2 -ml-2 text-slate-600 hover:text-indigo-600 transition-colors"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-indigo-200">
+                                <GraduationCap className="w-4 h-4 text-white" />
+                            </div>
+                            <span className="font-black text-xs uppercase tracking-tight text-slate-900 truncate max-w-[150px]">
+                                {navItems.find(i => isActive(i))?.label || 'College Portal'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-black text-xs border border-white shadow-sm shrink-0">
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'C'}
+                        </div>
+                    </div>
+                </header>
+
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-4 md:p-8">
+                        <Outlet />
+                    </div>
                 </div>
             </div>
         </div>
