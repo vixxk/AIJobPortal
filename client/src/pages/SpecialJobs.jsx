@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Sparkles, Search, MapPin, Briefcase, IndianRupee, Clock, ChevronRight, Building2 } from 'lucide-react';
+import { Sparkles, Search, MapPin, Briefcase, IndianRupee, Clock, ChevronRight, Building2, ArrowDownUp, X } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
 
@@ -89,6 +89,12 @@ const JobCard = ({ job, onClick }) => {
                         {job.salary}
                     </span>
                 )}
+                {job.experience && (
+                    <span className="flex items-center gap-1 px-2.5 py-1 bg-purple-50 border border-purple-100 rounded-lg text-[11px] font-semibold text-purple-700">
+                        <Clock className="w-3 h-3" />
+                        {job.experience}
+                    </span>
+                )}
             </div>
 
             {/* Footer */}
@@ -113,6 +119,10 @@ const SpecialJobs = () => {
     const [loading, setLoading] = useState(true);
     const [selectedJob, setSelectedJob] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [type, setType] = useState('any');
+    const [salaryRange, setSalaryRange] = useState('any');
+    const [experience, setExperience] = useState('any');
+    const [openDropdown, setOpenDropdown] = useState(null);
     const [savedJobsIds, setSavedJobsIds] = useState(new Set());
     const [searchParams] = useSearchParams();
     const jobIdFromUrl = searchParams.get('id');
@@ -151,11 +161,22 @@ const SpecialJobs = () => {
         fetchSaved();
     }, []);
 
-    const filteredJobs = jobs.filter(job =>
-        job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (job.recruiterId?.companyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (job.location || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredJobs = jobs.filter(job => {
+        const searchMode = searchTerm.toLowerCase();
+        const matchesSearch = !searchTerm ||
+            job.title?.toLowerCase().includes(searchMode) ||
+            (job.companyName || job.recruiterId?.companyName || '').toLowerCase().includes(searchMode) ||
+            (job.location || '').toLowerCase().includes(searchMode);
+
+        const matchesType = type === 'any' ||
+            job.jobType?.toLowerCase() === type.toLowerCase() ||
+            (type === 'fulltime' && job.jobType?.toLowerCase().includes('full'));
+
+        const matchesSalary = salaryRange === 'any' || job.salaryRange === salaryRange;
+        const matchesExperience = experience === 'any' || job.experience === experience;
+
+        return matchesSearch && matchesType && matchesSalary && matchesExperience;
+    });
 
     // Normalize job shape
     const normalise = (job) => ({
@@ -205,25 +226,117 @@ const SpecialJobs = () => {
                 </div>
             </div>
 
-            {/* ── Search bar ──────────────────────────────────────────────── */}
-            <div className="mb-7 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
-                <input
-                    type="text"
-                    placeholder="Search by title, company, or location..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-5 py-3.5
-                        text-sm font-medium placeholder:text-slate-400
-                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400
-                        shadow-sm transition-all"
-                />
-                {searchTerm && (
-                    <button
-                        onClick={() => setSearchTerm('')}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xl leading-none"
-                    >×</button>
-                )}
+            {/* ── Search & Filters ────────────────────────────────────────── */}
+            <div className="mb-8 space-y-4">
+                <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
+                    <input
+                        type="text"
+                        placeholder="Search by title, company, or location..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-5 py-3.5
+                            text-sm font-medium placeholder:text-slate-400
+                            focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400
+                            shadow-sm transition-all"
+                    />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xl leading-none"
+                        >×</button>
+                    )}
+                </div>
+
+                <div className="flex overflow-x-auto no-scrollbar gap-2 md:gap-3 pb-1">
+                    {/* Job Type */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
+                            className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${type !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
+                        >
+                            {type === 'any' ? 'Job Type' : <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>}
+                            <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
+                        {openDropdown === 'type' && (
+                            <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                {['any', 'fulltime', 'contract', 'internship', 'parttime'].map((v) => (
+                                    <button
+                                        key={v}
+                                        onClick={() => { setType(v); setOpenDropdown(null); }}
+                                        className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 capitalize ${type === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                    >
+                                        {v === 'any' ? 'Any Type' : v === 'fulltime' ? 'Full Time' : v}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Salary Range */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
+                            className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${salaryRange !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
+                        >
+                            {salaryRange === 'any' ? 'Salary Range' : salaryRange}
+                            <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
+                        {openDropdown === 'salary' && (
+                            <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-56 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                {['any', '< ₹ 5L', '₹ 5L - 10L', '₹ 10L - 20L', '₹ 20L - 40L', '> ₹ 40L'].map((v) => (
+                                    <button
+                                        key={v}
+                                        onClick={() => { setSalaryRange(v); setOpenDropdown(null); }}
+                                        className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${salaryRange === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                    >
+                                        {v === 'any' ? 'Any Salary' : v}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Experience */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
+                            className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${experience !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
+                        >
+                            {experience === 'any' ? 'Experience' : experience}
+                            <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
+                        {openDropdown === 'experience' && (
+                            <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                {['any', 'Entry Level', 'Junior', 'Mid-Level', 'Senior', 'Lead'].map((v) => (
+                                    <button
+                                        key={v}
+                                        onClick={() => { setExperience(v); setOpenDropdown(null); }}
+                                        className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${experience === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                    >
+                                        {v === 'any' ? 'Any Experience' : v}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Clear All */}
+                    {(type !== 'any' || salaryRange !== 'any' || experience !== 'any' || searchTerm) && (
+                        <button
+                            onClick={() => {
+                                setType('any');
+                                setSalaryRange('any');
+                                setExperience('any');
+                                setSearchTerm('');
+                            }}
+                            className="flex items-center shrink-0 gap-1 px-3 py-2 text-[10px] md:text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors"
+                        >
+                            <X className="w-3 h-3" />
+                            Clear Filters
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* ── Content ─────────────────────────────────────────────────── */}
