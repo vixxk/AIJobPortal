@@ -435,6 +435,16 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
   if (expertise && Array.isArray(expertise)) user.expertise = expertise;
   user.profileCompleted = true;
   await user.save({ validateBeforeSave: false });
+
+  // If user is a student, also update/create StudentProfile phoneNumber
+  if (user.role === 'STUDENT') {
+    const StudentProfile = require('../student/student.model');
+    await StudentProfile.findOneAndUpdate(
+      { userId: user._id },
+      { phoneNumber: phoneNumber || user.phoneNumber },
+      { upsert: true, new: true }
+    );
+  }
   res.status(200).json({
     status: 'success',
     data: { user: buildUserPayload(user) }
@@ -457,6 +467,7 @@ exports.updateSettings = catchAsync(async (req, res, next) => {
   });
 });
 
+const { uploadFile } = require('../../utils/fileUpload');
 exports.uploadAvatar = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError('Please provide an image file.', 400));
@@ -465,35 +476,13 @@ exports.uploadAvatar = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('User not found', 404));
   }
-  let avatarUrl;
-  const cloudinaryConfigured =
-    process.env.CLOUDINARY_IMAGE_CLOUD_NAME &&
-    process.env.CLOUDINARY_IMAGE_CLOUD_NAME !== 'your_cloud_name' &&
-    process.env.CLOUDINARY_IMAGE_API_KEY &&
-    process.env.CLOUDINARY_IMAGE_API_KEY !== 'your_api_key';
-  if (cloudinaryConfigured) {
-    const { uploadImageToCloudinary } = require('../../config/cloudinary');
-    let fileBuffer = req.file.buffer;
-    if (!fileBuffer && req.file.path) {
-      const fs = require('fs');
-      fileBuffer = fs.readFileSync(req.file.path);
-      fs.unlink(req.file.path, () => {});
-    }
-    let result;
-    try {
-      result = await uploadImageToCloudinary(fileBuffer, 'avatars');
-    } catch (err) {
-      return next(new AppError('Cloudinary upload failed. Please try again.', 500));
-    }
-    avatarUrl = result.secure_url;
-  } else {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    avatarUrl = `${baseUrl}/uploads/avatars/${req.file.filename}`;
-  }
-  user.avatar = avatarUrl;
+  
+  const result = await uploadFile(req.file, 'avatars', true, 'avatars');
+  user.avatar = result.url;
   await user.save({ validateBeforeSave: false });
+
   res.status(200).json({
     status: 'success',
-    data: { avatarUrl }
+    data: { avatarUrl: user.avatar }
   });
 });

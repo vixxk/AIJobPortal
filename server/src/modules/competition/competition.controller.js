@@ -1,10 +1,12 @@
 const Competition = require('./competition.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
+const { uploadFile } = require('../../utils/fileUpload');
 exports.createCompetition = catchAsync(async (req, res, next) => {
   const data = { ...req.body };
   if (req.file) {
-    data.bannerImage = `/uploads/avatars/${req.file.filename}`;
+    const result = await uploadFile(req.file, 'competitions/banners', false, 'avatars');
+    data.bannerImage = result.url;
   }
   
   if (data.rounds && typeof data.rounds === 'string') {
@@ -100,7 +102,8 @@ exports.getCompetition = catchAsync(async (req, res, next) => {
 exports.updateCompetition = catchAsync(async (req, res, next) => {
     const data = { ...req.body };
     if (req.file) {
-        data.bannerImage = `/uploads/avatars/${req.file.filename}`;
+        const result = await uploadFile(req.file, 'competitions/banners', false, 'avatars');
+        data.bannerImage = result.url;
     }
 
     if (data.rounds && typeof data.rounds === 'string') {

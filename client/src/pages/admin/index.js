@@ -6,4 +6,5 @@ export { default as AdminCourses } from './AdminCourses';
 export { default as AdminApplications } from './AdminApplications';
 export { default as AdminCompetitions } from './AdminCompetitions';
 export { default as AdminIssues } from './AdminIssues';
+export { default as AdminPayments } from './AdminPayments';
 export { default as CourseManagement } from './CourseManagement';

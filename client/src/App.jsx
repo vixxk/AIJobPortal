@@ -34,7 +34,7 @@ import CollegeEmails from './pages/college/CollegeEmails';
 import CollegePlacement from './pages/college/CollegePlacement';
 import {
   AdminLayout, AdminOverview, AdminUsers, AdminJobs,
-  AdminCourses, AdminApplications, AdminCompetitions, AdminIssues, CourseManagement
+  AdminCourses, AdminApplications, AdminCompetitions, AdminIssues, AdminPayments, CourseManagement
 } from './pages/admin';
 
 import MyApplications from './pages/MyApplications';
@@ -110,6 +110,7 @@ function App() {
                 <Route path="applications" element={<AdminApplications />} />
                 <Route path="competitions" element={<AdminCompetitions />} />
                 <Route path="issues" element={<AdminIssues />} />
+                <Route path="payments" element={<AdminPayments />} />
               </Route>
               <Route path="teacher" element={<ProtectedRoute allowedRoles={['TEACHER', 'SUPER_ADMIN']}><TeacherLayout /></ProtectedRoute>}>
                 <Route index element={<TeacherOverview />} />

@@ -4,6 +4,7 @@ const LectureProgress = require('./progress.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
+const { uploadFile } = require('../../utils/fileUpload');
 
 exports.createCourse = catchAsync(async (req, res, next) => {
   if (!['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role)) {
@@ -12,7 +13,8 @@ exports.createCourse = catchAsync(async (req, res, next) => {
 
   const courseData = { ...req.body };
   if (req.file) {
-    courseData.coverImage = `/uploads/avatars/${req.file.filename}`;
+    const result = await uploadFile(req.file, 'courses/covers', false, 'avatars');
+    courseData.coverImage = result.url;
   }
 
   // Parse JSON fields if they come as strings
@@ -62,7 +64,8 @@ exports.updateCourse = catchAsync(async (req, res, next) => {
   }
 
   if (req.file) {
-    updateData.coverImage = `/uploads/avatars/${req.file.filename}`;
+    const result = await uploadFile(req.file, 'courses/covers', false, 'avatars');
+    updateData.coverImage = result.url;
   }
 
   const updatedCourse = await Course.findByIdAndUpdate(req.params.id, updateData, {
@@ -191,7 +194,14 @@ exports.getCourse = catchAsync(async (req, res, next) => {
 });
 
 exports.enrollInCourse = catchAsync(async (req, res, next) => {
-  const course = await Course.findByIdAndUpdate(
+  const course = await Course.findById(req.params.id);
+  if (!course) return next(new AppError('Course not found', 404));
+
+  if (course.price > 0) {
+    return next(new AppError('This is a paid course. Please use the payment gateway to enroll.', 403));
+  }
+
+  await Course.findByIdAndUpdate(
     req.params.id,
     { $addToSet: { enrolledStudents: req.user.id } },
     { new: true }

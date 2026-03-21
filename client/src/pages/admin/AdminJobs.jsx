@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
-import { MapPin, IndianRupee, Trash2, Users, Eye, Plus, X, Briefcase, List, Building2, CheckCircle2, Clock } from 'lucide-react';
+import { MapPin, IndianRupee, Trash2, Users, Eye, Plus, X, Briefcase, List, Building2, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 import JobDetailsModal from '../../components/JobDetailsModal';
 
@@ -56,6 +57,15 @@ const AdminJobs = () => {
             fetchJobs();
         } catch (err) {
             alert('Approval failed');
+        }
+    };
+
+    const handleToggleSpecial = async (id, currentStatus) => {
+        try {
+            await axios.patch(`/admin/jobs/${id}`, { isSpecial: !currentStatus });
+            fetchJobs();
+        } catch (err) {
+            alert('Status update failed');
         }
     };
 
@@ -204,6 +214,18 @@ const AdminJobs = () => {
                             <div className="flex items-center justify-between mt-4">
                                 <span className="text-[10px] font-bold text-slate-400 tracking-wider">Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                                 <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => handleToggleSpecial(job._id, job.isSpecial)} 
+                                        className={clsx(
+                                            "p-3 rounded-2xl transition-all border shrink-0",
+                                            job.isSpecial 
+                                                ? "bg-amber-50 text-amber-600 border-amber-100 shadow-sm" 
+                                                : "bg-slate-50 text-slate-400 border-slate-100 hover:text-amber-500 hover:bg-white"
+                                        )}
+                                        title={job.isSpecial ? "Remove from Gradnex Jobs" : "Mark as Gradnex Job (Special)"}
+                                    >
+                                        <Sparkles className={clsx("w-4 h-4", job.isSpecial && "fill-current")} />
+                                    </button>
                                     {job.status === 'PENDING' && (
                                         <button onClick={() => handleApproveJob(job._id)} className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl hover:bg-emerald-100 transition-all border border-emerald-100/20" title="Approve Job">
                                             <CheckCircle2 className="w-4 h-4" />

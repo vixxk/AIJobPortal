@@ -148,10 +148,33 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
     const enrolledCourses = await Course.find({ enrolledStudents: req.user._id }).select('_id');
     const enrolledCourseIds = enrolledCourses.map(c => c._id);
     
-    queryObj.$or = [
-      { isSpecial: { $ne: true } },
-      { isSpecial: true, courseId: { $in: enrolledCourseIds } }
-    ];
+    // Original queryObj might already have isSpecial: true from req.query
+    // We want to ensure that if they are a student:
+    // 1. They see non-special jobs
+    // 2. They see special jobs IF (no courseId OR courseId is in their enrolled list)
+    
+    const studentFilter = {
+      $or: [
+        { isSpecial: { $ne: true } },
+        { 
+          isSpecial: true, 
+          $or: [
+            { courseId: { $exists: false } },
+            { courseId: null },
+            { courseId: { $in: enrolledCourseIds } }
+          ]
+        }
+      ]
+    };
+
+    // Merge with existing queryObj
+    if (queryObj.isSpecial === true) {
+        // If they specifically asked for special jobs, only show those they have access to
+        queryObj.courseId = { $in: [null, undefined, ...enrolledCourseIds] };
+    } else {
+        // Otherwise use the general student filter
+        Object.assign(queryObj, studentFilter);
+    }
   }
 
   let query = Job.find(queryObj).populate('recruiterId', 'companyName logo');
@@ -200,11 +223,52 @@ exports.getJob = catchAsync(async (req, res, next) => {
 
 exports.searchJobs = catchAsync(async (req, res, next) => {
   const { role, location, type, salaryRange, experience } = req.query;
-  const jobs = await externalJobService.searchExternalJobs(role, location, type, salaryRange, experience);
+
+  // 1. Fetch Internal Jobs from DB (Approved only)
+  const dbQuery = { status: 'APPROVED' };
+  
+  if (role) {
+      dbQuery.$or = [
+          { title: { $regex: role, $options: 'i' } },
+          { skillsRequired: { $in: [new RegExp(role, 'i')] } }
+      ];
+  }
+  
+  if (location && location.toLowerCase() !== 'any') {
+      dbQuery.location = { $regex: location, $options: 'i' };
+  }
+
+  if (type && type !== 'any') {
+      dbQuery.jobType = type; // Match Full-time, Internship, etc
+  }
+
+  const internalJobs = await Job.find(dbQuery).populate('recruiterId', 'companyName logo').lean();
+  
+  const mappedInternal = internalJobs.map(job => ({
+      _id: job._id,
+      title: job.title,
+      company: job.companyName || job.recruiterId?.companyName || 'Gradnex Partner',
+      location: job.location,
+      type: job.jobType,
+      salary: job.salaryRange || 'Not specified',
+      link: `/app/job/${job._id}`,
+      snippet: job.description?.slice(0, 200) + '...',
+      source: 'Gradnex Verified',
+      logo: job.recruiterId?.logo,
+      isInternal: true,
+      createdAt: job.createdAt
+  }));
+
+  // 2. Fetch External Jobs (Existing Logic)
+  const externalJobs = await externalJobService.searchExternalJobs(role, location, type, salaryRange, experience);
+  
+  // 3. Merge results (Internal first)
+  const allJobs = [...mappedInternal, ...externalJobs];
+
   res.status(200).json({
     status: 'success',
-    results: jobs.length,
-    jobs: jobs
+    results: allJobs.length,
+    jobs: allJobs
   });
 });
 

@@ -55,7 +55,7 @@ exports.getJobApplicants = catchAsync(async (req, res, next) => {
   // Manual populate for now or using aggregation for better performance.
   // 1. Get Applications
   const applications = await Application.find({ jobId: req.params.jobId })
-    .populate('studentId', 'name email avatar phoneNumber gender country')
+    .populate('studentId', 'name email avatar phoneNumber gender country dateOfBirth nickname expertise')
     .sort('-createdAt')
     .skip(skip)
     .limit(limit)

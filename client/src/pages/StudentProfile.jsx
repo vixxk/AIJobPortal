@@ -348,7 +348,9 @@ const StudentProfile = () => {
                                 fm.append('image', file);
                                 setSaving(true);
                                 try {
-                                    const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/logo' : '/student/profile/image';
+                                    const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/logo' : 
+                                                   user?.role === 'COLLEGE_ADMIN' ? '/college/profile/logo' : 
+                                                   '/student/profile/image';
                                     const res = await axios.patch(endpoint, fm);
                                     if (res.data.status === 'success') {
                                         if (user?.role === 'RECRUITER') {
@@ -394,7 +396,7 @@ const StudentProfile = () => {
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
                 <Input label="Address" value={profile.address} onChange={e => handleUpdateField('address', e.target.value)} icon={<Globe className="w-4 h-4" />} />
-                <Input label="Phone Number" value={profile.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
+                <Input label="Phone Number" value={profile.phoneNumber || user?.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
                 <Input label="Email" value={user?.email} disabled={true} icon={<Mail className="w-4 h-4" />} />
             </div>
             <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
@@ -656,8 +658,10 @@ const StudentProfile = () => {
                                         fm.append('resume', file);
                                         setSaving(true);
                                         try {
-                                            const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/resume' : '/student/me/upload-resume';
-                                            const { data } = await axios.post(endpoint, fm);
+                                            const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/resume' : 
+                                                           user?.role === 'COLLEGE_ADMIN' ? '/college/profile/resume' :
+                                                           '/student/profile/resume';
+                                            const { data } = await axios.patch(endpoint, fm);
                                             if (data.success || data.status === 'success') {
                                                 setProfile({ ...profile, resumeUrl: data.data.resumeUrl });
                                             }
@@ -669,14 +673,18 @@ const StudentProfile = () => {
                             </div>
                             {profile.resumeUrl && (
                                 <div className="mt-3 flex items-center justify-between p-3 bg-red-50 rounded-2xl border border-red-100">
-                                    <div className="flex gap-3 items-center">
+                                    <div className="flex gap-3 items-center flex-1 cursor-pointer" onClick={() => window.open(profile.resumeUrl, '_blank')}>
                                         <FileText className="text-red-500 w-6 h-6" />
-                                        <div>
+                                        <div className="min-w-0 flex-1">
                                             <p className="font-bold text-sm">Active Resume</p>
-                                            <p className="text-xs text-slate-500">{profile.resumeUrl.substring(profile.resumeUrl.lastIndexOf('/') + 1) || 'document.pdf'}</p>
+                                            <p className="text-xs text-slate-500 truncate">{profile.resumeUrl.substring(profile.resumeUrl.lastIndexOf('/') + 1) || 'document.pdf'}</p>
                                         </div>
                                     </div>
-                                    <X className="w-5 h-5 text-red-500" />
+                                    <X className="w-5 h-5 text-red-500 cursor-pointer" onClick={async () => {
+                                        if (window.confirm('Are you sure you want to remove your resume?')) {
+                                            await saveProfile({ resumeUrl: '' });
+                                        }
+                                    }} />
                                 </div>
                             )}
                         </div>
@@ -831,7 +839,7 @@ const StudentProfile = () => {
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <p className="text-[10px] font-bold text-slate-400 uppercase">Phone Number</p>
-                                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.phoneNumber || '+1 Add Phone Number'}</p>
+                                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.phoneNumber || user?.phoneNumber || '+1 Add Phone Number'}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -915,17 +923,17 @@ const StudentProfile = () => {
                                                     <button onClick={() => navigate('/app/profile/resume')} className="text-[12px] font-bold text-blue-600">Upload New</button>
                                                 </div>
                                                 {profile.resumeUrl ? (
-                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/resume')}>
-                                                        <div className="flex items-center gap-4 min-w-0">
+                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => window.open(profile.resumeUrl, '_blank')}>
+                                                        <div className="flex items-center gap-4 min-w-0 flex-1">
                                                             <div className="w-12 h-12 rounded-[20px] bg-red-50 flex items-center justify-center shrink-0 border border-red-50">
                                                                 <FileText className="w-5 h-5 text-red-500" />
                                                             </div>
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="text-[14px] font-bold text-slate-800 truncate pr-2">{profile.resumeUrl.substring(profile.resumeUrl.lastIndexOf('/') +   1) || 'document.pdf'}</p>
-                                                                <p className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">Updated recently • 1.2 MB</p>
+                                                                <p className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">Click to view/download • {profile.resumeUrl.split('.').pop().toUpperCase() || 'PDF'}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="p-2 -mr-2 bg-transparent shrink-0">
+                                                        <div className="p-2 -mr-2 bg-transparent shrink-0" onClick={(e) => { e.stopPropagation(); navigate('/app/profile/resume'); }}>
                                                             <MoreVertical className="w-5 h-5 text-slate-400" />
                                                         </div>
                                                     </div>

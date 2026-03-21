@@ -43,7 +43,7 @@ const MainLayout = () => {
                 {!['/app/learning', '/app/admin', '/app/teacher', '/app/college', '/app/english-tutor'].some(path => location.pathname.startsWith(path)) && (
                     <>
                         {isMobile && !isSidebarOpen && <MobileNavbar toggleSidebar={() => setIsSidebarOpen(true)} />}
-                        <div className="print:hidden z-10 sticky top-0 bg-background">
+                        <div className="print:hidden z-40 sticky top-0 bg-background">
                             <Topbar toggleSidebar={() => setIsSidebarOpen(true)} isMobile={isMobile} />
                         </div>
                     </>

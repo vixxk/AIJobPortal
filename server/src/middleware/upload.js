@@ -32,16 +32,13 @@ const documentFilter = (req, file, cb) => {
     cb(new AppError('Not an image or PDF! Please upload only supported files.', 400), false);
   }
 };
-const uploadAvatarDisk = multer({
-  storage: avatarStorage,
-  fileFilter: imageFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
 const uploadMemory = multer({
   storage: memoryStorage,
   fileFilter: documentFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // Increased to 10MB for high-quality thumbnails
 });
-exports.uploadImage      = uploadAvatarDisk.single('image');
+
+exports.uploadImage      = uploadMemory.single('image');
 exports.uploadResume     = uploadMemory.single('resume');
 exports.uploadCertificate = uploadMemory.single('certificate');
-exports.uploadLogo       = uploadAvatarDisk.single('logo');
+exports.uploadLogo       = uploadMemory.single('logo');

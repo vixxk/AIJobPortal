@@ -221,77 +221,117 @@ const StudentProfileModal = ({ student, onClose }) => {
         </div>
     );
 
+    const DataRow = ({ label, value }) => (
+        <div className="flex flex-col py-2 border-b border-slate-50">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+            <span className="text-[13px] font-semibold text-slate-700">{value || 'N/A'}</span>
+        </div>
+    );
+
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-[32px] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose}>
+            <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[32px] overflow-hidden shadow-2xl flex flex-col pointer-events-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="relative h-32 bg-gradient-to-r from-slate-800 to-slate-900 shrink-0">
                     <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all z-20">
                         <XCircle className="w-6 h-6" />
                     </button>
+                    <div className="absolute -bottom-12 left-8 w-28 h-28 rounded-[32px] bg-white p-1.5 shadow-xl border border-slate-100 flex items-center justify-center overflow-hidden">
+                        {profile.profileImage || student.avatar ? (
+                            <img src={profile.profileImage || student.avatar} alt="Profile" className="w-full h-full object-cover rounded-[24px]" />
+                        ) : (
+                            <div className="w-full h-full bg-slate-100 flex items-center justify-center rounded-[24px]">
+                                <User className="w-10 h-10 text-slate-300" />
+                            </div>
+                        )}
+                    </div>
                 </div>
                 
-                <div className="px-8 pb-10 overflow-y-auto no-scrollbar flex-1 -mt-16 relative z-10">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-32 h-32 rounded-[40px] bg-white p-1.5 shadow-2xl border border-slate-100 flex items-center justify-center overflow-hidden mb-4">
-                            {profile.profileImage || student.avatar ? (
-                                <img src={profile.profileImage || student.avatar} alt="Profile" className="w-full h-full object-cover rounded-[32px]" />
-                            ) : (
-                                <User className="w-16 h-16 text-slate-200" />
-                            )}
-                        </div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">{student.name}</h2>
-                        <div className="flex items-center gap-4 mt-1">
-                            <p className="flex items-center gap-1.5 text-slate-500 font-semibold text-sm">
-                                <Mail className="w-4 h-4" /> {student.email}
+                <div className="px-8 pb-10 overflow-y-auto no-scrollbar flex-1 pt-14">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                        <div>
+                            <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                                {student.name}
+                                {student.nickname && <span className="text-lg font-bold text-blue-500 bg-blue-50 px-3 py-1 rounded-xl">"{student.nickname}"</span>}
+                            </h2>
+                            <p className="text-slate-500 font-bold mt-1 uppercase tracking-wider text-xs">
+                                {profile.currentPosition || 'N/A'}
                             </p>
-                            {student.phoneNumber && (
-                                <p className="flex items-center gap-1.5 text-slate-500 font-semibold text-sm">
-                                    <Phone className="w-4 h-4" /> {student.phoneNumber}
-                                </p>
-                            )}
                         </div>
-                        <div className="flex flex-wrap justify-center gap-2 mt-4">
-                            {student.country && (
-                                <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
-                                    <Globe className="w-3 h-3" /> {student.country}
+                        <div className="flex flex-wrap gap-2">
+                             {profile.jobSeekingStatus && (
+                                <span className={`px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-widest border shadow-sm ${
+                                    profile.jobSeekingStatus === 'Actively looking for jobs' ? 'bg-green-50 text-green-600 border-green-100' :
+                                    profile.jobSeekingStatus === 'Passively looking for jobs' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                    'bg-slate-50 text-slate-500 border-slate-200'
+                                }`}>
+                                    {profile.jobSeekingStatus}
                                 </span>
-                            )}
-                            {student.gender && (
-                                <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                                    {student.gender}
+                             )}
+                             {profile.expectedSalary?.minimum && (
+                                <span className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm flex items-center gap-1.5">
+                                    <IndianRupee className="w-3 h-3" /> 
+                                    {profile.expectedSalary.minimum} - {profile.expectedSalary.maximum} {profile.expectedSalary.currency || 'INR'} / {profile.expectedSalary.frequency?.split(' ')[1] || 'yr'}
                                 </span>
-                            )}
+                             )}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                        <DataRow label="Email" value={student.email} />
+                        <DataRow label="Phone" value={student.phoneNumber} />
+                        <DataRow label="Gender" value={student.gender} />
+                        <DataRow label="Date of Birth" value={student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'N/A'} />
+                        <DataRow label="Country" value={student.country} />
+                        <DataRow label="Address" value={profile.address} />
+                        <DataRow label="Last Updated" value={new Date(profile.updatedAt || Date.now()).toLocaleDateString()} />
+                        <div className="flex flex-col py-2 border-b border-slate-50">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Major expertise</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {(student.expertise || []).map((exp, i) => (
+                                    <span key={i} className="text-[9px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter">{exp}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12">
                         {/* Left Column */}
-                        <div className="space-y-2">
+                        <div className="space-y-6">
                             <div>
                                 <SectionHeader icon={FileText} title="Professional Summary" />
-                                <p className="text-slate-600 text-sm leading-relaxed bg-slate-50 p-5 rounded-2xl border border-slate-100/50">
+                                <div className="text-slate-600 text-sm leading-relaxed bg-white p-5 rounded-2xl border border-slate-100 ring-4 ring-slate-50/50">
                                     {profile.summary || "No professional summary provided."}
-                                </p>
+                                </div>
                             </div>
 
                             <div>
-                                <SectionHeader icon={Layers} title="Core Skills" />
+                                <SectionHeader icon={ShieldCheck} title="Core Skills & Expertise" />
                                 <div className="flex flex-wrap gap-2">
                                     {(profile.skills || []).map((skill, i) => (
-                                        <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold border border-indigo-100/50">{skill}</span>
+                                        <span key={i} className="px-3.5 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-[11px] font-black border border-indigo-100/50 shadow-sm uppercase tracking-wider">{skill}</span>
                                     ))}
                                     {(!profile.skills || profile.skills.length === 0) && <p className="text-slate-400 text-xs italic ml-1">No skills listed</p>}
                                 </div>
                             </div>
 
-                            {profile.languages?.length > 0 && (
+                            {profile.experience?.length > 0 && (
                                 <div>
-                                    <SectionHeader icon={Globe} title="Languages" />
-                                    <div className="flex flex-wrap gap-2">
-                                        {profile.languages.map((lang, i) => (
-                                            <span key={i} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-bold border border-emerald-100/50">
-                                                {lang.language} • <span className="opacity-70 font-medium">{lang.proficiency}</span>
-                                            </span>
+                                    <SectionHeader icon={Briefcase} title="Work Experience" />
+                                    <div className="space-y-6 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-[2px] before:bg-slate-100">
+                                        {profile.experience.map((exp, i) => (
+                                            <div key={i} className="flex gap-4 relative pl-1">
+                                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-slate-100 shadow-sm z-10 ring-4 ring-white">
+                                                    <Briefcase className="w-5 h-5 text-indigo-500" />
+                                                </div>
+                                                <div className="pt-0.5">
+                                                    <h4 className="font-bold text-slate-900 text-[15px] leading-tight">{exp.position}</h4>
+                                                    <p className="text-[13px] text-slate-500 font-semibold">{exp.company}</p>
+                                                    <p className="text-[10px] text-slate-400 font-black mt-1 uppercase tracking-widest bg-slate-50 inline-block px-2 py-0.5 rounded">
+                                                        {new Date(exp.startDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} - {exp.current ? 'Present' : new Date(exp.endDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                                                    </p>
+                                                    {exp.description && <p className="text-[12px] text-slate-600 mt-2.5 leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100/50">{exp.description}</p>}
+                                                </div>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
@@ -299,21 +339,42 @@ const StudentProfileModal = ({ student, onClose }) => {
 
                             {profile.certifications?.length > 0 && (
                                 <div>
-                                    <SectionHeader icon={ShieldCheck} title="Certifications" />
-                                    <div className="space-y-3">
+                                    <SectionHeader icon={Award} title="Certifications & Licenses" />
+                                    <div className="grid grid-cols-1 gap-3">
                                         {profile.certifications.map((cert, i) => (
-                                            <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-start gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                                                    <Award className="w-4 h-4 text-emerald-500" />
+                                            <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50/50 transition-colors shadow-sm flex items-start gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100/20">
+                                                    <ShieldCheck className="w-5 h-5 text-emerald-500" />
                                                 </div>
-                                                <div>
-                                                    <h4 className="text-xs font-bold text-slate-900 leading-tight">{cert.title}</h4>
-                                                    <p className="text-[10px] text-slate-500 font-medium">{cert.publishingOrganization}</p>
-                                                    {cert.credentialUrl && (
-                                                        <a href={cert.credentialUrl} target="_blank" rel="noreferrer" className="text-[9px] text-indigo-500 font-bold mt-1 flex items-center gap-1 hover:underline">
-                                                            View Credential <LinkIcon className="w-2.5 h-2.5" />
-                                                        </a>
-                                                    )}
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-bold text-slate-900 line-clamp-1">{cert.title}</h4>
+                                                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight">{cert.publishingOrganization}</p>
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        {cert.dateOfIssue && <span className="text-[10px] text-slate-400 font-medium">Issued: {new Date(cert.dateOfIssue).toLocaleDateString()}</span>}
+                                                        {cert.credentialUrl && (
+                                                            <a href={cert.credentialUrl} target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-black flex items-center gap-1 hover:underline">
+                                                                VERIFY <LinkIcon className="w-2.5 h-2.5" />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {profile.references?.length > 0 && (
+                                <div>
+                                    <SectionHeader icon={User} title="References" />
+                                    <div className="space-y-3">
+                                        {profile.references.map((ref, i) => (
+                                            <div key={i} className="p-4 rounded-3xl border border-slate-100 bg-slate-50 shadow-sm">
+                                                <h4 className="text-sm font-bold text-slate-900">{ref.name}</h4>
+                                                <p className="text-[11px] text-slate-500 font-bold uppercase mt-0.5">{ref.occupation} at {ref.company}</p>
+                                                <div className="flex items-center gap-4 mt-2">
+                                                    <p className="text-[11px] font-bold text-blue-600 flex items-center gap-1"><Mail className="w-3 h-3" /> {ref.email}</p>
+                                                    <p className="text-[11px] font-bold text-blue-600 flex items-center gap-1"><Phone className="w-3 h-3" /> {ref.phoneNumber}</p>
                                                 </div>
                                             </div>
                                         ))}
@@ -323,23 +384,25 @@ const StudentProfileModal = ({ student, onClose }) => {
                         </div>
 
                         {/* Right Column */}
-                        <div className="space-y-2">
-                            {profile.experience?.length > 0 && (
+                        <div className="space-y-6">
+                             {profile.education?.length > 0 && (
                                 <div>
-                                    <SectionHeader icon={Briefcase} title="Work Experience" />
-                                    <div className="space-y-4 relative before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-[2px] before:bg-slate-100">
-                                        {profile.experience.map((exp, i) => (
-                                            <div key={i} className="flex gap-4 relative">
-                                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-slate-100 shadow-sm z-10">
-                                                    <Briefcase className="w-5 h-5 text-indigo-500" />
+                                    <SectionHeader icon={Building} title="Education History" />
+                                    <div className="space-y-4">
+                                        {profile.education.map((edu, i) => (
+                                            <div key={i} className="flex gap-4 p-5 rounded-[28px] border border-slate-100 bg-white shadow-sm ring-4 ring-slate-50/50">
+                                                <div className="w-11 h-11 bg-indigo-50 rounded-2xl flex items-center justify-center shrink-0 border border-indigo-100/50 shadow-inner">
+                                                    <Building className="w-5 h-5 text-indigo-500" />
                                                 </div>
-                                                <div className="pt-0.5">
-                                                    <h4 className="font-bold text-slate-900 text-sm leading-tight">{exp.position}</h4>
-                                                    <p className="text-xs text-slate-500 font-medium">{exp.company}</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">
-                                                        {new Date(exp.startDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} - {exp.current ? 'Present' : new Date(exp.endDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
-                                                    </p>
-                                                    {exp.description && <p className="text-[11px] text-slate-600 mt-2 leading-relaxed">{exp.description}</p>}
+                                                <div>
+                                                    <h4 className="font-black text-slate-900 text-sm leading-tight pr-4">{edu.degree}</h4>
+                                                    <p className="text-xs text-slate-500 font-bold mt-0.5 uppercase tracking-tighter">{edu.institution}</p>
+                                                    <div className="flex items-center gap-1.5 mt-2">
+                                                        <Calendar className="w-3.5 h-3.5 text-slate-300" />
+                                                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                                                            Class of {new Date(edu.endDate).getFullYear()}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -349,39 +412,65 @@ const StudentProfileModal = ({ student, onClose }) => {
 
                             {profile.projects?.length > 0 && (
                                 <div>
-                                    <SectionHeader icon={Layers} title="Projects" />
-                                    <div className="space-y-3">
+                                    <SectionHeader icon={Layers} title="Portfolio Projects" />
+                                    <div className="space-y-4">
                                         {profile.projects.map((proj, i) => (
-                                            <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-indigo-50/30">
-                                                <h4 className="font-bold text-slate-900 text-sm">{proj.title}</h4>
-                                                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{proj.description}</p>
-                                                {proj.url && (
-                                                    <a href={proj.url} target="_blank" rel="noreferrer" className="text-[10px] text-indigo-600 font-bold mt-2 flex items-center gap-1 hover:underline">
-                                                        Live Project <LinkIcon className="w-3 h-3" />
-                                                    </a>
-                                                )}
+                                            <div key={i} className="p-5 rounded-3xl border border-slate-100 bg-white hover:border-indigo-200 transition-all shadow-sm">
+                                                <h4 className="font-bold text-slate-900 text-sm flex items-center justify-between">
+                                                    {proj.title}
+                                                    {proj.url && (
+                                                        <a href={proj.url} target="_blank" rel="noreferrer" className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors">
+                                                            <LinkIcon className="w-3 h-3" />
+                                                        </a>
+                                                    )}
+                                                </h4>
+                                                <p className="text-[12px] text-slate-600 mt-2 leading-relaxed">{proj.description}</p>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {profile.education?.length > 0 && (
+                            {profile.professionalExams?.length > 0 && (
                                 <div>
-                                    <SectionHeader icon={Building} title="Education" />
-                                    <div className="space-y-4">
-                                        {profile.education.map((edu, i) => (
-                                            <div key={i} className="flex gap-4 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
-                                                <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center shrink-0 border border-slate-100">
-                                                    <Building className="w-5 h-5 text-slate-400" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-bold text-slate-900 text-sm">{edu.degree}</h4>
-                                                    <p className="text-xs text-slate-600 font-medium">{edu.institution}</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
-                                                        Graduated {new Date(edu.endDate).getFullYear()}
-                                                    </p>
-                                                </div>
+                                    <SectionHeader icon={Globe} title="Professional Exams" />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {profile.professionalExams.map((exam, i) => (
+                                            <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-slate-50 text-center">
+                                                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{exam.title}</h4>
+                                                <p className="text-xl font-black text-slate-900 mt-1">{exam.score}</p>
+                                                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase leading-none">Taken {new Date(exam.dateTaken).getFullYear()}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {profile.seminars?.length > 0 && (
+                                <div>
+                                    <SectionHeader icon={Calendar} title="Seminars & Training" />
+                                    <div className="space-y-3">
+                                        {profile.seminars.map((sem, i) => (
+                                            <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-white shadow-sm">
+                                                <h4 className="text-sm font-bold text-slate-900">{sem.topic}</h4>
+                                                <p className="text-[11px] text-slate-500 font-bold mt-0.5">{sem.organizer}</p>
+                                                <p className="text-[10px] text-slate-400 mt-1">
+                                                    {new Date(sem.startDate).getFullYear()} - {sem.current ? 'Present' : new Date(sem.endDate).getFullYear()}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {profile.languages?.length > 0 && (
+                                <div>
+                                    <SectionHeader icon={Globe} title="Languages" />
+                                    <div className="flex flex-wrap gap-2.5">
+                                        {profile.languages.map((lang, i) => (
+                                            <div key={i} className="px-4 py-2 bg-slate-50 border border-slate-100 text-slate-700 rounded-2xl text-xs font-bold flex flex-col">
+                                                <span className="text-[13px]">{lang.language}</span>
+                                                <span className="text-[9px] text-blue-500 font-black uppercase tracking-tighter opacity-80">{lang.proficiency}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -393,12 +482,28 @@ const StudentProfileModal = ({ student, onClose }) => {
                                     <SectionHeader icon={Award} title="Awards & Honors" />
                                     <div className="space-y-3">
                                         {profile.awards.map((award, i) => (
-                                            <div key={i} className="flex gap-3 p-3 rounded-2xl bg-amber-50/50 border border-amber-100/50 text-amber-900">
-                                                <Award className="w-5 h-5 shrink-0" />
-                                                <div>
-                                                    <h4 className="text-xs font-bold leading-tight">{award.title}</h4>
-                                                    <p className="text-[10px] opacity-80">{award.issuer} • {new Date(award.dateAwarded).getFullYear()}</p>
+                                            <div key={i} className="flex gap-4 p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-white border border-amber-100 shadow-sm shadow-amber-500/5">
+                                                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-200">
+                                                    <Award className="w-5 h-5 text-amber-600" />
                                                 </div>
+                                                <div>
+                                                    <h4 className="text-[13px] font-black text-amber-900 leading-tight">{award.title}</h4>
+                                                    <p className="text-[10px] text-amber-700 font-bold uppercase mt-1">{award.issuer} • {new Date(award.dateAwarded).getFullYear()}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {profile.affiliations?.length > 0 && (
+                                <div>
+                                    <SectionHeader icon={LinkIcon} title="Affiliations" />
+                                    <div className="space-y-3">
+                                        {profile.affiliations.map((aff, i) => (
+                                            <div key={i} className="p-4 rounded-3xl border border-slate-100 bg-white">
+                                                <h4 className="text-sm font-bold text-slate-900">{aff.role}</h4>
+                                                <p className="text-[11px] font-bold text-slate-500">{aff.organization}</p>
                                             </div>
                                         ))}
                                     </div>

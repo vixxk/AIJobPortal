@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Shield, Users, Briefcase, Building2, GraduationCap,
-    LayoutDashboard, FileText, Globe, Search, Plus, BookOpen, Menu, X, AlertCircle
+    LayoutDashboard, FileText, Globe, Search, Plus, BookOpen, Menu, X, AlertCircle, CreditCard
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -49,6 +49,7 @@ const AdminLayout = () => {
         if (path.includes('/applications')) return 'Applications Control';
         if (path.includes('/competitions')) return 'Competitions Control';
         if (path.includes('/issues')) return 'Reported Issues';
+        if (path.includes('/payments')) return 'Payments & Revenue';
         return 'Admin Control';
     };
 
@@ -64,8 +65,8 @@ const AdminLayout = () => {
 
             {/* Sidebar (Desktop & Mobile) */}
             <div className={clsx(
-                "fixed lg:sticky top-0 left-0 z-[101] h-screen bg-white border-r border-slate-200 p-8 flex flex-col gap-2 shrink-0 overflow-y-auto transition-transform duration-300 lg:translate-x-0 lg:w-72",
-                isMobileMenuOpen ? "translate-x-0 w-80" : "-translate-x-full w-72"
+                "fixed lg:sticky top-0 left-0 z-[101] h-screen bg-white border-r border-slate-200 p-6 flex flex-col gap-2 shrink-0 overflow-y-auto transition-transform duration-300 lg:translate-x-0 lg:w-64",
+                isMobileMenuOpen ? "translate-x-0 w-72" : "-translate-x-full w-64"
             )}>
                 <div className="flex items-center justify-between mb-12 lg:mb-12">
                     <div className="flex items-center gap-4 px-2">
@@ -101,6 +102,7 @@ const AdminLayout = () => {
                     <SidebarItem to="/app/admin/applications" label="APPLICATIONS" icon={FileText} />
                     <SidebarItem to="/app/admin/competitions" label="COMPETITIONS" icon={Globe} />
                     <SidebarItem to="/app/admin/issues" label="APP ISSUES" icon={AlertCircle} />
+                    <SidebarItem to="/app/admin/payments" label="PAYMENTS" icon={CreditCard} />
                 </div>
 
                 <div className="mt-auto pt-10">
@@ -123,27 +125,27 @@ const AdminLayout = () => {
 
             {/* Main Content */}
             <div className="flex-1 min-w-0 flex flex-col">
-                <header className="h-16 lg:h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 lg:px-10 flex items-center justify-between sticky top-0 z-30">
+                <header className="h-14 lg:h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30">
                     <div className="flex items-center gap-3 lg:gap-4 overflow-hidden">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
-                            className="lg:hidden w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shrink-0"
+                            className="lg:hidden w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shrink-0"
                         >
-                            <Menu className="w-4 h-4 text-white" />
+                            <Menu className="w-3.5 h-3.5 text-white" />
                         </button>
-                        <h2 className="font-black text-slate-900 text-[11px] md:text-sm lg:text-lg tracking-tight uppercase truncate">
+                        <h2 className="font-black text-slate-900 text-[10px] md:text-xs lg:text-sm tracking-tight uppercase truncate">
                             {getPageTitle()}
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-4 lg:gap-6">
-                        <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-[10px] md:text-xs text-indigo-600 border-2 border-white shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-black text-[10px] text-indigo-600 border border-slate-200">
                             SA
                         </div>
                     </div>
                 </header>
 
-                <main className="p-4 lg:p-10 flex-1">
+                <main className="p-4 lg:p-8 flex-1">
                     <Outlet />
                 </main>
             </div>

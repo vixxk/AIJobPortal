@@ -11,6 +11,7 @@ const sendEmail = require('../../config/mailer');
 const RecruiterProfile = require('../recruiter/recruiter.model');
 const CollegeProfile = require('../college/college.model');
 const Issue = require('../issue/issue.model');
+const StudentProfile = require('../student/student.model');
 
 exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
   const totalUsers = await User.countDocuments();
@@ -229,6 +230,10 @@ exports.createJob = catchAsync(async (req, res, next) => {
     recruiterId: req.body.recruiterId || req.user._id,
     status: 'APPROVED'
   });
+
+  // Trigger notifications
+  await notifyStudentsOfJob(newJob, true);
+
   res.status(201).json({
     status: 'success',
     data: {
@@ -237,33 +242,81 @@ exports.createJob = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateJob = catchAsync(async (req, res, next) => {
-  const job = await Job.findByIdAndUpdate(req.params.jobId, req.body, { new: true });
-  if (!job) return next(new AppError('Job not found', 404));
+const notifyStudentsOfJob = async (job, isNewlyApproved) => {
+  if (!job || job.status !== 'APPROVED') return;
 
-  // If status is updated to APPROVED, send notification
-  if (req.body.status === 'APPROVED') {
-    if (job.isSpecial && job.courseId) {
-      // Notify students enrolled in the course
+  // 1. Handle Special Jobs
+  if (job.isSpecial) {
+    if (job.courseId) {
+      // Course-specific special job: notify enrolled students
       const course = await Course.findById(job.courseId);
       if (course && course.enrolledStudents.length > 0) {
         const notifications = course.enrolledStudents.map(studentId => ({
           userId: studentId,
-          title: 'Special Job Posting! 🚀',
-          message: `A new special job "${job.title}" has been posted specifically for students of ${course.title}.`,
-          type: 'JOB_POSTING'
+          title: 'Course Exclusive Job! 🚀',
+          message: `New job "${job.title}" posted for ${course.title} students.`,
+          type: 'JOB_POSTING',
+          metadata: { jobId: job._id }
         }));
-        await Notification.insertMany(notifications);
+        await Notification.insertMany(notifications, { ordered: false }).catch(() => {});
       }
     } else {
-      // Notify the recruiter that their job is approved
-      await Notification.create({
-        userId: job.recruiterId,
-        title: 'Job Approved',
-        message: `Your job posting "${job.title}" has been approved and is now live.`,
-        type: 'JOB_POSTING'
-      });
+      // Global special job: notify ALL students (gradnex official)
+      const allStudents = await User.find({ role: 'STUDENT', isActive: true }).select('_id');
+      if (allStudents.length > 0) {
+        const notifications = allStudents.map(student => ({
+          userId: student._id,
+          title: 'Gradnex Exclusive Job! ✨',
+          message: `A new verified job "${job.title}" at ${job.companyName || 'Gradnex Partner'} is now live. Apply now!`,
+          type: 'JOB_POSTING',
+          metadata: { jobId: job._id }
+        }));
+        await Notification.insertMany(notifications, { ordered: false }).catch(() => {});
+      }
     }
+  } else {
+    // 2. Regular Jobs: Notify recruiter + Match skills for students
+    if (isNewlyApproved) {
+        await Notification.create({
+          userId: job.recruiterId,
+          title: 'Job Approved ✅',
+          message: `Your job posting "${job.title}" has been approved and is now visible to students.`,
+          type: 'JOB_POSTING',
+          metadata: { jobId: job._id }
+        }).catch(() => {});
+    }
+
+    // Notify students with matching skills
+    const matchingProfiles = await StudentProfile.find({
+      skills: { $in: job.skillsRequired }
+    }).limit(50).select('userId');
+
+    const studentUserIds = matchingProfiles.map(p => p.userId);
+
+    if (studentUserIds.length > 0) {
+      const notifications = studentUserIds.map(studentId => ({
+        userId: studentId,
+        title: 'New Job Match! 🎯',
+        message: `A new job "${job.title}" matches your skills. Check it out!`,
+        type: 'JOB_MATCH',
+        metadata: { jobId: job._id }
+      }));
+      await Notification.insertMany(notifications, { ordered: false }).catch(() => {});
+    }
+  }
+};
+
+exports.updateJob = catchAsync(async (req, res, next) => {
+  const oldJob = await Job.findById(req.params.jobId);
+  if (!oldJob) return next(new AppError('Job not found', 404));
+
+  const job = await Job.findByIdAndUpdate(req.params.jobId, req.body, { new: true });
+  
+  // If status is updated to APPROVED, or a job becomes Special
+  if (req.body.status === 'APPROVED' && oldJob.status !== 'APPROVED') {
+    await notifyStudentsOfJob(job, true);
+  } else if (job.status === 'APPROVED' && req.body.isSpecial === true && !oldJob.isSpecial) {
+      await notifyStudentsOfJob(job, false);
   }
 
   res.status(200).json({

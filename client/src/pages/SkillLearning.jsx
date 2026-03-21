@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import SmartImage from '../components/ui/SmartImage';
 import Skeleton from '../components/ui/Skeleton';
+import PaymentVerify from './course/PaymentVerify';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const getImgUrl = (p) => {
@@ -824,8 +825,31 @@ const CourseDetailPage = () => {
     useEffect(() => { fetchCourse(); }, [fetchCourse]);
 
     const handleEnroll = async () => {
-        try { await axios.post(`/courses/${id}/enroll`); setIsEnrolled(true); fetchCourse(); }
-        catch { alert('Failed to enroll'); }
+        try {
+            const res = await axios.post('/payment/create-order', { courseId: id });
+            
+            if (res.data.isFree) {
+                setIsEnrolled(true);
+                fetchCourse();
+                return;
+            }
+
+            // Cashfree logic
+            const cashfree = new window.Cashfree({
+                mode: import.meta.env.MODE === 'production' ? 'production' : 'sandbox'
+            });
+
+            const checkoutOptions = {
+                paymentSessionId: res.data.data.payment_session_id,
+                redirectTarget: "_self", // Or "_blank" or "_modal" (for _modal, we need to handle callbacks)
+            };
+
+            cashfree.checkout(checkoutOptions);
+
+        } catch (err) {
+            console.error('Enroll Error:', err);
+            alert(err.response?.data?.message || 'Failed to enroll');
+        }
     };
 
     const handleMarkComplete = async () => {
@@ -2027,6 +2051,7 @@ const SkillLearning = () => {
             <Route path="teacher" element={<TeacherDashboard />} />
             <Route path="manage/:courseId" element={<ManageLectures />} />
             <Route path="onboarding" element={<TeacherOnboarding />} />
+            <Route path="course/:id/payment-verify" element={<PaymentVerify />} />
         </Routes>
     );
 };

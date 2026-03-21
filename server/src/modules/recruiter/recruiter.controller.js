@@ -1,7 +1,7 @@
 const RecruiterProfile = require('./recruiter.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
-const { uploadImageToCloudinary } = require('../../config/cloudinary');
+const { uploadFile } = require('../../utils/fileUpload');
 exports.getMe = catchAsync(async (req, res, next) => {
   const profile = await RecruiterProfile.findOne({ userId: req.user.id });
   res.status(200).json({
@@ -38,10 +38,10 @@ exports.uploadLogo = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError('Please upload an image file.', 400));
   }
-  const result = await uploadImageToCloudinary(req.file.buffer, 'company_logos');
+  const result = await uploadFile(req.file, 'recruiter/logos', true, 'avatars');
   const profile = await RecruiterProfile.findOneAndUpdate(
     { userId: req.user.id },
-    { logo: result.secure_url },
+    { logo: result.url },
     { new: true, upsert: true }
   );
   res.status(200).json({
