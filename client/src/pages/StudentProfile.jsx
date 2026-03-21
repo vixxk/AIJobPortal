@@ -672,15 +672,17 @@ const StudentProfile = () => {
                                 <span className="font-bold text-slate-700">Browse File</span>
                             </div>
                             {profile.resumeUrl && (
-                                <div className="mt-3 flex items-center justify-between p-3 bg-red-50 rounded-2xl border border-red-100">
-                                    <div className="flex gap-3 items-center flex-1 cursor-pointer" onClick={() => window.open(profile.resumeUrl, '_blank')}>
-                                        <FileText className="text-red-500 w-6 h-6" />
+                                <div className="mt-3 flex items-center justify-between p-3 bg-red-50 rounded-2xl border border-red-100 overflow-hidden">
+                                    <div className="flex gap-3 items-center flex-1 min-w-0 cursor-pointer" onClick={() => window.open(profile.resumeUrl, '_blank')}>
+                                        <FileText className="text-red-500 w-6 h-6 shrink-0" />
                                         <div className="min-w-0 flex-1">
                                             <p className="font-bold text-sm">Active Resume</p>
-                                            <p className="text-xs text-slate-500 truncate">{profile.resumeUrl.substring(profile.resumeUrl.lastIndexOf('/') + 1) || 'document.pdf'}</p>
+                                            <p className="text-xs text-slate-500 truncate" title={profile.resumeUrl.split('/').pop().split('?')[0]}>
+                                                {profile.resumeUrl.split('/').pop().split('?')[0] || 'document.pdf'}
+                                            </p>
                                         </div>
                                     </div>
-                                    <X className="w-5 h-5 text-red-500 cursor-pointer" onClick={async () => {
+                                    <X className="w-5 h-5 text-red-500 cursor-pointer shrink-0 ml-2" onClick={async () => {
                                         if (window.confirm('Are you sure you want to remove your resume?')) {
                                             await saveProfile({ resumeUrl: '' });
                                         }
@@ -802,7 +804,7 @@ const StudentProfile = () => {
                                                 <Edit2 className="w-4 h-4 text-white" />
                                             </div>
                                         </div>
-                                        <h2 className="text-[22px] font-bold tracking-tight text-slate-800 mb-1 text-center">
+                                        <h2 className="text-[22px] font-bold tracking-tight text-slate-800 mb-1 text-center truncate px-4 w-full">
                                             {user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}
                                         </h2>
                                         <p className="text-slate-500 text-[13px] font-medium text-center px-4 leading-relaxed">
@@ -929,8 +931,10 @@ const StudentProfile = () => {
                                                                 <FileText className="w-5 h-5 text-red-500" />
                                                             </div>
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="text-[14px] font-bold text-slate-800 truncate pr-2">{profile.resumeUrl.substring(profile.resumeUrl.lastIndexOf('/') +   1) || 'document.pdf'}</p>
-                                                                <p className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">Click to view/download • {profile.resumeUrl.split('.').pop().toUpperCase() || 'PDF'}</p>
+                                                                <p className="text-[14px] font-bold text-slate-800 truncate pr-2" title={profile.resumeUrl.split('/').pop().split('?')[0]}>
+                                                                    {profile.resumeUrl.split('/').pop().split('?')[0] || 'document.pdf'}
+                                                                </p>
+                                                                <p className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">Click to view/download • {profile.resumeUrl.split('?')[0].split('.').pop().toUpperCase() || 'PDF'}</p>
                                                             </div>
                                                         </div>
                                                         <div className="p-2 -mr-2 bg-transparent shrink-0" onClick={(e) => { e.stopPropagation(); navigate('/app/profile/resume'); }}>
@@ -1167,9 +1171,9 @@ const StudentProfile = () => {
                                     )}
                                 />
                             </div>
-                            <div>
-                                <h2 className="text-xl font-bold tracking-tight text-slate-800">{user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}</h2>
-                                <p className="text-slate-500 text-sm mt-1 font-medium">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
+                            <div className="min-w-0 flex-1">
+                                <h2 className="text-xl font-bold tracking-tight text-slate-800 truncate" title={user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}>{user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}</h2>
+                                <p className="text-slate-500 text-sm mt-1 font-medium truncate">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
                             </div>
                         </div>
                         <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-0.5">
