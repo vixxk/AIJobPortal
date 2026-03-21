@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Sparkles, Search, MapPin, Briefcase, IndianRupee, Clock, ChevronRight, Building2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
 
@@ -114,6 +114,8 @@ const SpecialJobs = () => {
     const [selectedJob, setSelectedJob] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [savedJobsIds, setSavedJobsIds] = useState(new Set());
+    const [searchParams] = useSearchParams();
+    const jobIdFromUrl = searchParams.get('id');
 
     const fetchSpecialJobs = useCallback(async () => {
         setLoading(true);
@@ -128,6 +130,13 @@ const SpecialJobs = () => {
     }, []);
 
     useEffect(() => { fetchSpecialJobs(); }, [fetchSpecialJobs]);
+
+    useEffect(() => {
+        if (jobIdFromUrl && jobs.length > 0) {
+            const job = jobs.find(j => j._id === jobIdFromUrl);
+            if (job) setSelectedJob(normalise(job));
+        }
+    }, [jobIdFromUrl, jobs]);
 
     useEffect(() => {
         const fetchSaved = async () => {

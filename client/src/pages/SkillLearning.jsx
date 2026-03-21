@@ -558,6 +558,7 @@ const CourseListingPage = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+    const [filterType, setFilterType] = useState('all'); // 'all' or 'enrolled'
     const { user } = useAuth();
 
     const fetchCourses = useCallback(async () => {
@@ -576,6 +577,12 @@ const CourseListingPage = () => {
     // Derive categories from courses
     const categories = ['All', ...Array.from(new Set(courses.map(c => c.category).filter(Boolean)))];
 
+    // Enrolled IDs from user
+    const userId = user?._id || user?.id;
+    const isEnrolled = useCallback((course) =>
+        Array.isArray(course.enrolledStudents) && userId &&
+        course.enrolledStudents.some(s => (s._id || s).toString() === userId.toString()), [userId]);
+
     // Filtering
     const filtered = courses.filter(c => {
         const q = search.toLowerCase();
@@ -584,15 +591,9 @@ const CourseListingPage = () => {
             || c.teacher?.name?.toLowerCase().includes(q)
             || c.tags?.some(t => t.toLowerCase().includes(q));
         const matchCat = activeCategory === 'All' || c.category === activeCategory;
-        return matchSearch && matchCat;
+        const matchFilter = filterType === 'all' || isEnrolled(c);
+        return matchSearch && matchCat && matchFilter;
     });
-
-    // Enrolled IDs from user (backend sends isEnrolled per course on getCourse, but listing may not)
-    // We'll mark enrolled if user._id appears in enrolledStudents
-    const userId = user?._id || user?.id;
-    const isEnrolled = (course) =>
-        Array.isArray(course.enrolledStudents) && userId &&
-        course.enrolledStudents.some(s => (s._id || s).toString() === userId.toString());
 
     const enrolledCount = courses.filter(isEnrolled).length;
 
@@ -640,21 +641,35 @@ const CourseListingPage = () => {
             <div className="max-w-6xl mx-auto px-4 md:px-8 -mt-6">
 
                 {/* ── Stats strip */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 mb-8">
                     {[
-                        { label: 'Total Courses', value: courses.length, icon: BookOpen, color: 'indigo' },
-                        { label: 'Enrolled', value: enrolledCount, icon: CheckCircle, color: 'emerald' },
-                        { label: 'Available', value: courses.length - enrolledCount, icon: Play, color: 'violet' },
-                    ].map(({ label, value, icon: Icon, color }) => (
-                        <div key={label} className={`bg-white rounded-2xl p-3 sm:p-5 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center sm:gap-4 gap-1 text-center sm:text-left`}>
-                            <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-${color}-50 rounded-xl flex items-center justify-center shrink-0`}>
-                                <Icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${color}-500`} />
+                        { id: 'all', label: 'Total Courses', value: courses.length, icon: BookOpen, color: 'indigo' },
+                        { id: 'enrolled', label: 'Enrolled', value: enrolledCount, icon: CheckCircle, color: 'emerald' },
+                    ].map(({ id, label, value, icon: Icon, color }) => (
+                        <div 
+                            key={id} 
+                            onClick={() => setFilterType(id)}
+                            className={clsx(
+                                "bg-white rounded-[24px] p-4 sm:p-6 border-2 transition-all cursor-pointer flex flex-col sm:flex-row items-center sm:gap-5 gap-2 text-center sm:text-left group",
+                                filterType === id 
+                                    ? `border-${color}-500 shadow-lg shadow-${color}-500/10` 
+                                    : "border-slate-100 hover:border-slate-200 hover:shadow-md"
+                            )}
+                        >
+                            <div className={clsx(
+                                "w-10 h-10 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110",
+                                `bg-${color}-50 text-${color}-500`
+                            )}>
+                                <Icon className="w-5 h-5 sm:w-7 sm:h-7" />
                             </div>
                             <div>
-                                <div className={`text-lg sm:text-xl font-black text-${color}-600 leading-none`}>
-                                    {loading ? <Skeleton className="h-6 w-8" /> : value}
+                                <div className={clsx(
+                                    "text-xl sm:text-3xl font-black leading-none mb-1",
+                                    `text-${color}-600`
+                                )}>
+                                    {loading ? <Skeleton className="h-8 w-10" /> : value}
                                 </div>
-                                <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">{label}</p>
+                                <p className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest leading-tight">{label}</p>
                             </div>
                         </div>
                     ))}
@@ -703,9 +718,9 @@ const CourseListingPage = () => {
                             : `Showing all ${courses.length} courses`
                         }
                     </p>
-                    {(search || activeCategory !== 'All') && (
+                    {(search || activeCategory !== 'All' || filterType !== 'all') && (
                         <button
-                            onClick={() => { setSearch(''); setActiveCategory('All'); }}
+                            onClick={() => { setSearch(''); setActiveCategory('All'); setFilterType('all'); }}
                             className="text-xs font-black text-indigo-600 hover:underline"
                         >
                             Clear filters

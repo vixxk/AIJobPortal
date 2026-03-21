@@ -23,7 +23,7 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
         return null;
     }
 
-    if (isMobile && (location.pathname === '/app' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/contact')) {
+    if (isMobile && (location.pathname === '/app' || location.pathname === '/app/dashboard' || location.pathname.startsWith('/app/job/') || location.pathname === '/app/contact')) {
         return null;
     }
     const getPageTitle = () => {

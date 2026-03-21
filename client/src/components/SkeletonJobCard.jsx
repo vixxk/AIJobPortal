@@ -1,8 +1,8 @@
-import React from 'react';
+import clsx from 'clsx';
 
-const SkeletonJobCard = () => {
+const SkeletonJobCard = ({ className }) => {
     return (
-        <div className="bg-white rounded-[16px] md:rounded-[24px] p-4 md:p-5 border border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] mb-4 animate-pulse w-full">
+        <div className={clsx("bg-white rounded-[16px] md:rounded-[24px] p-4 md:p-5 border border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] animate-pulse mb-4", className)}>
             <div className="flex justify-between items-start mb-3 md:mb-4">
                 <div className="flex gap-3 md:gap-4 w-full">
                     <div className="w-12 h-12 rounded-xl md:rounded-2xl bg-slate-200 shrink-0"></div>

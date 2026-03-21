@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import axios from '../utils/axios';
@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
-const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
+import NotificationsDropdown from '../components/NotificationsDropdown';
+import TutorialOverlay from '../components/TutorialOverlay';
+const JobCard = ({ job, onClick, initiallySaved, onToggleSave, className }) => {
     const [saved, setSaved] = useState(initiallySaved);
 
     useEffect(() => {
@@ -41,7 +43,7 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
         }
     };
     return (
-        <div onClick={() => onClick(job)} className="bg-white rounded-[16px] md:rounded-[24px] p-4 md:p-5 border border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] cursor-pointer hover:shadow-[0_8px_30px_-10px_rgba(37,99,235,0.15)] hover:border-blue-100 transition-all mb-4 relative">
+        <div onClick={() => onClick(job)} className={clsx("bg-white rounded-[16px] md:rounded-[24px] p-4 md:p-5 border border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] cursor-pointer hover:shadow-[0_8px_30px_-10px_rgba(37,99,235,0.15)] hover:border-blue-100 transition-all mb-4 relative", className)}>
             <div className="flex justify-between items-start mb-2 md:mb-3">
                 <div className="flex gap-3 md:gap-4">
                     <div className="w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center bg-white shadow-sm overflow-hidden shrink-0 relative">
@@ -95,6 +97,102 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
         </div>
     )
 };
+
+const AutoCarousel = ({ items, renderItem, autoSlideInterval = 3000 }) => {
+    const [index, setIndex] = useState(0);
+    const [autoSlide, setAutoSlide] = useState(true);
+    const containerRef = useRef(null);
+    const interactionTimerRef = useRef(null);
+    const isProgrammaticScroll = useRef(false);
+
+    const handleScroll = (e) => {
+        if (isProgrammaticScroll.current) return;
+        const scrollLeft = e.target.scrollLeft;
+        const itemWidth = 280 + 16;
+        const newIndex = Math.round(scrollLeft / itemWidth);
+        if (newIndex !== index && newIndex >= 0 && newIndex < items.length) {
+            setIndex(newIndex);
+        }
+    };
+
+    const handleInteraction = () => {
+        setAutoSlide(false);
+        if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
+        interactionTimerRef.current = setTimeout(() => setAutoSlide(true), 8000);
+    };
+
+    // Auto sliding effect
+    useEffect(() => {
+        if (!autoSlide || items.length <= 1) return;
+        const timer = setInterval(() => {
+            setIndex(prev => (prev + 1) % items.length);
+        }, autoSlideInterval);
+        return () => clearInterval(timer);
+    }, [autoSlide, items.length, autoSlideInterval]);
+
+    // Programmatic scroll to index
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container || !autoSlide) return;
+
+        const itemWidth = 280 + 16;
+        const target = index * itemWidth;
+        
+        if (Math.abs(container.scrollLeft - target) > 5) {
+            isProgrammaticScroll.current = true;
+            // Temporarily disable snapping to allow smooth programmatic scroll
+            container.style.scrollSnapType = 'none';
+            container.scrollTo({ left: target, behavior: 'smooth' });
+            
+            // Re-enable snapping and allow manual scroll tracking after animation
+            const timeout = setTimeout(() => {
+                if (containerRef.current) containerRef.current.style.scrollSnapType = 'x mandatory';
+                isProgrammaticScroll.current = false;
+            }, 600);
+            return () => {
+                clearTimeout(timeout);
+                isProgrammaticScroll.current = false;
+            };
+        }
+    }, [index, autoSlide]);
+
+    return (
+        <div className="relative group/carousel">
+            <div
+                ref={containerRef}
+                onScroll={handleScroll}
+                onTouchStart={handleInteraction}
+                onMouseDown={handleInteraction}
+                className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-4 pb-4 px-5"
+            >
+                {items.map((item, i) => (
+                    <div key={i} className="shrink-0 first:pl-0 last:pr-0">
+                        {renderItem(item)}
+                    </div>
+                ))}
+            </div>            
+            {items?.length > 1 && (
+                <div className="flex justify-center gap-2 mt-[-10px] mb-4">
+                    {items.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => {
+                                setIndex(idx);
+                                handleInteraction();
+                            }}
+                            className={clsx(
+                                "w-2 h-2 rounded-full transition-all duration-300",
+                                index === idx 
+                                    ? "bg-blue-600 w-6" 
+                                    : "bg-slate-200"
+                            )}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 const Dashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -114,6 +212,40 @@ const Dashboard = () => {
     const [profile, setProfile] = useState(null);
     const [specialJobs, setSpecialJobs] = useState([]);
     const [loadingSpecial, setLoadingSpecial] = useState(false);
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+    const tutorialSteps = [
+        { 
+            target: '[data-tutorial-id="feature-3"]', 
+            title: 'Skill Learning', 
+            content: 'Master new technologies and industry-standard tools with curated courses from industry experts.' 
+        },
+        { 
+            target: '[data-tutorial-id="feature-4"]', 
+            title: 'AI English Tutor', 
+            content: 'Improve your communication skills with personalized spoken practice and grammar guidance from our AI tutor.' 
+        },
+        { 
+            target: '[data-tutorial-id="feature-1"]', 
+            title: 'Resume Builder', 
+            content: 'Create a professional, ATS-optimized resume in minutes. Choose from premium templates designed to get you hired.' 
+        },
+        { 
+            target: '[data-tutorial-id="feature-2"]', 
+            title: 'AI Mock Interviews', 
+            content: 'Practice your interview skills with our advanced AI interviewer. Get real-time feedback on your performance.' 
+        },
+        { 
+            target: '[data-tutorial-id="feature-5"]', 
+            title: 'Gradnex Job Postings', 
+            content: 'Access exclusive job postings from top companies directly on Gradnex. These are high-priority roles just for you.' 
+        },
+        { 
+            target: '[data-tutorial-id="feature-0"]', 
+            title: 'Global Job Search', 
+            content: 'Explore thousands of job opportunities from around the world. Filter by role, location, and salary to find your perfect match.' 
+        },
+    ];
 
 
     const fetchStudentProfile = useCallback(async () => {
@@ -144,7 +276,7 @@ const Dashboard = () => {
                 })
             );
             setSavedJobsIds(savedIds);
-        } catch (err) { }
+        } catch (err) {}
     }, []);
 
     useEffect(() => {
@@ -240,8 +372,11 @@ const Dashboard = () => {
                                 See how you can <br />
                                 <span className="text-blue-100 italic">find a job quickly!</span>
                             </h2>
-                            <button className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-blue-900/20 hover:scale-105 transition-transform active:scale-95 flex items-center gap-2">
-                                Explore Opportunities
+                            <button 
+                                onClick={() => setIsTutorialOpen(true)}
+                                className="bg-white text-blue-600 px-8 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-blue-900/20 hover:scale-105 transition-transform active:scale-95 flex items-center gap-2"
+                            >
+                                Explore Now
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
@@ -260,9 +395,10 @@ const Dashboard = () => {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
                         {features.map((feature, i) => (
-                            <Link
+                             <Link
                                 key={i}
                                 to={feature.link}
+                                data-tutorial-id={`feature-${i}`}
                                 className="group bg-white p-6 rounded-[28px] border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 flex flex-col items-center text-center"
                             >
                                 <div className={`w-13 h-13 rounded-[20px] ${feature.bg} flex items-center justify-center mb-5 group-hover:scale-105 transition-all duration-300 shadow-sm`}>
@@ -377,10 +513,10 @@ const Dashboard = () => {
                             <h2 className="text-xl font-black text-slate-900 leading-none tracking-tight">{firstName}</h2>
                         </div>
                     </div>
-                    <button className="relative w-12 h-12 rounded-[18px] border border-slate-100 flex items-center justify-center bg-white shadow-sm active:scale-90 transition-all">
-                        <div className="absolute top-[10px] right-[10px] w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full z-10"></div>
-                        <Bell className="w-6 h-6 text-slate-800" strokeWidth={2} />
-                    </button>
+                    <NotificationsDropdown 
+                        className="w-12 h-12 rounded-[18px] border border-slate-100 bg-white shadow-sm active:scale-90"
+                        iconClassName="w-6 h-6 text-slate-800"
+                    />
                 </div>
                 <div className="px-5 mb-7">
                     <div className="w-full bg-gradient-to-br from-[#3872FA] to-[#1e40af] rounded-[32px] p-6 text-white relative overflow-hidden flex flex-col justify-center min-h-[180px] shadow-xl shadow-blue-500/20">
@@ -389,10 +525,13 @@ const Dashboard = () => {
                             <div className="absolute top-10 right-0 w-40 h-40 bg-blue-300/20 transform rounded-full blur-xl"></div>
                         </div>
                         <div className="relative z-10 w-[65%] pl-1">
-                            <h3 className="text-[19px] font-extrabold leading-tight mb-4 tracking-tight text-white drop-shadow-md">
-                                See how you can<br />find a job quickly!
+                            <h3 className="text-[20px] font-black leading-[1.2] mb-5 tracking-tight text-white drop-shadow-sm">
+                                See how you can<br />find a job <span className="text-blue-200">quickly!</span>
                             </h3>
-                            <button className="bg-white text-blue-600 text-[12px] font-bold py-2 px-5 rounded-xl inline-block shadow-md">
+                             <button 
+                                onClick={() => setIsTutorialOpen(true)}
+                                className="bg-white text-blue-600 text-[13px] font-extrabold py-3 px-6 rounded-[14px] shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
+                            >
                                 Explore Now
                             </button>
                         </div>
@@ -411,9 +550,10 @@ const Dashboard = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-3 md:gap-4">
                         {features.map((feature, i) => (
-                            <Link
+                             <Link
                                 key={i}
                                 to={feature.link}
+                                data-tutorial-id={`feature-${i}`}
                                 className="group bg-white p-5 rounded-[24px] border border-slate-100 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.05)] active:scale-95 transition-all duration-300 flex flex-col items-center text-center"
                             >
                                 <div className={`w-12 h-12 rounded-2xl ${feature.bg} flex items-center justify-center mb-3.5 shadow-sm`}>
@@ -431,14 +571,15 @@ const Dashboard = () => {
                         <Link to="/app/gradnex-jobs" className="text-[13px] font-bold text-rose-600">See All</Link>
                     </div>
                     {loadingSpecial ? (
-                        <div className="flex flex-col gap-4">
-                            {[1, 2].map((i) => (
-                                <SkeletonJobCard key={i} />
+                        <div className="flex overflow-x-auto gap-4 snap-x no-scrollbar pb-10 px-5 -mx-5">
+                            {[1, 2, 3].map((i) => (
+                                <SkeletonJobCard key={i} className="mb-0 w-[280px] shrink-0 snap-center" />
                             ))}
                         </div>
                     ) : specialJobs.length > 0 ? (
-                        <div className="flex flex-col gap-4">
-                            {specialJobs.slice(0, 2).map((job) => {
+                        <AutoCarousel 
+                            items={specialJobs}
+                            renderItem={(job) => {
                                 const internalJob = {
                                     ...job,
                                     jobId: job._id,
@@ -453,6 +594,7 @@ const Dashboard = () => {
                                         key={job._id}
                                         job={internalJob}
                                         onClick={setSelectedJob}
+                                        className="mb-0 w-[280px] shrink-0 snap-center"
                                         initiallySaved={savedJobsIds.has(job._id)}
                                         onToggleSave={(id, isSaved) => {
                                             const newIds = new Set(savedJobsIds);
@@ -462,8 +604,8 @@ const Dashboard = () => {
                                         }}
                                     />
                                 );
-                            })}
-                        </div>
+                            }}
+                        />
                     ) : (
                         <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
                             <Sparkles className="w-8 h-8 text-rose-300 mx-auto mb-2" />
@@ -490,35 +632,42 @@ const Dashboard = () => {
                         ))}
                     </div>
                 </div>
-                <div className="mt-4 pr-5 pl-5 mb-10">
+                <div className="mt-4 pb-8 overflow-hidden">
                     {loadingJobs ? (
-                        <div className="flex flex-col gap-4">
+                        <div className="flex overflow-x-auto gap-4 snap-x no-scrollbar pb-10 px-5 -mx-5">
                             {[1, 2, 3].map((i) => (
-                                <SkeletonJobCard key={i} />
+                                <SkeletonJobCard key={i} className="mb-0 w-[280px] shrink-0 snap-center" />
                             ))}
                         </div>
                     ) : error ? (
-                        <div className="text-red-500 bg-red-50 p-4 rounded-2xl font-semibold text-center mt-2 border border-red-100 text-[13px]">
-                            {error}
+                        <div className="px-5">
+                            <div className="text-red-500 bg-red-50 p-4 rounded-2xl font-semibold text-center mt-2 border border-red-100 text-[13px]">
+                                {error}
+                            </div>
                         </div>
                     ) : (
-                        recentJobs.map((job) => {
-                            const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
-                            return (
-                                <JobCard
-                                    key={jobId}
-                                    job={job}
-                                    onClick={setSelectedJob}
-                                    initiallySaved={savedJobsIds.has(jobId)}
-                                    onToggleSave={(id, isSaved) => {
-                                        const newIds = new Set(savedJobsIds);
-                                        if (isSaved) newIds.add(id);
-                                        else newIds.delete(id);
-                                        setSavedJobsIds(newIds);
-                                    }}
-                                />
-                            );
-                        })
+                        <AutoCarousel 
+                            items={recentJobs}
+                            autoSlideInterval={3000}
+                            renderItem={(job) => {
+                                const jobId = job.link || `${job.title}-${job.company}`.replace(/\s+/g, '-').toLowerCase();
+                                return (
+                                    <JobCard
+                                        key={jobId}
+                                        job={job}
+                                        onClick={setSelectedJob}
+                                        className="mb-0 w-[280px] shrink-0 snap-center"
+                                        initiallySaved={savedJobsIds.has(jobId)}
+                                        onToggleSave={(id, isSaved) => {
+                                            const newIds = new Set(savedJobsIds);
+                                            if (isSaved) newIds.add(id);
+                                            else newIds.delete(id);
+                                            setSavedJobsIds(newIds);
+                                        }}
+                                    />
+                                );
+                            }}
+                        />
                     )}
                 </div>
             </div>
@@ -531,7 +680,12 @@ const Dashboard = () => {
                     if (isSaved) newIds.add(jobId);
                     else newIds.delete(jobId);
                     setSavedJobsIds(newIds);
-                }}
+                 }}
+            />
+            <TutorialOverlay
+                isOpen={isTutorialOpen}
+                steps={tutorialSteps}
+                onClose={() => setIsTutorialOpen(false)}
             />
         </>
     );

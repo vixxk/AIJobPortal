@@ -36,16 +36,40 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
     const companyLogo = job?.logo || job?.recruiterId?.logo || job?.recruiterId?.avatar;
 
     const handleCopyLink = () => {
-        if (job?.link) {
-            navigator.clipboard.writeText(job.link || window.location.href);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } else if (job?._id) {
-            const url = `${window.location.origin}/app/special-jobs/${job._id}`;
-            navigator.clipboard.writeText(url);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+        const shareUrl = job?.link || `${window.location.origin}/app/gradnex-jobs?id=${job?._id || ''}`;
+        
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                })
+                .catch(err => {
+                    console.error('Clipboard copy failed', err);
+                    fallbackCopy(shareUrl);
+                });
+        } else {
+            fallbackCopy(shareUrl);
         }
+    };
+
+    const fallbackCopy = (text) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
     };
     useEffect(() => {
         if (job) {

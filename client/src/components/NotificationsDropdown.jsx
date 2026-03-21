@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from '../utils/axios';
 import { Bell, Check, Trash2, X } from 'lucide-react';
-const NotificationsDropdown = () => {
+import clsx from 'clsx';
+const NotificationsDropdown = ({ className, iconClassName }) => {
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -47,19 +48,34 @@ const NotificationsDropdown = () => {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors hidden md:block"
+                className={clsx(
+                    "relative flex items-center justify-center transition-all",
+                    className || "p-2 text-slate-500 hover:bg-slate-100 rounded-full"
+                )}
             >
-                <Bell className="w-5 h-5" />
+                <Bell className={clsx("w-5 h-5", iconClassName)} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                    <div className="absolute top-[2px] right-[2px] w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full z-10"></div>
                 )}
             </button>
             { }
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden">
-                    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                        <h3 className="font-bold text-slate-800">Notifications</h3>
-                        <span className="text-xs font-semibold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">{unreadCount} New</span>
+                <>
+                    {/* Background Overlay for Mobile */}
+                    <div 
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[105] md:hidden transition-opacity"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className={clsx(
+                        "bg-white rounded-[32px] shadow-2xl border border-slate-200 z-[110] overflow-hidden transition-all duration-300",
+                        "fixed left-4 right-4 top-24 w-auto transform origin-top",
+                        "md:absolute md:right-0 md:left-auto md:w-96 md:top-full md:mt-3"
+                    )}>
+                        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
+                        <h3 className="font-bold text-slate-900 text-lg tracking-tight">Notifications</h3>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase tracking-widest">{unreadCount} New</span>
+                        </div>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
@@ -94,6 +110,7 @@ const NotificationsDropdown = () => {
                         )}
                     </div>
                 </div>
+            </>
             )}
         </div>
     );
