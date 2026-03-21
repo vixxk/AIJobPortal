@@ -346,9 +346,9 @@ const Dashboard = () => {
     }, [fetchRecentData]); // Run when activeCategory changes (since fetchRecentData depends on it)
     const features = [
         { title: 'Global Job Search', desc: 'Find Best Matches', icon: Search, color: 'text-blue-600', bg: 'bg-blue-50', link: '/app/jobs' },
-        { title: 'Resume Builder', desc: 'Optimized for ATS', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', link: '/app/resume' },
+        { title: 'Resume\nBuilder', desc: 'Optimized for ATS', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50', link: '/app/resume' },
         { title: 'AI Mock Interviews', desc: 'Practice with AI', icon: MonitorPlay, color: 'text-orange-600', bg: 'bg-orange-50', link: '/app/interview' },
-        { title: 'Skill Learning', desc: 'Online Classes', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
+        { title: 'Skill\nLearning', desc: 'Online Classes', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
         { title: 'AI English Tutor', desc: 'Spoken Practice', icon: Headphones, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/app/english-tutor' },
         { title: 'Gradnex Job Postings', desc: 'Top Companies', icon: Rocket, color: 'text-rose-600', bg: 'bg-rose-50', link: '/app/gradnex-jobs' },
     ];
@@ -404,7 +404,7 @@ const Dashboard = () => {
                                 <div className={`w-13 h-13 rounded-[20px] ${feature.bg} flex items-center justify-center mb-5 group-hover:scale-105 transition-all duration-300 shadow-sm`}>
                                     <feature.icon className={`w-6.5 h-6.5 ${feature.color}`} strokeWidth={2.5} />
                                 </div>
-                                <h4 className="text-[15px] font-bold text-slate-800 mb-1.5 tracking-tight transition-colors">{feature.title}</h4>
+                                <h4 className="text-[15px] font-bold text-slate-800 mb-1.5 tracking-tight transition-colors whitespace-pre-line">{feature.title}</h4>
                                 <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{feature.desc}</p>
                             </Link>
                         ))}
@@ -559,7 +559,7 @@ const Dashboard = () => {
                                 <div className={`w-12 h-12 rounded-2xl ${feature.bg} flex items-center justify-center mb-3.5 shadow-sm`}>
                                     <feature.icon className={`w-6 h-6 ${feature.color}`} strokeWidth={2.5} />
                                 </div>
-                                <h4 className="font-bold text-slate-900 text-[13px] leading-tight mb-1">{feature.title}</h4>
+                                <h4 className="font-bold text-slate-900 text-[13px] leading-tight mb-1 whitespace-pre-line">{feature.title}</h4>
                                 <p className="text-[10px] text-slate-500 font-medium leading-normal">{feature.desc}</p>
                             </Link>
                         ))}
