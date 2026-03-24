@@ -38,7 +38,7 @@ exports.uploadLogo = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError('Please upload an image file.', 400));
   }
-  const result = await uploadFile(req.file, 'recruiter/logos', true, 'avatars');
+  const result = await uploadFile(req.file, 'recruiter/logos', true, 'avatars', 'image');
   const profile = await RecruiterProfile.findOneAndUpdate(
     { userId: req.user.id },
     { logo: result.url },

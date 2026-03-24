@@ -128,12 +128,40 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
         }
     };
 
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadedResume, setUploadedResume] = useState(null);
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.type !== 'application/pdf') {
+            setError("Only PDF files are allowed.");
+            return;
+        }
+        setIsUploading(true);
+        setError(null);
+        const formData = new FormData();
+        formData.append('resume', file);
+        try {
+            const res = await axios.patch('/student/profile/resume', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (res.data.status === 'success') {
+                setUploadedResume(res.data.data.resumeUrl);
+                alert("Resume uploaded successfully!");
+            }
+        } catch (err) {
+            setError ("Failed to upload resume. Please try again.");
+            console.error(err);
+        } finally {
+            setIsUploading(false);
+        }
+    };
     const handleApply = async () => {
         if (!job?.isInternal) return;
         setIsApplying(true);
         setError(null);
         try {
-            const res = await axios.post('/applications', { jobId: job?._id });
+            const res = await axios.post('/applications', { jobId: job?._id, resume: uploadedResume });
             if (res.data.status === 'success') {
                 setApplied(true);
             }
@@ -302,21 +330,62 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                             </button>
                         </div>
                         {job.isInternal ? (
-                            <button
-                                onClick={() => {
-                                    if (!profileCompleteness.complete && !showWarning) {
-                                        setShowWarning(true);
-                                    } else {
-                                        handleApply();
-                                    }
-                                }}
-                                disabled={isApplying || applied}
-                                className={`w-full sm:w-auto sm:flex-[1.2] font-bold py-3 px-4 rounded-xl text-sm whitespace-nowrap transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/10 ${applied ? 'bg-emerald-500 text-white cursor-default' : 'bg-[#1a56f0] text-white hover:bg-[#1546c7]'}`}
-                            >
-                                {isApplying ? 'Applying...' : applied ? (
-                                    <><Check className="w-4 h-4" /> Applied Successfully</>
-                                ) : showWarning ? 'Apply Anyway' : 'Apply Now'}
-                            </button>
+                            <div className="w-full">
+                                {!applied && (
+                                    <div className="mb-4 space-y-3">
+                                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Upload/Select Resume (Mandatory)</label>
+                                        <div className="flex gap-2">
+                                            {user?.resumeUrl && !user.resumeUrl.includes('default.pdf') && !user.resumeUrl.includes('dummy.pdf') ? (
+                                                <button 
+                                                    onClick={() => setUploadedResume(user.resumeUrl)}
+                                                    className={`flex-1 py-3 px-4 rounded-xl text-[13px] font-bold border transition-all flex items-center justify-center gap-2 ${uploadedResume === user.resumeUrl ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                                >
+                                                    {uploadedResume === user.resumeUrl ? <><Check className="w-4 h-4" /> Profile Resume Selected</> : 'Use Profile Resume'}
+                                                </button>
+                                            ) : null}
+                                            <div className="flex-1 relative">
+                                                <input 
+                                                    type="file"
+                                                    id="resume-upload"
+                                                    accept=".pdf"
+                                                    className="hidden"
+                                                    onChange={handleFileUpload}
+                                                />
+                                                <label 
+                                                    htmlFor="resume-upload"
+                                                    className={`w-full py-3 px-4 rounded-xl text-[13px] font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : (uploadedResume && !uploadedResume.includes('default') ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')}`}
+                                                >
+                                                    {isUploading ? 'Uploading...' : (uploadedResume && !uploadedResume.includes('default') ? <><Check className="w-4 h-4" /> PDF Uploaded</> : 'Upload New PDF')}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {uploadedResume && (
+                                            <p className="text-[10px] text-slate-400 font-medium italic mt-1 text-center truncate px-2">Chosen: {uploadedResume}</p>
+                                        )}
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => {
+                                        if (!uploadedResume) {
+                                            setError("Please upload or select a resume before applying.");
+                                            return;
+                                        }
+                                        if (!profileCompleteness.complete && !showWarning) {
+                                            setShowWarning(true);
+                                        } else {
+                                            handleApply();
+                                        }
+                                    }}
+                                    disabled={isApplying || applied}
+                                    className={`w-full font-bold py-3.5 px-4 rounded-xl text-sm whitespace-nowrap transition-all flex items-center justify-center gap-2 shadow-lg ${applied ? 'bg-emerald-500 text-white cursor-default' : 'bg-[#1a56f0] text-white hover:bg-[#1546c7] shadow-blue-500/10'}`}
+                                >
+                                    {isApplying ? 'Applying...' : applied ? (
+                                        <><Check className="w-4 h-4" /> Applied Successfully</>
+                                    ) : (
+                                        <>Apply to {companyDisplayName} {showWarning ? 'Anyway' : ''}</>
+                                    )}
+                                </button>
+                            </div>
                         ) : (
                             <a
                                 href={job.link || '#'}

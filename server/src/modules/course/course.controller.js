@@ -313,6 +313,19 @@ exports.addLecture = catchAsync(async (req, res, next) => {
   const lecture = await Lecture.create({ ...req.body, course: courseId });
 
   res.status(201).json({ status: 'success', data: { lecture } });
+
+  // Background notification for enrolled students
+  if (course.enrolledStudents && course.enrolledStudents.length > 0) {
+    try {
+      const notifications = course.enrolledStudents.map(studentId => ({
+        userId: studentId,
+        title: 'New Content Added! 📹',
+        message: `A new video "${lecture.title}" has been added to your course: ${course.title}. Check it out now!`,
+        type: 'COURSE_UPDATE'
+      }));
+      await Notification.insertMany(notifications);
+    } catch (err) { }
+  }
 });
 
 exports.getLectures = catchAsync(async (req, res, next) => {

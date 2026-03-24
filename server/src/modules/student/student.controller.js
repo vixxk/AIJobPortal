@@ -55,7 +55,7 @@ exports.uploadImage = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError('Please upload an image file.', 400));
   }
-  const result = await uploadFile(req.file, 'students/avatars', true, 'avatars');
+  const result = await uploadFile(req.file, 'students/avatars', true, 'avatars', 'image');
   const profile = await StudentProfile.findOneAndUpdate(
     { userId: req.user.id },
     { profileImage: result.url },
@@ -73,7 +73,7 @@ exports.uploadResume = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError('Please upload a resume file (PDF).', 400));
   }
-  const result = await uploadFile(req.file, 'students/resumes', false, 'resumes');
+  const result = await uploadFile(req.file, 'students/resumes', false, 'resumes', 'resume');
   const profile = await StudentProfile.findOneAndUpdate(
     { userId: req.user.id },
     { resumeUrl: result.url },

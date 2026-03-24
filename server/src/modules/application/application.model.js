@@ -10,6 +10,19 @@ const applicationSchema = new mongoose.Schema({
     ref: 'Job',
     required: true
   },
+  resume: {
+    type: String,
+    required: [true, 'An application must have a resume.'],
+    validate: {
+      validator: function(v) {
+        // Must be a PDF and NOT a known mock/dummy link
+        return v.toLowerCase().endsWith('.pdf') && 
+               !v.includes('dummy.pdf') && 
+               !v.includes('default.pdf');
+      },
+      message: props => `${props.value} is not a valid PDF resume upload!`
+    }
+  },
   status: {
     type: String,
     enum: ['APPLIED', 'SHORTLISTED', 'INTERVIEW', 'REJECTED', 'HIRED'],
@@ -26,6 +39,16 @@ const applicationSchema = new mongoose.Schema({
     }
   }],
   feedback: {
+    type: String,
+    default: ''
+  },
+  matchingScore: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  aiSummary: {
     type: String,
     default: ''
   }

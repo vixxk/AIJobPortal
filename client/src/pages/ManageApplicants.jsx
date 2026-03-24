@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../utils/axios';
-import { User, Mail, Link as LinkIcon, CheckCircle, XCircle, ArrowLeft, Download, Users, Briefcase, Building, Award, FileText, Globe, Calendar, MapPin, Phone, ShieldCheck, Layers } from 'lucide-react';
+import { User, Mail, Link as LinkIcon, CheckCircle, XCircle, ArrowLeft, Download, Users, Briefcase, Building, Award, FileText, Globe, Calendar, MapPin, Phone, ShieldCheck, Layers, Sparkles, Filter, ArrowUpDown, SlidersHorizontal, Zap, HelpCircle } from 'lucide-react';
 const ManageApplicants = () => {
     const { jobId } = useParams();
     const [job, setJob] = useState(null);
@@ -11,6 +11,40 @@ const ManageApplicants = () => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [statusUpdating, setStatusUpdating] = useState(null);
     const [notifyAppId, setNotifyAppId] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('ALL');
+    const [sortBy, setSortBy] = useState('SCORE_DESC'); // SCORE_DESC, DATE_DESC
+    const [bulkUpdating, setBulkUpdating] = useState(false);
+    const [shortlistKeywords, setShortlistKeywords] = useState("");
+    const [isSmartMatching, setIsSmartMatching] = useState(false);
+    const [skillPopover, setSkillPopover] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const [showMatchInfo, setShowMatchInfo] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const addKeyword = (kw) => {
+        const trimmed = kw.trim();
+        if (!trimmed) return;
+        
+        let newKeywords = "";
+        setShortlistKeywords(prev => {
+            const current = (prev || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+            if (current.includes(trimmed.toLowerCase())) {
+                newKeywords = prev;
+                return prev;
+            }
+            newKeywords = prev ? `${prev}, ${trimmed}` : trimmed;
+            return newKeywords;
+        });
+        
+        // Trigger matching with a small delay to ensure state update
+        setTimeout(() => handleSmartMatch(newKeywords), 100);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -20,7 +54,7 @@ const ManageApplicants = () => {
                     const jobData = jobRes.data.data.job;
                     setJob(jobData);
                     window.dispatchEvent(new CustomEvent('set-custom-header', {
-                        detail: { title: `Candidates for ${jobData.title}` }
+                        detail: { title: jobData.title.length > 20 ? `${jobData.title.substring(0, 18)}...` : jobData.title }
                     }));
                 }
                 const appRes = await axios.get(`/applications/job/${jobId}`);
@@ -54,6 +88,99 @@ const ManageApplicants = () => {
             setStatusUpdating(null);
         }
     };
+
+    const autoShortlist = async (targetCount = 5) => {
+        let topCandidates = applications
+            .filter(app => app.status === 'APPLIED')
+            .map(app => {
+                let bonus = 0;
+                if (shortlistKeywords) {
+                    const keywords = shortlistKeywords.split(',').map(k => k.trim().toLowerCase()).filter(k => k);
+                    const studentData = (
+                        (app.studentId?.name || '') + ' ' +
+                        (app.studentId?.expertise || []).join(' ') + ' ' +
+                        (app.studentProfile?.skills || []).join(' ') + ' ' +
+                        (app.studentProfile?.summary || '')
+                    ).toLowerCase();
+                    
+                    keywords.forEach(k => {
+                        if (studentData.includes(k)) bonus += 10;
+                    });
+                }
+                return { ...app, currentScore: (app.matchingScore || 40) + bonus };
+            })
+            .sort((a, b) => b.currentScore - a.currentScore);
+
+        const aboveThreshold = topCandidates.filter(c => c.currentScore >= 60).slice(0, targetCount);
+        
+        let toShortlist = aboveThreshold;
+
+        if (aboveThreshold.length === 0 && topCandidates.length > 0) {
+            const bestCandidate = topCandidates[0];
+            const confirmBest = window.confirm(`No eligible candidates found above 60% match. Would you like to shortlist the best matching candidate: ${bestCandidate.studentId?.name} (${bestCandidate.currentScore}%)?`);
+            
+            if (confirmBest) {
+                toShortlist = [bestCandidate];
+            } else {
+                return;
+            }
+        } else if (toShortlist.length === 0) {
+            alert("No candidates available for shortlisting.");
+            return;
+        }
+
+        if (!window.confirm(`Auto-shortlist ${toShortlist.length} candidate(s)?`)) return;
+
+        setBulkUpdating(true);
+        try {
+            await Promise.all(toShortlist.map(app => 
+                axios.patch(`/applications/${app._id}`, { status: 'SHORTLISTED' })
+            ));
+            
+            setApplications(apps => apps.map(app => {
+                const isSelected = toShortlist.some(tc => tc._id === app._id);
+                return isSelected ? { ...app, status: 'SHORTLISTED' } : app;
+            }));
+            
+            alert(`Successfully shortlisted ${toShortlist.length} candidate(s)!`);
+        } catch (error) {
+            console.error("Bulk update failed", error);
+            alert("Failed to shortlist some candidates.");
+        } finally {
+            setBulkUpdating(false);
+        }
+    };
+    
+    const handleSmartMatch = async (forceKeywords = null) => {
+        // Defensive check: if called as an event handler (onBlur), forceKeywords will be an event object
+        const keywordsToUse = (forceKeywords && typeof forceKeywords === 'string') 
+            ? forceKeywords 
+            : shortlistKeywords;
+
+        if (!keywordsToUse && (forceKeywords === null || typeof forceKeywords !== 'string')) return;
+        
+        setIsSmartMatching(true);
+        try {
+            const res = await axios.post(`/applications/job/${jobId}/smart-match`, { keywords: keywordsToUse });
+            if (res.data.status === 'success') {
+                setApplications(res.data.data.applications);
+                setSortBy('SCORE_DESC');
+            }
+        } catch (error) {
+            console.error("Smart match failed", error);
+            alert("Failed to perform smart matching.");
+        } finally {
+            setIsSmartMatching(false);
+        }
+    };
+
+    const filteredApplications = applications
+        .filter(app => filterStatus === 'ALL' || app.status === filterStatus)
+        .sort((a, b) => {
+            if (sortBy === 'SCORE_DESC') return (b.matchingScore || 0) - (a.matchingScore || 0);
+            if (sortBy === 'DATE_DESC') return new Date(b.createdAt) - new Date(a.createdAt);
+            return 0;
+        });
     const ManageSkeleton = () => (
         <div className="max-w-6xl mx-auto space-y-8 animate-pulse p-4">
             <div className="flex items-center gap-4">
@@ -81,69 +208,309 @@ const ManageApplicants = () => {
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+            {/* Control Bar */}
+            <div className="bg-white p-3 md:p-4 rounded-[24px] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+                    <div className="flex bg-slate-100 p-1 rounded-xl md:rounded-2xl shrink-0">
+                        {['ALL', 'APPLIED', 'SHORTLISTED', 'HIRED', 'REJECTED'].map(status => (
+                            <button
+                                key={status}
+                                onClick={() => setFilterStatus(status)}
+                                className={`px-3 md:px-4 py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all ${filterStatus === status ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                {status === 'ALL' ? 'All' : status.charAt(0) + status.slice(1).toLowerCase()}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <div className="flex-1 md:flex-none flex items-center md:min-w-[320px] px-3 md:px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl md:rounded-2xl transition-all h-10 md:h-11">
+                        <Filter className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
+                        <input 
+                            type="text" 
+                            placeholder={isMobile ? "Search..." : "AI Search Keywords..."}
+                            className="bg-transparent text-[11px] md:text-sm font-bold text-slate-700 outline-none w-full"
+                            value={shortlistKeywords}
+                            onChange={(e) => setShortlistKeywords(e.target.value)}
+                            onBlur={() => handleSmartMatch()}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSmartMatch()}
+                        />
+                        <div className="relative flex items-center shrink-0 ml-1">
+                            <button 
+                                onClick={() => setShowMatchInfo(!showMatchInfo)}
+                                className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                            >
+                                <HelpCircle className="w-3.5 h-3.5" />
+                            </button>
+                            
+                            {showMatchInfo && (
+                                <>
+                                    <div className="fixed inset-0 z-[100]" onClick={() => setShowMatchInfo(false)} />
+                                    <div className="absolute top-full right-0 mt-3 w-64 md:w-80 bg-slate-900 text-white rounded-2xl shadow-2xl p-4 z-[110] animate-in zoom-in-95 fade-in duration-200 origin-top-right border border-slate-800">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Zap className="w-4 h-4 text-amber-400" />
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-200">How AI Matching Works</h4>
+                                        </div>
+                                        <div className="space-y-3 text-[11px] leading-relaxed text-slate-300 font-medium">
+                                            <p><span className="text-indigo-400 font-bold">1. Title Relevancy (40%):</span> Compares the student's background against the job title.</p>
+                                            <p><span className="text-emerald-400 font-bold">2. Keyword Accuracy (60%):</span> Strongly weights candidates who possess the exact labels or skills you search for.</p>
+                                            <p><span className="text-amber-400 font-bold">3. Top Picks:</span> Experts with an 80%+ match are identified as high-priority talent for your requirements.</p>
+                                        </div>
+                                        <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-500 italic">
+                                            Pro Tip: Click candidate skills to instantly update your global AI filter.
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        <button 
+                            onClick={() => handleSmartMatch()}
+                            className="p-1 md:p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all ml-1 shrink-0"
+                            title="AI Match"
+                        >
+                            <Zap className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 md:gap-4 lg:gap-6">
+                    <div className="relative">
+                        <button 
+                            onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all shadow-sm"
+                        >
+                            <ArrowUpDown className="w-3.5 h-3.5 text-indigo-500" />
+                            <span className="hidden md:inline text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Sort</span>
+                            <span className="text-[10px] md:text-xs font-black text-slate-700 uppercase tracking-tight">
+                                {sortBy === 'SCORE_DESC' ? 'Match' : 'Recent'}
+                            </span>
+                        </button>
+
+                        {sortDropdownOpen && (
+                            <>
+                                <div className="fixed inset-0 z-[80]" onClick={() => setSortDropdownOpen(false)} />
+                                <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl z-[90] p-2 animate-in slide-in-from-top-2 fade-in duration-200 origin-top-left md:origin-top-right">
+                                    <button 
+                                        onClick={() => { setSortBy('SCORE_DESC'); setSortDropdownOpen(false); }}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${sortBy === 'SCORE_DESC' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        <Zap className="w-4 h-4" />
+                                        <span className="text-[11px] font-black uppercase tracking-wider">Highest Match</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => { setSortBy('DATE_DESC'); setSortDropdownOpen(false); }}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${sortBy === 'DATE_DESC' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        <Calendar className="w-4 h-4" />
+                                        <span className="text-[11px] font-black uppercase tracking-wider">Newest First</span>
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={() => autoShortlist(5)}
+                        disabled={bulkUpdating || applications.filter(a => a.status === 'APPLIED').length === 0}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 md:px-5 py-2.5 md:py-2 bg-indigo-600 text-white text-[11px] md:text-xs font-black rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 uppercase tracking-wider overflow-hidden group"
+                    >
+                        <Sparkles className={`w-3.5 h-3.5 ${isSmartMatching ? 'animate-pulse' : ''} text-amber-300`} /> 
+                        <span className="relative z-10">{bulkUpdating ? '...' : 'AI Shortlist'}</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    </button>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {applications.length === 0 ? (
+                {filteredApplications.length === 0 ? (
                     <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-slate-200">
                         <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                         <h3 className="text-lg font-bold text-slate-700">No applicants yet.</h3>
                         <p className="text-slate-500 mt-1 text-sm">Applications for this role will appear here.</p>
                     </div>
                 ) : (
-                    applications.map((app) => (
-                        <div key={app._id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-                            <div className="p-5 flex-1">
-                                <div className="flex items-start justify-between mb-4">
+                    filteredApplications.map((app) => (
+                        <div 
+                            key={app._id} 
+                            className={`bg-white rounded-3xl border shadow-sm flex flex-col hover:shadow-md transition-all relative ${app.matchingScore >= 80 ? 'border-indigo-200 ring-1 ring-indigo-50' : 'border-slate-200'} ${skillPopover === app._id ? 'z-50 shadow-xl' : 'z-0'}`}
+                        >
+                            {app.matchingScore >= 80 && (
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-indigo-600 text-[10px] font-black text-white rounded-b-2xl uppercase tracking-[0.2em] flex items-center gap-1.5 shadow-xl shadow-indigo-500/20 z-10 border-x border-b border-indigo-400/30">
+                                    <Sparkles className="w-3 h-3 text-amber-300" />
+                                    <span>AI Top Pick</span>
+                                </div>
+                            )}
+                            <div className="p-4 md:p-5 flex-1">
+                                <div className="flex items-start justify-between mb-4 md:mb-5">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-slate-200">
+                                        <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-slate-100 shadow-inner">
                                             {app.studentProfile?.profileImage || app.studentId?.avatar ? (
                                                 <img src={app.studentProfile?.profileImage || app.studentId?.avatar} alt="Profile" className="w-full h-full object-cover" />
                                             ) : (
-                                                <User className="w-6 h-6 text-slate-400" />
+                                                <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                                                    <User className="w-6 h-6 text-slate-400" />
+                                                </div>
                                             )}
                                         </div>
-                                        <div>
-                                            <h4 className="font-bold text-slate-900 line-clamp-1">{app.studentId?.name}</h4>
-                                            <p className="text-xs font-medium text-slate-500">{app.studentId?.email}</p>
+                                        <div className="min-w-0">
+                                            <h4 className="font-bold text-slate-900 line-clamp-1 text-[15px] md:text-[17px] tracking-tight">{app.studentId?.name}</h4>
+                                            <p className="text-[11px] font-semibold text-slate-400 tracking-tight truncate max-w-[120px] md:max-w-none">{app.studentId?.email}</p>
                                         </div>
                                     </div>
-                                    <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${app.status === 'APPLIED' ? 'bg-blue-50 text-blue-600' :
-                                        app.status === 'SHORTLISTED' ? 'bg-orange-50 text-orange-600' :
-                                            app.status === 'HIRED' ? 'bg-green-50 text-green-600' :
-                                                'bg-red-50 text-red-600'
-                                        }`}>
-                                        {app.status}
-                                    </span>
+                                    <div className="flex flex-col items-end gap-1.5">
+                                        <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg shadow-sm ${app.status === 'APPLIED' ? 'bg-blue-600 text-white' :
+                                            app.status === 'SHORTLISTED' ? 'bg-amber-500 text-white' :
+                                                app.status === 'HIRED' ? 'bg-emerald-500 text-white' :
+                                                    'bg-rose-500 text-white'
+                                            }`}>
+                                            {app.status}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="space-y-3 mb-4">
-                                    <div>
-                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Top Skills</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {(app.studentProfile?.skills || []).slice(0, 4).map((skill, i) => (
-                                                <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">{skill}</span>
+
+                                <div className="space-y-4 md:space-y-5">
+                                    <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                                        <div className="flex-1">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">AI Match Score</p>
+                                                <span className={`text-[13px] font-black ${app.matchingScore > 75 ? 'text-emerald-600' : app.matchingScore > 50 ? 'text-indigo-600' : 'text-slate-500'}`}>
+                                                    {app.matchingScore || 40}%
+                                                </span>
+                                            </div>
+                                            <div className="w-full h-2 md:h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full transition-all duration-1000 ${app.matchingScore > 75 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : app.matchingScore > 50 ? 'bg-gradient-to-r from-indigo-400 to-indigo-600' : 'bg-slate-300'}`}
+                                                    style={{ width: `${app.matchingScore || 40}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="pl-4">
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 text-indigo-600 text-[9px] font-black uppercase rounded-lg border border-indigo-100 shadow-sm active:scale-95 transition-transform cursor-pointer">
+                                                <Sparkles className="w-3 h-3" /> AI Analysis
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {app.aiSummary && (
+                                        <div className="relative">
+                                            <p className="text-[11px] md:text-[12px] text-slate-600 font-medium leading-[1.6] bg-slate-50/70 p-3 md:p-3.5 rounded-2xl border border-slate-100 italic relative z-10">
+                                            "{app.aiSummary}"
+                                            </p>
+                                            <div className="absolute top-2 right-2 opacity-5">
+                                                <Zap className="w-8 h-8 text-indigo-600" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="relative">
+                                        <div className="flex flex-wrap gap-1.5 mt-2">
+                                            {(app.studentProfile?.skills || []).slice(0, 3).map((skill, i) => (
+                                                <button 
+                                                    key={i} 
+                                                    onClick={() => addKeyword(skill)}
+                                                    className="text-[9px] md:text-[10px] bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg border border-slate-100 shadow-sm font-bold uppercase tracking-tight hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 transition-all active:scale-95 whitespace-nowrap"
+                                                >
+                                                    {skill}
+                                                </button>
                                             ))}
-                                            {(!app.studentProfile?.skills || app.studentProfile?.skills.length === 0) && (
-                                                <span className="text-[11px] text-slate-400 italic">No skills listed</span>
+                                            {(app.studentProfile?.skills?.length > 3) && (
+                                                <div className="relative">
+                                                    <button 
+                                                        onClick={() => setSkillPopover(skillPopover === app._id ? null : app._id)}
+                                                        className={`text-[9px] font-bold px-2 py-1 rounded-lg border transition-all active:scale-95 flex items-center gap-1 shrink-0 ${skillPopover === app._id ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
+                                                    >
+                                                        +{app.studentProfile.skills.length - 3}
+                                                    </button>
+                                                    
+                                                    {skillPopover === app._id && (
+                                                        <>
+                                                            {/* Desktop Popover */}
+                                                            <div className="hidden md:block absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 p-3 z-[80] animate-in slide-in-from-top-2 fade-in duration-200 origin-top">
+                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Deep Tech Stack</p>
+                                                                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1 custom-scrollbar">
+                                                                    {(app.studentProfile?.skills || []).slice(3).map((skill, i) => (
+                                                                        <button 
+                                                                            key={i} 
+                                                                            onClick={() => {
+                                                                                addKeyword(skill);
+                                                                                setSkillPopover(null);
+                                                                            }}
+                                                                            className="text-[9px] bg-slate-50 text-slate-600 px-2.5 py-1.5 rounded-lg border border-slate-100 font-black uppercase hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm"
+                                                                        >
+                                                                            {skill}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Mobile Bottom Sheet Overlay */}
+                                                            <div className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[100] animate-in fade-in duration-300" onClick={() => setSkillPopover(null)}>
+                                                                <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
+                                                                    <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+                                                                    <div className="flex items-center justify-between mb-4">
+                                                                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Candidate Tech Stack</h3>
+                                                                        <button onClick={() => setSkillPopover(null)} className="text-xs font-bold text-slate-400">Close</button>
+                                                                    </div>
+                                                                    <div className="flex flex-wrap gap-2 max-h-[40vh] overflow-y-auto pb-8">
+                                                                        {(app.studentProfile?.skills || []).map((skill, i) => (
+                                                                            <button 
+                                                                                key={i} 
+                                                                                onClick={() => {
+                                                                                    addKeyword(skill);
+                                                                                    setSkillPopover(null);
+                                                                                }}
+                                                                                className="text-[10px] bg-slate-50 text-slate-600 px-3 py-2 rounded-xl border border-slate-100 font-black uppercase hover:bg-indigo-600 hover:text-white"
+                                                                            >
+                                                                                {skill}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex flex-col gap-2 pt-1">
+
+                                    <div className="grid grid-cols-2 gap-2 md:gap-3 pt-1">
                                         <button 
                                             onClick={() => setSelectedStudent({ ...app.studentId, profile: app.studentProfile })}
-                                            className="w-full py-2 bg-slate-50 text-slate-600 text-[13px] font-bold rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 border border-slate-200"
+                                            className="py-2.5 bg-white text-slate-700 text-[11px] md:text-[12px] font-black rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2 border border-slate-200 shadow-sm uppercase tracking-wider"
                                         >
-                                            <User className="w-4 h-4" /> View Full Profile
+                                            <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-500" /> Profile
                                         </button>
                                         <button 
                                             onClick={() => setNotifyAppId(app._id)}
-                                            className="w-full py-2 bg-indigo-50 text-indigo-600 text-[13px] font-bold rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 border border-indigo-200"
+                                            className="py-2.5 bg-indigo-600 text-white text-[11px] md:text-[12px] font-black rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100 uppercase tracking-wider"
                                         >
-                                            <Mail className="w-4 h-4" /> Send Notification
+                                            <Mail className="w-3.5 h-3.5 md:w-4 md:h-4" /> Message
                                         </button>
-                                        {app.studentProfile?.resumeUrl && (
-                                            <a href={app.studentProfile.resumeUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-2 text-[13px] font-bold text-blue-600 hover:bg-blue-50 rounded-xl border border-blue-100 transition-colors">
-                                                <Download className="w-4 h-4" /> View Resume
-                                            </a>
-                                        )}
+                                        
+                                        <div className="col-span-2 space-y-2 mt-1">
+                                            {app.resume && (
+                                                <a 
+                                                    href={app.resume.startsWith('http') ? app.resume : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${app.resume}`} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="w-full h-[42px] flex items-center justify-center gap-2 px-4 text-[11px] md:text-[12px] font-bold text-blue-700 bg-blue-50/50 hover:bg-blue-50 rounded-xl border border-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                                >
+                                                    <Download className="w-3.5 h-3.5 md:w-4 md:h-4" /> Specific Resume
+                                                </a>
+                                            )}
+                                            {!app.resume && app.studentProfile?.resumeUrl && (
+                                                <a 
+                                                    href={app.studentProfile.resumeUrl.startsWith('http') ? app.studentProfile.resumeUrl : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${app.studentProfile.resumeUrl}`} 
+                                                    target="_blank" 
+                                                    rel="noreferrer" 
+                                                    className="w-full h-[42px] flex items-center justify-center gap-2 px-4 text-[11px] md:text-[12px] font-bold text-slate-700 bg-slate-50/50 hover:bg-slate-50 rounded-xl border border-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                                >
+                                                    <Download className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-400" /> Profile Resume
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
