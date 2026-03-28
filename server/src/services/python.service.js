@@ -1,13 +1,12 @@
 const axios = require('axios');
 const FormData = require('form-data');
-const fs = require('fs');
 
 const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://localhost:8000';
 
-exports.analyzeAudio = async (filePath) => {
+exports.analyzeAudio = async (audioBuffer, filename = 'audio.wav') => {
     try {
         const form = new FormData();
-        form.append('file', fs.createReadStream(filePath));
+        form.append('file', audioBuffer, { filename });
         const response = await axios.post(`${PYTHON_API_URL}/analyze-audio`, form, {
             headers: {
                 ...form.getHeaders()
@@ -20,13 +19,13 @@ exports.analyzeAudio = async (filePath) => {
     }
 };
 
-exports.startInterview = async ({ job_role, interview_type, resumePath }) => {
+exports.startInterview = async ({ job_role, interview_type, resumeBuffer, resumeName }) => {
     try {
         const form = new FormData();
         form.append('job_role', job_role || '');
         form.append('interview_type', interview_type || 'behavioral');
-        if (resumePath) {
-            form.append('resume', fs.createReadStream(resumePath));
+        if (resumeBuffer) {
+            form.append('resume', resumeBuffer, { filename: resumeName || 'resume.pdf' });
         }
         const response = await axios.post(`${PYTHON_API_URL}/api/interview/start`, form, {
             headers: {
@@ -40,12 +39,12 @@ exports.startInterview = async ({ job_role, interview_type, resumePath }) => {
     }
 };
 
-exports.processAnswer = async ({ question, job_role, filePath }) => {
+exports.processAnswer = async ({ question, job_role, audioBuffer, audioName }) => {
     try {
         const form = new FormData();
         form.append('question', question);
         form.append('job_role', job_role || '');
-        form.append('audio', fs.createReadStream(filePath));
+        form.append('audio', audioBuffer, { filename: audioName || 'answer.wav' });
         const response = await axios.post(`${PYTHON_API_URL}/api/interview/process-audio`, form, {
             headers: {
                 ...form.getHeaders()
@@ -58,12 +57,12 @@ exports.processAnswer = async ({ question, job_role, filePath }) => {
     }
 };
 
-exports.evaluateAnswer = async ({ question, job_role, filePath }) => {
+exports.evaluateAnswer = async ({ question, job_role, audioBuffer, audioName }) => {
     try {
         const form = new FormData();
         form.append('question', question);
         form.append('job_role', job_role || '');
-        form.append('audio', fs.createReadStream(filePath));
+        form.append('audio', audioBuffer, { filename: audioName || 'answer.wav' });
         const response = await axios.post(`${PYTHON_API_URL}/api/interview/evaluate`, form, {
             headers: {
                 ...form.getHeaders()
@@ -132,14 +131,14 @@ exports.generateLesson = async ({ level, lesson_index }) => {
     }
 };
 
-exports.evaluateTutorTask = async ({ task_type, transcript, context, filePath }) => {
+exports.evaluateTutorTask = async ({ task_type, transcript, context, audioBuffer, audioName }) => {
     try {
         const form = new FormData();
         form.append('task_type', task_type);
         form.append('transcript', transcript || '');
         form.append('context_json', JSON.stringify(context || {}));
-        if (filePath) {
-            form.append('audio', fs.createReadStream(filePath));
+        if (audioBuffer) {
+            form.append('audio', audioBuffer, { filename: audioName || 'task_audio.wav' });
         }
 
         const response = await axios.post(`${PYTHON_API_URL}/api/tutor/evaluate-task`, form, {
@@ -153,3 +152,4 @@ exports.evaluateTutorTask = async ({ task_type, transcript, context, filePath })
         throw new Error('Failed to evaluate tutor task');
     }
 };
+

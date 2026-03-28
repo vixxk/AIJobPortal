@@ -2,17 +2,18 @@ const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
 const fireworksService = require('../../services/fireworks.service');
 const pythonService = require('../../services/python.service');
-const { parse } = require('pdf-parse');
-const fs = require('fs');
+
 exports.startInterview = catchAsync(async (req, res, next) => {
     const { job_role, interview_type } = req.body;
     const pythonResponse = await pythonService.startInterview({
         job_role,
         interview_type,
-        resumePath: req.file ? req.file.path : null
+        resumeBuffer: req.file ? req.file.buffer : null,
+        resumeName: req.file ? req.file.originalname : null
     });
     res.status(200).json(pythonResponse);
 });
+
 exports.processAnswer = catchAsync(async (req, res, next) => {
     const { question, job_role } = req.body;
     if (!req.file) {
@@ -21,10 +22,12 @@ exports.processAnswer = catchAsync(async (req, res, next) => {
     const result = await pythonService.processAnswer({
         question,
         job_role,
-        filePath: req.file.path
+        audioBuffer: req.file.buffer,
+        audioName: req.file.originalname
     });
     res.status(200).json(result);
 });
+
 exports.generateReport = catchAsync(async (req, res, next) => {
     const { answers, job_role } = req.body;
     const result = await pythonService.generateReport({
@@ -48,11 +51,12 @@ exports.generateReport = catchAsync(async (req, res, next) => {
 
     res.status(200).json(result);
 });
+
 exports.transcribeAudio = catchAsync(async (req, res, next) => {
     if (!req.file) {
         return next(new AppError('Please upload audio file', 400));
     }
-    const result = await pythonService.analyzeAudio(req.file.path);
+    const result = await pythonService.analyzeAudio(req.file.buffer, req.file.originalname);
     res.status(200).json({
         status: 'success',
         data: {
@@ -60,6 +64,7 @@ exports.transcribeAudio = catchAsync(async (req, res, next) => {
         }
     });
 });
+
 exports.speakText = catchAsync(async (req, res, next) => {
     const { text, voice } = req.body;
     if (!text) {
@@ -72,3 +77,4 @@ exports.speakText = catchAsync(async (req, res, next) => {
     });
     res.send(Buffer.from(audioBuffer));
 });
+

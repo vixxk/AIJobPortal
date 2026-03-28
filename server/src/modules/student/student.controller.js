@@ -3,12 +3,23 @@ const User = require('../user/user.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const { uploadFile } = require('../../utils/fileUpload');
+const { getSignedUrl } = require('../../config/aws');
+
 exports.getMe = catchAsync(async (req, res, next) => {
   const currentId = req.user._id || req.user.id;
   if (currentId === (process.env.SUPER_ADMIN_ID || 'super_admin')) {
     return res.status(200).json({ status: 'success', data: { profile: {} } });
   }
   const profile = await StudentProfile.findOne({ userId: currentId });
+  if (profile && profile.resumeUrl && !profile.resumeUrl.startsWith('http')) {
+    // If it's a key and not a full URL (legacy might have full URLs)
+    profile.resumeUrl = await getSignedUrl(profile.resumeUrl);
+  } else if (profile && profile.resumeUrl && profile.resumeUrl.includes('s3')) {
+    // Refresh signature even if it looks like a URL but is from S3
+    const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+    if (key) profile.resumeUrl = await getSignedUrl(key);
+  }
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -74,23 +85,33 @@ exports.uploadResume = catchAsync(async (req, res, next) => {
     return next(new AppError('Please upload a resume file (PDF).', 400));
   }
   const result = await uploadFile(req.file, 'students/resumes', false, 'resumes', 'resume');
+  
+  // We save the KEY in the database for private assets so we can re-sign it on retrieval
   const profile = await StudentProfile.findOneAndUpdate(
     { userId: req.user.id },
-    { resumeUrl: result.url },
+    { resumeUrl: result.key || result.url },
     { new: true, upsert: true }
   );
+  
   res.status(200).json({
     status: 'success',
     data: {
-      resumeUrl: profile.resumeUrl
+      resumeUrl: result.url // Still send the signed URL for instant frontend preview
     }
   });
+
 });
 exports.getStudentProfile = catchAsync(async (req, res, next) => {
   const profile = await StudentProfile.findById(req.params.id).populate('userId', 'name email');
   if (!profile) {
     return next(new AppError('Student profile not found', 404));
   }
+  
+  if (profile.resumeUrl && profile.resumeUrl.includes('s3')) {
+    const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+    if (key) profile.resumeUrl = await getSignedUrl(key);
+  }
+
   res.status(200).json({
     status: 'success',
     data: {

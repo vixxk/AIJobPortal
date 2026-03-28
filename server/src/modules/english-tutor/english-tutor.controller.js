@@ -134,14 +134,17 @@ exports.getLesson = catchAsync(async (req, res, next) => {
 exports.submitLessonTask = catchAsync(async (req, res, next) => {
   const { task_type, transcript, context_json } = req.body;
   const context = JSON.parse(context_json || '{}');
-  const filePath = req.file ? req.file.path : null;
+  const audioBuffer = req.file ? req.file.buffer : null;
+  const audioName = req.file ? req.file.originalname : null;
 
   const result = await pythonService.evaluateTutorTask({
     task_type,
     transcript,
     context,
-    filePath
+    audioBuffer,
+    audioName
   });
+
 
   if (result.status === 'success') {
     const { evaluation } = result.data;

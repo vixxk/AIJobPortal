@@ -12,6 +12,8 @@ const RecruiterProfile = require('../recruiter/recruiter.model');
 const CollegeProfile = require('../college/college.model');
 const Issue = require('../issue/issue.model');
 const StudentProfile = require('../student/student.model');
+const { uploadFile } = require('../../utils/fileUpload');
+
 
 exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
   const totalUsers = await User.countDocuments();
@@ -192,8 +194,10 @@ exports.createTeacher = catchAsync(async (req, res, next) => {
   
   let avatar = req.body.avatar;
   if (req.file) {
-    avatar = `/uploads/avatars/${req.file.filename}`;
+    const result = await uploadFile(req.file, 'teachers/avatars', true, 'avatars');
+    avatar = result.url;
   }
+
 
   const existing = await User.findOne({ email });
   if (existing) return next(new AppError('User with this email already exists', 400));
@@ -410,8 +414,10 @@ exports.createCompetition = catchAsync(async (req, res, next) => {
   const data = { ...req.body };
   
   if (req.file) {
-    data.bannerImage = `/uploads/avatars/${req.file.filename}`;
+    const result = await uploadFile(req.file, 'competitions/banners', false, 'avatars');
+    data.bannerImage = result.url;
   }
+
   
   if (typeof data.rounds === 'string') {
     try {
@@ -436,8 +442,10 @@ exports.updateCompetition = catchAsync(async (req, res, next) => {
   const data = { ...req.body };
   
   if (req.file) {
-    data.bannerImage = `/uploads/avatars/${req.file.filename}`;
+    const result = await uploadFile(req.file, 'competitions/banners', false, 'avatars');
+    data.bannerImage = result.url;
   }
+
   
   if (typeof data.rounds === 'string') {
     try {

@@ -5,6 +5,8 @@ const Notification = require('../notification/notification.model');
 const Job = require('../job/job.model');
 const sendEmail = require('../../config/mailer');
 const User = require('../user/user.model');
+const { getSignedUrl } = require('../../config/aws');
+
 exports.applyToJob = catchAsync(async (req, res, next) => {
   const job = await Job.findById(req.body.jobId);
   if (!job || job.status === 'CLOSED') {
@@ -100,9 +102,23 @@ exports.getJobApplicants = catchAsync(async (req, res, next) => {
   // 2. Attach StudentProfile for each application
   const StudentProfile = require('../student/student.model');
   const applicationsWithProfile = await Promise.all(applications.map(async (app) => {
-    const profile = await StudentProfile.findOne({ userId: app.studentId._id });
+    const profile = await StudentProfile.findOne({ userId: app.studentId._id }).lean();
+    if (profile && profile.resumeUrl && profile.resumeUrl.includes('s3')) {
+      const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+      if (key) profile.resumeUrl = await getSignedUrl(key);
+    }
+    
+    // Also sign the application's resume field
+    if (app.resume && !app.resume.startsWith('http')) {
+        app.resume = await getSignedUrl(app.resume);
+    } else if (app.resume && app.resume.includes('s3')) {
+        const key = app.resume.split('.amazonaws.com/')[1];
+        if (key) app.resume = await getSignedUrl(key);
+    }
+
     return { ...app, studentProfile: profile };
   }));
+
 
   const total = await Application.countDocuments({ jobId: req.params.jobId });
 
@@ -212,7 +228,21 @@ exports.smartMatchApplicants = catchAsync(async (req, res, next) => {
     const keywordList = keywords ? keywords.split(',').map(k => k.trim().toLowerCase()).filter(k => k) : [];
 
     const scoredApplications = await Promise.all(applications.map(async (app) => {
-        const profile = await StudentProfile.findOne({ userId: app.studentId?._id });
+        const profile = await StudentProfile.findOne({ userId: app.studentId?._id }).lean();
+        if (profile && profile.resumeUrl && profile.resumeUrl.includes('s3')) {
+            const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+            if (key) profile.resumeUrl = await getSignedUrl(key);
+        }
+
+        // Also sign the application's resume field
+        let applicationResume = app.resume;
+        if (applicationResume && !applicationResume.startsWith('http')) {
+            applicationResume = await getSignedUrl(applicationResume);
+        } else if (applicationResume && applicationResume.includes('s3')) {
+            const key = applicationResume.split('.amazonaws.com/')[1];
+            if (key) applicationResume = await getSignedUrl(key);
+        }
+        
         let bonus = 0;
         
         const jobTitleWords = job.title.toLowerCase().split(' ').filter(w => w.length > 2);
@@ -272,10 +302,12 @@ exports.smartMatchApplicants = catchAsync(async (req, res, next) => {
 
         return {
             ...app,
+            resume: applicationResume,
             studentProfile: profile,
             matchingScore: finalWeightedScore,
             weightedScore: finalWeightedScore
         };
+
     }));
 
     scoredApplications.sort((a, b) => b.weightedScore - a.weightedScore);
@@ -298,19 +330,31 @@ exports.getMyApplications = catchAsync(async (req, res, next) => {
       .skip(skip)
       .limit(limit)
       .lean();
+
+    const applicationsWithSignedUrls = await Promise.all(applications.map(async (app) => {
+        if (app.resume && !app.resume.startsWith('http')) {
+            app.resume = await getSignedUrl(app.resume);
+        } else if (app.resume && app.resume.includes('s3')) {
+            const key = app.resume.split('.amazonaws.com/')[1];
+            if (key) app.resume = await getSignedUrl(key);
+        }
+        return app;
+    }));
+
     const total = await Application.countDocuments({ studentId: userId });
     res.status(200).json({
       status: 'success',
-      results: applications.length,
+      results: applicationsWithSignedUrls.length,
       pagination: {
           total,
           page,
           pages: Math.ceil(total / limit)
       },
       data: {
-        applications
+        applications: applicationsWithSignedUrls
       }
     });
+
 });
 
 exports.sendNotificationToApplicant = catchAsync(async (req, res, next) => {
