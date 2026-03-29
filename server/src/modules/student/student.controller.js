@@ -16,7 +16,7 @@ exports.getMe = catchAsync(async (req, res, next) => {
     profile.resumeUrl = await getSignedUrl(profile.resumeUrl);
   } else if (profile && profile.resumeUrl && profile.resumeUrl.includes('s3')) {
     // Refresh signature even if it looks like a URL but is from S3
-    const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+    const key = profile.resumeUrl.split('.amazonaws.com/')[1]?.split('?')[0];
     if (key) profile.resumeUrl = await getSignedUrl(key);
   }
 
@@ -108,7 +108,7 @@ exports.getStudentProfile = catchAsync(async (req, res, next) => {
   }
   
   if (profile.resumeUrl && profile.resumeUrl.includes('s3')) {
-    const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+    const key = profile.resumeUrl.split('.amazonaws.com/')[1]?.split('?')[0];
     if (key) profile.resumeUrl = await getSignedUrl(key);
   }
 

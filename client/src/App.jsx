@@ -39,6 +39,7 @@ import {
 
 import MyApplications from './pages/MyApplications';
 import InterviewPage from './pages/InterviewPage';
+import CandidateInterviewPage from './pages/CandidateInterviewPage';
 import TutorLayout from './pages/english-tutor/TutorLayout';
 import TutorDashboard from './pages/english-tutor/TutorDashboard';
 import TutorWelcome from './pages/english-tutor/TutorWelcome';
@@ -135,6 +136,7 @@ function App() {
               <Route path="contact" element={<CustomerService />} />
               <Route path="settings" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER', 'TEACHER', 'SUPER_ADMIN']}><ComingSoon feature="Settings" /></ProtectedRoute>} />
             </Route>
+            <Route path="/candidate-interview/:token" element={<ProtectedRoute allowedRoles={['STUDENT']}><CandidateInterviewPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

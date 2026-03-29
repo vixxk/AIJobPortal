@@ -5,6 +5,8 @@ import axios from '../../utils/axios';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 import JobDetailsModal from '../../components/JobDetailsModal';
+import AIInterviewSetupModal from '../../components/interview/AIInterviewSetupModal';
+import { Sparkles } from 'lucide-react';
 
 const AdminApplications = () => {
     const { search } = useLocation();
@@ -12,6 +14,7 @@ const AdminApplications = () => {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedJob, setSelectedJob] = useState(null);
+    const [selectedAppForInterview, setSelectedAppForInterview] = useState(null);
 
     const fetchApplications = useCallback(async () => {
         setLoading(true);
@@ -95,6 +98,7 @@ const AdminApplications = () => {
                             <th className="p-6 lg:p-8 hidden sm:table-cell">JOB POSITION</th>
                             <th className="p-6 lg:p-8 hidden md:table-cell">DATE</th>
                             <th className="p-6 lg:p-8 text-right">STATUS</th>
+                            <th className="p-6 lg:p-8 text-right">AI INTERVIEW</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -135,12 +139,20 @@ const AdminApplications = () => {
                                 <td className="p-6 lg:p-8 text-right">
                                     <span className={clsx(
                                         "px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[8px] lg:text-[10px] font-black tracking-widest uppercase border",
-                                        app.status === 'ACCEPTED' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                                        app.status === 'ACCEPTED' || app.status === 'HIRED' || app.status === 'SHORTLISTED' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
                                             app.status === 'REJECTED' ? "bg-rose-50 text-rose-600 border-rose-100" :
                                                 "bg-amber-50 text-amber-600 border-amber-100"
                                     )}>
                                         {app.status}
                                     </span>
+                                </td>
+                                <td className="p-6 lg:p-8 text-right">
+                                    <button
+                                        onClick={() => setSelectedAppForInterview(app)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-indigo-100 transition-colors"
+                                    >
+                                        <Sparkles className="w-3 h-3" /> View Data
+                                    </button>
                                 </td>
                             </tr>
                         ))}
@@ -152,6 +164,14 @@ const AdminApplications = () => {
                 onClose={() => setSelectedJob(null)}
                 hideActions={true}
             />
+            {selectedAppForInterview && (
+                <AIInterviewSetupModal
+                    isOpen={!!selectedAppForInterview}
+                    onClose={() => setSelectedAppForInterview(null)}
+                    application={selectedAppForInterview}
+                    job={selectedAppForInterview.jobId}
+                />
+            )}
         </div>
     );
 };

@@ -24,6 +24,7 @@ router.use(roleMiddleware.restrictTo('RECRUITER'));
 
 router.post('/', jobController.createJob);
 router.patch('/:id', jobController.updateJob);
+router.patch('/:id/questions', jobController.updateJobQuestions);
 router.patch('/:id/close', jobController.closeJob);
 router.delete('/:id', jobController.deleteJob);
 

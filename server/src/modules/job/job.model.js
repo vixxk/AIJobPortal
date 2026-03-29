@@ -22,6 +22,10 @@ const jobSchema = new mongoose.Schema({
     type: [String],
     required: true
   },
+  aiInterviewQuestions: {
+    type: [String],
+    default: []
+  },
   experienceRange: String,
   jobType: {
     type: String,

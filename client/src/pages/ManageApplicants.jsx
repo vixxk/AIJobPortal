@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../utils/axios';
 import { User, Mail, Link as LinkIcon, CheckCircle, XCircle, ArrowLeft, Download, Users, Briefcase, Building, Award, FileText, Globe, Calendar, MapPin, Phone, ShieldCheck, Layers, Sparkles, Filter, ArrowUpDown, SlidersHorizontal, Zap, HelpCircle } from 'lucide-react';
+import AIInterviewSetupModal from '../components/interview/AIInterviewSetupModal';
+
 const ManageApplicants = () => {
     const { jobId } = useParams();
     const [job, setJob] = useState(null);
@@ -20,6 +22,7 @@ const ManageApplicants = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [showMatchInfo, setShowMatchInfo] = useState(false);
+    const [setupModalApp, setSetupModalApp] = useState(null);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -497,17 +500,7 @@ const ManageApplicants = () => {
                                                     rel="noreferrer" 
                                                     className="w-full h-[42px] flex items-center justify-center gap-2 px-4 text-[11px] md:text-[12px] font-bold text-blue-700 bg-blue-50/50 hover:bg-blue-50 rounded-xl border border-blue-100 transition-all hover:scale-[1.02] active:scale-[0.98]"
                                                 >
-                                                    <Download className="w-3.5 h-3.5 md:w-4 md:h-4" /> Specific Resume
-                                                </a>
-                                            )}
-                                            {!app.resume && app.studentProfile?.resumeUrl && (
-                                                <a 
-                                                    href={app.studentProfile.resumeUrl.startsWith('http') ? app.studentProfile.resumeUrl : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/${app.studentProfile.resumeUrl}`} 
-                                                    target="_blank" 
-                                                    rel="noreferrer" 
-                                                    className="w-full h-[42px] flex items-center justify-center gap-2 px-4 text-[11px] md:text-[12px] font-bold text-slate-700 bg-slate-50/50 hover:bg-slate-50 rounded-xl border border-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                                                >
-                                                    <Download className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-400" /> Profile Resume
+                                                    <Download className="w-3.5 h-3.5 md:w-4 md:h-4" /> {app.resume === app.studentProfile?.resumeUrl ? 'Profile Resume' : 'Specific Job Resume'}
                                                 </a>
                                             )}
                                         </div>
@@ -535,6 +528,13 @@ const ManageApplicants = () => {
                                 )}
                                 {app.status === 'SHORTLISTED' && (
                                     <>
+                                        <button
+                                            disabled={statusUpdating === app._id}
+                                            onClick={() => setSetupModalApp(app)}
+                                            className="flex-1 py-2 bg-indigo-50 border border-indigo-200 text-indigo-600 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider hover:bg-indigo-100 hover:border-indigo-300 transition-colors flex items-center justify-center gap-1.5"
+                                        >
+                                            <Sparkles className="w-3.5 h-3.5" /> AI Interview
+                                        </button>
                                         <button
                                             disabled={statusUpdating === app._id}
                                             onClick={() => updateStatus(app._id, 'HIRED')}
@@ -570,6 +570,13 @@ const ManageApplicants = () => {
             <NotificationModal 
                 applicationId={notifyAppId}
                 onClose={() => setNotifyAppId(null)}
+            />
+
+            <AIInterviewSetupModal 
+                isOpen={!!setupModalApp}
+                onClose={() => setSetupModalApp(null)}
+                application={setupModalApp}
+                job={job}
             />
         </div>
     );

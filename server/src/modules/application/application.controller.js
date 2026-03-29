@@ -55,10 +55,16 @@ exports.applyToJob = catchAsync(async (req, res, next) => {
       console.error("AI Match Calculation Error:", err);
   }
 
+  let resumeToSave = req.body.resume;
+  if (resumeToSave && resumeToSave.includes('.amazonaws.com/')) {
+      // Extract the key and remove any query parameters (like presigned URL signatures)
+      resumeToSave = resumeToSave.split('.amazonaws.com/')[1].split('?')[0];
+  }
+
   const newApp = await Application.create({
     studentId: userId,
     jobId: req.body.jobId,
-    resume: req.body.resume,
+    resume: resumeToSave,
     matchingScore,
     aiSummary: matchingScore > 85 
         ? "Highly recommended candidate with an exceptional alignment of skills and potential. Profile shows high relevance to the job requirements." 
@@ -104,7 +110,7 @@ exports.getJobApplicants = catchAsync(async (req, res, next) => {
   const applicationsWithProfile = await Promise.all(applications.map(async (app) => {
     const profile = await StudentProfile.findOne({ userId: app.studentId._id }).lean();
     if (profile && profile.resumeUrl && profile.resumeUrl.includes('s3')) {
-      const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+      const key = profile.resumeUrl.split('.amazonaws.com/')[1]?.split('?')[0];
       if (key) profile.resumeUrl = await getSignedUrl(key);
     }
     
@@ -112,7 +118,7 @@ exports.getJobApplicants = catchAsync(async (req, res, next) => {
     if (app.resume && !app.resume.startsWith('http')) {
         app.resume = await getSignedUrl(app.resume);
     } else if (app.resume && app.resume.includes('s3')) {
-        const key = app.resume.split('.amazonaws.com/')[1];
+        const key = app.resume.split('.amazonaws.com/')[1]?.split('?')[0];
         if (key) app.resume = await getSignedUrl(key);
     }
 
@@ -230,7 +236,7 @@ exports.smartMatchApplicants = catchAsync(async (req, res, next) => {
     const scoredApplications = await Promise.all(applications.map(async (app) => {
         const profile = await StudentProfile.findOne({ userId: app.studentId?._id }).lean();
         if (profile && profile.resumeUrl && profile.resumeUrl.includes('s3')) {
-            const key = profile.resumeUrl.split('.amazonaws.com/')[1];
+            const key = profile.resumeUrl.split('.amazonaws.com/')[1]?.split('?')[0];
             if (key) profile.resumeUrl = await getSignedUrl(key);
         }
 
@@ -239,7 +245,7 @@ exports.smartMatchApplicants = catchAsync(async (req, res, next) => {
         if (applicationResume && !applicationResume.startsWith('http')) {
             applicationResume = await getSignedUrl(applicationResume);
         } else if (applicationResume && applicationResume.includes('s3')) {
-            const key = applicationResume.split('.amazonaws.com/')[1];
+            const key = applicationResume.split('.amazonaws.com/')[1]?.split('?')[0];
             if (key) applicationResume = await getSignedUrl(key);
         }
         
@@ -335,7 +341,7 @@ exports.getMyApplications = catchAsync(async (req, res, next) => {
         if (app.resume && !app.resume.startsWith('http')) {
             app.resume = await getSignedUrl(app.resume);
         } else if (app.resume && app.resume.includes('s3')) {
-            const key = app.resume.split('.amazonaws.com/')[1];
+            const key = app.resume.split('.amazonaws.com/')[1]?.split('?')[0];
             if (key) app.resume = await getSignedUrl(key);
         }
         return app;

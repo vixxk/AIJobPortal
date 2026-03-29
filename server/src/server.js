@@ -22,6 +22,8 @@ const englishTutorRoutes = require('./modules/english-tutor/english-tutor.routes
 const courseRoutes = require('./modules/course/course.routes');
 const issueRoutes = require('./modules/issue/issue.routes');
 const paymentRoutes = require('./modules/payment/payment.routes');
+const interviewSessionRoutes = require('./modules/interview/interviewSession.routes');
+
 const legacyJobsRouter = require('../routes/jobs');
 const legacyResumeRouter = require('../routes/resume');
 
@@ -72,6 +74,7 @@ app.use('/api/v1/english-tutor', englishTutorRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/issues', issueRoutes);
 app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/interview-sessions', interviewSessionRoutes);
 
 app.use('/api/jobs', legacyJobsRouter);
 app.use('/api/v1/resume', legacyResumeRouter);

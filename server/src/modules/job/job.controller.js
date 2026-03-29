@@ -63,6 +63,28 @@ exports.updateJob = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+exports.updateJobQuestions = catchAsync(async (req, res, next) => {
+  const userId = req.user._id || req.user.id;
+  
+  const job = await Job.findOneAndUpdate(
+    { _id: req.params.id, recruiterId: userId },
+    { aiInterviewQuestions: req.body.aiInterviewQuestions },
+    { new: true, runValidators: true }
+  );
+  
+  if (!job) {
+    return next(new AppError('No job found with that ID or you do not have permission', 404));
+  }
+  
+  res.status(200).json({
+    status: 'success',
+    data: {
+      job
+    }
+  });
+});
+
 exports.closeJob = catchAsync(async (req, res, next) => {
   const job = await Job.findOneAndUpdate(
     { _id: req.params.id, recruiterId: req.user.id },
@@ -224,51 +246,13 @@ exports.getJob = catchAsync(async (req, res, next) => {
 exports.searchJobs = catchAsync(async (req, res, next) => {
   const { role, location, type, salaryRange, experience } = req.query;
 
-  // 1. Fetch Internal Jobs from DB (Approved only)
-  const dbQuery = { status: 'APPROVED' };
-  
-  if (role) {
-      dbQuery.$or = [
-          { title: { $regex: role, $options: 'i' } },
-          { skillsRequired: { $in: [new RegExp(role, 'i')] } }
-      ];
-  }
-  
-  if (location && location.toLowerCase() !== 'any') {
-      dbQuery.location = { $regex: location, $options: 'i' };
-  }
-
-  if (type && type !== 'any') {
-      dbQuery.jobType = type; // Match Full-time, Internship, etc
-  }
-
-  const internalJobs = await Job.find(dbQuery).populate('recruiterId', 'companyName logo').lean();
-  
-  const mappedInternal = internalJobs.map(job => ({
-      _id: job._id,
-      title: job.title,
-      company: job.companyName || job.recruiterId?.companyName || 'Gradnex Partner',
-      location: job.location,
-      type: job.jobType,
-      salary: job.salaryRange || 'Not specified',
-      link: `/app/job/${job._id}`,
-      snippet: job.description?.slice(0, 200) + '...',
-      source: 'Gradnex Verified',
-      logo: job.recruiterId?.logo,
-      isInternal: true,
-      createdAt: job.createdAt
-  }));
-
-  // 2. Fetch External Jobs (Existing Logic)
+  // 1. Fetch External Jobs (Existing Logic)
   const externalJobs = await externalJobService.searchExternalJobs(role, location, type, salaryRange, experience);
-  
-  // 3. Merge results (Internal first)
-  const allJobs = [...mappedInternal, ...externalJobs];
 
   res.status(200).json({
     status: 'success',
-    results: allJobs.length,
-    jobs: allJobs
+    results: externalJobs.length,
+    jobs: externalJobs
   });
 });
 

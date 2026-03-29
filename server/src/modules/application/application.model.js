@@ -15,8 +15,10 @@ const applicationSchema = new mongoose.Schema({
     required: [true, 'An application must have a resume.'],
     validate: {
       validator: function(v) {
+        // Strip query params for checking extension
+        const urlWithoutParams = v.split('?')[0];
         // Must be a PDF and NOT a known mock/dummy link
-        return v.toLowerCase().endsWith('.pdf') && 
+        return urlWithoutParams.toLowerCase().endsWith('.pdf') && 
                !v.includes('dummy.pdf') && 
                !v.includes('default.pdf');
       },

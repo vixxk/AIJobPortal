@@ -7,7 +7,7 @@ import {
     User, Mail, GraduationCap, Briefcase, FileText, Plus, X, UploadCloud, CheckCircle,
     Settings, ChevronLeft, Trash2, Edit2, ChevronDown, Check,
     Award, FileBadge, Globe, Link, Heart, Phone, BookOpen, Star, IndianRupee, Home, AlertCircle, Bell,
-    MapPin, MoreVertical
+    MapPin, MoreVertical, Loader2
 } from 'lucide-react';
 import ReportIssueModal from '../components/ReportIssueModal';
 import toast from 'react-hot-toast';
@@ -241,9 +241,11 @@ const StudentProfile = () => {
             const res = await axios.post(endpoint, updates);
             if (res.data.status === 'success') {
                 setProfile(res.data.data.profile);
+                toast.success('Profile updated successfully');
             }
         } catch (error) {
             console.error(error);
+            toast.error('Failed to update profile');
         } finally {
             setSaving(false);
         }
@@ -389,7 +391,7 @@ const StudentProfile = () => {
                     </>
                 )}
             </div>
-            <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
+            <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderContact = () => (
@@ -399,7 +401,7 @@ const StudentProfile = () => {
                 <Input label="Phone Number" value={profile.phoneNumber || user?.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
                 <Input label="Email" value={user?.email} disabled={true} icon={<Mail className="w-4 h-4" />} />
             </div>
-            <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
+            <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderSummary = () => (
@@ -413,7 +415,7 @@ const StudentProfile = () => {
                     onChange={e => handleUpdateField(user?.role === 'RECRUITER' ? 'companyDescription' : user?.role === 'COLLEGE_ADMIN' ? 'about' : 'summary', e.target.value)} 
                 />
             </div>
-            <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
+            <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderSalary = () => (
@@ -424,7 +426,7 @@ const StudentProfile = () => {
                 <Select label="Currency" options={['INR', 'USD', 'EUR', 'GBP']} value={profile.expectedSalary?.currency || 'INR'} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, currency: e.target.value })} />
                 <Select label="Frequency" options={['per hour', 'per month', 'per year']} value={profile.expectedSalary?.frequency} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, frequency: e.target.value })} />
             </div>
-            <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
+            <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderListOrForm = (listName, title, renderFormFields) => {
@@ -454,12 +456,14 @@ const StudentProfile = () => {
                 </div>
                 <div className="flex gap-3 shrink-0 mt-2">
                     {editIndex >= 0 && editIndex < list.length && (
-                        <button onClick={() => deleteItemFromList(listName)} className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 active:scale-95 rounded-2xl font-bold transition-all shrink-0">
+                        <button onClick={() => deleteItemFromList(listName)} disabled={saving} className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 active:scale-95 rounded-2xl font-bold transition-all shrink-0 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            {saving && <Loader2 className="w-4 h-4 animate-spin text-red-600" />}
                             Delete
                         </button>
                     )}
-                    <button onClick={() => saveItemToList(listName)} className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all shrink-0">
-                        Save
+                    <button onClick={() => saveItemToList(listName)} disabled={saving} className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all shrink-0 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {saving ? 'Saving...' : 'Save'}
                     </button>
                 </div>
             </div>
@@ -614,7 +618,7 @@ const StudentProfile = () => {
                                 </label>
                             ))}
                         </div>
-                        <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
+                        <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
                     </div>
                 );
             case 'SKILLS':
@@ -642,7 +646,7 @@ const StudentProfile = () => {
                                 ))}
                             </div>
                         </div>
-                        <button onClick={() => saveProfile(profile)} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all">Save</button>
+                        <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
                     </div>
                 );
             case 'RESUME':

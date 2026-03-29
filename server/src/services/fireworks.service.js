@@ -21,12 +21,23 @@ const callFireworks = async (systemPrompt, userPrompt) => {
                 }
             }
         );
-        return JSON.parse(response.data.choices[0].message.content);
+        let content = response.data.choices[0].message.content;
+        
+        // Extract JSON if model wrapped it in markdown or text
+        const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        return JSON.parse(content);
     } catch (error) {
         console.error('Fireworks API Error:', error.response?.data || error.message);
         throw new Error('Failed to generate AI response');
     }
 };
+exports.generateCompletion = async (systemPrompt, userPrompt) => {
+    return await callFireworks(systemPrompt, userPrompt);
+};
+
 exports.generateQuestions = async (jobRole, interviewType, resumeText) => {
     const systemPrompt = `You are an expert interviewer.
 Generate exactly 5 interview questions.
