@@ -539,24 +539,24 @@ const RecruiterCompetitions = () => {
 
             {/* Management/Analytics Modal */}
             {showAnalytics && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4">
-                    <div className="bg-white rounded-[40px] w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 lg:p-12 border-b border-slate-50 flex items-center justify-between">
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white">
-                                    <BarChart3 className="w-8 h-8" />
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-2 sm:p-4">
+                    <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-4xl shadow-2xl relative overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
+                        <div className="p-5 md:p-8 lg:p-12 border-b border-slate-50 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 md:gap-6">
+                                <div className="w-10 h-10 md:w-16 md:h-16 bg-indigo-600 rounded-xl md:rounded-3xl flex items-center justify-center text-white shrink-0">
+                                    <BarChart3 className="w-5 h-5 md:w-8 md:h-8" />
                                 </div>
-                                <div>
-                                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase line-clamp-1">{selectedStats?.title}</h3>
-                                    <p className="text-slate-400 text-[10px] font-bold tracking-widest uppercase mt-1">Enrollment & Registry Management</p>
+                                <div className="space-y-0.5 md:space-y-1 min-w-0">
+                                    <h3 className="text-lg md:text-2xl font-black text-slate-900 tracking-tighter uppercase line-clamp-1 truncate">{selectedStats?.title}</h3>
+                                    <p className="text-slate-400 text-[8px] md:text-[10px] font-bold tracking-widest uppercase md:mt-1">Enrollment Management</p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowAnalytics(false)} className="p-4 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-2xl">
-                                <XCircle className="w-8 h-8" />
+                            <button onClick={() => setShowAnalytics(false)} className="p-2 md:p-4 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl md:rounded-2xl shrink-0">
+                                <XCircle className="w-6 h-6 md:w-8 md:h-8" />
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-8 lg:p-12">
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 flex flex-col gap-6 md:gap-12">
                             {analyticsLoading ? (
                                 <div className="h-64 flex flex-col items-center justify-center gap-4">
                                     <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
@@ -564,58 +564,58 @@ const RecruiterCompetitions = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-12">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
                                         {[
                                             { label: 'Total Learners', value: selectedStats?.participants?.length || 0, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                                             { label: 'Design Stages', value: selectedStats?.rounds?.length || 0, icon: Layers, color: 'text-violet-600', bg: 'bg-violet-50' },
-                                            { label: 'Status Tracking', value: new Date(selectedStats?.endDate) > new Date() ? 'ACTIVE' : 'EXPIRED', icon: Globe, color: 'text-emerald-600', bg: 'bg-emerald-50' }
+                                            { label: 'Status', value: new Date(selectedStats?.endDate) > new Date() ? 'ACTIVE' : 'EXPIRED', icon: Globe, color: 'text-emerald-600', bg: 'bg-emerald-50' }
                                         ].map((stat, i) => (
-                                            <div key={i} className="bg-slate-50/50 p-6 rounded-[32px] space-y-4 border border-slate-100">
-                                                <div className={clsx("w-12 h-12 rounded-2xl flex items-center justify-center", stat.bg)}>
-                                                    <stat.icon className={clsx("w-6 h-6", stat.color)} />
+                                            <div key={i} className="bg-slate-50/50 p-4 md:p-6 rounded-2xl md:rounded-[32px] flex sm:flex-col items-center sm:items-start gap-4 border border-slate-100">
+                                                <div className={clsx("w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0", stat.bg)}>
+                                                    <stat.icon className={clsx("w-5 h-5 md:w-6 md:h-6", stat.color)} />
                                                 </div>
-                                                <div>
-                                                    <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">{stat.label}</p>
-                                                    <h4 className="text-2xl font-black text-slate-900 tracking-tighter">{stat.value}</h4>
+                                                <div className="flex-1">
+                                                    <p className="text-[9px] md:text-[10px] font-black text-slate-400 tracking-widest uppercase">{stat.label}</p>
+                                                    <h4 className="text-lg md:text-2xl font-black text-slate-900 tracking-tighter">{stat.value}</h4>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
 
-                                    <div className="space-y-6">
-                                        <div className="flex items-center justify-between px-2">
-                                            <h4 className="text-[11px] font-black text-slate-900 tracking-widest uppercase italic bg-slate-50 px-4 py-2 rounded-full inline-block">Registered Talent Registry</h4>
-                                            <div className="flex items-center gap-3">
+                                    <div className="space-y-4 md:space-y-6">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1 md:px-2">
+                                            <h4 className="text-[10px] md:text-[11px] font-black text-slate-900 tracking-widest uppercase italic bg-slate-50 px-3 md:px-4 py-1.5 md:py-2 rounded-full inline-block text-center md:text-left self-start">Registered Talent Registry</h4>
+                                            <div className="flex flex-wrap items-center gap-2 md:gap-3">
                                                 <button 
                                                     disabled={downloadingCsv}
                                                     onClick={() => handleDownloadParticipants(selectedStats._id, selectedStats.title)}
-                                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
+                                                    className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-sm md:shadow-lg shadow-indigo-100 disabled:opacity-50"
                                                 >
                                                     {downloadingCsv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
                                                     Export CSV
                                                 </button>
-                                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">{selectedStats?.participants?.length || 0} Registered</span>
+                                                <span className="text-[9px] md:text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 md:px-3 md:py-1 rounded-md md:rounded-full uppercase tracking-tighter shadow-sm">{selectedStats?.participants?.length || 0} Reg</span>
                                             </div>
                                         </div>
                                         {selectedStats?.participants?.length > 0 ? (
-                                            <div className="grid grid-cols-1 gap-4">
+                                            <div className="grid grid-cols-1 gap-3 md:gap-4">
                                                 {selectedStats.participants.map((user, idx) => (
-                                                    <div key={idx} className="bg-white border border-slate-100 p-5 rounded-[24px] flex items-center justify-between group hover:shadow-xl hover:shadow-slate-100 transition-all">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-12 h-12 bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center font-black text-slate-300">
+                                                    <div key={idx} className="bg-white border border-slate-100 p-4 md:p-5 rounded-2xl md:rounded-[24px] flex flex-row items-center justify-between gap-3 md:gap-4 group hover:shadow-md hover:shadow-slate-100 transition-all">
+                                                        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                                                            <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-xl md:rounded-2xl overflow-hidden shadow-inner flex items-center justify-center font-black text-slate-300 shrink-0">
                                                                 {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.charAt(0)}
                                                             </div>
-                                                            <div>
-                                                                <h5 className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">{user.name}</h5>
-                                                                <p className="text-[10px] font-bold text-slate-400 tracking-wide uppercase">{user.email}</p>
+                                                            <div className="min-w-0">
+                                                                <h5 className="text-xs md:text-sm font-black text-slate-900 tracking-tight leading-none mb-1 truncate">{user.name}</h5>
+                                                                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wide uppercase truncate">{user.email}</p>
                                                             </div>
                                                         </div>
                                                         <button 
                                                             onClick={() => setViewingParticipant(user)}
-                                                            className="flex items-center gap-2 px-4 py-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 rounded-xl transition-all"
+                                                            className="flex items-center justify-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 text-indigo-600 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-indigo-50 bg-slate-50 md:bg-transparent rounded-lg md:rounded-xl transition-all shrink-0"
                                                         >
-                                                            Inspect
-                                                            <ExternalLink className="w-4 h-4" />
+                                                            <span className="hidden sm:inline">Inspect</span>
+                                                            <ExternalLink className="w-3 h-3 md:w-4 md:h-4" />
                                                         </button>
                                                     </div>
                                                 ))}
@@ -639,30 +639,37 @@ const RecruiterCompetitions = () => {
 
             {/* Participant Profile Modal */}
             {viewingParticipant && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col max-h-[85vh]">
-                        <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Talent Intelligence Profile</h4>
-                            <button onClick={() => setViewingParticipant(null)} className="p-3 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-4 md:p-8 border-b border-slate-50 flex items-center justify-between gap-3">
+                            <h4 className="text-lg md:text-xl font-black text-slate-900 uppercase tracking-tighter italic truncate">Talent Profile</h4>
+                            <button onClick={() => setViewingParticipant(null)} className="p-2 md:p-3 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl shrink-0">
                                 <XCircle className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
-                            <div className="flex items-start gap-6 bg-slate-50 p-6 rounded-[32px] border border-slate-100">
-                                <div className="w-20 h-20 bg-white rounded-3xl overflow-hidden shadow-sm flex items-center justify-center font-black text-slate-300 text-3xl">
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar space-y-6 md:space-y-8">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6 bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 relative">
+                                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-sm flex items-center justify-center font-black text-slate-300 text-2xl md:text-3xl shrink-0">
                                     {viewingParticipant.avatar ? <img src={viewingParticipant.avatar} className="w-full h-full object-cover" /> : viewingParticipant.name?.charAt(0)}
                                 </div>
-                                <div className="space-y-1">
-                                    <h5 className="text-2xl font-black text-slate-900 tracking-tight">{viewingParticipant.name}</h5>
-                                    <p className="text-sm font-bold text-slate-500 uppercase flex items-center gap-2">
-                                        {viewingParticipant.email}
-                                    </p>
-                                    {viewingParticipant.studentProfile?.phoneNumber && (
-                                        <p className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1 rounded-full shadow-sm w-fit mt-2">
-                                            {viewingParticipant.studentProfile.phoneNumber}
+                                <div className="space-y-1.5 md:space-y-2 flex-1 min-w-0">
+                                    <h5 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">{viewingParticipant.name}</h5>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <p className="text-[11px] md:text-sm font-bold text-slate-500 truncate">{viewingParticipant.email}</p>
+                                        <p className="text-[9px] md:text-[11px] font-black text-indigo-600 bg-white px-2 py-0.5 md:px-3 md:py-1 rounded-md md:rounded-full shadow-sm">
+                                            {viewingParticipant.studentProfile?.phoneNumber || 'No Phone'}
                                         </p>
-                                    )}
+                                    </div>
                                 </div>
+                                {viewingParticipant.studentProfile?.resumeUrl ? (
+                                    <a target="_blank" rel="noreferrer" href={viewingParticipant.studentProfile.resumeUrl} className="mt-2 sm:mt-0 sm:absolute sm:top-6 sm:right-6 flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-md w-full sm:w-auto justify-center">
+                                        Resume <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                ) : (
+                                    <span className="mt-2 sm:mt-0 sm:absolute sm:top-6 sm:right-6 flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2 bg-slate-200 text-slate-400 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest w-full sm:w-auto justify-center cursor-not-allowed">
+                                        No Resume
+                                    </span>
+                                )}
                             </div>
 
                             {viewingParticipant.studentProfile ? (

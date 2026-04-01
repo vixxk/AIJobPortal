@@ -311,19 +311,19 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 z-[60] bg-white/95 backdrop-blur-md rounded-[2.5rem] flex flex-col items-center justify-center text-center p-8 border border-rose-100 shadow-2xl"
                         >
-                            <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6 border border-rose-100 animate-bounce">
+                            <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6 border border-rose-100">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                             </div>
                             <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">Microphone Blocked</h3>
                             <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs mb-8">
-                                We need microphone access to capture your speech. Please allow permission and click retry.
+                                Please click the 🔒 <b>lock icon</b> in your browser's address bar, enable the <b>Microphone</b>, and then try again.
                             </p>
                             <div className="flex flex-col gap-3 w-full max-w-[240px]">
                                 <button
                                     onClick={handleRetryPermission}
                                     className="w-full py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-900 transition-all active:scale-95"
                                 >
-                                    Grant & Retry
+                                    I've Enabled It - Retry
                                 </button>
                                 <button
                                     onClick={handleDismissPermission}

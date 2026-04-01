@@ -605,7 +605,7 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                                                             }`}
                                                                             title="Listen to paragraph"
                                                                         >
-                                                                            {isPreparingAudio || isElenaSpeaking
+                                                                            {isPreparingAudio
                                                                                 ? <Loader2 size={16} className="animate-spin" />
                                                                                 : <Volume2 size={16} />
                                                                             }

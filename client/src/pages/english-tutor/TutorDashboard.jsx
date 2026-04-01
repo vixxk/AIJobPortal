@@ -171,9 +171,9 @@ const TutorDashboard = () => {
                                         isCompleted={tutorData?.dailyGoals?.lessonCompleted}
                                     />
                                     <GoalItem
-                                        label="15m Active Speaking"
-                                        target={`${Math.round((tutorData?.dailyGoals?.speakingMinutes || 0) * 10) / 10}/15`}
-                                        isCompleted={tutorData?.dailyGoals?.speakingMinutes >= 15}
+                                        label="5m Active Speaking"
+                                        target={`${Math.round((tutorData?.dailyGoals?.speakingMinutes || 0) * 10) / 10}/5`}
+                                        isCompleted={tutorData?.dailyGoals?.speakingMinutes >= 5}
                                     />
                                     <GoalItem
                                         label="Learn 5 New Words"

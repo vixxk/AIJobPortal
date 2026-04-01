@@ -438,7 +438,7 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
                                                             }`}
                                                             title="Listen to paragraph"
                                                         >
-                                                            {isPreparingAudio || isElenaSpeaking
+                                                            {isPreparingAudio
                                                                 ? <Loader2 size={16} className="animate-spin" />
                                                                 : <Volume2 size={16} />
                                                             }
@@ -576,7 +576,7 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
                                                                 }`}
                                                                 title="Listen"
                                                             >
-                                                                {isPreparingAudio || isElenaSpeaking
+                                                                {isPreparingAudio
                                                                     ? <Loader2 size={14} className="animate-spin md:w-4 md:h-4" />
                                                                     : <Volume2 size={14} className="md:w-4 md:h-4" />
                                                                 }

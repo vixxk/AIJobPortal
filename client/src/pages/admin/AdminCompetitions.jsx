@@ -174,7 +174,7 @@ const AdminCompetitions = () => {
     const handleDownloadParticipants = async (id, title) => {
         setDownloadingCsv(true);
         try {
-            const response = await axios.get(`/admin/competitions/${id}/download-participants`, {
+            const response = await axios.get(`/competitions/${id}/download-participants`, {
                 responseType: 'blob',
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -605,20 +605,20 @@ const AdminCompetitions = () => {
             {showAnalytics && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl animate-in fade-in duration-300 p-4">
                     <div className="bg-white rounded-[40px] w-full max-w-4xl shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-8 lg:p-12 border-b border-slate-50 flex items-center justify-between">
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-100">
-                                    <BarChart3 className="w-8 h-8 text-white" />
+                        <div className="p-6 md:p-8 lg:p-12 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 md:gap-6">
+                                <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-100 shrink-0">
+                                    <BarChart3 className="w-6 h-6 md:w-8 md:h-8 text-white" />
                                 </div>
-                                <div className="space-y-1">
-                                    <h3 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tighter uppercase italic line-clamp-1">{selectedStats?.title || 'Competition Analytics'}</h3>
-                                    <p className="text-slate-400 text-[10px] lg:text-[11px] font-bold tracking-widest uppercase flex items-center gap-2">
+                                <div className="space-y-1 min-w-0">
+                                    <h3 className="text-xl md:text-2xl lg:text-3xl font-black text-slate-900 tracking-tighter uppercase italic truncate">{selectedStats?.title || 'Competition Analytics'}</h3>
+                                    <p className="text-slate-400 text-[9px] md:text-[10px] lg:text-[11px] font-bold tracking-widest uppercase flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                                         Detailed breakdown & participant registry
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={() => setShowAnalytics(false)} className="p-4 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-2xl">
-                                <XCircle className="w-8 h-8" />
+                            <button onClick={() => setShowAnalytics(false)} className="absolute top-4 right-4 md:relative md:top-0 md:right-0 p-3 md:p-4 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-2xl">
+                                <XCircle className="w-6 h-6 md:w-8 md:h-8" />
                             </button>
                         </div>
 
@@ -651,9 +651,9 @@ const AdminCompetitions = () => {
 
                                     {/* Participants Section */}
                                     <div className="space-y-6">
-                                        <div className="flex items-center justify-between px-2">
-                                            <h4 className="text-sm font-black text-slate-900 tracking-widest uppercase italic">Participant Registry</h4>
-                                            <div className="flex items-center gap-3">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between px-2 gap-4">
+                                            <h4 className="text-sm font-black text-slate-900 tracking-widest uppercase italic text-center md:text-left">Participant Registry</h4>
+                                            <div className="flex flex-wrap items-center justify-center gap-3">
                                                 <button 
                                                     disabled={downloadingCsv}
                                                     onClick={() => handleDownloadParticipants(selectedStats._id, selectedStats.title)}
@@ -669,19 +669,19 @@ const AdminCompetitions = () => {
                                         {selectedStats?.participants?.length > 0 ? (
                                             <div className="grid grid-cols-1 gap-4">
                                                 {selectedStats.participants.map((user, idx) => (
-                                                    <div key={idx} className="bg-white border border-slate-100 p-5 rounded-[24px] flex items-center justify-between hover:shadow-xl hover:shadow-slate-100 transition-all group">
+                                                    <div key={idx} className="bg-white border border-slate-100 p-5 rounded-[24px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-xl hover:shadow-slate-100 transition-all group">
                                                         <div className="flex items-center gap-4">
-                                                            <div className="w-12 h-12 bg-slate-100 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center font-black text-slate-400">
+                                                            <div className="w-12 h-12 bg-slate-100 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center font-black text-slate-400 shrink-0">
                                                                 {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.charAt(0)}
                                                             </div>
-                                                            <div>
-                                                                <h5 className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">{user.name}</h5>
-                                                                <p className="text-[10px] font-bold text-slate-400 tracking-wide uppercase">{user.email}</p>
+                                                            <div className="min-w-0">
+                                                                <h5 className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1 truncate">{user.name}</h5>
+                                                                <p className="text-[10px] font-bold text-slate-400 tracking-wide uppercase truncate">{user.email}</p>
                                                             </div>
                                                         </div>
                                                         <button 
                                                             onClick={() => setViewingParticipant(user)}
-                                                            className="flex items-center gap-2 px-4 py-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 rounded-xl transition-all"
+                                                            className="flex items-center justify-center gap-2 px-4 py-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 bg-slate-50 sm:bg-transparent rounded-xl transition-all sm:w-auto w-full"
                                                         >
                                                             View Profile
                                                             <ExternalLink className="w-4 h-4" />
@@ -716,21 +716,28 @@ const AdminCompetitions = () => {
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
-                            <div className="flex items-start gap-6 bg-slate-50 p-6 rounded-[32px] border border-slate-100">
-                                <div className="w-20 h-20 bg-white rounded-3xl overflow-hidden shadow-sm flex items-center justify-center font-black text-slate-300 text-3xl">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-slate-50 p-6 rounded-[32px] border border-slate-100 relative">
+                                <div className="w-20 h-20 bg-white rounded-3xl overflow-hidden shadow-sm flex items-center justify-center font-black text-slate-300 text-3xl shrink-0">
                                     {viewingParticipant.avatar ? <img src={viewingParticipant.avatar} className="w-full h-full object-cover" /> : viewingParticipant.name?.charAt(0)}
                                 </div>
-                                <div className="space-y-1">
-                                    <h5 className="text-2xl font-black text-slate-900 tracking-tight">{viewingParticipant.name}</h5>
-                                    <p className="text-sm font-bold text-slate-500 uppercase flex items-center gap-2">
-                                        {viewingParticipant.email}
-                                    </p>
-                                    {viewingParticipant.studentProfile?.phoneNumber && (
-                                        <p className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1 rounded-full shadow-sm w-fit mt-2">
-                                            {viewingParticipant.studentProfile.phoneNumber}
+                                <div className="space-y-2 flex-1 min-w-0">
+                                    <h5 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingParticipant.name}</h5>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <p className="text-sm font-bold text-slate-500">{viewingParticipant.email}</p>
+                                        <p className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1 rounded-full shadow-sm">
+                                            {viewingParticipant.studentProfile?.phoneNumber || 'No Phone'}
                                         </p>
-                                    )}
+                                    </div>
                                 </div>
+                                {viewingParticipant.studentProfile?.resumeUrl ? (
+                                    <a target="_blank" rel="noreferrer" href={viewingParticipant.studentProfile.resumeUrl} className="sm:absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-md w-full sm:w-auto justify-center">
+                                        View Resume <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                ) : (
+                                    <span className="sm:absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest w-full sm:w-auto justify-center cursor-not-allowed">
+                                        No Resume
+                                    </span>
+                                )}
                             </div>
 
                             {viewingParticipant.studentProfile ? (
