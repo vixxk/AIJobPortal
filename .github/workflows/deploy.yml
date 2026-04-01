@@ -1,4 +1,4 @@
-name: Deploy Backend & Python Service
+name: Deploy Backend
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'server/**'
-      - 'python-service/**'
       - '.github/workflows/**'
 
 jobs:
@@ -40,10 +39,6 @@ jobs:
             # Clear caches
             npm cache clean --force || true
             
-            # Remove python bytecode
-            find . -name "__pycache__" -type d -exec rm -rf {} + || true
-            find . -name "*.pyc" -delete || true
-            
             # Optimize git storage
             git gc --prune=now || true
             # Show current disk usage
@@ -61,22 +56,8 @@ jobs:
             pm2 restart server || pm2 start src/server.js --name server
             cd ..
 
-            # --- 🐍 Deploy Python Service ---
-            echo "📦 Setting up Python Service..."
-            cd python-service
-            
-            # Creates venv if missing on EC2
-            if [ ! -d "venv" ]; then
-                echo "🔧 Creating virtual environment..."
-                python3 -m venv venv
-            fi
-            
-            # Install dependencies
-            ./venv/bin/pip install -r requirements.txt
-            
-            # Restart with PM2 using the venv python interpreter
-            pm2 restart python-service || pm2 start "./venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000" --name python-service
-            cd ..
+            # Clean up old python pm2 process if it exists
+            pm2 delete python-service || true
 
             # Save PM2 state to survive reboots
             pm2 save

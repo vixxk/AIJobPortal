@@ -379,9 +379,9 @@ const RecruiterCompetitions = () => {
                         </div>
 
                         <div className="overflow-y-auto overflow-x-hidden flex-1 custom-scrollbar scroll-smooth">
-                            <div className="p-8 lg:p-12">
-                                <form onSubmit={handleSubmit} className="space-y-12">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                            <div className="p-4 md:p-8 lg:p-12">
+                                <form onSubmit={handleSubmit} className="space-y-8 md:space-y-12 pb-8 md:pb-0">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 md:gap-y-8">
                                         <div className="space-y-4 lg:space-y-8">
                                             <div className="space-y-3">
                                                 <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Event Domain</label>
@@ -476,8 +476,8 @@ const RecruiterCompetitions = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-8">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 gap-4 lg:gap-0">
+                                    <div className="space-y-6 md:space-y-8">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-1 md:px-2 gap-4 lg:gap-0">
                                             <div className="flex items-center gap-3 lg:gap-4">
                                                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-slate-900 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-lg">
                                                     <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
@@ -491,9 +491,9 @@ const RecruiterCompetitions = () => {
 
                                         <div className="space-y-4 lg:space-y-6">
                                             {form.rounds.map((round, idx) => (
-                                                <div key={idx} className="bg-white p-6 lg:p-8 rounded-[28px] lg:rounded-[32px] border border-slate-100 shadow-sm space-y-6 relative group">
+                                                <div key={idx} className="bg-white p-5 md:p-6 lg:p-8 rounded-3xl lg:rounded-[32px] border border-slate-100 shadow-sm space-y-5 md:space-y-6 relative group">
                                                     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                                                        <div className="w-12 h-12 lg:w-16 lg:h-16 bg-slate-50 flex items-center justify-center rounded-xl lg:rounded-2xl text-lg lg:text-xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
+                                                        <div className="w-10 h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 bg-slate-50 flex items-center justify-center rounded-xl lg:rounded-2xl text-base lg:text-xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
                                                             {idx + 1}
                                                         </div>
                                                         <div className="flex-1 space-y-4 lg:space-y-6">
@@ -523,8 +523,8 @@ const RecruiterCompetitions = () => {
                                         </div>
                                     </div>
 
-                                    <div className="pt-6">
-                                        <button type="submit" className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-[13px] uppercase tracking-[0.1em] shadow-xl shadow-indigo-100 transition-all hover:bg-indigo-700 hover:-translate-y-1">
+                                    <div className="pt-4 md:pt-6">
+                                        <button type="submit" className="w-full py-4 md:py-5 bg-indigo-600 text-white rounded-2xl font-black text-xs md:text-[13px] uppercase tracking-[0.1em] shadow-xl shadow-indigo-100 transition-all hover:bg-indigo-700 hover:-translate-y-1">
                                             {editingId ? 'Save Modifications' : 'Launch Competition'}
                                         </button>
                                     </div>
