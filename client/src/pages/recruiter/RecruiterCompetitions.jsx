@@ -250,7 +250,7 @@ const RecruiterCompetitions = () => {
                     <div className="flex items-center gap-2.5 px-3 py-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-lg shadow-violet-100">
                         <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
                         <span className="text-[12px] font-black text-white tracking-[0.05em] uppercase">
-                            {competitions.length} <span className="text-violet-100/60 font-medium text-[10px] lowercase italic ml-0.5 tracking-normal">hosted</span>
+                            {competitions.length} <span className="text-violet-100/60 font-medium text-xs lowercase italic ml-0.5 tracking-normal">hosted</span>
                         </span>
                     </div>
                 </div>
@@ -258,13 +258,13 @@ const RecruiterCompetitions = () => {
                     <input
                         type="text"
                         placeholder="Search your competitions..."
-                        className="w-full sm:max-w-sm h-11 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-[10px] lg:text-xs font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
+                        className="w-full sm:max-w-sm h-11 px-6 bg-slate-100 border border-slate-200 rounded-2xl text-xs lg:text-xs font-bold focus:ring-2 ring-indigo-500/30 outline-none transition-all placeholder:text-slate-400 text-slate-700"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                     <button
                         onClick={() => setShowModal(true)}
-                        className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 shrink-0"
+                        className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black tracking-widest uppercase hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 shrink-0"
                     >
                         <Plus className="w-4 h-4" /> HOST COMPETITION
                     </button>
@@ -282,7 +282,7 @@ const RecruiterCompetitions = () => {
                                     <Globe className="w-12 h-12" />
                                 </div>
                             )}
-                            <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[8px] lg:text-[9px] font-black text-indigo-600 tracking-widest uppercase shadow-sm">
+                            <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-xs lg:text-sm font-black text-indigo-600 tracking-widest uppercase shadow-sm">
                                 {comp.category}
                             </div>
                         </div>
@@ -292,7 +292,7 @@ const RecruiterCompetitions = () => {
                                 <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handleEditCompetition(comp)}>
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-black text-slate-900 text-sm lg:text-xl tracking-tight leading-tight group-hover:text-indigo-600 transition-colors uppercase truncate">{comp.title}</h4>
-                                        <div className={`px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase shrink-0 ${
+                                        <div className={`px-2 py-0.5 rounded-full text-xs font-black tracking-widest uppercase shrink-0 ${
                                             comp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600' : 
                                             comp.status === 'PENDING' ? 'bg-amber-50 text-amber-600 animate-pulse' : 
                                             'bg-slate-50 text-slate-600'
@@ -300,7 +300,7 @@ const RecruiterCompetitions = () => {
                                             {comp.status || 'PENDING'}
                                         </div>
                                     </div>
-                                    <p className="text-slate-400 text-[9px] lg:text-[10px] font-black uppercase tracking-widest mt-1 truncate">{comp.organizer}</p>
+                                    <p className="text-slate-400 text-sm lg:text-xs font-black uppercase tracking-widest mt-1 truncate">{comp.organizer}</p>
                                 </div>
                                 <div className="flex gap-2 shrink-0">
                                     <button onClick={(e) => { e.stopPropagation(); handleEditCompetition(comp); }} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl transition-all hover:bg-indigo-100">
@@ -312,20 +312,20 @@ const RecruiterCompetitions = () => {
                                 </div>
                             </div>
 
-                            <p className="text-slate-500 text-[10px] lg:text-xs font-semibold leading-relaxed line-clamp-2 mb-6 group-hover:text-slate-600 transition-colors">
+                            <p className="text-slate-500 text-xs lg:text-xs font-semibold leading-relaxed line-clamp-2 mb-6 group-hover:text-slate-600 transition-colors">
                                 {comp.description || 'No description provided.'}
                             </p>
 
                             <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="flex items-center gap-2 text-[9px] lg:text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                                <div className="flex items-center gap-2 text-sm lg:text-xs font-bold text-slate-500 uppercase tracking-tight">
                                     <Calendar className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-indigo-500" />
                                     <span>Starts: {new Date(comp.startDate).toLocaleDateString()}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[9px] lg:text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                                <div className="flex items-center gap-2 text-sm lg:text-xs font-bold text-slate-500 uppercase tracking-tight">
                                     <Layers className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-indigo-500" />
                                     <span>{comp.rounds?.length || 0} Rounds</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[9px] lg:text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                                <div className="flex items-center gap-2 text-sm lg:text-xs font-bold text-slate-500 uppercase tracking-tight">
                                     <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-emerald-500" />
                                     <span>{comp.participants?.length || 0} Registered</span>
                                 </div>
@@ -334,18 +334,18 @@ const RecruiterCompetitions = () => {
                             <div className="mt-auto flex items-center justify-between pt-4 lg:pt-6 border-t border-slate-50 gap-2">
                                 <div className="flex flex-wrap items-center gap-1.5">
                                     <span className={clsx(
-                                        "px-2 lg:px-3 py-1 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest",
+                                        "px-2 lg:px-3 py-1 rounded-lg text-xs lg:text-sm font-black uppercase tracking-widest",
                                         new Date(comp.endDate) > new Date() ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"
                                     )}>
                                         {new Date(comp.endDate) > new Date() ? 'LIVE' : 'CLOSED'}
                                     </span>
-                                    <span className="px-2 lg:px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest">
+                                    <span className="px-2 lg:px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs lg:text-sm font-black uppercase tracking-widest">
                                         {comp.mode}
                                     </span>
                                 </div>
                                 <button
                                     onClick={() => handleShowAnalytics(comp._id)}
-                                    className="text-[9px] lg:text-[10px] font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest underline decoration-2 underline-offset-4 shrink-0"
+                                    className="text-sm lg:text-xs font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest underline decoration-2 underline-offset-4 shrink-0"
                                 >
                                     MANAGEMENT
                                 </button>
@@ -358,7 +358,7 @@ const RecruiterCompetitions = () => {
             {/* Creation Modal */}
             {showModal && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-t-[40px] md:rounded-[40px] w-full max-w-5xl shadow-2xl relative animate-in slide-in-from-bottom-5 duration-500 overflow-hidden border border-white/20 flex flex-col h-[92vh] md:h-[90vh]">
+                    <div className="bg-white rounded-t-[40px] md:rounded-[40px] w-full max-w-5xl shadow-2xl relative animate-in slide-in-from-bottom-5 duration-500 overflow-hidden border border-white/20 flex flex-col h-[85dvh] md:h-[90vh]">
                         <div className="z-20 bg-white border-b border-slate-100 flex items-center justify-between px-6 lg:px-12 py-5 lg:py-8 shrink-0">
                             <div className="flex items-center gap-3 lg:gap-5">
                                 <div className="w-10 h-10 lg:w-14 lg:h-14 bg-indigo-600 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 group">
@@ -368,7 +368,7 @@ const RecruiterCompetitions = () => {
                                     <h3 className="text-lg lg:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
                                         {editingId ? 'Edit Event' : 'Launch Event'}
                                     </h3>
-                                    <p className="text-slate-400 text-[8px] lg:text-[11px] font-bold tracking-widest uppercase mt-1 lg:mt-1.5 flex items-center gap-2">
+                                    <p className="text-slate-400 text-xs lg:text-sm font-bold tracking-widest uppercase mt-1 lg:mt-1.5 flex items-center gap-2">
                                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                                         {editingId ? 'Refine details' : 'Configure timeline'}
                                     </p>
@@ -380,18 +380,18 @@ const RecruiterCompetitions = () => {
                         </div>
 
                         <div className="overflow-y-auto overflow-x-hidden flex-1 custom-scrollbar scroll-smooth">
-                            <div className="p-4 md:p-8 lg:p-12">
-                                <form onSubmit={handleSubmit} className="space-y-8 md:space-y-12 pb-8 md:pb-0">
+                            <div className="p-5 md:p-8 lg:p-12">
+                                <form onSubmit={handleSubmit} className="space-y-8 md:space-y-12 pb-24 md:pb-0">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 md:gap-y-8">
                                         <div className="space-y-4 lg:space-y-8">
                                             <div className="space-y-3">
-                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Event Domain</label>
+                                                <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Event Domain</label>
                                                 <input required className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
                                                     placeholder="e.g. AI Hackathon 2026" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                                             </div>
 
                                             <div className="space-y-3">
-                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Organizer Identity</label>
+                                                <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Organizer Identity</label>
                                                 <div className="relative">
                                                     <Building2 className="absolute left-5 lg:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                                     <input required className="w-full h-12 lg:h-14 pl-12 lg:pl-14 pr-5 lg:pr-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
@@ -401,7 +401,7 @@ const RecruiterCompetitions = () => {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                                                 <div className="space-y-3">
-                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Classification</label>
+                                                    <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Classification</label>
                                                     <div className="relative">
                                                         <select className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 appearance-none cursor-pointer text-sm"
                                                             value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
@@ -416,7 +416,7 @@ const RecruiterCompetitions = () => {
                                                     </div>
                                                 </div>
                                                 <div className="space-y-3">
-                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Protocol</label>
+                                                    <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Protocol</label>
                                                     <div className="relative">
                                                         <select className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 appearance-none cursor-pointer text-sm"
                                                             value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value })}>
@@ -434,25 +434,25 @@ const RecruiterCompetitions = () => {
                                         <div className="space-y-6 lg:space-y-8">
                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                                                 <div className="space-y-3">
-                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Start Date</label>
+                                                    <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Start Date</label>
                                                     <input required type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
                                                         value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
                                                 </div>
                                                 <div className="space-y-3">
-                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">End Date</label>
+                                                    <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">End Date</label>
                                                     <input required type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
                                                         value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
                                                 </div>
                                             </div>
 
                                             <div className="space-y-3">
-                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Application Deadline</label>
+                                                <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Application Deadline</label>
                                                 <input required type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
                                                     value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
                                             </div>
 
                                             <div className="space-y-3 lg:space-y-4">
-                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Event Poster</label>
+                                                <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Event Poster</label>
                                                 <div className="flex items-center gap-4 lg:gap-6">
                                                     <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-2xl lg:rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shrink-0 group">
                                                         {form.preview ? (
@@ -461,7 +461,7 @@ const RecruiterCompetitions = () => {
                                                             <Layers className="w-6 h-6 lg:w-8 lg:h-8 text-slate-300" />
                                                         )}
                                                     </div>
-                                                    <label className="flex-1 h-12 lg:h-14 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-xl lg:rounded-2xl flex items-center justify-center cursor-pointer hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all font-black text-indigo-600 text-[10px] lg:text-[11px] tracking-widest uppercase gap-2 group">
+                                                    <label className="flex-1 h-12 lg:h-14 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-xl lg:rounded-2xl flex items-center justify-center cursor-pointer hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all font-black text-indigo-600 text-xs lg:text-sm tracking-widest uppercase gap-2 group">
                                                         <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                                                         Upload Media
                                                         <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -471,7 +471,7 @@ const RecruiterCompetitions = () => {
                                         </div>
 
                                         <div className="col-span-1 md:col-span-2 space-y-3">
-                                            <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Brief & Guidelines</label>
+                                            <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Brief & Guidelines</label>
                                             <textarea required rows={4} className="w-full p-5 lg:p-6 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 ring-indigo-500/5 focus:border-indigo-500 rounded-2xl lg:rounded-3xl outline-none transition-all font-bold text-slate-800 text-xs lg:text-sm leading-relaxed"
                                                 placeholder="Provide the core objective and rules..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                                         </div>
@@ -485,14 +485,14 @@ const RecruiterCompetitions = () => {
                                                 </div>
                                                 <h4 className="text-lg lg:text-xl font-black text-slate-900 uppercase tracking-tight">Timeline Architecture</h4>
                                             </div>
-                                            <button type="button" onClick={handleAddRound} className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-900 rounded-xl lg:rounded-2xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest hover:border-indigo-600 hover:text-indigo-600 transition-all">
+                                            <button type="button" onClick={handleAddRound} className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-900 rounded-xl lg:rounded-2xl text-xs lg:text-sm font-black uppercase tracking-widest hover:border-indigo-600 hover:text-indigo-600 transition-all">
                                                 <Plus className="w-4 h-4" strokeWidth={3} /> Add Stage
                                             </button>
                                         </div>
 
                                         <div className="space-y-4 lg:space-y-6">
                                             {form.rounds.map((round, idx) => (
-                                                <div key={idx} className="bg-white p-5 md:p-6 lg:p-8 rounded-3xl lg:rounded-[32px] border border-slate-100 shadow-sm space-y-5 md:space-y-6 relative group">
+                                                <div key={idx} className="bg-white p-6 md:p-8 rounded-3xl lg:rounded-[32px] border border-slate-100 shadow-sm space-y-5 md:space-y-6 relative group">
                                                     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
                                                         <div className="w-10 h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 bg-slate-50 flex items-center justify-center rounded-xl lg:rounded-2xl text-base lg:text-xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
                                                             {idx + 1}
@@ -500,12 +500,12 @@ const RecruiterCompetitions = () => {
                                                         <div className="flex-1 space-y-4 lg:space-y-6">
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                                                                 <div className="space-y-2 lg:space-y-3">
-                                                                    <label className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Stage Title</label>
+                                                                    <label className="text-sm lg:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Stage Title</label>
                                                                     <input required className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-slate-800 text-xs lg:text-sm focus:bg-white transition-all placeholder:text-slate-300"
                                                                         placeholder="e.g. Qualification Round" value={round.title} onChange={e => handleRoundChange(idx, 'title', e.target.value)} />
                                                                 </div>
                                                                 <div className="space-y-2 lg:space-y-3">
-                                                                    <label className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Date</label>
+                                                                    <label className="text-sm lg:text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Target Date</label>
                                                                     <input type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-slate-800 text-xs lg:text-sm focus:bg-white transition-all"
                                                                         value={round.date} onChange={e => handleRoundChange(idx, 'date', e.target.value)} />
                                                                 </div>
@@ -540,7 +540,7 @@ const RecruiterCompetitions = () => {
             {/* Management/Analytics Modal */}
             {showAnalytics && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-2 sm:p-4">
-                    <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-4xl shadow-2xl relative overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
+                    <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-4xl shadow-2xl relative overflow-hidden flex flex-col max-h-[85dvh] md:max-h-[90vh]">
                         <div className="p-5 md:p-8 lg:p-12 border-b border-slate-50 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 md:gap-6">
                                 <div className="w-10 h-10 md:w-16 md:h-16 bg-indigo-600 rounded-xl md:rounded-3xl flex items-center justify-center text-white shrink-0">
@@ -548,7 +548,7 @@ const RecruiterCompetitions = () => {
                                 </div>
                                 <div className="space-y-0.5 md:space-y-1 min-w-0">
                                     <h3 className="text-lg md:text-2xl font-black text-slate-900 tracking-tighter uppercase line-clamp-1 truncate">{selectedStats?.title}</h3>
-                                    <p className="text-slate-400 text-[8px] md:text-[10px] font-bold tracking-widest uppercase md:mt-1">Enrollment Management</p>
+                                    <p className="text-slate-400 text-xs md:text-xs font-bold tracking-widest uppercase md:mt-1">Enrollment Management</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowAnalytics(false)} className="p-2 md:p-4 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl md:rounded-2xl shrink-0">
@@ -556,27 +556,27 @@ const RecruiterCompetitions = () => {
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 flex flex-col gap-6 md:gap-12">
+                        <div className="flex-1 overflow-y-auto p-5 md:p-8 lg:p-12 flex flex-col gap-6 md:gap-12 pb-24 md:pb-12">
                             {analyticsLoading ? (
                                 <div className="h-64 flex flex-col items-center justify-center gap-4">
                                     <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
-                                    <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase italic">Initializing registry...</span>
+                                    <span className="text-xs font-black text-slate-400 tracking-widest uppercase italic">Initializing registry...</span>
                                 </div>
                             ) : (
                                 <div className="space-y-12">
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                                         {[
                                             { label: 'Total Learners', value: selectedStats?.participants?.length || 0, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                                             { label: 'Design Stages', value: selectedStats?.rounds?.length || 0, icon: Layers, color: 'text-violet-600', bg: 'bg-violet-50' },
                                             { label: 'Status', value: new Date(selectedStats?.endDate) > new Date() ? 'ACTIVE' : 'EXPIRED', icon: Globe, color: 'text-emerald-600', bg: 'bg-emerald-50' }
                                         ].map((stat, i) => (
-                                            <div key={i} className="bg-slate-50/50 p-4 md:p-6 rounded-2xl md:rounded-[32px] flex sm:flex-col items-center sm:items-start gap-4 border border-slate-100">
-                                                <div className={clsx("w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0", stat.bg)}>
-                                                    <stat.icon className={clsx("w-5 h-5 md:w-6 md:h-6", stat.color)} />
+                                            <div key={i} className={clsx("bg-slate-50/50 p-4 md:p-6 rounded-2xl md:rounded-[32px] flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 border border-slate-100", i === 2 ? "col-span-2 lg:col-span-1" : "")}>
+                                                <div className={clsx("w-8 h-8 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0", stat.bg)}>
+                                                    <stat.icon className={clsx("w-4 h-4 md:w-6 md:h-6", stat.color)} />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <p className="text-[9px] md:text-[10px] font-black text-slate-400 tracking-widest uppercase">{stat.label}</p>
-                                                    <h4 className="text-lg md:text-2xl font-black text-slate-900 tracking-tighter">{stat.value}</h4>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm md:text-xs font-black text-slate-400 tracking-tight md:tracking-widest uppercase truncate">{stat.label}</p>
+                                                    <h4 className="text-xl md:text-2xl font-black text-slate-900 tracking-tighter">{stat.value}</h4>
                                                 </div>
                                             </div>
                                         ))}
@@ -584,17 +584,17 @@ const RecruiterCompetitions = () => {
 
                                     <div className="space-y-4 md:space-y-6">
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1 md:px-2">
-                                            <h4 className="text-[10px] md:text-[11px] font-black text-slate-900 tracking-widest uppercase italic bg-slate-50 px-3 md:px-4 py-1.5 md:py-2 rounded-full inline-block text-center md:text-left self-start">Registered Talent Registry</h4>
+                                            <h4 className="text-xs md:text-sm font-black text-slate-900 tracking-widest uppercase italic bg-slate-50 px-3 md:px-4 py-1.5 md:py-2 rounded-full inline-block text-center md:text-left self-start">Registered Talent Registry</h4>
                                             <div className="flex flex-wrap items-center gap-2 md:gap-3">
                                                 <button 
                                                     disabled={downloadingCsv}
                                                     onClick={() => handleDownloadParticipants(selectedStats._id, selectedStats.title)}
-                                                    className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-sm md:shadow-lg shadow-indigo-100 disabled:opacity-50"
+                                                    className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg md:rounded-xl text-sm md:text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-sm md:shadow-lg shadow-indigo-100 disabled:opacity-50"
                                                 >
                                                     {downloadingCsv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
                                                     Export CSV
                                                 </button>
-                                                <span className="text-[9px] md:text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 md:px-3 md:py-1 rounded-md md:rounded-full uppercase tracking-tighter shadow-sm">{selectedStats?.participants?.length || 0} Reg</span>
+                                                <span className="text-sm md:text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 md:px-3 md:py-1 rounded-md md:rounded-full uppercase tracking-tighter shadow-sm">{selectedStats?.participants?.length || 0} Reg</span>
                                             </div>
                                         </div>
                                         {selectedStats?.participants?.length > 0 ? (
@@ -607,12 +607,12 @@ const RecruiterCompetitions = () => {
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <h5 className="text-xs md:text-sm font-black text-slate-900 tracking-tight leading-none mb-1 truncate">{user.name}</h5>
-                                                                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wide uppercase truncate">{user.email}</p>
+                                                                <p className="text-sm md:text-xs font-bold text-slate-400 tracking-wide uppercase truncate">{user.email}</p>
                                                             </div>
                                                         </div>
                                                         <button 
                                                             onClick={() => setViewingParticipant(user)}
-                                                            className="flex items-center justify-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 text-indigo-600 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-indigo-50 bg-slate-50 md:bg-transparent rounded-lg md:rounded-xl transition-all shrink-0"
+                                                            className="flex items-center justify-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 text-indigo-600 font-black text-sm md:text-xs uppercase tracking-widest hover:bg-indigo-50 bg-slate-50 md:bg-transparent rounded-lg md:rounded-xl transition-all shrink-0"
                                                         >
                                                             <span className="hidden sm:inline">Inspect</span>
                                                             <ExternalLink className="w-3 h-3 md:w-4 md:h-4" />
@@ -625,7 +625,7 @@ const RecruiterCompetitions = () => {
                                                 <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
                                                     <Users className="w-8 h-8 text-slate-300" />
                                                 </div>
-                                                <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase italic">No talent registered yet</p>
+                                                <p className="text-xs font-black text-slate-400 tracking-widest uppercase italic">No talent registered yet</p>
                                             </div>
                                         )}
                                     </div>
@@ -641,13 +641,13 @@ const RecruiterCompetitions = () => {
             {viewingParticipant && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="p-4 md:p-8 border-b border-slate-50 flex items-center justify-between gap-3">
+                        <div className="p-5 md:p-8 border-b border-slate-50 flex items-center justify-between gap-3">
                             <h4 className="text-lg md:text-xl font-black text-slate-900 uppercase tracking-tighter italic truncate">Talent Profile</h4>
                             <button onClick={() => setViewingParticipant(null)} className="p-2 md:p-3 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl shrink-0">
                                 <XCircle className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar space-y-6 md:space-y-8">
+                        <div className="flex-1 overflow-y-auto p-5 md:p-8 custom-scrollbar space-y-6 md:space-y-8 pb-24 md:pb-12">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6 bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-slate-100 relative">
                                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-sm flex items-center justify-center font-black text-slate-300 text-2xl md:text-3xl shrink-0">
                                     {viewingParticipant.avatar ? <img src={viewingParticipant.avatar} className="w-full h-full object-cover" /> : viewingParticipant.name?.charAt(0)}
@@ -655,18 +655,18 @@ const RecruiterCompetitions = () => {
                                 <div className="space-y-1.5 md:space-y-2 flex-1 min-w-0">
                                     <h5 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">{viewingParticipant.name}</h5>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <p className="text-[11px] md:text-sm font-bold text-slate-500 truncate">{viewingParticipant.email}</p>
-                                        <p className="text-[9px] md:text-[11px] font-black text-indigo-600 bg-white px-2 py-0.5 md:px-3 md:py-1 rounded-md md:rounded-full shadow-sm">
+                                        <p className="text-sm md:text-sm font-bold text-slate-500 truncate">{viewingParticipant.email}</p>
+                                        <p className="text-sm md:text-sm font-black text-indigo-600 bg-white px-2 py-0.5 md:px-3 md:py-1 rounded-md md:rounded-full shadow-sm">
                                             {viewingParticipant.studentProfile?.phoneNumber || 'No Phone'}
                                         </p>
                                     </div>
                                 </div>
                                 {viewingParticipant.studentProfile?.resumeUrl ? (
-                                    <a target="_blank" rel="noreferrer" href={viewingParticipant.studentProfile.resumeUrl} className="mt-2 sm:mt-0 sm:absolute sm:top-6 sm:right-6 flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-md w-full sm:w-auto justify-center">
+                                    <a target="_blank" rel="noreferrer" href={viewingParticipant.studentProfile.resumeUrl} className="mt-2 sm:mt-0 sm:absolute sm:top-6 sm:right-6 flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg md:rounded-xl text-sm md:text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-md w-full sm:w-auto justify-center">
                                         Resume <ExternalLink className="w-3 h-3" />
                                     </a>
                                 ) : (
-                                    <span className="mt-2 sm:mt-0 sm:absolute sm:top-6 sm:right-6 flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2 bg-slate-200 text-slate-400 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest w-full sm:w-auto justify-center cursor-not-allowed">
+                                    <span className="mt-2 sm:mt-0 sm:absolute sm:top-6 sm:right-6 flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2 bg-slate-200 text-slate-400 rounded-lg md:rounded-xl text-sm md:text-xs font-black uppercase tracking-widest w-full sm:w-auto justify-center cursor-not-allowed">
                                         No Resume
                                     </span>
                                 )}
@@ -676,10 +676,10 @@ const RecruiterCompetitions = () => {
                                 <>
                                     {viewingParticipant.studentProfile.skills?.length > 0 && (
                                         <div className="space-y-3">
-                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Identified Skills</h6>
+                                            <h6 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Identified Skills</h6>
                                             <div className="flex flex-wrap gap-2">
                                                 {viewingParticipant.studentProfile.skills.map((skill, i) => (
-                                                    <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-tight shadow-sm border border-indigo-100">
+                                                    <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-tight shadow-sm border border-indigo-100">
                                                         {skill}
                                                     </span>
                                                 ))}
@@ -690,12 +690,12 @@ const RecruiterCompetitions = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {viewingParticipant.studentProfile.education?.length > 0 && (
                                             <div className="space-y-4">
-                                                <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Academic Background</h6>
+                                                <h6 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Academic Background</h6>
                                                 {viewingParticipant.studentProfile.education.map((edu, i) => (
                                                     <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-lg transition-all">
-                                                        <p className="text-[11px] font-black text-slate-900 leading-tight mb-1">{edu.institution}</p>
-                                                        <p className="text-[10px] font-bold text-indigo-600 italic">{edu.degree}</p>
-                                                        <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{edu.fieldOfStudy}</p>
+                                                        <p className="text-sm font-black text-slate-900 leading-tight mb-1">{edu.institution}</p>
+                                                        <p className="text-xs font-bold text-indigo-600 italic">{edu.degree}</p>
+                                                        <p className="text-sm text-slate-400 font-bold mt-1 uppercase tracking-widest">{edu.fieldOfStudy}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -703,11 +703,11 @@ const RecruiterCompetitions = () => {
 
                                         {viewingParticipant.studentProfile.experience?.length > 0 && (
                                             <div className="space-y-4">
-                                                <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Carrier Path</h6>
+                                                <h6 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Carrier Path</h6>
                                                 {viewingParticipant.studentProfile.experience.map((exp, i) => (
                                                     <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-lg transition-all">
-                                                        <p className="text-[11px] font-black text-slate-900 leading-tight mb-1">{exp.company}</p>
-                                                        <p className="text-[10px] font-bold text-violet-600 italic">{exp.position}</p>
+                                                        <p className="text-sm font-black text-slate-900 leading-tight mb-1">{exp.company}</p>
+                                                        <p className="text-xs font-bold text-violet-600 italic">{exp.position}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -716,7 +716,7 @@ const RecruiterCompetitions = () => {
                                     
                                     {viewingParticipant.studentProfile.summary && (
                                         <div className="space-y-2">
-                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Professional Abstract</h6>
+                                            <h6 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Professional Abstract</h6>
                                             <p className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-xs font-semibold text-slate-600 leading-relaxed italic">
                                                 "{viewingParticipant.studentProfile.summary}"
                                             </p>
@@ -725,7 +725,7 @@ const RecruiterCompetitions = () => {
                                 </>
                             ) : (
                                 <div className="p-12 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Full profile haven't been completed by this user yet</p>
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">Full profile haven't been completed by this user yet</p>
                                 </div>
                             )}
                         </div>

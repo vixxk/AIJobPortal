@@ -2,6 +2,22 @@ const Competition = require('./competition.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const { uploadFile } = require('../../utils/fileUpload');
+const { getSignedUrl } = require('../../config/aws');
+
+// Helper to resolve resumeUrl for populated participants
+const resolveParticipantResumes = async (participants) => {
+  if (!participants || !Array.isArray(participants)) return;
+  for (const user of participants) {
+    const profile = user.studentProfile;
+    if (!profile || !profile.resumeUrl) continue;
+    if (!profile.resumeUrl.startsWith('http')) {
+      profile.resumeUrl = await getSignedUrl(profile.resumeUrl);
+    } else if (profile.resumeUrl.includes('s3')) {
+      const key = profile.resumeUrl.split('.amazonaws.com/')[1]?.split('?')[0];
+      if (key) profile.resumeUrl = await getSignedUrl(key);
+    }
+  }
+};
 exports.createCompetition = catchAsync(async (req, res, next) => {
   const data = { ...req.body };
   if (req.file) {
@@ -93,6 +109,9 @@ exports.getCompetition = catchAsync(async (req, res, next) => {
           return next(new AppError('This competition is pending approval.', 403));
       }
   }
+
+  // Resolve resume signed URLs for all participants
+  await resolveParticipantResumes(competition.participants);
 
   res.status(200).json({
     status: 'success',
