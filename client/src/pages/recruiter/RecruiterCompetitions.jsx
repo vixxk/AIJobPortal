@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
 import { Globe, Trash2, Calendar, Users, Plus, XCircle, MapPin, Award, Layers, Building2, BarChart3, ExternalLink, Loader2, Pencil, Download, ChevronRight } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 
@@ -355,8 +356,8 @@ const RecruiterCompetitions = () => {
             </div>
 
             {/* Creation Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
+            {showModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-white rounded-t-[40px] md:rounded-[40px] w-full max-w-5xl shadow-2xl relative animate-in slide-in-from-bottom-5 duration-500 overflow-hidden border border-white/20 flex flex-col h-[92vh] md:h-[90vh]">
                         <div className="z-20 bg-white border-b border-slate-100 flex items-center justify-between px-6 lg:px-12 py-5 lg:py-8 shrink-0">
                             <div className="flex items-center gap-3 lg:gap-5">
@@ -532,12 +533,13 @@ const RecruiterCompetitions = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Management/Analytics Modal */}
-            {showAnalytics && (
-                <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4">
+            {showAnalytics && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4">
                     <div className="bg-white rounded-[40px] w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="p-8 lg:p-12 border-b border-slate-50 flex items-center justify-between">
                             <div className="flex items-center gap-6">
@@ -631,12 +633,13 @@ const RecruiterCompetitions = () => {
                             )}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Participant Profile Modal */}
-            {viewingParticipant && (
-                <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+            {viewingParticipant && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col max-h-[85vh]">
                         <div className="p-8 border-b border-slate-50 flex items-center justify-between">
                             <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Talent Intelligence Profile</h4>
@@ -720,7 +723,8 @@ const RecruiterCompetitions = () => {
                             )}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
         </div>
