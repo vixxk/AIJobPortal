@@ -42,7 +42,8 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
     const [repeatCount, setRepeatCount] = useState(0);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [prepSeconds, setPrepSeconds] = useState(PREP_SECONDS);
-    const [isBlurring, setIsBlurring] = useState(false);
+    const [isBlurring, setIsBlurring] = useState(true);
+    const [ttsReady, setTtsReady] = useState(false);
     const audioRef = useRef(null);
     const prepIntervalRef = useRef(null);
     const hasStartedRef = useRef(false);
@@ -88,10 +89,15 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
             const url = await speakText(text, v);
             if (signal?.aborted) { URL.revokeObjectURL(url); return; }
             const a = new Audio(url); audioRef.current = a;
-            return new Promise(res => {
+            return new Promise((res, rej) => {
                 const done = () => { URL.revokeObjectURL(url); res(); };
-                a.onended = done; a.onerror = done;
-                const p = a.play(); if (p) p.catch(done);
+                a.onended = done; a.onerror = () => { URL.revokeObjectURL(url); rej(new Error('play error')); };
+                a.onplay = () => {
+                    // Audio actually started — reveal the question NOW
+                    setTtsReady(true);
+                    setIsBlurring(false);
+                };
+                const p = a.play(); if (p) p.catch(() => { URL.revokeObjectURL(url); rej(new Error('play blocked')); });
                 signal?.addEventListener('abort', () => { a.pause(); done(); });
             });
         };
@@ -100,6 +106,9 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
             try { if (!signal?.aborted) await tryPlay('en-GB-LibbyNeural'); }
             catch {
                 if (!signal?.aborted) {
+                    // Fallback: reveal question immediately for browser synth
+                    setTtsReady(true);
+                    setIsBlurring(false);
                     await new Promise(res => {
                         if ('speechSynthesis' in window) {
                             window.speechSynthesis.cancel();
@@ -125,21 +134,27 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
         setRepeatCount(0);
         setPrepSeconds(PREP_SECONDS);
         setIsBlurring(true);
+        setTtsReady(false);
 
-        const blurTimer = setTimeout(() => {
-            if (isMounted) setIsBlurring(false);
-        }, 2000);
-
+        // Start TTS immediately — question stays hidden until audio.onplay fires
         const speechTimeout = setTimeout(() => {
             if (isMounted && !ctrl.signal.aborted) {
                 speak(questionText, ctrl.signal);
             }
-        }, 400);
+        }, 100);
+
+        // Safety fallback: if TTS takes too long (>6s), reveal anyway
+        const safetyTimer = setTimeout(() => {
+            if (isMounted && !ctrl.signal.aborted) {
+                setTtsReady(true);
+                setIsBlurring(false);
+            }
+        }, 6000);
 
         return () => {
             isMounted = false;
-            clearTimeout(blurTimer);
             clearTimeout(speechTimeout);
+            clearTimeout(safetyTimer);
             ctrl.abort();
             speakControllerRef.current = null;
             stopAudio();
@@ -168,7 +183,7 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
                     </div>
                 </div>
             )}
-            <div className={`flex flex-col items-center justify-center text-center w-full max-w-lg lg:max-w-4xl px-4 transition-all duration-1000 ${isBlurring ? 'blur-3xl grayscale opacity-0 scale-110' : 'blur-0 grayscale-0 opacity-100 scale-100'}`}>
+            <div className={`flex flex-col items-center justify-center text-center w-full max-w-lg lg:max-w-4xl px-4 transition-all duration-700 ${isBlurring ? 'blur-3xl grayscale opacity-0 scale-110' : 'blur-0 grayscale-0 opacity-100 scale-100'}`}>
                 { }
                 <div className="relative flex items-center justify-center w-16 h-16 sm:w-32 sm:h-32 lg:w-40 lg:h-40 mb-1 lg:mb-6 shrink-0">
                     {isSpeaking && <PulseRings />}

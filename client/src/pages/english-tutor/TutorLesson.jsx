@@ -1,17 +1,20 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LessonFlow from '../../components/english-tutor/LessonFlow';
 import { useTutor } from './TutorLayout';
 
 const TutorLesson = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { tutorData, fetchDashboard } = useTutor();
 
     if (!tutorData) return null;
 
+    const requestedLevel = parseInt(searchParams.get('level')) || tutorData.currentLevel;
+
     return (
         <LessonFlow
-            level={tutorData.currentLevel}
+            level={requestedLevel}
             onComplete={() => {
                 fetchDashboard();
                 navigate('/app/english-tutor');

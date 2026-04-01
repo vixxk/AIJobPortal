@@ -74,13 +74,15 @@ ${JSON.stringify(metrics)}
 Provide:
 1 Answer quality score (0-100)
 2 Communication score (0-100)
-3 Strengths
-4 Weaknesses
-5 Suggestions
+3 Technical pointers: 2-4 short bullet points about technical accuracy (e.g. "Correctly explained closure scope" or "Confused TCP with UDP")
+4 Strengths
+5 Weaknesses
+6 Suggestions
 Return JSON format:
 {
 "answer_score": number,
 "communication_score": number,
+"technical_pointers": ["short pointer 1", "short pointer 2"],
 "strengths": ["..."],
 "weaknesses": ["..."],
 "suggestions": ["..."]

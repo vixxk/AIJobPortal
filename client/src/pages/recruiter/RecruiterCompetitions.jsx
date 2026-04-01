@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
-import { Globe, Trash2, Calendar, Users, Plus, XCircle, MapPin, Award, Layers, Building2, BarChart3, ExternalLink, Loader2, Pencil } from 'lucide-react';
+import { Globe, Trash2, Calendar, Users, Plus, XCircle, MapPin, Award, Layers, Building2, BarChart3, ExternalLink, Loader2, Pencil, Download, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 
@@ -48,6 +48,10 @@ const RecruiterCompetitions = () => {
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [selectedStats, setSelectedStats] = useState(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+    // New states for participant details
+    const [viewingParticipant, setViewingParticipant] = useState(null);
+    const [downloadingCsv, setDownloadingCsv] = useState(false);
 
     const fetchMyCompetitions = useCallback(async () => {
         setLoading(true);
@@ -152,6 +156,26 @@ const RecruiterCompetitions = () => {
             rounds: comp.rounds || [{ title: '', description: '', date: '' }]
         });
         setShowModal(true);
+    };
+
+    const handleDownloadParticipants = async (id, title) => {
+        setDownloadingCsv(true);
+        try {
+            const response = await axios.get(`/competitions/${id}/download-participants`, {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${title.replace(/\s+/g, '_')}_Participants.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Failed to download participant data.');
+        } finally {
+            setDownloadingCsv(false);
+        }
     };
 
     const handleShowAnalytics = async (id) => {
@@ -332,25 +356,25 @@ const RecruiterCompetitions = () => {
 
             {/* Creation Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] w-full max-w-5xl shadow-2xl relative animate-in slide-in-from-bottom-5 duration-500 overflow-hidden border border-white/20 flex flex-col h-[85vh] lg:h-[90vh] mx-4">
-                        <div className="z-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 lg:px-12 py-6 lg:py-8 shrink-0">
-                            <div className="flex items-center gap-5">
-                                <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 group">
-                                    <Globe className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
+                <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-t-[40px] md:rounded-[40px] w-full max-w-5xl shadow-2xl relative animate-in slide-in-from-bottom-5 duration-500 overflow-hidden border border-white/20 flex flex-col h-[92vh] md:h-[90vh]">
+                        <div className="z-20 bg-white border-b border-slate-100 flex items-center justify-between px-6 lg:px-12 py-5 lg:py-8 shrink-0">
+                            <div className="flex items-center gap-3 lg:gap-5">
+                                <div className="w-10 h-10 lg:w-14 lg:h-14 bg-indigo-600 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100 group">
+                                    <Globe className="w-5 h-5 lg:w-7 lg:h-7 text-white group-hover:rotate-12 transition-transform" />
                                 </div>
                                 <div>
-                                    <h3 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-                                        {editingId ? 'Edit Event' : 'Launch New Event'}
+                                    <h3 className="text-lg lg:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
+                                        {editingId ? 'Edit Event' : 'Launch Event'}
                                     </h3>
-                                    <p className="text-slate-400 text-[10px] lg:text-[11px] font-bold tracking-widest uppercase mt-1.5 flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                                        {editingId ? 'Refine competition parameters' : 'Setup competition details & timeline'}
+                                    <p className="text-slate-400 text-[8px] lg:text-[11px] font-bold tracking-widest uppercase mt-1 lg:mt-1.5 flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                        {editingId ? 'Refine details' : 'Configure timeline'}
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={() => { setShowModal(false); setEditingId(null); }} className="p-3 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-2xl">
-                                <XCircle className="w-7 h-7 lg:w-8 lg:h-8" />
+                            <button onClick={() => { setShowModal(false); setEditingId(null); }} className="p-2 lg:p-3 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl lg:rounded-2xl">
+                                <XCircle className="w-6 h-6 lg:w-8 lg:h-8" />
                             </button>
                         </div>
 
@@ -358,75 +382,85 @@ const RecruiterCompetitions = () => {
                             <div className="p-8 lg:p-12">
                                 <form onSubmit={handleSubmit} className="space-y-12">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                                        <div className="space-y-8">
+                                        <div className="space-y-4 lg:space-y-8">
                                             <div className="space-y-3">
-                                                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Competition Title</label>
-                                                <input required className="w-full h-14 px-6 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 ring-indigo-500/5 focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-slate-800"
-                                                    placeholder="e.g. Frontend Masterclass 2026" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Event Domain</label>
+                                                <input required className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
+                                                    placeholder="e.g. AI Hackathon 2026" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                                             </div>
 
                                             <div className="space-y-3">
-                                                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Host Organization</label>
+                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Organizer Identity</label>
                                                 <div className="relative">
-                                                    <Building2 className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                                    <input required className="w-full h-14 pl-14 pr-6 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 ring-indigo-500/5 focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-slate-800"
-                                                        placeholder="e.g. Acme Corp Careers" value={form.organizer} onChange={e => setForm({ ...form, organizer: e.target.value })} />
+                                                    <Building2 className="absolute left-5 lg:left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <input required className="w-full h-12 lg:h-14 pl-12 lg:pl-14 pr-5 lg:pr-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
+                                                        placeholder="e.g. Acme Corp" value={form.organizer} onChange={e => setForm({ ...form, organizer: e.target.value })} />
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                                                 <div className="space-y-3">
-                                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Category</label>
-                                                    <select className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-bold text-slate-800 appearance-none cursor-pointer"
-                                                        value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                                                        <option>Hackathon</option>
-                                                        <option>Quiz</option>
-                                                        <option>Coding Challenge</option>
-                                                        <option>Case Study</option>
-                                                    </select>
+                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Classification</label>
+                                                    <div className="relative">
+                                                        <select className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 appearance-none cursor-pointer text-sm"
+                                                            value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                                                            <option>Hackathon</option>
+                                                            <option>Quiz</option>
+                                                            <option>Challenge</option>
+                                                            <option>Case Study</option>
+                                                        </select>
+                                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                            <ChevronRight className="w-4 h-4 rotate-90" />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-3">
-                                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Mode</label>
-                                                    <select className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-bold text-slate-800 appearance-none cursor-pointer"
-                                                        value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value })}>
-                                                        <option>Online</option>
-                                                        <option>Offline</option>
-                                                    </select>
+                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Protocol</label>
+                                                    <div className="relative">
+                                                        <select className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 appearance-none cursor-pointer text-sm"
+                                                            value={form.mode} onChange={e => setForm({ ...form, mode: e.target.value })}>
+                                                            <option>Online</option>
+                                                            <option>Offline</option>
+                                                        </select>
+                                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                                            <ChevronRight className="w-4 h-4 rotate-90" />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="space-y-8">
-                                            <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-6 lg:space-y-8">
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                                                 <div className="space-y-3">
-                                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Start Date</label>
-                                                    <input required type="date" className="w-full h-14 px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-2xl outline-none transition-all font-bold text-slate-800"
+                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Start Date</label>
+                                                    <input required type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
                                                         value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
                                                 </div>
                                                 <div className="space-y-3">
-                                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">End Date</label>
-                                                    <input required type="date" className="w-full h-14 px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-2xl outline-none transition-all font-bold text-slate-800"
+                                                    <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">End Date</label>
+                                                    <input required type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
                                                         value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
                                                 </div>
                                             </div>
 
                                             <div className="space-y-3">
-                                                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Application Deadline</label>
-                                                <input required type="date" className="w-full h-14 px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-2xl outline-none transition-all font-bold text-slate-800"
+                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Application Deadline</label>
+                                                <input required type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-200 focus:bg-white rounded-xl lg:rounded-2xl outline-none transition-all font-bold text-slate-800 text-sm"
                                                     value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
                                             </div>
 
-                                            <div className="space-y-4">
-                                                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Event Poster</label>
-                                                <div className="flex items-center gap-6">
-                                                    <div className="w-24 h-24 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shrink-0 group">
+                                            <div className="space-y-3 lg:space-y-4">
+                                                <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Event Poster</label>
+                                                <div className="flex items-center gap-4 lg:gap-6">
+                                                    <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-2xl lg:rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shrink-0 group">
                                                         {form.preview ? (
                                                             <img src={form.preview} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                                                         ) : (
-                                                            <Layers className="w-8 h-8 text-slate-300" />
+                                                            <Layers className="w-6 h-6 lg:w-8 lg:h-8 text-slate-300" />
                                                         )}
                                                     </div>
-                                                    <label className="flex-1 h-14 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all font-black text-indigo-600 text-[11px] tracking-widest uppercase gap-2 group">
+                                                    <label className="flex-1 h-12 lg:h-14 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-xl lg:rounded-2xl flex items-center justify-center cursor-pointer hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all font-black text-indigo-600 text-[10px] lg:text-[11px] tracking-widest uppercase gap-2 group">
                                                         <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                                                         Upload Media
                                                         <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -436,46 +470,46 @@ const RecruiterCompetitions = () => {
                                         </div>
 
                                         <div className="col-span-1 md:col-span-2 space-y-3">
-                                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Brief & Guidelines</label>
-                                            <textarea required rows={4} className="w-full p-6 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 ring-indigo-500/5 focus:border-indigo-500 rounded-3xl outline-none transition-all font-bold text-slate-800 text-sm leading-relaxed"
+                                            <label className="text-[10px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest px-1">Brief & Guidelines</label>
+                                            <textarea required rows={4} className="w-full p-5 lg:p-6 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-4 ring-indigo-500/5 focus:border-indigo-500 rounded-2xl lg:rounded-3xl outline-none transition-all font-bold text-slate-800 text-xs lg:text-sm leading-relaxed"
                                                 placeholder="Provide the core objective and rules..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                                         </div>
                                     </div>
 
                                     <div className="space-y-8">
-                                        <div className="flex items-center justify-between px-2">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg">
-                                                    <Calendar className="w-6 h-6 text-white" />
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 gap-4 lg:gap-0">
+                                            <div className="flex items-center gap-3 lg:gap-4">
+                                                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-slate-900 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-lg">
+                                                    <Calendar className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                                                 </div>
-                                                <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Timeline Architecture</h4>
+                                                <h4 className="text-lg lg:text-xl font-black text-slate-900 uppercase tracking-tight">Timeline Architecture</h4>
                                             </div>
-                                            <button type="button" onClick={handleAddRound} className="flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-indigo-600 hover:text-indigo-600 transition-all">
+                                            <button type="button" onClick={handleAddRound} className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-900 rounded-xl lg:rounded-2xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest hover:border-indigo-600 hover:text-indigo-600 transition-all">
                                                 <Plus className="w-4 h-4" strokeWidth={3} /> Add Stage
                                             </button>
                                         </div>
 
-                                        <div className="space-y-6">
+                                        <div className="space-y-4 lg:space-y-6">
                                             {form.rounds.map((round, idx) => (
-                                                <div key={idx} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6 relative group">
-                                                    <div className="flex flex-col md:flex-row gap-6">
-                                                        <div className="w-full md:w-16 h-16 bg-slate-50 flex items-center justify-center rounded-2xl text-xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
+                                                <div key={idx} className="bg-white p-6 lg:p-8 rounded-[28px] lg:rounded-[32px] border border-slate-100 shadow-sm space-y-6 relative group">
+                                                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                                                        <div className="w-12 h-12 lg:w-16 lg:h-16 bg-slate-50 flex items-center justify-center rounded-xl lg:rounded-2xl text-lg lg:text-xl font-black text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
                                                             {idx + 1}
                                                         </div>
-                                                        <div className="flex-1 space-y-6">
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                                <div className="space-y-3">
-                                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Stage Title</label>
-                                                                    <input required className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-slate-800 text-sm focus:bg-white transition-all"
+                                                        <div className="flex-1 space-y-4 lg:space-y-6">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                                                                <div className="space-y-2 lg:space-y-3">
+                                                                    <label className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Stage Title</label>
+                                                                    <input required className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-slate-800 text-xs lg:text-sm focus:bg-white transition-all placeholder:text-slate-300"
                                                                         placeholder="e.g. Qualification Round" value={round.title} onChange={e => handleRoundChange(idx, 'title', e.target.value)} />
                                                                 </div>
-                                                                <div className="space-y-3">
-                                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Date</label>
-                                                                    <input type="date" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-slate-800 text-sm focus:bg-white transition-all"
+                                                                <div className="space-y-2 lg:space-y-3">
+                                                                    <label className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Date</label>
+                                                                    <input type="date" className="w-full h-12 lg:h-14 px-5 lg:px-6 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-slate-800 text-xs lg:text-sm focus:bg-white transition-all"
                                                                         value={round.date} onChange={e => handleRoundChange(idx, 'date', e.target.value)} />
                                                                 </div>
                                                             </div>
-                                                            <textarea rows={2} className="w-full p-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-slate-800 text-sm focus:bg-white transition-all"
+                                                            <textarea rows={2} className="w-full p-5 lg:p-6 bg-slate-50 border border-slate-100 rounded-xl lg:rounded-2xl outline-none font-bold text-slate-800 text-xs lg:text-sm focus:bg-white transition-all placeholder:text-slate-300"
                                                                 placeholder="Stage requirements and selection criteria..." value={round.description} onChange={e => handleRoundChange(idx, 'description', e.target.value)} />
                                                         </div>
                                                     </div>
@@ -547,28 +581,48 @@ const RecruiterCompetitions = () => {
                                     </div>
 
                                     <div className="space-y-6">
-                                        <h4 className="text-[11px] font-black text-slate-900 tracking-widest uppercase italic bg-slate-50 px-4 py-2 rounded-full inline-block">Registered Talent Registry</h4>
+                                        <div className="flex items-center justify-between px-2">
+                                            <h4 className="text-[11px] font-black text-slate-900 tracking-widest uppercase italic bg-slate-50 px-4 py-2 rounded-full inline-block">Registered Talent Registry</h4>
+                                            <div className="flex items-center gap-3">
+                                                <button 
+                                                    disabled={downloadingCsv}
+                                                    onClick={() => handleDownloadParticipants(selectedStats._id, selectedStats.title)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
+                                                >
+                                                    {downloadingCsv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                                                    Export CSV
+                                                </button>
+                                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">{selectedStats?.participants?.length || 0} Registered</span>
+                                            </div>
+                                        </div>
                                         {selectedStats?.participants?.length > 0 ? (
                                             <div className="grid grid-cols-1 gap-4">
                                                 {selectedStats.participants.map((user, idx) => (
-                                                    <div key={idx} className="bg-white border border-slate-100 p-5 rounded-[24px] flex items-center justify-between group">
+                                                    <div key={idx} className="bg-white border border-slate-100 p-5 rounded-[24px] flex items-center justify-between group hover:shadow-xl hover:shadow-slate-100 transition-all">
                                                         <div className="flex items-center gap-4">
-                                                            <div className="w-12 h-12 bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center">
-                                                                {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <Users className="w-6 h-6 text-slate-300" />}
+                                                            <div className="w-12 h-12 bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center font-black text-slate-300">
+                                                                {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.charAt(0)}
                                                             </div>
                                                             <div>
                                                                 <h5 className="text-sm font-black text-slate-900 tracking-tight leading-none mb-1">{user.name}</h5>
                                                                 <p className="text-[10px] font-bold text-slate-400 tracking-wide uppercase">{user.email}</p>
                                                             </div>
                                                         </div>
-                                                        <button className="p-3 text-slate-300 group-hover:text-indigo-600 transition-colors">
-                                                            <ExternalLink className="w-5 h-5" />
+                                                        <button 
+                                                            onClick={() => setViewingParticipant(user)}
+                                                            className="flex items-center gap-2 px-4 py-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 rounded-xl transition-all"
+                                                        >
+                                                            Inspect
+                                                            <ExternalLink className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="bg-slate-50/50 rounded-[32px] p-12 text-center">
+                                            <div className="bg-slate-50/50 rounded-[32px] p-12 text-center border-2 border-dashed border-slate-100">
+                                                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+                                                    <Users className="w-8 h-8 text-slate-300" />
+                                                </div>
                                                 <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase italic">No talent registered yet</p>
                                             </div>
                                         )}
@@ -579,6 +633,96 @@ const RecruiterCompetitions = () => {
                     </div>
                 </div>
             )}
+
+            {/* Participant Profile Modal */}
+            {viewingParticipant && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col max-h-[85vh]">
+                        <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Talent Intelligence Profile</h4>
+                            <button onClick={() => setViewingParticipant(null)} className="p-3 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl">
+                                <XCircle className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+                            <div className="flex items-start gap-6 bg-slate-50 p-6 rounded-[32px] border border-slate-100">
+                                <div className="w-20 h-20 bg-white rounded-3xl overflow-hidden shadow-sm flex items-center justify-center font-black text-slate-300 text-3xl">
+                                    {viewingParticipant.avatar ? <img src={viewingParticipant.avatar} className="w-full h-full object-cover" /> : viewingParticipant.name?.charAt(0)}
+                                </div>
+                                <div className="space-y-1">
+                                    <h5 className="text-2xl font-black text-slate-900 tracking-tight">{viewingParticipant.name}</h5>
+                                    <p className="text-sm font-bold text-slate-500 uppercase flex items-center gap-2">
+                                        {viewingParticipant.email}
+                                    </p>
+                                    {viewingParticipant.studentProfile?.phoneNumber && (
+                                        <p className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1 rounded-full shadow-sm w-fit mt-2">
+                                            {viewingParticipant.studentProfile.phoneNumber}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {viewingParticipant.studentProfile ? (
+                                <>
+                                    {viewingParticipant.studentProfile.skills?.length > 0 && (
+                                        <div className="space-y-3">
+                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Identified Skills</h6>
+                                            <div className="flex flex-wrap gap-2">
+                                                {viewingParticipant.studentProfile.skills.map((skill, i) => (
+                                                    <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-tight shadow-sm border border-indigo-100">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {viewingParticipant.studentProfile.education?.length > 0 && (
+                                            <div className="space-y-4">
+                                                <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Academic Background</h6>
+                                                {viewingParticipant.studentProfile.education.map((edu, i) => (
+                                                    <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-lg transition-all">
+                                                        <p className="text-[11px] font-black text-slate-900 leading-tight mb-1">{edu.institution}</p>
+                                                        <p className="text-[10px] font-bold text-indigo-600 italic">{edu.degree}</p>
+                                                        <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{edu.fieldOfStudy}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {viewingParticipant.studentProfile.experience?.length > 0 && (
+                                            <div className="space-y-4">
+                                                <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Carrier Path</h6>
+                                                {viewingParticipant.studentProfile.experience.map((exp, i) => (
+                                                    <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-lg transition-all">
+                                                        <p className="text-[11px] font-black text-slate-900 leading-tight mb-1">{exp.company}</p>
+                                                        <p className="text-[10px] font-bold text-violet-600 italic">{exp.position}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {viewingParticipant.studentProfile.summary && (
+                                        <div className="space-y-2">
+                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Professional Abstract</h6>
+                                            <p className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-xs font-semibold text-slate-600 leading-relaxed italic">
+                                                "{viewingParticipant.studentProfile.summary}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="p-12 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Full profile haven't been completed by this user yet</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

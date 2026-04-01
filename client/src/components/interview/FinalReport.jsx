@@ -129,6 +129,64 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
                     </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    {report.spoken_english && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest">🗣️ Spoken English Evaluation</h2>
+                                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold">{report.spoken_english.score}/100</span>
+                            </div>
+                            <p className="text-gray-700 text-xs sm:text-sm leading-relaxed">{report.spoken_english.feedback}</p>
+                            <div className="space-y-3">
+                                {report.spoken_english.strengths?.length > 0 && (
+                                    <div>
+                                        <h3 className="text-[10px] font-black uppercase text-emerald-600 mb-1">Strengths</h3>
+                                        <ul className="list-disc list-inside text-xs text-gray-600 space-y-0.5">
+                                            {report.spoken_english.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                                {report.spoken_english.weaknesses?.length > 0 && (
+                                    <div>
+                                        <h3 className="text-[10px] font-black uppercase text-rose-600 mb-1">Areas to Improve</h3>
+                                        <ul className="list-disc list-inside text-xs text-gray-600 space-y-0.5">
+                                            {report.spoken_english.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {report.answer_evaluation && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest">🧠 Answer Content Evaluation</h2>
+                                <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">{report.answer_evaluation.score}/100</span>
+                            </div>
+                            <p className="text-gray-700 text-xs sm:text-sm leading-relaxed">{report.answer_evaluation.feedback}</p>
+                            <div className="space-y-3">
+                                {report.answer_evaluation.strengths?.length > 0 && (
+                                    <div>
+                                        <h3 className="text-[10px] font-black uppercase text-emerald-600 mb-1">Strengths</h3>
+                                        <ul className="list-disc list-inside text-xs text-gray-600 space-y-0.5">
+                                            {report.answer_evaluation.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                                {report.answer_evaluation.weaknesses?.length > 0 && (
+                                    <div>
+                                        <h3 className="text-[10px] font-black uppercase text-rose-600 mb-1">Areas to Improve</h3>
+                                        <ul className="list-disc list-inside text-xs text-gray-600 space-y-0.5">
+                                            {report.answer_evaluation.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {suggestions.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
                         <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 sm:mb-4">💡 Overall Suggestions</h2>
@@ -178,6 +236,23 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
                                                         <span>Delivery: <span className="text-emerald-700">{ans.evaluation.communication_score}</span>/100</span>
                                                     </div>
                                                 </div>
+
+                                                {ans.evaluation.technical_pointers && ans.evaluation.technical_pointers.length > 0 && (
+                                                    <div className="p-3 sm:p-4 bg-sky-50/40 rounded-xl border border-sky-100/50">
+                                                        <div className="flex items-center gap-1.5 mb-2 text-[9px] font-black uppercase tracking-widest text-sky-600">
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                                                            Technical Accuracy
+                                                        </div>
+                                                        <ul className="text-[11px] sm:text-xs text-sky-800 leading-relaxed space-y-1">
+                                                            {(Array.isArray(ans.evaluation.technical_pointers) ? ans.evaluation.technical_pointers : [ans.evaluation.technical_pointers]).map((pointer, i) => (
+                                                                <li key={i} className="flex items-start gap-1.5">
+                                                                    <span className="mt-[3px] w-1 h-1 rounded-full bg-sky-400 shrink-0" />
+                                                                    {pointer}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
 
                                                 {ans.evaluation.strengths && ans.evaluation.strengths.length > 0 && (
                                                     <div className="p-3 sm:p-4 bg-emerald-50/40 rounded-xl border border-emerald-100/50">

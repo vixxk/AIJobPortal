@@ -52,7 +52,7 @@ const JobCard = ({ job, onClick, onUnsave }) => {
             {/* Unsave button */}
             <button
                 onClick={handleUnsave}
-                className="absolute top-4 right-4 z-10 p-1.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-500 hover:bg-red-50 hover:border-red-100 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                className="absolute top-4 right-4 z-10 p-1.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-500 hover:bg-red-50 hover:border-red-100 hover:text-red-500 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
                 title="Remove from saved"
             >
                 <Bookmark className="w-3.5 h-3.5" strokeWidth={2.5} fill="currentColor" />

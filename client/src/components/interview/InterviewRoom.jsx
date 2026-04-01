@@ -13,6 +13,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const [lastAnalysis, setLastAnalysis] = useState(null);
     const [lastEvaluation, setLastEvaluation] = useState(null);
     const [systemError, setSystemError] = useState(null);
+    const [micBlocked, setMicBlocked] = useState(false);
     const [prepState, setPrepState] = useState({ uiPhase: 'speaking', prepSeconds: 5, isSpeaking: false });
     const isSubmittingRef = useRef(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -28,7 +29,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const currentQuestion = questions[currentIdx];
     const isLastQuestion = currentIdx === questions.length - 1;
     useEffect(() => {
-        if (!isTimerRunning || timer <= 0) return;
+        if (!isTimerRunning || timer <= 0 || micBlocked) return;
         const id = setInterval(() => {
             setTimer(prev => {
                 if (prev <= 1) {
@@ -89,7 +90,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         const updatedAnswers = [...answers, newAnswer];
         setAnswers(updatedAnswers);
 
-        await new Promise(res => setTimeout(res, 2000));
+        await new Promise(res => setTimeout(res, 800));
         if (!isLastQuestion) {
             const nextIdx = currentIdx + 1;
             setCurrentIdx(nextIdx);
@@ -296,6 +297,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                             onSubmitAnswer={handleAnswerSubmit}
                             onEndInterview={handleEndInterview}
                             layout="sidebar"
+                            onPermissionChange={setMicBlocked}
                         />
                     </div>
 
@@ -352,13 +354,6 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                             <span className="text-xs font-black text-slate-700">{Math.round((lastAnalysis.pause_ratio || 0) * 100)}%</span>
                                         </div>
                                     </div>
-                                    {lastEvaluation && (
-                                        <div className="mt-8 p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl text-center shadow-xl shadow-blue-200 relative overflow-hidden group">
-                                            <div className="absolute inset-0 bg-white/10 group-hover:bg-transparent transition-colors" />
-                                            <span className="relative z-10 text-[9px] font-black text-blue-100 uppercase tracking-[0.3em] mb-1 block">Analytical Score</span>
-                                            <span className="relative z-10 text-2xl font-black text-white">{lastEvaluation.communication_score}<span className="text-xs opacity-50 ml-1">/100</span></span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         ) : (
@@ -392,6 +387,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                             onSubmitAnswer={handleAnswerSubmit}
                             onEndInterview={handleEndInterview}
                             layout="footer"
+                            onPermissionChange={setMicBlocked}
                         />
                     </div>
                 </footer>

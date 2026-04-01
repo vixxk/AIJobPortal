@@ -1,13 +1,10 @@
 import api from '../utils/axios';
 export const startInterview = async (formData) => {
-    const response = await api.post('/interview/start', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const response = await api.post('/interview/start', formData);
     return response.data;
 };
 export const evaluateAnswer = async (formData) => {
     const response = await api.post('/interview/evaluate', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000,
     });
     return response.data;
@@ -18,7 +15,6 @@ export const generateReport = async (answers, job_role) => {
 };
 export const transcribeAudio = async (formData) => {
     const response = await api.post('/interview/transcribe', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000,
     });
     return response.data;

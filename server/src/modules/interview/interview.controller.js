@@ -1,17 +1,46 @@
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
-const fireworksService = require('../../services/fireworks.service');
-const pythonService = require('../../services/python.service');
+const aiService = require('../../services/ai.service');
 
 exports.startInterview = catchAsync(async (req, res, next) => {
     const { job_role, interview_type } = req.body;
-    const pythonResponse = await pythonService.startInterview({
-        job_role,
-        interview_type,
-        resumeBuffer: req.file ? req.file.buffer : null,
-        resumeName: req.file ? req.file.originalname : null
+
+    let resumeText = '';
+    if (req.file) {
+        try {
+            const pdfParse = require('pdf-parse');
+            const data = await pdfParse(req.file.buffer);
+            resumeText = data.text || '';
+            console.log(`[Interview] Extracted ${resumeText.length} chars from resume: ${req.file.originalname}`);
+        } catch (err) {
+            console.error('Resume PDF extraction failed:', err.message);
+        }
+    }
+
+    const result = await aiService.generateQuestionsV2(
+        job_role || 'Software Engineer',
+        interview_type || 'behavioral',
+        resumeText
+    );
+
+    if (!result.role_clear) {
+        return res.status(200).json({
+            status: 'success',
+            data: {
+                role_clear: false,
+                suggestions: result.suggestions || []
+            }
+        });
+    }
+
+    console.log(`[Interview] Started: role=${job_role}, 5 questions generated`);
+    res.status(200).json({
+        status: 'success',
+        data: {
+            role_clear: true,
+            questions: result.questions || []
+        }
     });
-    res.status(200).json(pythonResponse);
 });
 
 exports.processAnswer = catchAsync(async (req, res, next) => {
@@ -19,21 +48,38 @@ exports.processAnswer = catchAsync(async (req, res, next) => {
     if (!req.file) {
         return next(new AppError('Please upload audio file', 400));
     }
-    const result = await pythonService.processAnswer({
+
+    console.log(`[Interview] Evaluating answer for: ${question.substring(0, 60)}...`);
+
+    // Transcribe audio via Fireworks Whisper (returns segments + duration)
+    const sttResult = await aiService.transcribeAudio(req.file.buffer, req.file.originalname);
+    const transcript = sttResult.text || '';
+
+    // Build audio metrics from real Whisper segment timestamps
+    const analysis = aiService.buildMetricsFromSegments(transcript, sttResult.segments, sttResult.duration);
+    analysis.transcript = transcript;
+    analysis.confidence = sttResult.confidence;
+
+    // AI Evaluation
+    const evaluation = await aiService.evaluateAnswer(
         question,
-        job_role,
-        audioBuffer: req.file.buffer,
-        audioName: req.file.originalname
+        transcript,
+        analysis,
+        job_role
+    );
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            analysis,
+            evaluation
+        }
     });
-    res.status(200).json(result);
 });
 
 exports.generateReport = catchAsync(async (req, res, next) => {
     const { answers, job_role } = req.body;
-    const result = await pythonService.generateReport({
-        answers,
-        job_role
-    });
+    const result = await aiService.generateReport(answers, job_role);
 
     // Send notification after report generation
     try {
@@ -41,7 +87,7 @@ exports.generateReport = catchAsync(async (req, res, next) => {
         await Notification.create({
             userId: req.user.id,
             title: 'Interview Report Generated',
-            message: `Your AI interview for ${job_role} is complete. Overall Score: ${result.overall_score || 'N/A'}/100.`,
+            message: `Your AI interview for ${job_role} is complete. Overall Score: ${result.data?.overall_score || 'N/A'}/100.`,
             type: 'INTERVIEW_REPORT',
             link: '/app/interview'
         });
@@ -56,11 +102,11 @@ exports.transcribeAudio = catchAsync(async (req, res, next) => {
     if (!req.file) {
         return next(new AppError('Please upload audio file', 400));
     }
-    const result = await pythonService.analyzeAudio(req.file.buffer, req.file.originalname);
+    const analysis = await aiService.analyzeAudio(req.file.buffer, req.file.originalname);
     res.status(200).json({
         status: 'success',
         data: {
-            analysis: result
+            analysis
         }
     });
 });
@@ -70,11 +116,10 @@ exports.speakText = catchAsync(async (req, res, next) => {
     if (!text) {
         return next(new AppError('Please provide text to convert to speech', 400));
     }
-    const audioBuffer = await pythonService.speakText({ text, voice });
+    const audioBuffer = await aiService.speakText(text, voice);
     res.set({
         'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.byteLength
     });
     res.send(Buffer.from(audioBuffer));
 });
-

@@ -1,6 +1,6 @@
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
-const pythonService = require('../../services/python.service');
+const aiService = require('../../services/ai.service');
 const EnglishTutor = require('./english-tutor.model');
 
 exports.getDashboard = catchAsync(async (req, res, next) => {
@@ -10,7 +10,7 @@ exports.getDashboard = catchAsync(async (req, res, next) => {
     tutorData = await EnglishTutor.create({
       user: req.user.id,
       currentLevel: 1,
-      isInitialTestCompleted: false, // Changed to false to force placement test
+      isInitialTestCompleted: false,
       xp: 0,
       streak: 0,
       stats: {
@@ -59,7 +59,7 @@ exports.submitSpeakingTest = catchAsync(async (req, res, next) => {
       focus_areas: ["Microphone Setup", "Basic Pronunciation"]
     };
   } else {
-    const evaluation = await pythonService.evaluateSpeakingTest({ responses });
+    const evaluation = await aiService.evaluateSpeakingTest(responses);
     if (evaluation.status !== 'success') {
       return next(new AppError('AI Evaluation failed', 500));
     }
@@ -118,33 +118,51 @@ exports.getLesson = catchAsync(async (req, res, next) => {
     if (today > lastDate) {
         tutorData.dailyGoals.lessonCompleted = false;
         tutorData.dailyGoals.newWordsLearned = 0;
-
         tutorData.dailyGoals.speakingMinutes = 0;
     }
   }
 
-  const level = tutorData ? tutorData.currentLevel : 1;
-  const lessonIndex = (tutorData ? tutorData.lessonsProgress.filter(l => l.level === level).length : 0) + 1;
+  const level = req.query.level ? parseInt(req.query.level) : (tutorData ? tutorData.currentLevel : 1);
+  const lessonIndex = (tutorData && tutorData.lessonsProgress ? tutorData.lessonsProgress.filter(l => l.level === level).length : 0);
 
-  const lesson = await pythonService.generateLesson({ level, lesson_index: lessonIndex });
+  const lesson = await aiService.generateLessonContent(level, lessonIndex);
 
   res.status(200).json(lesson);
 });
 
 exports.submitLessonTask = catchAsync(async (req, res, next) => {
-  const { task_type, transcript, context_json } = req.body;
+  const { task_type, transcript: bodyTranscript, context_json } = req.body;
   const context = JSON.parse(context_json || '{}');
-  const audioBuffer = req.file ? req.file.buffer : null;
-  const audioName = req.file ? req.file.originalname : null;
+  
+  let finalTranscript = bodyTranscript || '';
+  let metrics = {};
 
-  const result = await pythonService.evaluateTutorTask({
+  // If audio file was uploaded, transcribe it (same logic as AI Interview)
+  if (req.file && req.file.buffer.length > 500) {
+    try {
+      const sttResult = await aiService.transcribeAudio(req.file.buffer, req.file.originalname);
+      const whisperText = sttResult.text || '';
+      metrics = aiService.buildMetricsFromSegments(whisperText, sttResult.segments, sttResult.duration);
+      metrics.confidence = sttResult.confidence;
+
+      // Keep whichever transcript has more words (mirrors InterviewRoom logic)
+      const whisperWords = whisperText.split(' ').filter(Boolean).length;
+      const browserWords = finalTranscript.split(' ').filter(Boolean).length;
+      if (whisperWords > browserWords) {
+        finalTranscript = whisperText;
+      }
+      metrics.transcript = finalTranscript;
+    } catch (err) {
+      console.error('Lesson task STT failed, using browser transcript:', err);
+    }
+  }
+
+  const result = await aiService.evaluateLessonTask(
     task_type,
-    transcript,
-    context,
-    audioBuffer,
-    audioName
-  });
-
+    finalTranscript,
+    metrics,
+    context
+  );
 
   if (result.status === 'success') {
     const { evaluation } = result.data;
@@ -160,7 +178,7 @@ exports.submitLessonTask = catchAsync(async (req, res, next) => {
         });
       }
 
-      const wordCount = transcript.split(/\s+/).length;
+      const wordCount = finalTranscript.split(/\s+/).length;
       const estimatedMinutes = wordCount / 130;
       tutorData.dailyGoals.speakingMinutes += parseFloat(estimatedMinutes.toFixed(2));
 
@@ -260,7 +278,6 @@ exports.resetProgression = catchAsync(async (req, res, next) => {
         return next(new AppError('No tutor data found to reset.', 404));
     }
 
-    // Resetting to absolute baseline
     tutorData.currentLevel = 1;
     tutorData.isInitialTestCompleted = false;
     tutorData.xp = 0;

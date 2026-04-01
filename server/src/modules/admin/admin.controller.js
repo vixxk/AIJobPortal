@@ -391,8 +391,14 @@ exports.getAllCompetitions = catchAsync(async (req, res, next) => {
 
 exports.getCompetitionDetails = catchAsync(async (req, res, next) => {
   const competition = await Competition.findById(req.params.id)
-    .populate('participants', 'name email avatar studentProfile')
-    .lean();
+    .populate({
+        path: 'participants',
+        select: 'name email avatar studentProfile',
+        populate: {
+            path: 'studentProfile'
+        }
+    })
+    .lean({ virtuals: true });
 
   if (!competition) return next(new AppError('Competition not found', 404));
 
@@ -466,4 +472,41 @@ exports.updateCompetition = catchAsync(async (req, res, next) => {
     status: 'success',
     data: { competition }
   });
+});
+
+exports.downloadCompetitionParticipants = catchAsync(async (req, res, next) => {
+    const competition = await Competition.findById(req.params.id)
+        .populate({
+            path: 'participants',
+            select: 'name email studentProfile',
+            populate: {
+                path: 'studentProfile'
+            }
+        })
+        .lean();
+
+    if (!competition) return next(new AppError('No competition found with that ID', 404));
+
+    if (!competition.participants || competition.participants.length === 0) {
+        return next(new AppError('No participants to download.', 400));
+    }
+
+    const header = ['Name', 'Email', 'Phone', 'Skills', 'University', 'Degree', 'Current Position'];
+    const rows = competition.participants.map(user => {
+        const profile = user.studentProfile || {};
+        return [
+            user.name || '',
+            user.email || '',
+            profile.phoneNumber || '',
+            (profile.skills || []).join('; '),
+            (profile.education && profile.education[0]?.institution) || '',
+            (profile.education && profile.education[0]?.degree) || '',
+            profile.currentPosition || ''
+        ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+    });
+
+    const csvContent = [header.join(','), ...rows].join('\n');
+    res.header('Content-Type', 'text/csv');
+    res.attachment(`${competition.title.replace(/\s+/g, '_')}_Participants.csv`);
+    res.status(200).send(csvContent);
 });

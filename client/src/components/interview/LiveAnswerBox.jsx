@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
-const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndInterview, layout = 'footer' }) => {
+const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndInterview, layout = 'footer', onPermissionChange }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [typedText, setTypedText] = useState('');
     const [interimText, setInterimText] = useState('');
@@ -17,6 +18,7 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
     const audioContextRef = useRef(null);
     const analyserRef = useRef(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [permissionError, setPermissionError] = useState(false);
     const isRecordingRef = useRef(false);
     useEffect(() => { typedTextRef.current = typedText; }, [typedText]);
     useEffect(() => { interimTextRef.current = interimText; }, [interimText]);
@@ -35,6 +37,7 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
     const startRecording = async () => {
         setTypedText('');
         setInterimText('');
+        setPermissionError(false);
         audioChunksRef.current = [];
         audioBlobRef.current = null;
         try {
@@ -78,8 +81,24 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
             setIsRecording(true);
             try { recognitionRef.current?.start(); } catch { }
         } catch (err) {
+            console.error('Mic Access Failed:', err);
             setIsRecording(false);
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message?.includes('denied')) {
+                setPermissionError(true);
+                if (onPermissionChange) onPermissionChange(true);
+            }
         }
+    };
+
+    const handleRetryPermission = () => {
+        setPermissionError(false);
+        if (onPermissionChange) onPermissionChange(false);
+        startRecording();
+    };
+
+    const handleDismissPermission = () => {
+        setPermissionError(false);
+        if (onPermissionChange) onPermissionChange(false);
     };
     const handleSubmit = () => {
         if (isSubmitting) return;
@@ -94,17 +113,15 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
 
             // If we have a blob OR we've exhausted wait attempts
             if (audioBlobRef.current || attempts <= 0) {
-                // If neither transcript nor blob exist, we treat it as an empty answer but allow it
-                // Logic is handled in the parent via handleAnswerSubmit
                 onSubmitAnswer(finalTranscript, audioBlobRef.current);
                 setIsSubmitting(false);
             } else {
-                setTimeout(() => checkBlob(attempts - 1), 150);
+                setTimeout(() => checkBlob(attempts - 1), 60);
             }
         };
 
-        // Increase delay between stopping and checking to ensure blob finalized
-        setTimeout(() => checkBlob(15), 250);
+        // Immediate check with faster backoff
+        checkBlob(15);
     };
     useEffect(() => {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -164,12 +181,31 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
         };
         sync();
     }, [isTimerRunning]);
+    const hasShownToastRef = useRef(false);
+
     useEffect(() => {
-        if (timer === 0 && !isTimerRunning) {
+        if (timer === 0 && !isTimerRunning && !permissionError) {
+            if (!hasShownToastRef.current) {
+                toast('Time is over! Submitting response...', {
+                    icon: '⏱️',
+                    duration: 3000,
+                    style: {
+                        borderRadius: '16px',
+                        background: '#333',
+                        color: '#fff',
+                        maxWidth: '400px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                    },
+                });
+                hasShownToastRef.current = true;
+            }
             const id = setTimeout(handleSubmit, 1000);
             return () => clearTimeout(id);
+        } else if (timer > 0) {
+            hasShownToastRef.current = false;
         }
-    }, [timer, isTimerRunning, handleSubmit]);
+    }, [timer, isTimerRunning, handleSubmit, permissionError]);
 
     const timerPct = maxTimer ? (timer / maxTimer) * 100 : 100;
 
@@ -265,8 +301,41 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                         )}
                     </div>
                 </div>
-            </div>
 
+                {/* Permission Error Overlay */}
+                <AnimatePresence>
+                    {permissionError && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 z-[60] bg-white/95 backdrop-blur-md rounded-[2.5rem] flex flex-col items-center justify-center text-center p-8 border border-rose-100 shadow-2xl"
+                        >
+                            <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6 border border-rose-100 animate-bounce">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">Microphone Blocked</h3>
+                            <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs mb-8">
+                                We need microphone access to capture your speech. Please allow permission and click retry.
+                            </p>
+                            <div className="flex flex-col gap-3 w-full max-w-[240px]">
+                                <button
+                                    onClick={handleRetryPermission}
+                                    className="w-full py-4 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hover:bg-slate-900 transition-all active:scale-95"
+                                >
+                                    Grant & Retry
+                                </button>
+                                <button
+                                    onClick={handleDismissPermission}
+                                    className="text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-600"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 };

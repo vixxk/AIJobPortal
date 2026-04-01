@@ -172,7 +172,7 @@ const TutorDashboard = () => {
                                     />
                                     <GoalItem
                                         label="15m Active Speaking"
-                                        target={`${tutorData?.dailyGoals?.speakingMinutes || 0}/15`}
+                                        target={`${Math.round((tutorData?.dailyGoals?.speakingMinutes || 0) * 10) / 10}/15`}
                                         isCompleted={tutorData?.dailyGoals?.speakingMinutes >= 15}
                                     />
                                     <GoalItem
@@ -203,27 +203,23 @@ const TutorDashboard = () => {
                             <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest leading-none mb-8">Level Roadmap</h2>
                             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                 {ROADMAP_LEVELS.map((item) => {
-                                    const isCompleted = item.level < tutorData.currentLevel;
                                     const isCurrent = item.level === tutorData.currentLevel;
-                                    const isLocked = item.level > tutorData.currentLevel;
 
                                     return (
-                                        <div 
-                                            key={item.level} 
-                                            className={`p-4 rounded-2xl border transition-all ${
+                                        <button 
+                                            key={item.level}
+                                            onClick={() => navigate(`/app/english-tutor/lesson?level=${item.level}`)}
+                                            className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer hover:-translate-y-1 hover:shadow-lg ${
                                                 isCurrent 
-                                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-100' 
-                                                    : isCompleted 
-                                                        ? 'bg-emerald-50/20 border-emerald-100' 
-                                                        : 'bg-white opacity-40 grayscale border-slate-100'
+                                                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-100'
+                                                    : 'bg-white hover:border-indigo-200 border-slate-100'
                                             }`}
                                         >
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className={`text-[9px] font-black uppercase tracking-tighter ${isCurrent ? 'text-indigo-200' : 'text-slate-400'}`}>Level {item.level}</span>
-                                                {isCompleted && <span className="text-emerald-500 font-bold text-xs">✓</span>}
                                             </div>
                                             <p className={`text-xs font-bold leading-tight ${isCurrent ? 'text-white' : 'text-slate-800'}`}>{item.name}</p>
-                                        </div>
+                                        </button>
                                     );
                                 })}
                             </div>

@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
 
 export const getTutorDashboard = () => api.get('/english-tutor/dashboard');
 export const submitSpeakingTest = (responses) => api.post('/english-tutor/test/submit', { responses });
-export const getLesson = () => api.get('/english-tutor/lesson');
+export const getLesson = (level) => api.get('/english-tutor/lesson', { params: { level } });
 export const submitLessonTask = (formData) => api.post('/english-tutor/lesson/submit-task', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });

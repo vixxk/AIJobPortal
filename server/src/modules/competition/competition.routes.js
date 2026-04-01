@@ -13,4 +13,5 @@ router.post('/:id/unregister', roleMiddleware.restrictTo('STUDENT'), competition
 router.post('/', roleMiddleware.restrictTo('SUPER_ADMIN', 'RECRUITER'), upload.uploadImage, competitionController.createCompetition);
 router.patch('/:id', roleMiddleware.restrictTo('RECRUITER'), upload.uploadImage, competitionController.updateCompetition);
 router.delete('/:id', roleMiddleware.restrictTo('RECRUITER'), competitionController.deleteCompetition);
+router.get('/:id/download-participants', roleMiddleware.restrictTo('RECRUITER', 'SUPER_ADMIN'), competitionController.downloadCompetitionParticipants);
 module.exports = router;

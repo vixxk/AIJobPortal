@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
-import { Globe, Trash2, Calendar, Users, Plus, Pencil, XCircle, MapPin, Award, BookOpen, Layers, Building2, BarChart3, ChevronRight, ExternalLink, Loader2, CheckCircle2 } from 'lucide-react';
+import { Globe, Trash2, Calendar, Users, Plus, Pencil, XCircle, MapPin, Award, BookOpen, Layers, Building2, BarChart3, ChevronRight, ExternalLink, Loader2, CheckCircle2, Download } from 'lucide-react';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 
@@ -48,6 +48,10 @@ const AdminCompetitions = () => {
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [selectedStats, setSelectedStats] = useState(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
+    
+    // New states for participant details
+    const [viewingParticipant, setViewingParticipant] = useState(null);
+    const [downloadingCsv, setDownloadingCsv] = useState(false);
 
     const fetchCompetitions = useCallback(async () => {
         setLoading(true);
@@ -164,6 +168,26 @@ const AdminCompetitions = () => {
             console.error(err);
         } finally {
             setAnalyticsLoading(false);
+        }
+    };
+
+    const handleDownloadParticipants = async (id, title) => {
+        setDownloadingCsv(true);
+        try {
+            const response = await axios.get(`/admin/competitions/${id}/download-participants`, {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${title.replace(/\s+/g, '_')}_Participants.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Failed to download participant data.');
+        } finally {
+            setDownloadingCsv(false);
         }
     };
 
@@ -629,7 +653,17 @@ const AdminCompetitions = () => {
                                     <div className="space-y-6">
                                         <div className="flex items-center justify-between px-2">
                                             <h4 className="text-sm font-black text-slate-900 tracking-widest uppercase italic">Participant Registry</h4>
-                                            <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">{selectedStats?.participants?.length || 0} Registered</span>
+                                            <div className="flex items-center gap-3">
+                                                <button 
+                                                    disabled={downloadingCsv}
+                                                    onClick={() => handleDownloadParticipants(selectedStats._id, selectedStats.title)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg shadow-indigo-100 disabled:opacity-50"
+                                                >
+                                                    {downloadingCsv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                                                    Download CSV
+                                                </button>
+                                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-tighter shadow-sm">{selectedStats?.participants?.length || 0} Registered</span>
+                                            </div>
                                         </div>
 
                                         {selectedStats?.participants?.length > 0 ? (
@@ -645,8 +679,12 @@ const AdminCompetitions = () => {
                                                                 <p className="text-[10px] font-bold text-slate-400 tracking-wide uppercase">{user.email}</p>
                                                             </div>
                                                         </div>
-                                                        <button className="p-3 text-slate-300 group-hover:text-indigo-600 transition-colors">
-                                                            <ExternalLink className="w-5 h-5" />
+                                                        <button 
+                                                            onClick={() => setViewingParticipant(user)}
+                                                            className="flex items-center gap-2 px-4 py-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 rounded-xl transition-all"
+                                                        >
+                                                            View Profile
+                                                            <ExternalLink className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 ))}
@@ -666,6 +704,96 @@ const AdminCompetitions = () => {
                     </div>
                 </div>
             )}
+
+            {/* Participant Profile Modal */}
+            {viewingParticipant && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative animate-in zoom-in-95 duration-500 overflow-hidden flex flex-col max-h-[85vh]">
+                        <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Participant Profile</h4>
+                            <button onClick={() => setViewingParticipant(null)} className="p-3 text-slate-400 hover:text-slate-900 transition-all hover:bg-slate-50 rounded-xl">
+                                <XCircle className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+                            <div className="flex items-start gap-6 bg-slate-50 p-6 rounded-[32px] border border-slate-100">
+                                <div className="w-20 h-20 bg-white rounded-3xl overflow-hidden shadow-sm flex items-center justify-center font-black text-slate-300 text-3xl">
+                                    {viewingParticipant.avatar ? <img src={viewingParticipant.avatar} className="w-full h-full object-cover" /> : viewingParticipant.name?.charAt(0)}
+                                </div>
+                                <div className="space-y-1">
+                                    <h5 className="text-2xl font-black text-slate-900 tracking-tight">{viewingParticipant.name}</h5>
+                                    <p className="text-sm font-bold text-slate-500 uppercase flex items-center gap-2">
+                                        {viewingParticipant.email}
+                                    </p>
+                                    {viewingParticipant.studentProfile?.phoneNumber && (
+                                        <p className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1 rounded-full shadow-sm w-fit mt-2">
+                                            {viewingParticipant.studentProfile.phoneNumber}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {viewingParticipant.studentProfile ? (
+                                <>
+                                    {viewingParticipant.studentProfile.skills?.length > 0 && (
+                                        <div className="space-y-3">
+                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Technical Skills</h6>
+                                            <div className="flex flex-wrap gap-2">
+                                                {viewingParticipant.studentProfile.skills.map((skill, i) => (
+                                                    <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-tight shadow-sm border border-indigo-100">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {viewingParticipant.studentProfile.education?.length > 0 && (
+                                            <div className="space-y-4">
+                                                <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Education Registry</h6>
+                                                {viewingParticipant.studentProfile.education.map((edu, i) => (
+                                                    <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-lg transition-all">
+                                                        <p className="text-[11px] font-black text-slate-900 leading-tight mb-1">{edu.institution}</p>
+                                                        <p className="text-[10px] font-bold text-indigo-600 italic">{edu.degree}</p>
+                                                        <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{edu.fieldOfStudy}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {viewingParticipant.studentProfile.experience?.length > 0 && (
+                                            <div className="space-y-4">
+                                                <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Industrial Experience</h6>
+                                                {viewingParticipant.studentProfile.experience.map((exp, i) => (
+                                                    <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-lg transition-all">
+                                                        <p className="text-[11px] font-black text-slate-900 leading-tight mb-1">{exp.company}</p>
+                                                        <p className="text-[10px] font-bold text-violet-600 italic">{exp.position}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {viewingParticipant.studentProfile.summary && (
+                                        <div className="space-y-2">
+                                            <h6 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Professional Abstract</h6>
+                                            <p className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-xs font-semibold text-slate-600 leading-relaxed italic">
+                                                "{viewingParticipant.studentProfile.summary}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="p-12 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Full profile haven't been completed by this user yet</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
