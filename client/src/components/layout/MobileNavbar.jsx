@@ -5,7 +5,7 @@ import clsx from 'clsx';
 const MobileNavbar = () => {
     const location = useLocation();
     const { user } = useAuth();
-    if (location.pathname.startsWith('/app/job/') || location.pathname === '/app/interview') {
+    if (location.pathname.startsWith('/app/job/') || location.pathname === '/app/interview' || location.pathname === '/app/resume') {
         return null;
     }
     const bottomNavItems = [

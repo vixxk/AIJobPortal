@@ -721,7 +721,8 @@ const AiResumeBuilder = () => {
             </div>
 
             {/* ── MOBILE: Sticky bottom tab bar ─────────────────────────── */}
-            <div className="xl:hidden fixed bottom-0 left-0 right-0 z-50 print:hidden bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center">
+            <div className="xl:hidden fixed bottom-0 left-0 right-0 z-[100] print:hidden bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}>
 
                 {/* Edit tab */}
                 <button
