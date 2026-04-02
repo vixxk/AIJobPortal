@@ -9,6 +9,7 @@ import {
     UploadCloud, AlertCircle, Check, Play
 } from 'lucide-react';
 import Skeleton from '../../components/ui/Skeleton';
+import VideoPlayer, { extractYouTubeId } from '../../components/ui/VideoPlayer';
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -20,18 +21,7 @@ const getImageUrl = (path) => {
 const LEVEL_OPTIONS = ['Beginner', 'Intermediate', 'Advanced'];
 const CATEGORY_OPTIONS = ['Skill', 'AI', 'Technology', 'Business', 'Design', 'Marketing', 'Data Science', 'Web Development', 'Mobile Dev', 'Other'];
 
-// ─── YouTube URL Parser (defined early so all components can use it) ──────────
-const extractYouTubeId = (url) => {
-    if (!url) return '';
-    if (/^[\w-]{11}$/.test(url.trim())) return url.trim(); // bare 11-char ID
-    try {
-        const u = new URL(url);
-        if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('?')[0];
-        if (u.pathname.startsWith('/live/')) return u.pathname.split('/live/')[1].split('?')[0];
-        if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split('?')[0];
-        return u.searchParams.get('v') || '';
-    } catch { return ''; }
-};
+// extractYouTubeId now imported from VideoPlayer
 
 // ─── Inline Editable Field ───────────────────────────────────────────────────
 const EditableField = ({ label, value, onSave, multiline = false, type = 'text' }) => {
@@ -1149,28 +1139,14 @@ const CourseManagement = () => {
                             </button>
                         </div>
                         <div className="p-4 lg:p-6 overflow-y-auto max-h-[70vh]">
-                            {previewLecture.videoIdentifier ? (() => {
-                                const cleanId = extractYouTubeId(previewLecture.videoIdentifier);
-                                const origin = window.location.origin;
-                                const embedUrl = `https://www.youtube.com/embed/${cleanId}?rel=0&modestbranding=1&enablejsapi=1&origin=${origin}&widget_referrer=${origin}&controls=0&iv_load_policy=3&fs=0`;
-                                
-                                return (
-                                    <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-xl mb-4 relative group">
-                                        <iframe
-                                            src={embedUrl}
-                                            className="w-full h-full border-0 relative z-0"
-                                            title={previewLecture.title}
-                                            loading="lazy"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        />
-                                        <div className="absolute inset-0 z-10 cursor-default bg-transparent" onContextMenu={e => e.preventDefault()} />
-                                        
-                                        <div className="absolute top-4 left-4 z-20 opacity-20 pointer-events-none">
-                                            <span className="text-[8px] font-black text-white/60 bg-black/40 px-2 py-1 rounded uppercase tracking-widest">Student Preview Mode</span>
-                                        </div>
+                            {previewLecture.videoIdentifier ? (
+                                <div className="mb-4">
+                                    <VideoPlayer lecture={previewLecture} />
+                                    <div className="mt-4 flex items-center justify-center">
+                                        <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-3 py-1 rounded uppercase tracking-[0.2em]">Preview Mode</span>
                                     </div>
-                                );
-                            })() : (
+                                </div>
+                            ) : (
                                 <div className="aspect-video bg-slate-800 rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-xl mb-4">
                                     <Video className="w-10 h-10 lg:w-12 lg:h-12 text-slate-600 mb-3" />
                                     <p className="text-slate-400 font-bold text-xs lg:text-sm">No video URL set for this lecture</p>

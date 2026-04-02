@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
+import Skeleton from '../components/ui/Skeleton';
 import {
     BookOpen, Video, FileText, LayoutDashboard, Settings, Globe, Mail,
     MapPin, DollarSign, Calendar, ChevronRight, ArrowUpRight, Edit2,
@@ -30,7 +31,6 @@ const SidebarItem = ({ id, label, icon: Icon, activeTab, onClick }) => (
         {label}
     </button>
 );
-
 const TeacherDashboard = () => {
     const navigate = useNavigate();
     const { logout, user } = useAuth();
@@ -76,10 +76,57 @@ const TeacherDashboard = () => {
     };
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="text-slate-500 font-bold animate-pulse">Loading Academy Portal...</p>
+        <div className="flex min-h-screen bg-[#F8FAFC]">
+            {/* Sidebar Skeleton */}
+            <div className="w-72 bg-white border-r border-slate-200 p-8 flex flex-col gap-6 shrink-0 h-screen sticky top-0 hidden lg:flex">
+                <div className="flex items-center gap-4 px-2 mb-6">
+                    <Skeleton className="w-11 h-11 rounded-[14px]" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                    </div>
+                </div>
+                <div className="space-y-4">
+                    <Skeleton className="h-14 w-full rounded-[20px]" />
+                    <Skeleton className="h-14 w-full rounded-[20px]" />
+                </div>
+                <div className="mt-auto px-2">
+                    <Skeleton className="h-32 w-full rounded-[24px]" />
+                </div>
+            </div>
+
+            <div className="flex-1 flex flex-col">
+                {/* Header Skeleton */}
+                <header className="h-20 bg-white border-b border-slate-200 px-10 flex items-center justify-between">
+                    <Skeleton className="h-6 w-48" />
+                    <div className="flex items-center gap-6">
+                        <Skeleton className="h-11 w-72 rounded-[16px] hidden md:block" />
+                        <div className="flex items-center gap-3">
+                            <div className="text-right hidden sm:block">
+                                <Skeleton className="h-3 w-20 mb-1" />
+                                <Skeleton className="h-2 w-16 ml-auto" />
+                            </div>
+                            <Skeleton className="w-10 h-10 rounded-full" />
+                        </div>
+                    </div>
+                </header>
+
+                {/* Dashboard skeleton content */}
+                <main className="p-10">
+                    <div className="max-w-6xl mx-auto space-y-10">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {[1, 2, 3].map(i => (
+                                <Skeleton key={i} className="h-44 w-full rounded-[32px]" />
+                            ))}
+                        </div>
+                        <Skeleton className="h-64 w-full rounded-[40px]" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {[1, 2, 3].map(i => (
+                                <Skeleton key={i} className="h-[400px] w-full rounded-[32px]" />
+                            ))}
+                        </div>
+                    </div>
+                </main>
             </div>
         </div>
     );

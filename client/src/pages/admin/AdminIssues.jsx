@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from '../../utils/axios';
 import { AlertCircle, CheckCircle, Clock, Trash2, User, Mail, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Skeleton from '../../components/ui/Skeleton';
 
 const AdminIssues = () => {
     const [issues, setIssues] = useState([]);
@@ -37,7 +38,49 @@ const AdminIssues = () => {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading issues...</div>;
+    if (loading) return (
+        <div className="p-6 sm:p-8 space-y-8 animate-in fade-in duration-700">
+            <div>
+                <Skeleton className="h-10 w-64 mb-2" />
+                <Skeleton className="h-5 w-96" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-6 sm:p-8">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="w-12 h-12 rounded-2xl" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-6 w-48" />
+                                    <div className="flex items-center gap-2">
+                                        <Skeleton className="h-4 w-20 rounded-full" />
+                                        <Skeleton className="h-3 w-32" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-10 w-32 rounded-xl" />
+                                <Skeleton className="h-10 w-24 rounded-xl" />
+                            </div>
+                        </div>
+                        <Skeleton className="h-24 w-full rounded-2xl mb-6" />
+                        <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-100">
+                            {[1, 2, 3].map(j => (
+                                <div key={j} className="flex items-center gap-2">
+                                    <Skeleton className="w-8 h-8 rounded-full" />
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-3 w-12" />
+                                        <Skeleton className="h-4 w-24" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 
     return (
         <div className="p-6 sm:p-8 space-y-8 animate-in fade-in duration-700">

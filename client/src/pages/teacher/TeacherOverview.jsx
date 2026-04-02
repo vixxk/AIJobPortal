@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
+import Skeleton from '../../components/ui/Skeleton';
 import { Video, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -29,11 +30,21 @@ const TeacherOverview = () => {
     }, [fetchCourses]);
 
     if (loading) return (
-        <div className="flex items-center justify-center h-64">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="text-slate-500 font-bold animate-pulse">Loading Dashboard...</p>
+        <div className="max-w-6xl mx-auto space-y-10">
+            <div>
+                <Skeleton className="h-8 w-64 mb-2" />
+                <Skeleton className="h-5 w-48" />
             </div>
+
+            {/* Stats grid skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="h-44 w-full rounded-[32px]" />
+                ))}
+            </div>
+
+            {/* Welcome banner skeleton */}
+            <Skeleton className="h-64 w-full rounded-[40px]" />
         </div>
     );
 
