@@ -240,7 +240,7 @@ const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '') => {
     {
       "role_clear": true,
       "questions": [
-        { "id": 1, "question": "...", "difficulty": "...", "topic": "..." }
+        { "id": 1, "question": "...", "difficulty": "...", "topic": "...", "ideal_answer": "a high-quality, comprehensive sample answer that would score 100% for this role" }
       ]
     }
     If the job role is nonsense, return "role_clear": false and suggestions for valid roles.`;
@@ -268,6 +268,7 @@ const evaluateAnswer = async (question, transcript, metrics, jobRole) => {
       "answer_score": 0-100,
       "communication_score": 0-100,
       "technical_pointers": ["specific critique 1", "specific critique 2"],
+      "model_answer": "a concise, high-quality sample answer that would score 100% for this specific role and question",
       "strengths": ["...", "..."],
       "weaknesses": ["...", "..."],
       "suggestions": ["..."]

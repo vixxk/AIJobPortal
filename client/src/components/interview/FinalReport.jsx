@@ -226,6 +226,19 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
                                             </div>
                                             {ans.skipped ? 'You didn\'t provide an answer for this question.' : ans.transcript || 'No transcript available.'}
                                         </div>
+
+                                        {(ans.ideal_answer || (ans.evaluation && ans.evaluation.model_answer)) && (
+                                            <div className="mt-3 p-3 sm:p-4 bg-emerald-50/20 rounded-xl border border-emerald-100/30">
+                                                <div className="flex items-center gap-1.5 mb-2 text-[9px] font-black uppercase tracking-widest text-emerald-600">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    AI Approved Answer (Study Guide)
+                                                </div>
+                                                <p className="text-[11px] sm:text-xs text-emerald-900 leading-relaxed font-bold">
+                                                    {ans.ideal_answer || (ans.evaluation && ans.evaluation.model_answer)}
+                                                </p>
+                                            </div>
+                                        )}
+
                                         {!ans.skipped && ans.evaluation && (
                                             <div className="mt-2.5 sm:mt-3 space-y-2">
                                                 <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">

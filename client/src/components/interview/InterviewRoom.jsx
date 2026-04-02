@@ -85,6 +85,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
             transcript: analysis?.transcript || transcript || '',
             evaluation: evaluation || null,
             analysis: analysis || null,
+            ideal_answer: currentQuestion.ideal_answer,
         };
 
         const updatedAnswers = [...answers, newAnswer];
@@ -114,8 +115,8 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const handleEndInterview = useCallback(async () => {
         setIsTimerRunning(false);
         setPhase('finishing');
-        const currentSkipped = { question: currentQuestion.question, answer: '', transcript: '', evaluation: null, skipped: true };
-        const remaining = questions.slice(currentIdx + 1).map(q => ({ question: q.question, answer: '', transcript: '', evaluation: null, skipped: true }));
+        const currentSkipped = { question: currentQuestion.question, answer: '', transcript: '', evaluation: null, skipped: true, ideal_answer: currentQuestion.ideal_answer };
+        const remaining = questions.slice(currentIdx + 1).map(q => ({ question: q.question, answer: '', transcript: '', evaluation: null, skipped: true, ideal_answer: q.ideal_answer }));
         const allAnswers = [...answers, currentSkipped, ...remaining];
         try {
             const result = await generateReport(allAnswers, jobRole);

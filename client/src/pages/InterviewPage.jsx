@@ -4,6 +4,37 @@ import InterviewRoom from '../components/interview/InterviewRoom';
 import { startInterview } from '../services/interviewApi';
 import Skeleton from '../components/ui/Skeleton';
 import FinalReport from '../components/interview/FinalReport';
+
+const ROLE_LIST = {
+    "Software / Tech": [
+        "Java Developer", "Frontend Developer", "Backend Developer", "Full Stack Developer",
+        "React Developer", "Node.js Developer", "Python Developer", "Software Engineer (Fresher)",
+        "Web Developer", "Mobile App Developer", "Android Developer", "QA Tester",
+        "Software Tester", "DevOps Intern", "Cloud Intern"
+    ],
+    "Data / AI": [
+        "Data Analyst", "Data Science Intern", "Machine Learning Intern", "AI Intern",
+        "Business Analyst", "Data Entry Analyst"
+    ],
+    "Design": [
+        "UI UX Designer", "Graphic Designer", "Product Designer", "Motion Designer", "Video Editor"
+    ],
+    "Marketing": [
+        "Digital Marketing Executive", "Social Media Manager", "SEO Executive", "Content Writer",
+        "Copywriter", "Performance Marketing Intern"
+    ],
+    "Business / Non-Tech": [
+        "HR Executive", "HR Intern", "Sales Executive", "Business Development Executive",
+        "Operations Executive", "Customer Support Executive"
+    ],
+    "Trending": [
+        "AI Prompt Engineer", "No-Code Developer", "Automation Specialist", "Chatbot Developer",
+        "AI Content Creator"
+    ]
+};
+
+const ALL_ROLES = Object.values(ROLE_LIST).flat();
+
 const SuggestionModal = ({ isOpen, onClose, roleSuggestions, onSelect }) => {
     if (!isOpen) return null;
     const recommendations = (roleSuggestions && roleSuggestions.length > 0)
@@ -77,6 +108,9 @@ const InterviewPage = () => {
     const [questions, setQuestions] = useState([]);
     const [finalReport, setFinalReport] = useState(null);
     const [suggestionData, setSuggestionData] = useState({ open: false, roles: [] });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
 
     useEffect(() => {
         // Simulate initial check
@@ -85,18 +119,16 @@ const InterviewPage = () => {
     }, []);
     const handleStart = async (e) => {
         if (e) e.preventDefault();
-        if (!jobRole.trim() || jobRole.trim().length < 3) {
-            setSuggestionData({ open: true, roles: [] });
-            return;
-        }
+        const isValid = ALL_ROLES.includes(searchQuery);
+        if (!isValid) return;
+
         setIsStarting(true);
         try {
             const formData = new FormData();
-            formData.append('job_role', jobRole.trim());
+            formData.append('job_role', searchQuery.trim());
             formData.append('interview_type', interviewType);
             if (resume) formData.append('resume', resume);
             const response = await startInterview(formData);
-            // Destructure from response.data as the backend wraps everything in a 'data' object
             const { role_clear, questions, suggestions } = response.data || {};
             if (role_clear === false) {
                 setSuggestionData({ open: true, roles: suggestions || [] });
@@ -112,8 +144,10 @@ const InterviewPage = () => {
     };
     const handleSelectSuggestion = (role) => {
         setJobRole(role);
+        setSearchQuery(role);
         setSuggestionData({ open: false, roles: [] });
     };
+
     if (loading || (isStarting && questions.length === 0)) {
         return (
             <div className="min-h-full w-full bg-slate-50 flex items-center justify-center p-4">
@@ -180,36 +214,119 @@ const InterviewPage = () => {
                         <br></br> Get real-time feedback on your answers.</p>
                 </div>
                 <form onSubmit={handleStart} className="space-y-5">
-                    <div>
+                    <div className="relative">
                         <label className="block text-sm font-bold text-gray-700 mb-1.5">Target Job Role <span className="text-red-500">*</span></label>
-                        <input
-                            type="text"
-                            required
-                            placeholder="e.g. Senior React Developer, Data Scientist..."
-                            value={jobRole}
-                            onChange={(e) => setJobRole(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none font-medium text-gray-800 placeholder:text-gray-400"
-                        />
+                        <div className="relative group">
+                            <input
+                                type="text"
+                                placeholder="Search from 40+ roles..."
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setIsDropdownOpen(true);
+                                }}
+                                onFocus={() => setIsDropdownOpen(true)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !ALL_ROLES.includes(searchQuery)) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                                className={`w-full px-4 py-3 rounded-xl border transition-all outline-none font-medium text-gray-800 placeholder:text-gray-400 ${ALL_ROLES.includes(searchQuery)
+                                    ? 'border-emerald-200 bg-emerald-50/30 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100'
+                                    : 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+                                    }`}
+                            />
+                            {ALL_ROLES.includes(searchQuery) && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 animate-in zoom-in">
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+
+                        {isDropdownOpen && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setIsDropdownOpen(false)}
+                                />
+                                <div className="absolute z-20 left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-[320px] overflow-y-auto custom-scrollbar">
+                                    {Object.entries(ROLE_LIST).map(([category, roles]) => {
+                                        const filteredRoles = roles.filter(r =>
+                                            r.toLowerCase().includes(searchQuery.toLowerCase())
+                                        );
+                                        if (filteredRoles.length === 0) return null;
+                                        return (
+                                            <div key={category} className="p-2">
+                                                <div className="px-3 py-1 text-[10px] font-black text-gray-400 uppercase tracking-widest">{category}</div>
+                                                {filteredRoles.map(role => (
+                                                    <button
+                                                        key={role}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSearchQuery(role);
+                                                            setJobRole(role);
+                                                            setIsDropdownOpen(false);
+                                                        }}
+                                                        className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${searchQuery === role
+                                                            ? 'bg-blue-600 text-white'
+                                                            : 'text-gray-700 hover:bg-blue-50'
+                                                            }`}
+                                                    >
+                                                        {role}
+                                                        {searchQuery === role && (
+                                                            <svg className="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        );
+                                    })}
+                                    {ALL_ROLES.filter(r => r.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                                        <div className="p-8 text-center">
+                                            <span className="text-4xl block mb-2">🔍</span>
+                                            <p className="text-sm font-bold text-gray-900">No matching roles</p>
+                                            <p className="text-xs text-gray-400 mt-1">Please select from the suggested roles</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                        {!ALL_ROLES.includes(searchQuery) && searchQuery.length > 0 && !isDropdownOpen && (
+                            <p className="text-[10px] font-bold text-rose-500 mt-1.5 flex items-center gap-1 animate-in slide-in-from-top-1">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                Please select a valid role from suggestions
+                            </p>
+                        )}
                     </div>
+
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">Interview Type</label>
                         <div className="grid grid-cols-3 gap-2">
                             {[
-                                { value: 'behavioral', label: 'Behavioral', icon: '🧠' },
-                                { value: 'technical', label: 'Technical', icon: '💻' },
-                                { value: 'hr', label: 'HR / Culture', icon: '🤝' },
-                            ].map(({ value, label, icon }) => (
+                                { value: 'behavioral', label: 'Behavioral', desc: 'Soft skills', icon: '🧠' },
+                                { value: 'technical', label: 'Technical', desc: 'Coding & concepts', icon: '💻' },
+                                { value: 'hr', label: 'HR / Culture', desc: 'Team fit', icon: '🤝' },
+                            ].map(({ value, label, desc, icon }) => (
                                 <button
                                     key={value}
                                     type="button"
                                     onClick={() => setInterviewType(value)}
-                                    className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 font-semibold text-xs transition-all ${interviewType === value
-                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                    className={`flex flex-col items-center text-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all ${interviewType === value
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
                                         : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >
-                                    <span className="text-xl">{icon}</span>
-                                    {label}
+                                    <span className="text-xl mb-0.5">{icon}</span>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-xs">{label}</span>
+                                        <span className={`text-[9px] leading-tight font-medium ${interviewType === value ? 'text-blue-500' : 'text-gray-400'}`}>
+                                            {desc}
+                                        </span>
+                                    </div>
                                 </button>
                             ))}
                         </div>
@@ -222,12 +339,12 @@ const InterviewPage = () => {
                             onChange={(e) => setResume(e.target.files[0] || null)}
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all text-sm text-gray-500 cursor-pointer focus:outline-none"
                         />
-                        <p className="text-xs text-gray-400 mt-1">Helps tailor questions to your experience.</p>
+                        <p className="text-xs text-gray-400 mt-1">AI will analyze your resume and ask personalized questions.</p>
                     </div>
                     <button
                         type="submit"
-                        disabled={isStarting}
-                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-xl shadow-blue-200 transition-all hover:-translate-y-0.5 disabled:opacity-70 flex justify-center items-center gap-3"
+                        disabled={isStarting || !ALL_ROLES.includes(searchQuery)}
+                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-base shadow-xl shadow-blue-200 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed flex justify-center items-center gap-3"
                     >
                         {isStarting ? (
                             <>
@@ -241,6 +358,7 @@ const InterviewPage = () => {
                             '🚀 Start Interview'
                         )}
                     </button>
+
                 </form>
                 <p className="text-center text-xs text-gray-400 mt-5">
                     Tip: Allow microphone access when prompted. Answers are analyzed locally.
