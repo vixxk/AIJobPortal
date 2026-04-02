@@ -9,7 +9,7 @@ const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
 const sendEmail = require('../../config/mailer');
 const RecruiterProfile = require('../recruiter/recruiter.model');
-const CollegeProfile = require('../college/college.model');
+const { CollegeProfile } = require('../college/college.model');
 const Issue = require('../issue/issue.model');
 const StudentProfile = require('../student/student.model');
 const { uploadFile } = require('../../utils/fileUpload');
@@ -154,14 +154,39 @@ exports.banUser = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('User not found', 404));
   }
+  
+  // Toggle active status
   user.isActive = !user.isActive;
+  
   if (!user.isActive) {
+    // If we're banning, mark as REJECTED
     user.approvalStatus = 'REJECTED';
+    
+    // Sync profile for recruiters/colleges
+    if (user.role === 'RECRUITER') {
+      await RecruiterProfile.findOneAndUpdate({ userId: user._id }, { approved: false });
+    } else if (user.role === 'COLLEGE_ADMIN') {
+      await CollegeProfile.findOneAndUpdate({ userId: user._id }, { approved: false });
+    }
+  } else {
+    // If we're unbanning, we should restore approval for those who need it
+    if (user.role === 'RECRUITER' || user.role === 'COLLEGE_ADMIN') {
+      user.approvalStatus = 'APPROVED';
+      
+      // Sync profile back to approved
+      if (user.role === 'RECRUITER') {
+        await RecruiterProfile.findOneAndUpdate({ userId: user._id }, { approved: true });
+      } else if (user.role === 'COLLEGE_ADMIN') {
+        await CollegeProfile.findOneAndUpdate({ userId: user._id }, { approved: true });
+      }
+    }
   }
+
   await user.save({ validateBeforeSave: false });
+  
   res.status(200).json({
     status: 'success',
-    message: `User ${user.isActive ? 'unbanned' : 'banned'} successfully`
+    message: `User ${user.isActive ? 'unbanned and approved' : 'banned'} successfully`
   });
 });
 

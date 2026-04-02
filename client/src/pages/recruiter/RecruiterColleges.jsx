@@ -246,8 +246,8 @@ const RecruiterColleges = () => {
               <h3 className="font-black text-slate-700 mb-2">No Invites Sent Yet</h3>
               <p className="text-sm text-slate-400 mb-4">Start connecting with college placement cells.</p>
               <button onClick={() => setActiveTab('discover')}
-                className="px-6 h-10 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all">
-                Discover Colleges →
+                className="px-6 h-10 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 mx-auto">
+                Discover Colleges <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           ) : (

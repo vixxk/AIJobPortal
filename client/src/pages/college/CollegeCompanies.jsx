@@ -97,12 +97,12 @@ const CollegeCompanies = () => {
                       <img src={recruiter.logo} alt="Logo" className="w-full h-full object-cover rounded-xl" />
                     ) : recruiter.companyName?.[0]}
                   </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-900 group-hover:text-indigo-700 transition-colors uppercase leading-tight truncate max-w-[180px]">
+                  <div className="min-w-0">
+                    <h3 className="text-base font-black text-slate-900 group-hover:text-indigo-700 transition-colors uppercase leading-tight truncate">
                       {recruiter.companyName}
                     </h3>
-                    <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-0.5">
-                      <Building2 className="w-3 h-3" /> Recruiter
+                    <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                      <Mail className="w-3 h-3 shrink-0" /> {recruiter.userId?.email || 'No email available'}
                     </p>
                   </div>
                 </div>
@@ -125,7 +125,11 @@ const CollegeCompanies = () => {
 
               <div className="border-t border-slate-100 p-4 flex gap-2">
                 <button
-                  onClick={() => navigate(`/app/college/emails?to=${recruiter.userId?.email || ''}&company=${recruiter.companyName}`)}
+                  onClick={() => {
+                    const to = encodeURIComponent(recruiter.userId?.email || '');
+                    const company = encodeURIComponent(recruiter.companyName || '');
+                    navigate(`/app/college/emails?to=${to}&company=${company}`);
+                  }}
                   className="flex-1 h-9 flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-widest bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200">
                   <Mail className="w-3.5 h-3.5" /> Email
                 </button>

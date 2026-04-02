@@ -98,7 +98,9 @@ const CollegePlacement = () => {
           <Bell className="w-5 h-5 text-amber-500 shrink-0 animate-pulse" />
           <p className="text-sm font-bold text-amber-800 flex-1">
             <span className="font-black">{pendingInvites.length} recruiter{pendingInvites.length > 1 ? 's' : ''}</span> want to hire from your campus.
-            <button onClick={() => setActiveTab('invites')} className="ml-2 underline font-black text-amber-700">View Invites →</button>
+            <button onClick={() => setActiveTab('invites')} className="ml-2 underline font-black text-amber-700 inline-flex items-center gap-1">
+              View Invites <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </p>
         </div>
       )}
@@ -148,8 +150,8 @@ const CollegePlacement = () => {
             <h3 className="font-black text-slate-700 mb-2">No Sessions Scheduled</h3>
             <p className="text-sm text-slate-400 mb-6">Schedule your first interview session for a placement drive.</p>
             <button onClick={() => setShowModal(true)}
-              className="px-6 h-10 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all">
-              {drives.length > 0 ? 'Schedule Session' : 'Post a Drive First'}
+              className="px-6 h-10 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 mx-auto">
+              {drives.length > 0 ? 'Schedule Session' : 'Post a Drive First'} <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         ) : (
@@ -375,8 +377,8 @@ const CollegePlacement = () => {
                   <AlertCircle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
                   <p className="text-sm font-bold text-slate-600 mb-3">You need to post a drive first before scheduling sessions.</p>
                   <button type="button" onClick={() => { setShowModal(false); window.location.href = '/app/college/drives'; }}
-                    className="px-4 h-9 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all">
-                    Post a Drive →
+                    className="px-4 h-9 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 mx-auto">
+                    Post a Drive <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ) : (

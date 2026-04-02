@@ -1,4 +1,5 @@
 const RecruiterProfile = require('./recruiter.model');
+const User = require('../user/user.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const { uploadFile } = require('../../utils/fileUpload');

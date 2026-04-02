@@ -80,8 +80,8 @@ const CollegeOverview = () => {
               <p className="text-indigo-100 text-sm">Add your college details to start getting recruiter connections.</p>
             </div>
           </div>
-          <Link to="/app/college/profile" className="shrink-0 px-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-xs uppercase tracking-wider hover:scale-105 transition-transform">
-            Set Up Profile →
+          <Link to="/app/college/profile" className="shrink-0 px-6 py-3 bg-white text-indigo-600 rounded-xl font-black text-xs uppercase tracking-wider hover:scale-105 transition-transform flex items-center gap-2">
+            Set Up Profile <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}
@@ -138,8 +138,8 @@ const CollegeOverview = () => {
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <GraduationCap className="w-10 h-10 text-slate-200 mb-3" />
               <p className="text-sm text-slate-400 font-medium">Profile not set up yet.</p>
-              <Link to="/app/college/profile" className="mt-3 text-indigo-600 text-xs font-black uppercase tracking-wider hover:underline">
-                Setup Now →
+              <Link to="/app/college/profile" className="mt-3 text-indigo-600 text-xs font-black uppercase tracking-wider hover:underline flex items-center gap-1">
+                Setup Now <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           )}
