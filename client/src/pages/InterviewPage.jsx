@@ -354,14 +354,18 @@ const InterviewPage = () => {
                                 </svg>
                                 Preparing Interview...
                             </>
+                        ) : searchQuery === '' ? (
+                            '🔍 Search for a role'
+                        ) : !ALL_ROLES.includes(searchQuery) ? (
+                            'Select role to continue'
                         ) : (
                             '🚀 Start Interview'
                         )}
                     </button>
 
                 </form>
-                <p className="text-center text-xs text-gray-400 mt-5">
-                    Tip: Allow microphone access when prompted. Answers are analyzed locally.
+                <p className="text-center text-[10px] font-black text-gray-400 mt-5 uppercase tracking-[0.2em] opacity-50">
+                    Tip: Grant mic access via the 🔒 <span className="text-blue-500">lock icon</span> in your address bar for AI analysis.
                 </p>
             </div>
             <SuggestionModal

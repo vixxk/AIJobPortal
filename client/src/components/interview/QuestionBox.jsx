@@ -170,7 +170,7 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
         const ctrl = new AbortController(); speakControllerRef.current = ctrl;
         await speak(questionText, ctrl.signal);
     };
-    const statusLabel = isSpeaking ? 'AI Interrogating' : uiPhase === 'prep' ? 'Pause' : uiPhase === 'done' ? 'Live' : '';
+    const statusLabel = isSpeaking ? 'AI Speaking' : uiPhase === 'prep' ? 'Pause' : uiPhase === 'done' ? 'Listening' : '';
     const statusColor = isSpeaking ? 'text-blue-500' : uiPhase === 'done' ? 'text-emerald-500' : 'text-slate-400';
     return (
         <div className="relative w-full flex flex-col items-center">

@@ -4,6 +4,7 @@ import { Volume2, Mic, X, Loader2 } from 'lucide-react';
 import { submitSpeakingTest } from '../../services/englishTutorApi';
 import { transcribeAudio, speakText } from '../../services/interviewApi';
 import LiveAnswerBox from '../interview/LiveAnswerBox';
+import AudioCheck from '../interview/AudioCheck';
 
 const TASKS = [
     {
@@ -72,6 +73,7 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
     const [hasInteracted, setHasInteracted] = useState(false);
     const [audioCache, setAudioCache] = useState({});
     const [micBlocked, setMicBlocked] = useState(false);
+    const [showAudioCheck, setShowAudioCheck] = useState(false);
     const lastSpokenTaskRef = useRef(null);
     const speechSequenceRef = useRef(0);
 
@@ -402,13 +404,27 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                         </div>
                                     ) : (
                                         <button
-                                            onClick={() => setShowIntro(false)}
+                                            onClick={() => { setShowIntro(false); setShowAudioCheck(true); }}
                                             className="w-full py-3 md:py-5 bg-indigo-600 hover:bg-slate-900 text-white text-[9px] md:text-xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] rounded-xl transition-all shadow-lg active:scale-95"
                                         >
                                             Begin Test
                                         </button>
                                     )}
                                 </div>
+                            </motion.div>
+                        ) : showAudioCheck ? (
+                            <motion.div
+                                key="audio-check"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="w-full flex-grow flex items-center justify-center p-4"
+                            >
+                                <AudioCheck 
+                                    onConfirm={() => setShowAudioCheck(false)} 
+                                    setMicBlocked={setMicBlocked} 
+                                    type="placement" 
+                                />
                             </motion.div>
                         ) : testResults ? (
                             <motion.div
