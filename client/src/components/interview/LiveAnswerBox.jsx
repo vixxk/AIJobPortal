@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import toast from 'react-hot-toast';
 
-const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndInterview, layout = 'footer', onPermissionChange }) => {
+
+const LiveAnswerBox = ({ isTimerRunning, micEnabled, timer, maxTimer, onSubmitAnswer, onEndInterview, layout = 'footer', onPermissionChange }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [typedText, setTypedText] = useState('');
     const [interimText, setInterimText] = useState('');
@@ -20,21 +20,50 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [permissionError, setPermissionError] = useState(false);
     const isRecordingRef = useRef(false);
+    const stoppedRef = useRef(false); // guards against async race conditions
     useEffect(() => { typedTextRef.current = typedText; }, [typedText]);
     useEffect(() => { interimTextRef.current = interimText; }, [interimText]);
+
     const stopAll = () => {
-        if (mediaRecorderRef.current?.state !== 'inactive') mediaRecorderRef.current?.stop();
-        streamRef.current?.getTracks().forEach(t => t.stop());
-        streamRef.current = null;
-        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        // Mark as stopped FIRST — prevents any in-flight async startRecording from proceeding
+        stoppedRef.current = true;
+        isRecordingRef.current = false;
+
+        // Stop MediaRecorder
+        try {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                mediaRecorderRef.current.stop();
+            }
+        } catch (_) { }
+
+        // Stop all stream tracks (releases the mic)
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => { try { t.stop(); } catch (_) { } });
+            streamRef.current = null;
+        }
+
+        // Cancel visualizer
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
+
+        // Close audio context
         if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
             audioContextRef.current.close().catch(() => {});
+            audioContextRef.current = null;
         }
+
+        // Stop speech recognition
+        try { recognitionRef.current?.stop(); } catch (_) { }
+
         setAudioLevels(Array(15).fill(4));
         setIsRecording(false);
-        try { recognitionRef.current?.stop(); } catch (_) { }
     };
+
     const startRecording = async () => {
+        // Reset the stop guard — we're intentionally starting
+        stoppedRef.current = false;
         setTypedText('');
         setInterimText('');
         setPermissionError(false);
@@ -42,6 +71,13 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
         audioBlobRef.current = null;
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // CRITICAL: Check if stopAll was called while we were awaiting getUserMedia
+            if (stoppedRef.current) {
+                stream.getTracks().forEach(t => t.stop());
+                return;
+            }
+
             streamRef.current = stream;
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const analyser = audioCtx.createAnalyser();
@@ -53,7 +89,8 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
             const dataArray = new Uint8Array(analyser.frequencyBinCount);
             let lastUpdateTime = 0;
             const updateLevels = (timestamp) => {
-                if (timestamp - lastUpdateTime < 60) { // Update approx 16 times per second (~60ms) instead of 60
+                if (stoppedRef.current) return; // bail if stopped
+                if (timestamp - lastUpdateTime < 60) {
                     animationFrameRef.current = requestAnimationFrame(updateLevels);
                     return;
                 }
@@ -66,7 +103,6 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                 });
 
                 setAudioLevels(prev => {
-                    // Only update if at least one bar changed by more than 2px to avoid micro-renders
                     const changed = levels.some((v, i) => Math.abs(v - prev[i]) > 2);
                     return changed ? levels : prev;
                 });
@@ -78,10 +114,12 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
             mr.onstop = () => { audioBlobRef.current = new Blob(audioChunksRef.current, { type: 'audio/webm' }); };
             mr.start(250);
             mediaRecorderRef.current = mr;
+            isRecordingRef.current = true;
             setIsRecording(true);
             try { recognitionRef.current?.start(); } catch { }
         } catch (err) {
             console.error('Mic Access Failed:', err);
+            isRecordingRef.current = false;
             setIsRecording(false);
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message?.includes('denied')) {
                 setPermissionError(true);
@@ -104,25 +142,56 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
         if (isSubmitting) return;
         setIsSubmitting(true);
 
-        try { recognitionRef.current?.stop(); } catch (_) { }
+        // Kill everything immediately
         stopAll();
 
         // Give MediaRecorder a moment to finalize the onstop and blob creation
         const checkBlob = (attempts) => {
             const finalTranscript = (typedTextRef.current + interimTextRef.current).trim();
 
-            // If we have a blob OR we've exhausted wait attempts
             if (audioBlobRef.current || attempts <= 0) {
                 onSubmitAnswer(finalTranscript, audioBlobRef.current);
-                setIsSubmitting(false);
             } else {
                 setTimeout(() => checkBlob(attempts - 1), 60);
             }
         };
 
-        // Immediate check with faster backoff
         checkBlob(15);
     };
+
+    // Derive whether we should be recording from props
+    const shouldRecord = isTimerRunning && micEnabled;
+
+    useEffect(() => {
+        if (shouldRecord && !isRecordingRef.current) {
+            startRecording();
+        } else if (!shouldRecord && isRecordingRef.current) {
+            stopAll();
+        }
+    }, [shouldRecord]);
+
+    // Cleanup on unmount — ensures mic is released no matter what
+    useEffect(() => {
+        return () => {
+            stoppedRef.current = true;
+            isRecordingRef.current = false;
+            try {
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                    mediaRecorderRef.current.stop();
+                }
+            } catch (_) { }
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(t => { try { t.stop(); } catch (_) { } });
+                streamRef.current = null;
+            }
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+            if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+                audioContextRef.current.close().catch(() => {});
+            }
+            try { recognitionRef.current?.stop(); } catch (_) { }
+        };
+    }, []);
+
     useEffect(() => {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) return;
@@ -168,36 +237,12 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
         };
         checkBrave();
     }, []);
-    useEffect(() => {
-        isRecordingRef.current = isRecording;
-        if (!isRecording) {
-            try { recognitionRef.current?.stop(); } catch { }
-        }
-    }, [isRecording]);
-    useEffect(() => {
-        const sync = () => {
-            if (isTimerRunning) startRecording();
-            else stopAll();
-        };
-        sync();
-    }, [isTimerRunning]);
+    // isRecordingRef is now managed directly in startRecording() and stopAll()
     const hasShownToastRef = useRef(false);
 
     useEffect(() => {
         if (timer === 0 && !isTimerRunning && !permissionError) {
             if (!hasShownToastRef.current) {
-                toast('Time is over! Submitting response...', {
-                    icon: '⏱️',
-                    duration: 3000,
-                    style: {
-                        borderRadius: '16px',
-                        background: '#333',
-                        color: '#fff',
-                        maxWidth: '400px',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                    },
-                });
                 hasShownToastRef.current = true;
             }
             const id = setTimeout(handleSubmit, 1000);
@@ -245,13 +290,13 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 bg-indigo-50/50 px-2 sm:px-2.5 py-1 md:px-4 md:py-2 rounded-full border border-indigo-100/50">
                                 <div className="relative flex items-center justify-center w-1 sm:w-1.5 h-1 sm:h-1.5">
-                                    <div className={`w-full h-full rounded-full transition-all duration-300 ${isRecording ? 'bg-rose-500' : 'bg-slate-300'}`} />
+                                    <div className={`w-full h-full rounded-full transition-all duration-300 ${isRecording ? 'bg-rose-500' : !shouldRecord && isTimerRunning ? 'bg-amber-400' : 'bg-slate-300'}`} />
                                     {isRecording && (
                                         <div className="absolute inset-0 w-full h-full rounded-full bg-rose-500 animate-ping opacity-40" />
                                     )}
                                 </div>
-                                <span className={`text-[7px] sm:text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${isRecording ? 'text-indigo-900' : 'text-slate-400'}`}>
-                                    {isRecording ? 'Assessment Active' : 'System Ready'}
+                                <span className={`text-[7px] sm:text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${isRecording ? 'text-indigo-900' : !shouldRecord && isTimerRunning ? 'text-amber-600' : 'text-slate-400'}`}>
+                                    {isRecording ? 'Recording' : !shouldRecord && isTimerRunning ? 'Mic Paused' : 'Mic Off'}
                                 </span>
                             </div>
                         </div>

@@ -4,7 +4,7 @@ import QuestionBox from './QuestionBox';
 import LiveAnswerBox from './LiveAnswerBox';
 import PrepRing from './PrepRing';
 import AudioCheck from './AudioCheck';
-import { evaluateAnswer, generateReport } from '../../services/interviewApi';
+import { evaluateAnswer, generateReport, prefetchTts } from '../../services/interviewApi';
 const TIMER_BY_DIFFICULTY = { Easy: 45, Medium: 60, Hard: 90 };
 
 const InterviewRoom = ({ questions, jobRole, onComplete }) => {
@@ -18,6 +18,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const [systemError, setSystemError] = useState(null);
     const [micBlocked, setMicBlocked] = useState(false);
     const [prepState, setPrepState] = useState({ uiPhase: 'speaking', prepSeconds: 5, isSpeaking: false });
+    const [micEnabled, setMicEnabled] = useState(false);
     const isSubmittingRef = useRef(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -27,6 +28,13 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Pre-fetch TTS for the first question during the audio-check phase
+    useEffect(() => {
+        if (phase === 'audio-check' && questions[0]?.question) {
+            prefetchTts(questions[0].question, 'en-US-ChristopherNeural');
+        }
+    }, [phase]);
 
     const questionBoxRef = useRef(null);
     const currentQuestion = questions[currentIdx];
@@ -44,10 +52,14 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         }, 1000);
         return () => clearInterval(id);
     }, [isTimerRunning, timer]);
-    const handleTimerStart = useCallback(() => setIsTimerRunning(true), []);
+    const handleTimerStart = useCallback(() => {
+        setMicEnabled(true);
+        setIsTimerRunning(true);
+    }, []);
     const handleAnswerSubmit = useCallback(async (transcript, blob) => {
         isSubmittingRef.current = true;
         setIsTimerRunning(false);
+        setMicEnabled(false);
         setPhase('processing');
         setLastAnalysis(null);
         setLastEvaluation(null);
@@ -299,6 +311,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                         <LiveAnswerBox
                             key={currentIdx + "-desktop"}
                             isTimerRunning={isTimerRunning}
+                            micEnabled={micEnabled}
                             timer={timer}
                             maxTimer={TIMER_BY_DIFFICULTY[currentQuestion.difficulty] || 60}
                             onSubmitAnswer={handleAnswerSubmit}
@@ -389,6 +402,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                         <LiveAnswerBox
                             key={currentIdx + "-mobile"}
                             isTimerRunning={isTimerRunning}
+                            micEnabled={micEnabled}
                             timer={timer}
                             maxTimer={TIMER_BY_DIFFICULTY[currentQuestion.difficulty] || 60}
                             onSubmitAnswer={handleAnswerSubmit}

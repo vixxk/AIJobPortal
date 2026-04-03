@@ -137,23 +137,20 @@ const QuestionBox = React.forwardRef(({ questionText, onTimerStart, onStateChang
         setTtsReady(false);
 
         // Start TTS immediately — question stays hidden until audio.onplay fires
-        const speechTimeout = setTimeout(() => {
-            if (isMounted && !ctrl.signal.aborted) {
-                speak(questionText, ctrl.signal);
-            }
-        }, 100);
+        if (isMounted && !ctrl.signal.aborted) {
+            speak(questionText, ctrl.signal);
+        }
 
-        // Safety fallback: if TTS takes too long (>6s), reveal anyway
+        // Safety fallback: if TTS takes too long (>15s), reveal anyway
         const safetyTimer = setTimeout(() => {
             if (isMounted && !ctrl.signal.aborted) {
                 setTtsReady(true);
                 setIsBlurring(false);
             }
-        }, 6000);
+        }, 15000);
 
         return () => {
             isMounted = false;
-            clearTimeout(speechTimeout);
             clearTimeout(safetyTimer);
             ctrl.abort();
             speakControllerRef.current = null;

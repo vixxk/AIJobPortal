@@ -218,13 +218,32 @@ const analyzeAudio = async (audioBuffer, filename) => {
 };
 
 // ─── TTS: Text to Speech via edge-tts ────────────────────────────────────────
+const _ttsServerCache = new Map();
+const TTS_CACHE_MAX = 50;
+const TTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const speakText = async (text, voice = 'en-US-AriaNeural') => {
     if (!text || !text.trim()) throw new Error('Text cannot be empty');
+
+    const cacheKey = `${text}|${voice}`;
+    const cached = _ttsServerCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < TTS_CACHE_TTL) {
+        return cached.buf;
+    }
 
     const tts = new EdgeTTS(text, voice, { rate: '+0%', pitch: '+0Hz', volume: '+0%' });
     const result = await tts.synthesize();
     const arrayBuffer = await result.audio.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    const buf = Buffer.from(arrayBuffer);
+
+    // Evict oldest if at capacity
+    if (_ttsServerCache.size >= TTS_CACHE_MAX) {
+        const oldest = _ttsServerCache.keys().next().value;
+        _ttsServerCache.delete(oldest);
+    }
+    _ttsServerCache.set(cacheKey, { buf, ts: Date.now() });
+
+    return buf;
 };
 
 // ─── Interview: Generate Questions ───────────────────────────────────────────
