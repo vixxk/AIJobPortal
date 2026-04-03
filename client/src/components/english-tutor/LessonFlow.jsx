@@ -4,6 +4,7 @@ import { Volume2, X, RotateCcw, Loader2 } from 'lucide-react';
 import { getLesson, submitLessonTask, completeLesson } from '../../services/englishTutorApi';
 import { speakText } from '../../services/interviewApi';
 import LiveAnswerBox from '../interview/LiveAnswerBox';
+import AudioCheck from '../interview/AudioCheck';
 
 const ELENA_MESSAGES = {
     start: "Welcome to today's session! Let's dive into our topic and practice your spoken English.",
@@ -25,6 +26,7 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [taskScores, setTaskScores] = useState([]);
     const [showIntro, setShowIntro] = useState(true);
+    const [hasCheckedAudio, setHasCheckedAudio] = useState(false);
     const [micBlocked, setMicBlocked] = useState(false);
     const [isElenaSpeaking, setIsElenaSpeaking] = useState(false);
     const [isPreparingAudio, setIsPreparingAudio] = useState(false);
@@ -323,23 +325,31 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
 
             {!hasInteracted ? (
                 <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center p-3 md:p-8 text-center">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] shadow-xl border border-slate-100 max-w-sm w-full"
-                    >
-                        <div className="w-14 h-14 md:w-20 md:h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
-                            <span className="text-2xl md:text-4xl text-indigo-600">🎧</span>
-                        </div>
-                        <h2 className="text-lg md:text-2xl font-black text-slate-900 mb-1.5 md:mb-2">Ready to Speak?</h2>
-                        <p className="text-xs md:text-base text-slate-500 font-medium mb-5 md:mb-8 leading-relaxed">Elena is ready to start your level {level} lesson. Turn up your volume!</p>
-                        <button
-                            onClick={() => setHasInteracted(true)}
-                            className="w-full py-3.5 md:py-4 bg-indigo-600 hover:bg-slate-900 text-white rounded-xl md:rounded-2xl font-black transition-all shadow-lg shadow-indigo-200 active:scale-95"
+                    {!hasCheckedAudio ? (
+                        <AudioCheck 
+                            onConfirm={() => setHasCheckedAudio(true)} 
+                            setMicBlocked={setMicBlocked} 
+                            type="placement" 
+                        />
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] shadow-xl border border-slate-100 max-w-sm w-full"
                         >
-                            Start Lesson
-                        </button>
-                    </motion.div>
+                            <div className="w-14 h-14 md:w-20 md:h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+                                <span className="text-2xl md:text-4xl text-indigo-600">🎧</span>
+                            </div>
+                            <h2 className="text-lg md:text-2xl font-black text-slate-900 mb-1.5 md:mb-2">Ready to Speak?</h2>
+                            <p className="text-xs md:text-base text-slate-500 font-medium mb-5 md:mb-8 leading-relaxed">Elena is ready to start your level {level} lesson. Turn up your volume!</p>
+                            <button
+                                onClick={() => setHasInteracted(true)}
+                                className="w-full py-3.5 md:py-4 bg-indigo-600 hover:bg-slate-900 text-white rounded-xl md:rounded-2xl font-black transition-all shadow-lg shadow-indigo-200 active:scale-95"
+                            >
+                                Start Lesson
+                            </button>
+                        </motion.div>
+                    )}
                 </div>
             ) : (
                 <>
