@@ -161,7 +161,9 @@ const TutorDashboard = () => {
                         <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm">
                             <div className="flex items-center justify-between mb-8">
                                 <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest leading-none">Daily Targets</h2>
-                                <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-full">Reset in 4h</span>
+                                <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-full">
+                                    Reset in {tutorData?.hoursUntilReset || 24}h
+                                </span>
                             </div>
 
                             <div className="space-y-6">

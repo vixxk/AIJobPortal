@@ -89,6 +89,29 @@ const englishTutorSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+englishTutorSchema.methods.checkAndResetDailyTargets = async function() {
+  if (!this.lastActivityDate) return this;
+
+  const lastDate = new Date(this.lastActivityDate).setHours(0, 0, 0, 0);
+  const today = new Date().setHours(0, 0, 0, 0);
+
+  if (today > lastDate) {
+    this.dailyGoals.lessonCompleted = false;
+    this.dailyGoals.newWordsLearned = 0;
+    this.dailyGoals.speakingMinutes = 0;
+    
+    // Check if the daily target reset also affects the streak
+    const diffTime = today - lastDate;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 1) {
+      this.streak = 0;
+    }
+  }
+  
+  return this;
+};
+
 const EnglishTutor = mongoose.model('EnglishTutor', englishTutorSchema);
 
 module.exports = EnglishTutor;

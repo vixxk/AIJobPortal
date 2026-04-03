@@ -20,10 +20,21 @@ exports.getDashboard = catchAsync(async (req, res, next) => {
     });
   }
 
+  // Check and reset daily targets if it's a new day
+  await tutorData.checkAndResetDailyTargets();
+  await tutorData.save();
+
   const dashboardData = tutorData.toObject();
   const currentLevel = tutorData.currentLevel || 1;
   dashboardData.lessonsInCurrentLevel = (tutorData.lessonsProgress || []).filter(l => l.level === currentLevel).length;
   dashboardData.lessonsNeededForUpgrade = 5;
+
+  // Add hours until reset (midnight)
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0); 
+  const hoursUntilReset = Math.ceil((midnight - now) / (1000 * 60 * 60));
+  dashboardData.hoursUntilReset = hoursUntilReset;
 
   res.status(200).json({
     status: 'success',
@@ -112,14 +123,9 @@ exports.submitSpeakingTest = catchAsync(async (req, res, next) => {
 exports.getLesson = catchAsync(async (req, res, next) => {
   const tutorData = await EnglishTutor.findOne({ user: req.user.id });
 
-  if (tutorData && tutorData.lastActivityDate) {
-    const lastDate = new Date(tutorData.lastActivityDate).setHours(0,0,0,0);
-    const today = new Date().setHours(0,0,0,0);
-    if (today > lastDate) {
-        tutorData.dailyGoals.lessonCompleted = false;
-        tutorData.dailyGoals.newWordsLearned = 0;
-        tutorData.dailyGoals.speakingMinutes = 0;
-    }
+  if (tutorData) {
+    await tutorData.checkAndResetDailyTargets();
+    await tutorData.save();
   }
 
   const level = req.query.level ? parseInt(req.query.level) : (tutorData ? tutorData.currentLevel : 1);
