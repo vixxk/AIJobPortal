@@ -219,7 +219,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
         </div>
     );
     return (
-        <div className="flex flex-col w-full min-h-full bg-[#fafbff] text-slate-800 font-sans relative">
+        <div className="flex flex-col w-full min-h-full bg-[#fafbff] text-slate-800 font-sans relative overflow-hidden select-none touch-none">
             { }
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                 <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-blue-100/40 rounded-full blur-[120px] animate-pulse" />
@@ -227,38 +227,39 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                 <div className="absolute -bottom-[10%] left-[20%] w-[60%] h-[40%] bg-blue-50/60 rounded-full blur-[120px]" />
             </div>
             { }
-            <header className="shrink-0 bg-white/40 backdrop-blur-xl border-b border-white/40 px-6 sm:px-12 py-5 flex items-center justify-between z-50 shadow-[0_1px_0_0_rgba(0,0,0,0.03)]">
-                <div className="flex items-center gap-4">
-                    <div className="hidden sm:flex w-10 h-10 bg-blue-600 rounded-xl items-center justify-center shadow-lg shadow-blue-100">
-                        <span className="text-white font-black text-xs">AI</span>
+            <header className="shrink-0 bg-white/60 backdrop-blur-2xl border-b border-indigo-50/50 px-4 sm:px-12 py-3 sm:py-5 flex items-center justify-between z-50 shadow-sm">
+                <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-xl items-center justify-center shadow-lg shadow-indigo-100 ring-2 ring-white/50">
+                        <span className="text-white font-black text-[10px] sm:text-xs">AI</span>
                     </div>
                     <div>
-                        <span className="text-[10px] uppercase tracking-[0.3em] font-black text-blue-500/60 mb-0.5 block">Interview active</span>
-                        <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">{jobRole || 'Professional Interview'}</h2>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.2em] font-black text-slate-400">Live Session</span>
+                        </div>
+                        <h2 className="text-sm sm:text-lg font-black text-slate-900 tracking-tight leading-none">{jobRole || 'Analysis Session'}</h2>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 sm:gap-6">
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <div className="hidden xs:flex flex-col items-end">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-black text-blue-600 tabular-nums">{currentIdx + 1}<span className="text-slate-200"> / {questions.length}</span></span>
-                            </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-end mr-1 sm:mr-2">
+                        <span className="text-[7px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest mb-0.5">Progress</span>
+                        <div className="text-[10px] sm:text-xs font-black text-indigo-600 tabular-nums">
+                            {currentIdx + 1}<span className="text-slate-300 font-bold mx-0.5">/</span>{questions.length}
                         </div>
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-4 border-slate-50 flex items-center justify-center relative shadow-inner">
-                            <svg className="w-10 h-10 sm:w-12 sm:h-12 absolute -rotate-90" viewBox="0 0 40 40">
-                                <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" className="text-slate-50" strokeWidth="3" />
-                                <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" className="text-blue-500" strokeWidth="3"
-                                    strokeDasharray={113.1} strokeDashoffset={113.1 - (113.1 * (currentIdx + 1)) / questions.length} strokeLinecap="round" />
-                            </svg>
-                            <span className="relative text-[9px] sm:text-[10px] font-black text-slate-800">{Math.round(((currentIdx + 1) / questions.length) * 100)}%</span>
-                        </div>
+                    </div>
+                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center relative shadow-sm border border-slate-50">
+                        <svg className="w-9 h-9 sm:w-12 sm:h-12 absolute -rotate-90" viewBox="0 0 40 40">
+                            <circle cx="20" cy="20" r="18" fill="none" stroke="#f8fafc" strokeWidth="2.5" />
+                            <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" className="text-indigo-500" strokeWidth="2.5"
+                                strokeDasharray={113.1} strokeDashoffset={113.1 - (113.1 * (currentIdx + 1)) / questions.length} strokeLinecap="round" />
+                        </svg>
+                        <span className="relative text-[8px] sm:text-[9px] font-black text-slate-600">{Math.round(((currentIdx + 1) / questions.length) * 100)}%</span>
                     </div>
                 </div>
             </header>
             { }
-            <main className="flex-grow flex flex-col items-center relative overflow-y-auto z-10 px-4 sm:px-6 lg:px-12 py-6 lg:py-12">
-                <div className={`w-full max-w-[1600px] flex flex-col lg:grid lg:grid-cols-[280px_1fr_320px] gap-8 items-start transition-all duration-1000 ${(timer === 0 && phase === 'answering') ? 'blur-2xl pointer-events-none' : 'blur-0'}`}>
+            <main className="flex-grow flex flex-col items-center relative overflow-y-auto overflow-x-hidden z-10 px-3 sm:px-6 lg:px-12 py-4 lg:py-12 no-scrollbar">
+                <div className={`w-full max-w-[1600px] flex flex-col lg:grid lg:grid-cols-[280px_1fr_320px] gap-4 sm:gap-8 items-start transition-all duration-1000 ${(timer === 0 && phase === 'answering') ? 'blur-2xl pointer-events-none' : 'blur-0'}`}>
                     
                     {/* Left Sidebar (Desktop) */}
                     <div className="hidden lg:flex flex-col gap-6 sticky top-0">
@@ -312,7 +313,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                                 onStateChange={setPrepState}
                             />
                         </div>
-                        <div className="lg:hidden h-40 w-full" /> {/* Spacer for fixed mobile footer */}
+                        <div className="lg:hidden h-32 sm:h-40 w-full" /> {/* Spacer for fixed mobile footer */}
                     </div>
 
                     {/* Right Sidebar (Desktop) */}
@@ -378,8 +379,8 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                     </div>
                 </div>
 
-                <footer className="fixed bottom-0 sm:bottom-10 left-0 right-0 px-4 pb-6 sm:pb-0 z-50 lg:hidden flex justify-center pointer-events-none">
-                    <div className="w-full sm:min-w-[400px] mx-auto animate-in slide-in-from-bottom duration-1000 pointer-events-auto">
+                <footer className="fixed bottom-0 sm:bottom-6 inset-x-0 px-2 sm:px-4 pb-4 sm:pb-0 z-50 lg:hidden flex justify-center pointer-events-none no-scrollbar overflow-hidden">
+                    <div className="w-full max-w-[420px] mx-auto animate-in slide-in-from-bottom duration-1000 pointer-events-auto">
                         <LiveAnswerBox
                             key={currentIdx + "-mobile"}
                             isTimerRunning={isTimerRunning}

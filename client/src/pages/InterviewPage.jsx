@@ -198,20 +198,20 @@ const InterviewPage = () => {
         );
     }
     return (
-        <div className="min-h-full min-h-[500px] w-full bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-            <div className="bg-white/80 backdrop-blur-xl p-6 sm:p-8 rounded-3xl shadow-2xl max-w-lg w-full border border-white/60">
+        <div className="min-h-full min-h-[500px] w-full bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-3 sm:p-4">
+            <div className="bg-white/80 backdrop-blur-xl p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-white/60">
                 { }
-                <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center mb-6 sm:mb-8">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg shadow-blue-200">
+                        <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-2" />
                         </svg>
                     </div>
-                    <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-1">
+                    <h1 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-1">
                         AI Mock Interview
                     </h1>
-                    <p className="text-gray-500 text-sm">Practice with an intelligent AI recruiter.
-                        <br></br> Get real-time feedback on your answers.</p>
+                    <p className="text-gray-500 text-xs sm:text-sm">Practice with an intelligent AI recruiter.
+                        <br className="hidden sm:block"></br> Get real-time feedback on your answers.</p>
                 </div>
                 <form onSubmit={handleStart} className="space-y-5">
                     <div className="relative">

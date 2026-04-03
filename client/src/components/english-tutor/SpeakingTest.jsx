@@ -71,6 +71,7 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
     const [isProcessingTask, setIsProcessingTask] = useState(false);
     const [hasInteracted, setHasInteracted] = useState(false);
     const [audioCache, setAudioCache] = useState({});
+    const [micBlocked, setMicBlocked] = useState(false);
     const lastSpokenTaskRef = useRef(null);
     const speechSequenceRef = useRef(0);
 

@@ -37,8 +37,8 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
                 : { label: 'Needs Work', emoji: '💪', color: 'text-red-600', bg: 'from-red-50 to-rose-50', border: 'border-red-200' };
 
     return (
-        <div className="w-full bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col items-center justify-start p-3 sm:p-8">
-            <div className="w-full max-w-3xl space-y-4 sm:space-y-6 pb-20 sm:pb-0">
+        <div className="w-full bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col items-center justify-start p-2 sm:p-8">
+            <div className="w-full max-w-3xl space-y-3 sm:space-y-6 pb-20 sm:pb-0">
 
                 <div className={`bg-gradient-to-br ${grade.bg} border ${grade.border} rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center shadow-lg relative overflow-hidden`}>
                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
@@ -56,9 +56,9 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-                    <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 sm:mb-5 text-center">Score Breakdown</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 justify-items-center">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-6">
+                    <h2 className="text-[10px] sm:text-xs sm:text-sm font-bold text-gray-400 sm:text-gray-500 uppercase tracking-widest mb-3 sm:mb-5 text-center">Score Breakdown</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 justify-items-center">
                         <ScoreRing score={overall_score} label="Overall" color="#4f46e5" />
                         <ScoreRing score={confidence_score} label="Confidence" color="#059669" />
                         <ScoreRing score={fluency_score} label="Fluency" color="#7c3aed" />
@@ -210,16 +210,16 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
                             {report.answers.map((ans, idx) => (
                                 <div key={idx} className="group transition-all">
                                     <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-[10px] sm:rounded-xl bg-slate-900 text-white flex items-center justify-center text-[10px] sm:text-xs font-black shadow-lg shadow-slate-200 shrink-0">
+                                        <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-slate-900 text-white flex items-center justify-center text-[9px] sm:text-xs font-black shadow-lg shadow-slate-200 shrink-0">
                                             Q{idx + 1}
                                         </span>
-                                        <h3 className="text-xs sm:text-sm font-bold text-slate-800 leading-tight">
+                                        <h3 className="text-[11px] sm:text-sm font-bold text-slate-800 leading-tight">
                                             {ans.question}
                                         </h3>
                                     </div>
-                                    <div className="relative pl-9 sm:pl-11">
-                                        <div className="absolute left-[13px] sm:left-[15px] top-0 bottom-0 w-[2px] bg-slate-50 group-last:bg-transparent" />
-                                        <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border ${ans.skipped ? 'bg-amber-50 border-amber-100 italic text-amber-700' : 'bg-slate-50 border-slate-100 text-slate-700'} text-xs sm:text-sm leading-relaxed shadow-sm`}>
+                                    <div className="relative pl-7 sm:pl-11">
+                                        <div className="absolute left-[11px] sm:left-[15px] top-0 bottom-0 w-[1.5px] bg-slate-50 group-last:bg-transparent" />
+                                        <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl border ${ans.skipped ? 'bg-amber-50 border-amber-100 italic text-amber-700' : 'bg-slate-50 border-slate-100 text-slate-700'} text-[11px] sm:text-sm leading-relaxed shadow-sm`}>
                                             <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-slate-400">
                                                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                                                 {ans.skipped ? 'Skipped Question' : 'Your Response'}

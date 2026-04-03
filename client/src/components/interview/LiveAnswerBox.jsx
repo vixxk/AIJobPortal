@@ -210,18 +210,18 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
     const timerPct = maxTimer ? (timer / maxTimer) * 100 : 100;
 
     return (
-        <div className="flex flex-col gap-3 md:gap-6 max-w-2xl mx-auto w-full px-2">
-            <div className="relative bg-white rounded-[2rem] md:rounded-[3rem] p-4 md:p-8 border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-500">
+        <div className="flex flex-col gap-2 md:gap-6 max-w-2xl mx-auto w-full px-1 sm:px-2">
+            <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] p-2.5 sm:p-5 md:p-8 border border-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] overflow-x-hidden transition-all duration-500">
 
-                <div className="flex flex-col items-center gap-3 md:gap-8 relative z-10">
-                    <div className="w-full flex flex-col items-center gap-2 md:gap-4">
-                        <div className="h-12 md:h-16 flex items-center justify-center gap-1 px-4">
+                <div className="flex flex-col items-center gap-2 sm:gap-4 md:gap-8 relative z-10">
+                    <div className="w-full flex flex-col items-center gap-1.5 sm:gap-2 md:gap-4">
+                        <div className="h-8 sm:h-12 md:h-16 flex items-center justify-center gap-1 px-4">
                             {audioLevels.map((h, i) => (
                                 <motion.div
                                     key={i}
                                     style={{ height: `${h}px` }}
-                                    className="w-1 md:w-1.5 rounded-full bg-gradient-to-t from-indigo-500 to-purple-500 opacity-80"
-                                    animate={{ height: isRecording ? Math.max(4, h) : 4 }}
+                                    className="w-0.75 sm:w-1 md:w-1.5 rounded-full bg-gradient-to-t from-indigo-500 to-violet-600 opacity-80"
+                                    animate={{ height: isRecording ? Math.max(3, h) : 3 }}
                                 />
                             ))}
                         </div>
@@ -232,9 +232,9 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                                     initial={{ opacity: 0, y: 5 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0 }}
-                                    className="absolute top-16 md:top-24 left-0 right-0 px-4 md:px-8 text-center pointer-events-none"
+                                    className="absolute top-12 sm:top-16 md:top-24 left-0 right-0 px-4 md:px-8 text-center pointer-events-none"
                                 >
-                                    <p className="text-xs md:text-base font-medium text-slate-500 leading-relaxed max-w-md mx-auto line-clamp-1 italic">
+                                    <p className="text-[9px] sm:text-xs md:text-base font-medium text-slate-500 leading-relaxed max-w-xs sm:max-w-md mx-auto line-clamp-1 italic">
                                         {typedText}
                                         <span className="text-indigo-400 opacity-60">{interimText}</span>
                                     </p>
@@ -243,16 +243,15 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                         </AnimatePresence>
 
                         <div className="flex flex-col items-center">
-                            <span className="text-[7px] md:text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-1">Audio Capture</span>
-                            <div className="flex items-center gap-2 md:gap-3 bg-slate-50/50 px-2.5 py-1 md:px-4 md:py-2 rounded-lg md:rounded-xl border border-slate-100/50">
-                                <div className="relative flex items-center justify-center w-1.5 h-1.5">
+                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 bg-indigo-50/50 px-2 sm:px-2.5 py-1 md:px-4 md:py-2 rounded-full border border-indigo-100/50">
+                                <div className="relative flex items-center justify-center w-1 sm:w-1.5 h-1 sm:h-1.5">
                                     <div className={`w-full h-full rounded-full transition-all duration-300 ${isRecording ? 'bg-rose-500' : 'bg-slate-300'}`} />
                                     {isRecording && (
                                         <div className="absolute inset-0 w-full h-full rounded-full bg-rose-500 animate-ping opacity-40" />
                                     )}
                                 </div>
-                                <span className={`text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-colors duration-300 ${isRecording ? 'text-slate-900' : 'text-slate-400'}`}>
-                                    {isRecording ? 'Listening...' : 'Ready'}
+                                <span className={`text-[7px] sm:text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${isRecording ? 'text-indigo-900' : 'text-slate-400'}`}>
+                                    {isRecording ? 'Interrogation Active' : 'System Ready'}
                                 </span>
                             </div>
                         </div>
@@ -260,17 +259,17 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
 
                     {isTimerRunning && (
                         <div className="w-full max-w-sm px-2">
-                            <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Progress</span>
-                                <span className="text-[10px] font-black text-slate-900 tabular-nums">
+                            <div className="flex items-center justify-between mb-1 px-0.5">
+                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Efficiency Window</span>
+                                <span className={`text-[10px] font-black tabular-nums ${timer <= 10 ? 'text-rose-500 animate-pulse' : 'text-indigo-500'}`}>
                                     {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
                                 </span>
                             </div>
-                            <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                            <div className="h-1 bg-slate-50 rounded-full overflow-hidden border border-slate-100/50 shadow-inner">
                                 <motion.div
                                     initial={{ width: '100%' }}
                                     animate={{ width: `${timerPct}%` }}
-                                    className={`h-full rounded-full transition-colors duration-1000 ${timer <= 10 ? 'bg-rose-500' : 'bg-indigo-600'}`}
+                                    className={`h-full rounded-full transition-colors duration-1000 ${timer <= 10 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-gradient-to-r from-indigo-500 to-indigo-600'}`}
                                 />
                             </div>
                         </div>
@@ -280,23 +279,23 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                         <button
                             onClick={handleSubmit}
                             disabled={isSubmitting || (!isRecording && !typedText.trim())}
-                            className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 md:py-5 rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95 ${isSubmitting || (!isRecording && !typedText.trim())
-                                ? 'bg-slate-100 text-slate-300 cursor-not-allowed border border-slate-200'
-                                : 'bg-indigo-600 text-white shadow-indigo-100 hover:bg-slate-900'
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-2.5 sm:py-3 md:py-5 rounded-xl md:rounded-[2rem] font-bold text-[10px] md:text-sm uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 ${isSubmitting || (!isRecording && !typedText.trim())
+                                ? 'bg-slate-50 text-slate-300 border border-slate-100'
+                                : 'bg-gradient-to-r from-indigo-600 to-violet-700 text-white shadow-indigo-200/50 hover:shadow-indigo-300/50'
                                 }`}
                         >
-                            <span>{isSubmitting ? 'Syncing...' : 'Submit Answer'}</span>
+                            <span>{isSubmitting ? 'Processing' : 'Commit'}</span>
                         </button>
 
                         {onEndInterview && (
                             <button
                                 onClick={() => { stopAll(); onEndInterview?.(); }}
-                                className={`flex items-center justify-center gap-2 px-4 py-3.5 md:px-6 md:py-5 bg-white border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl md:rounded-[2rem] transition-all shadow-sm shrink-0 ${layout === 'sidebar' ? 'w-full' : 'w-auto'}`}
-                                title="End Session"
+                                className={`flex items-center justify-center gap-2 w-12 h-12 md:w-auto md:h-auto md:px-6 md:py-5 bg-white border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl md:rounded-[2rem] transition-all shadow-sm shrink-0`}
+                                title="Terminate Early"
                                 type="button"
                             >
-                                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
-                                <span className={layout === 'sidebar' ? 'inline' : 'hidden md:inline'}>End Session</span>
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                <span className={`text-[10px] md:text-sm font-black uppercase tracking-widest hidden md:inline`}>End</span>
                             </button>
                         )}
                     </div>

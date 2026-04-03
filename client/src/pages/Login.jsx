@@ -92,6 +92,7 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [otpTimer, setOtpTimer] = useState(0);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [isRegistrationFlow, setIsRegistrationFlow] = useState(false);
     const { login, loginWithGoogle, sendOTP, verifyOTP, user } = useAuth();
     const navigate = useNavigate();
@@ -129,6 +130,14 @@ const Login = () => {
         const t = setInterval(() => setOtpTimer(p => p - 1), 1000);
         return () => clearInterval(t);
     }, [otpTimer]);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
     const afterAuth = (userData, isRegistration) => {
         if (userData.needsRole) {
             navigate('/select-role', { state: { isRegistration }, replace: true });
@@ -220,8 +229,8 @@ const Login = () => {
     };
     return (
         <>
-
-            <div className="hidden md:flex min-h-screen overflow-hidden">
+            {!isMobile ? (
+                <div className="flex min-h-screen overflow-hidden animate-in fade-in duration-500">
 
                 <div
                     className="hidden lg:flex w-[48%] xl:w-[52%] flex-col relative overflow-hidden"
@@ -455,9 +464,9 @@ const Login = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="md:hidden w-full min-h-[100dvh] bg-white flex flex-col font-sans relative overflow-hidden">
+                </div>
+            ) : (
+                <div className="w-full min-h-[100dvh] bg-white flex flex-col font-sans relative overflow-hidden animate-in fade-in duration-500">
 
                 <div className="pt-6 pb-0 px-6 flex items-center">
                     <button
@@ -648,7 +657,8 @@ const Login = () => {
                         </div>
                     </div>
                 )}
-            </div>
+                </div>
+            )}
         </>
     );
 };
