@@ -34,14 +34,15 @@ router.post('/optimize-summary', async (req, res) => {
         const { text } = req.body;
         if (!text || text.trim().length < 10) return res.status(400).json({ success: false, message: 'Text too short' });
         
-        const prompt = `You are an expert ATS resume writer. Rewrite the following career objective into a highly professional, ATS-optimized 2-3 sentence paragraph.
+        const prompt = `You are an expert ATS resume writer. Rewrite the following career objective into a highly professional, ATS-optimized 1-2 sentence paragraph.
 
 Rules:
-1. Keep it concise, confident, and results-oriented.
-2. Naturally weave in relevant technical keywords and domain expertise for ATS parsing.
-3. Do NOT use personal pronouns (I, my, me). Use third-person or implied subject.
-4. Focus on years of experience, core competencies, and value proposition.
-5. Output ONLY the raw paragraph text. No quotes, no intro text, no bullet points, no markdown.
+1. Keep it extremely concise, confident, and impact-oriented.
+2. Target exactly 1-2 powerful sentences (no more).
+3. Naturally weave in 3-5 critical technical keywords for ATS parsing.
+4. Do NOT use personal pronouns (I, my, me). Use third-person or implied subject.
+5. Focus on the value proposition and core competencies early.
+6. Output ONLY the raw paragraph text. No quotes, no intro text, no bullet points, no markdown.
 
 Raw Summary:
 "${text}"`;
@@ -65,14 +66,14 @@ router.post('/optimize-experience', async (req, res) => {
 Rewrite the following raw ${isProject ? 'project' : 'work experience'} description into highly professional, ATS-optimized bullet points.
 
 Rules:
-1. Write exactly 3-5 bullet points (no more, no less).
-2. Start every bullet with a strong, unique action verb (e.g., Architected, Spearheaded, Optimized, Implemented, Engineered). Never repeat the same verb.
-3. Each bullet MUST follow the pattern: Action Verb + What you did + Technology/Method used + Quantifiable result or impact.
-4. Include specific technologies, frameworks, and tools mentioned in the raw text.
-5. Add realistic, plausible metrics where possible (e.g., "reducing load time by 40%", "serving 10K+ daily users", "processing 1M+ records").
-6. Do NOT use personal pronouns (I, my, me, we, our).
-7. Keep each bullet to 1-2 lines maximum.
-8. Output ONLY the bullet points, each on a new line starting with "•". No extra text, no numbering, no markdown formatting.
+1. Write 3-4 punchy bullet points (strictly one line each).
+2. Start every bullet with a strong, diverse action verb. Never repeat verbs.
+3. Prioritize IMPACT and RESULTS: Lead with the achievement or consequence where possible.
+4. Follow pattern: Action Verb + Key Result + How it was achieved (stack/method).
+5. Add realistic, plausible metrics (e.g., "improving performance by 30%", "scaling to 5K users") to anchor the impact.
+6. No personal pronouns.
+7. Omit filler words, "responsible for", and passive phrases.
+8. Output ONLY the bullet points, each on a new line starting with "•". No extra text.
 
 Raw ${isProject ? 'Project' : 'Experience'} Description:
 "${text}"`;
@@ -102,10 +103,11 @@ router.post('/optimize', async (req, res) => {
             const prompt = `You are an expert ATS resume writer.
 Rewrite the following raw job experience into 3-5 professional, ATS-optimized bullet points.
 Rules:
-1. Start every bullet with a unique, strong action verb.
-2. Follow pattern: Action Verb + Task + Technology + Quantifiable Impact.
-3. No personal pronouns.
-4. Output ONLY bullet points starting with "•", one per line. No extra text.
+1. Write 2-4 extremely concise, impact-focused bullet points (strictly one line each).
+2. Start with a unique, powerful action verb and lead with a quantifiable result.
+3. Use a "Result-first" logic: Action Verb + Achievement + Method/Tech.
+4. No personal pronouns. No filler words.
+5. Output ONLY bullet points starting with "•", one per line.
 
 Raw Experience:
 "${exp.description}"`;
@@ -120,9 +122,9 @@ Raw Experience:
             const prompt = `You are an expert ATS resume writer.
 Rewrite the following raw project description into 3-5 professional, ATS-optimized bullet points.
 Rules:
-1. Start every bullet with a unique, strong action verb.
-2. Emphasize technologies used and technical challenges solved.
-3. Add quantifiable metrics where plausible.
+1. Write 2-4 extremely concise, impact-focused bullet points (strictly one line each).
+2. Emphasize the quantifiable result or the scale of the technical challenge solved.
+3. Lead with impact: Action Verb + Result + Tech stack.
 4. No personal pronouns.
 5. Output ONLY bullet points starting with "•", one per line. No extra text.
 

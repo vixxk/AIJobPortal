@@ -251,7 +251,7 @@ const LiveAnswerBox = ({ isTimerRunning, timer, maxTimer, onSubmitAnswer, onEndI
                                     )}
                                 </div>
                                 <span className={`text-[7px] sm:text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-300 ${isRecording ? 'text-indigo-900' : 'text-slate-400'}`}>
-                                    {isRecording ? 'Interrogation Active' : 'System Ready'}
+                                    {isRecording ? 'Assessment Active' : 'System Ready'}
                                 </span>
                             </div>
                         </div>

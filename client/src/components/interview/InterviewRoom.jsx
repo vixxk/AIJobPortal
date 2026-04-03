@@ -1,9 +1,181 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import QuestionBox from './QuestionBox';
 import LiveAnswerBox from './LiveAnswerBox';
 import PrepRing from './PrepRing';
 import { evaluateAnswer, generateReport } from '../../services/interviewApi';
 const TIMER_BY_DIFFICULTY = { Easy: 45, Medium: 60, Hard: 90 };
+
+const AudioCheck = ({ onConfirm, setMicBlocked }) => {
+    const [audioLevels, setAudioLevels] = useState(Array(15).fill(4));
+    const [status, setStatus] = useState('ready'); // ready, listening, success, error
+    const streamRef = useRef(null);
+    const audioCtxRef = useRef(null);
+    const analyserRef = useRef(null);
+    const animationRef = useRef(null);
+
+    const startCheck = async () => {
+        try {
+            setStatus('listening');
+            // First check permission status if API is available
+            if (navigator.permissions && navigator.permissions.query) {
+                const status = await navigator.permissions.query({ name: 'microphone' });
+                if (status.state === 'denied') {
+                    throw new Error('Permission denied');
+                }
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = ctx.createAnalyser();
+            const source = ctx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 64;
+            audioCtxRef.current = ctx;
+            analyserRef.current = analyser;
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const update = () => {
+                analyser.getByteFrequencyData(dataArray);
+                const levels = Array.from({ length: 15 }, (_, i) => {
+                    const val = dataArray[i * 2] || 0;
+                    if (val > 40) {
+                        setStatus('success');
+                    }
+                    return Math.max(4, (val / 255) * 60);
+                });
+                setAudioLevels(levels);
+                animationRef.current = requestAnimationFrame(update);
+            };
+            animationRef.current = requestAnimationFrame(update);
+        } catch (err) {
+            console.error('Audio Check Failed:', err);
+            setStatus('error');
+            setMicBlocked(true);
+        }
+    };
+
+    useEffect(() => {
+        // Check if permission is already denied on mount
+        const checkPermission = async () => {
+            try {
+                if (navigator.permissions && navigator.permissions.query) {
+                    const status = await navigator.permissions.query({ name: 'microphone' });
+                    if (status.state === 'denied') {
+                        setStatus('error');
+                    }
+                }
+            } catch (e) {}
+        };
+        checkPermission();
+
+        return () => {
+            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+            if (audioCtxRef.current) audioCtxRef.current.close();
+            if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+        };
+    }, []);
+
+    return (
+        <div className="flex-grow flex items-center justify-center p-4">
+            <div className="bg-white/70 backdrop-blur-3xl p-10 sm:p-14 rounded-[3rem] border border-white shadow-[0_30px_100px_-10px_rgba(0,0,0,0.06)] text-center max-w-lg w-full relative overflow-hidden group">
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${status === 'success' ? 'from-emerald-400 to-teal-500' : 'from-blue-400 to-indigo-500'}`} />
+                
+                <div className="mb-10 relative">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-blue-100/50 border border-blue-50 relative z-10 transition-all duration-500">
+                        {status === 'success' ? (
+                            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center border border-emerald-100">
+                                    <svg className="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <div className="flex items-center gap-1">
+                                {audioLevels.map((h, i) => (
+                                    <motion.div
+                                        key={i}
+                                        animate={{ height: h }}
+                                        className={`w-1.5 rounded-full ${status === 'listening' ? 'bg-gradient-to-t from-blue-500 to-indigo-400' : 'bg-slate-100'}`}
+                                        style={{ height: '4px' }}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4 tracking-tighter">
+                    {status === 'success' ? 'Check Successful!' : 'Audio System Check'}
+                </h2>
+                <p className="text-slate-500 text-sm mb-10 leading-relaxed px-4">
+                    {status === 'success' 
+                        ? 'Your microphone is working perfectly. You are ready to start your interview.'
+                        : status === 'listening'
+                            ? 'Now please say something like "Test" or "Check" clearly.'
+                            : 'We need to verify your microphone is working before the interview begins.'
+                    }
+                </p>
+
+                <div className="flex flex-col gap-4">
+                    {status === 'ready' && (
+                        <button
+                            onClick={startCheck}
+                            className="group relative inline-flex justify-center items-center px-10 py-4 bg-blue-600 text-white font-black text-xs rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] uppercase tracking-[0.2em]"
+                        >
+                            <span className="relative z-10">Test Microphone</span>
+                        </button>
+                    )}
+
+                    {status === 'listening' && (
+                        <div className="py-4 px-6 bg-blue-50 rounded-2xl border border-blue-100 text-blue-600 font-black text-[10px] uppercase tracking-[0.3em] animate-pulse">
+                            Listening for input...
+                        </div>
+                    )}
+
+                    {status === 'success' && (
+                        <button
+                            onClick={onConfirm}
+                            className="group relative inline-flex justify-center items-center px-10 py-4 bg-slate-900 text-white font-black text-xs rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] uppercase tracking-[0.2em]"
+                        >
+                            <span className="relative z-10">Enter Interview Room</span>
+                        </button>
+                    )}
+                    
+                    {status === 'error' && (
+                        <div className="space-y-6 pt-2">
+                             <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 text-left">
+                                <div className="flex gap-3 items-start mb-3">
+                                    <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                                        <svg className="w-4 h-4 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 016 0v2H7V7z" /></svg>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-rose-900 font-black text-[11px] uppercase tracking-wider mb-1">How to enable:</h4>
+                                        <p className="text-rose-600/80 text-[11px] leading-relaxed font-medium">
+                                            1. Click the <span className="font-bold">🔒 Lock Icon</span> in the address bar.<br/>
+                                            2. Find <span className="font-bold">Microphone</span> and toggle it <span className="font-bold text-rose-700">ON</span>.<br/>
+                                            3. Refresh this page to continue.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                <button onClick={() => window.location.reload()} className="w-full py-4 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                    I've enabled it - Refresh Page
+                                </button>
+                                <button onClick={() => setStatus('ready')} className="text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-slate-600 transition-colors">
+                                    Try again anyway
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const [currentIdx, setCurrentIdx] = useState(0);
     const [timer, setTimer] = useState(TIMER_BY_DIFFICULTY[questions[0]?.difficulty] || 60);
@@ -148,6 +320,8 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
             </div>
         </div>
     );
+
+    if (phase === 'audio-check') return <AudioCheck onConfirm={() => setPhase('answering')} setMicBlocked={setMicBlocked} />;
     if (phase === 'ready') return (
         <div className="flex-grow flex items-center justify-center p-4">
             <div className="bg-white/60 backdrop-blur-3xl p-10 sm:p-14 rounded-[3rem] border border-white shadow-[0_30px_100px_-10px_rgba(0,0,0,0.06)] text-center max-w-lg w-full relative overflow-hidden group">
@@ -162,7 +336,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                 </div>
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 rounded-full text-blue-600 mb-6 border border-blue-100">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Live Session</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">AI-Powered session</span>
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4 tracking-tighter leading-none">Ready for your interview?</h2>
                 <div className="space-y-1 mb-10 text-center">
@@ -170,7 +344,7 @@ const InterviewRoom = ({ questions, jobRole, onComplete }) => {
                     <p className="text-blue-600 text-lg font-black tracking-tighter italic">{jobRole || 'General Assessment'}</p>
                 </div>
                 <button
-                    onClick={() => setPhase('answering')}
+                    onClick={() => setPhase('audio-check')}
                     className="group relative inline-flex justify-center items-center px-10 py-3.5 bg-slate-900 text-white font-black text-xs rounded-xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] uppercase tracking-[0.2em]"
                 >
                     <span className="relative z-10">Start Session</span>
