@@ -3,13 +3,20 @@ const AppError = require('../../utils/appError');
 const aiService = require('../../services/ai.service');
 
 exports.startInterview = catchAsync(async (req, res, next) => {
-    const { job_role, interview_type } = req.body;
+    const { job_role, interview_type, difficulty } = req.body;
 
     let resumeText = '';
     if (req.file) {
         try {
-            const pdfParse = require('pdf-parse');
-            const data = await pdfParse(req.file.buffer);
+            const pdf = require('pdf-parse');
+            let data;
+            if (typeof pdf === 'function') {
+                data = await pdf(req.file.buffer);
+            } else {
+                const parser = new pdf.PDFParse({ data: req.file.buffer });
+                data = await parser.getText();
+                await parser.destroy().catch(() => {});
+            }
             resumeText = data.text || '';
             console.log(`[Interview] Extracted ${resumeText.length} chars from resume: ${req.file.originalname}`);
         } catch (err) {
@@ -20,7 +27,8 @@ exports.startInterview = catchAsync(async (req, res, next) => {
     const result = await aiService.generateQuestionsV2(
         job_role || 'Software Engineer',
         interview_type || 'behavioral',
-        resumeText
+        resumeText,
+        difficulty || 'medium'
     );
 
     if (!result.role_clear) {
@@ -82,17 +90,19 @@ exports.generateReport = catchAsync(async (req, res, next) => {
     const result = await aiService.generateReport(answers, job_role);
 
     // Send notification after report generation
-    try {
-        const Notification = require('../notification/notification.model');
-        await Notification.create({
-            userId: req.user.id,
-            title: 'Interview Report Generated',
-            message: `Your AI interview for ${job_role} is complete. Overall Score: ${result.data?.overall_score || 'N/A'}/100.`,
-            type: 'INTERVIEW_REPORT',
-            link: '/app/interview'
-        });
-    } catch (err) {
-        console.error('Notification Error:', err);
+    if (req.user) {
+        try {
+            const Notification = require('../notification/notification.model');
+            await Notification.create({
+                userId: req.user._id || req.user.id,
+                title: 'Interview Report Generated',
+                message: `Your AI interview for ${job_role} is complete. Overall Score: ${result.data?.overall_score || 'N/A'}/100.`,
+                type: 'INTERVIEW_REPORT',
+                link: '/app/interview'
+            });
+        } catch (err) {
+            console.error('Notification Error:', err);
+        }
     }
 
     res.status(200).json(result);

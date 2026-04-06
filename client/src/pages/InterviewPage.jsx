@@ -110,6 +110,7 @@ const InterviewPage = () => {
     const [suggestionData, setSuggestionData] = useState({ open: false, roles: [] });
     const [searchQuery, setSearchQuery] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [difficulty, setDifficulty] = useState('medium');
 
 
     useEffect(() => {
@@ -127,6 +128,7 @@ const InterviewPage = () => {
             const formData = new FormData();
             formData.append('job_role', searchQuery.trim());
             formData.append('interview_type', interviewType);
+            formData.append('difficulty', difficulty);
             if (resume) formData.append('resume', resume);
             const response = await startInterview(formData);
             const { role_clear, questions, suggestions } = response.data || {};
@@ -324,6 +326,64 @@ const InterviewPage = () => {
                                     <div className="flex flex-col">
                                         <span className="font-bold text-xs">{label}</span>
                                         <span className={`text-[9px] leading-tight font-medium ${interviewType === value ? 'text-blue-500' : 'text-gray-400'}`}>
+                                            {desc}
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Interview Difficulty</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { 
+                                    value: 'easy', 
+                                    label: 'Easy', 
+                                    desc: 'Entry level', 
+                                    icon: (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )
+                                },
+                                { 
+                                    value: 'medium', 
+                                    label: 'Medium', 
+                                    desc: 'Intermediate', 
+                                    icon: (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                    )
+                                },
+                                { 
+                                    value: 'difficult', 
+                                    label: 'Difficult', 
+                                    desc: 'Expert level', 
+                                    icon: (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.657 8c1.567 2.223 1.567 4.444 0 8.657z" />
+                                        </svg>
+                                    )
+                                },
+                            ].map(({ value, label, desc, icon }) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setDifficulty(value)}
+                                    className={`flex flex-col items-center text-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all ${difficulty === value
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                                        : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <div className={`mb-0.5 ${difficulty === value ? 'text-blue-500' : 'text-gray-400'}`}>
+                                        {icon}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-xs">{label}</span>
+                                        <span className={`text-[9px] leading-tight font-medium ${difficulty === value ? 'text-blue-500' : 'text-gray-400'}`}>
                                             {desc}
                                         </span>
                                     </div>

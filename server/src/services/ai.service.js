@@ -247,23 +247,26 @@ const speakText = async (text, voice = 'en-US-AriaNeural') => {
 };
 
 // ─── Interview: Generate Questions ───────────────────────────────────────────
-const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '') => {
+const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '', difficulty = 'medium') => {
+    const isEasy = difficulty.toLowerCase() === 'easy';
     const systemPrompt = `You are an expert interviewer for a ${jobRole} position.
     Generate 5 high-quality ${interviewType} interview questions.
+    The difficulty level should be: ${difficulty}.
     ${resumeText ? `Candidate's Resume Context: ${resumeText}` : ''}
     
     Guidelines:
-    - Mix difficulty levels (easy, medium, hard).
-    - If a resume is provided, personalize at least 2 questions to their experience.
+    - Stick to the specified difficulty level: ${difficulty}.
+    ${isEasy ? '- Include simple, generic, and foundational questions. Focus on definitions and basic concepts (e.g., "What is React?", "What is a REST API?", etc.).' : ''}
+    - If a resume is provided, personalize at least 2 questions to their experience ${isEasy ? '(keep them simple)' : ''}.
     - Return ONLY a JSON object with:
     {
       "role_clear": true,
       "questions": [
-        { "id": 1, "question": "...", "difficulty": "...", "topic": "...", "ideal_answer": "a high-quality, comprehensive sample answer that would score 100% for this role" }
+        { "id": 1, "question": "...", "difficulty": "${difficulty}", "topic": "...", "ideal_answer": "a high-quality, comprehensive sample answer that would score 100% for this role" }
       ]
     }
     If the job role is nonsense, return "role_clear": false and suggestions for valid roles.`;
-    return await callFireworks(systemPrompt, `Generate ${interviewType} questions for ${jobRole}`);
+    return await callFireworks(systemPrompt, `Generate ${interviewType} questions for ${jobRole} at ${difficulty} difficulty`);
 };
 
 // ─── Interview: Evaluate Single Answer ───────────────────────────────────────
