@@ -7,11 +7,16 @@ const Notification = require('../notification/notification.model');
 const { uploadFile } = require('../../utils/fileUpload');
 
 exports.createCourse = catchAsync(async (req, res, next) => {
-  if (!['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role)) {
-    return next(new AppError('Unauthorized to create courses. Only administrators can create courses.', 403));
+  if (!['SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER'].includes(req.user.role)) {
+    return next(new AppError('Unauthorized to create courses.', 403));
   }
 
   const courseData = { ...req.body };
+  if (['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role)) {
+    courseData.approvalStatus = 'APPROVED';
+  } else {
+    courseData.approvalStatus = 'PENDING';
+  }
   if (req.file) {
     const result = await uploadFile(req.file, 'courses/covers', false, 'avatars');
     courseData.coverImage = result.url;
@@ -122,7 +127,7 @@ exports.getMyCourses = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllCourses = catchAsync(async (req, res, next) => {
-  const courses = await Course.find().populate({
+  const courses = await Course.find({ approvalStatus: 'APPROVED' }).populate({
     path: 'teacher',
     select: 'name avatar'
   });
@@ -156,6 +161,10 @@ exports.getCourse = catchAsync(async (req, res, next) => {
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
   const isTeacher = (course.teacher?._id || course.teacher)?.toString() === (req.user._id || req.user.id)?.toString();
   const isEnrolled = course.enrolledStudents?.some(s => (s?._id || s)?.toString() === (req.user._id || req.user.id)?.toString());
+
+  if (course.approvalStatus !== 'APPROVED' && !isAdmin && !isTeacher) {
+    return next(new AppError('Course not found or pending approval', 404));
+  }
 
   let completedLectures = [];
   if (isEnrolled || isTeacher || isAdmin) {

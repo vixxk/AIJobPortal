@@ -11,7 +11,7 @@ router.use(protect);
 router
   .route('/')
   .get(courseController.getAllCourses)
-  .post(restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN'), upload.uploadImage, courseController.createCourse);
+  .post(restrictTo('SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER'), upload.uploadImage, courseController.createCourse);
 
 router.get('/my-courses', restrictTo('TEACHER', 'COLLEGE_ADMIN', 'SUPER_ADMIN'), courseController.getMyCourses);
 

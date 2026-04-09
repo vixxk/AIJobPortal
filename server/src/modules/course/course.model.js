@@ -60,6 +60,11 @@ const courseSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  approvalStatus: {
+    type: String,
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    default: 'PENDING'
+  },
   createdAt: {
     type: Date,
     default: Date.now

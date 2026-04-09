@@ -375,8 +375,31 @@ exports.getAllCourses = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCourse = catchAsync(async (req, res, next) => {
+  const oldCourse = await Course.findById(req.params.courseId);
+  if (!oldCourse) return next(new AppError('Course not found', 404));
+
   const course = await Course.findByIdAndUpdate(req.params.courseId, req.body, { new: true });
-  if (!course) return next(new AppError('Course not found', 404));
+
+  if (req.body.approvalStatus === 'APPROVED' && oldCourse.approvalStatus !== 'APPROVED') {
+    try {
+      await Notification.create({
+        userId: course.teacher,
+        title: 'Course Approved ✅',
+        message: `Your course "${course.title}" has been approved.`,
+        type: 'COURSE_UPDATE'
+      });
+    } catch (e) {}
+  } else if (req.body.approvalStatus === 'REJECTED' && oldCourse.approvalStatus !== 'REJECTED') {
+    try {
+      await Notification.create({
+        userId: course.teacher,
+        title: 'Course Rejected ❌',
+        message: `Your course creation request for "${course.title}" has been rejected.`,
+        type: 'COURSE_UPDATE'
+      });
+    } catch (e) {}
+  }
+
   res.status(200).json({
     status: 'success',
     data: { course }

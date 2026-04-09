@@ -42,7 +42,7 @@ const callFireworks = async (systemPrompt, userPrompt, maxTokens = 2048) => {
     return JSON.parse(content);
 };
 
-// ─── Filler Detection (Port from Python) ─────────────────────────────────────
+// ─── Filler Detection ─────────────────────────────────────
 const FILLERS = ['um', 'uh', 'like', 'you know', 'basically', 'actually', 'sort of', 'kind of', 'right', 'okay'];
 
 const countFillers = (text) => {

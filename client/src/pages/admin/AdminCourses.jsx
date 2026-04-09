@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
-import { Plus, Trash2, Users, XCircle, UploadCloud } from 'lucide-react';
+import { Plus, Trash2, Users, XCircle, UploadCloud, Check } from 'lucide-react';
 import Skeleton from '../../components/ui/Skeleton';
 
 const getImageUrl = (path) => {
@@ -45,6 +45,15 @@ const AdminCourses = () => {
             fetchData();
         } catch (err) {
             alert('Delete failed');
+        }
+    };
+
+    const handleApproval = async (id, status) => {
+        try {
+            await axios.patch(`/admin/courses/${id}`, { approvalStatus: status });
+            fetchData();
+        } catch (err) {
+            alert('Approval action failed');
         }
     };
 
@@ -141,11 +150,33 @@ const AdminCourses = () => {
                                 <div className="h-44 bg-slate-100 relative overflow-hidden">
                                     <img src={getImageUrl(course.coverImage)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-80" />
-                                    <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black text-indigo-600 tracking-widest uppercase">
-                                        {course.category || 'Skill'}
+                                    <div className="absolute top-4 left-4 flex gap-2">
+                                        <span className="px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black text-indigo-600 tracking-widest uppercase">
+                                            {course.category || 'Skill'}
+                                        </span>
+                                        {course.approvalStatus === 'PENDING' && (
+                                            <span className="px-3 py-1 bg-amber-500/90 backdrop-blur-md rounded-full text-[10px] font-black text-white tracking-widest uppercase">
+                                                Pending
+                                            </span>
+                                        )}
+                                        {course.approvalStatus === 'REJECTED' && (
+                                            <span className="px-3 py-1 bg-rose-500/90 backdrop-blur-md rounded-full text-[10px] font-black text-white tracking-widest uppercase">
+                                                Rejected
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="absolute top-4 right-4 flex gap-2">
-                                        <button onClick={() => handleDeleteCourse(course._id)} className="p-2.5 bg-rose-600 text-white rounded-xl transition-all shadow-xl">
+                                        {course.approvalStatus === 'PENDING' && (
+                                            <>
+                                                <button onClick={() => handleApproval(course._id, 'APPROVED')} className="p-2.5 bg-emerald-600 text-white rounded-xl transition-all shadow-xl hover:scale-110">
+                                                    <Check className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => handleApproval(course._id, 'REJECTED')} className="p-2.5 bg-amber-600 text-white rounded-xl transition-all shadow-xl hover:scale-110">
+                                                    <XCircle className="w-4 h-4" />
+                                                </button>
+                                            </>
+                                        )}
+                                        <button onClick={() => handleDeleteCourse(course._id)} className="p-2.5 bg-rose-600 text-white rounded-xl transition-all shadow-xl hover:scale-110">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
