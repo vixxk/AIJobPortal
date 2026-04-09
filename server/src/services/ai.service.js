@@ -282,7 +282,12 @@ const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '', diff
 // ─── Interview: Evaluate Single Answer ───────────────────────────────────────
 const evaluateAnswer = async (question, transcript, metrics, jobRole) => {
     const systemPrompt = `You are to act as a brutally precise and highly strict technical interviewer evaluating a candidate for a ${jobRole} role.
-    You must evaluate the candidate's answer based on exact technical precision, completeness, and communication quality.
+    You must evaluate the candidate's answer based on technical precision and communication quality.
+    
+    IMPORTANT: The "Candidate's Answer Transcript" is generated using Speech-to-Text (STT).
+    - Ignore missing or incorrect punctuation (commas, exclamation marks, etc.).
+    - Be lenient with minor spelling or phonetic mistakes that are common STT artifacts (e.g., "to" vs "too", "there" vs "their", or similar sounding words).
+    - Focus on the substance and technical accuracy of the speech rather than orthographic perfection.
     
     Audio Metrics provided: ${JSON.stringify(metrics)}
     
@@ -293,7 +298,6 @@ const evaluateAnswer = async (question, transcript, metrics, jobRole) => {
     
     ### OUTPUT FORMAT ###
     For the "technical_pointers" field, provide 2-4 short, highly specific bullet points brutally auditing the technical accuracy of their answer.
-    Example: "Failed to mention actual alignment strategies", "Correctly identified O(n log n) complexity", "Answer was completely irrelevant", etc.
     
     Return ONLY a JSON object with strictly this schema:
     {
@@ -407,6 +411,11 @@ const evaluateSpeakingTest = async (responses) => {
     const tasksText = JSON.stringify(responses, null, 2);
     const systemPrompt = `You are a professional CEFR English examiner. Analyze several spoken responses.
     
+    IMPORTANT: The responses are provided as Speech-to-Text (STT) transcripts.
+    - Ignore punctuation errors (missing commas, periods, etc.).
+    - Ignore minor spelling mistakes or homophones (words that sound the same but are spelled differently) as these are often STT errors.
+    - Evaluate the student's proficiency based on the intended meaning and spoken performance, not transcript perfection.
+    
     Evaluation Rubric:
     1. Overall CEFR Level (A1-C2).
     2. Suggested Start Level (1-5) based on proficiency:
@@ -467,6 +476,11 @@ const evaluateLessonTask = async (taskType, transcript, metrics, context) => {
     Context (Original Task/Text): ${JSON.stringify(context)}
     Audio Metrics: ${JSON.stringify(metrics)}
     
+    IMPORTANT: The user transcript is from a Speech-to-Text (STT) engine.
+    - Ignore missing or incorrect punctuation.
+    - Ignore minor spelling mistakes or phonetic misinterpretations (e.g., 'there' vs 'their', 'accept' vs 'except') that are likely STT artifacts.
+    - Focus on the content and meaning of the spoken response.
+    
     Goals:
     - If task is 'repeat', check accuracy against 'text_to_repeat'.
     - If task is 'question', check relevance and grammar.
@@ -494,7 +508,7 @@ const evaluateLessonTask = async (taskType, transcript, metrics, context) => {
     
     IMPORTANT RULES FOR SCORING:
     - ALL scores MUST be on a scale of 0 to 100.
-    - For the 'repeat' task: Be highly lenient. If the transcript proves they repeated the 'text_to_repeat' accurately (e.g., they hit most of the words), they MUST receive a passing overall score (80-100) even if audio metrics suggest high pause ratios or hesitations. Do not fail a perfect repetition for a pause.
+    - For the 'repeat' task: Be highly lenient. If the transcript proves they repeated the 'text_to_repeat' accurately (allowing for STT misinterpretation of similar-sounding words), they MUST receive a passing overall score (80-100). Do not fail a perfect repetition for a pause or a minor STT error.
     - NEVER use the word "prompt" in your feedback or tips. Always refer to it naturally as "the text", "the sentence", or "the task".`;
     const result = await callFireworks(systemPrompt, `User transcript: ${transcript}`);
     return {

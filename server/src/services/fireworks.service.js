@@ -64,28 +64,34 @@ Return JSON only in this exact format:
 };
 exports.evaluateAnswer = async (question, transcript, metrics, jobRole) => {
     const systemPrompt = `You are an interview evaluator.
-Evaluate the candidate's answer for the job role: ${jobRole}.
-Question:
-${question}
-Transcript:
-${transcript}
-Speech Metrics:
-${JSON.stringify(metrics)}
-Provide:
-1 Answer quality score (0-100)
-2 Communication score (0-100)
-3 Technical pointers: 2-4 short bullet points about technical accuracy (e.g. "Correctly explained closure scope" or "Confused TCP with UDP")
-4 Strengths
-5 Weaknesses
-6 Suggestions
-Return JSON format:
-{
-"answer_score": number,
-"communication_score": number,
-"technical_pointers": ["short pointer 1", "short pointer 2"],
-"strengths": ["..."],
-"weaknesses": ["..."],
-"suggestions": ["..."]
-}`;
+    Evaluate the candidate's answer for the job role: ${jobRole}.
+    
+    IMPORTANT: The Transcript is generated using Speech-to-Text (STT).
+    - Ignore missing/incorrect punctuation.
+    - Ignore minor spelling or phonetic errors that are likely STT artifacts.
+    - Evaluate based on technical correctness and communicative intent.
+    
+    Question:
+    ${question}
+    Transcript:
+    ${transcript}
+    Speech Metrics:
+    ${JSON.stringify(metrics)}
+    Provide:
+    1 Answer quality score (0-100)
+    2 Communication score (0-100)
+    3 Technical pointers: 2-4 short bullet points about technical accuracy (e.g. "Correctly explained closure scope" or "Confused TCP with UDP")
+    4 Strengths
+    5 Weaknesses
+    6 Suggestions
+    Return JSON format:
+    {
+    "answer_score": number,
+    "communication_score": number,
+    "technical_pointers": ["short pointer 1", "short pointer 2"],
+    "strengths": ["..."],
+    "weaknesses": ["..."],
+    "suggestions": ["..."]
+    }`;
     return await callFireworks(systemPrompt, 'Evaluate this candidate\'s answer.');
 };
