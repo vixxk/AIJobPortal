@@ -15,76 +15,57 @@ const lectureSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId, // references embedded chapter _id
     default: null
   },
+  // Bunny Stream fields
+  bunnyVideoId: {
+    type: String,
+    default: null
+  },
+  videoStatus: {
+    type: String,
+    enum: ['PENDING', 'PROCESSING', 'READY', 'FAILED'],
+    default: 'PENDING'
+  },
+  thumbnailUrl: {
+    type: String,
+    default: null
+  },
+  // Legacy field kept for backward compat — will be ignored going forward
   videoIdentifier: {
     type: String,
   },
   type: {
     type: String,
-    enum: ['LIVE', 'RECORDED'],
+    enum: ['RECORDED'],
     default: 'RECORDED'
   },
   status: {
     type: String,
-    enum: ['READY', 'LIVE', 'ENDED'],
+    enum: ['READY', 'ENDED'],
     default: 'READY'
   },
   description: {
     type: String,
     trim: true
   },
-  streamKey: {
-    type: String,
-  },
   duration: {
     type: Number, // duration in minutes
-    default: 0
-  },
-  liveDuration: {
-    type: Number, // duration of live class in minutes
     default: 0
   },
   order: {
     type: Number,
     default: 0
   },
-  scheduledAt: {
-    type: Date,
-    default: null
-  },
   isPreview: {
     type: Boolean,
     default: false
   },
+  notesUrl: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
-  }
-});
-
-lectureSchema.pre(/^find/, async function() {
-  try {
-    const Model = mongoose.model('Lecture');
-    await Model.updateMany(
-      {
-        status: 'LIVE',
-        type: 'LIVE',
-        liveDuration: { $gt: 0 },
-        $expr: {
-          $lt: [
-            {
-              $add: [
-                { $ifNull: ["$scheduledAt", "$createdAt"] },
-                { $multiply: ["$liveDuration", 60, 1000] }
-              ]
-            },
-            new Date()
-          ]
-        }
-      },
-      { status: 'ENDED' }
-    );
-  } catch (err) {
-    console.error('Error auto-ending live classes:', err);
   }
 });
 

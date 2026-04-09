@@ -33,8 +33,25 @@ const uploadImageOnly = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+// For video uploads (lectures → Bunny Stream)
+const videoFilter = (req, file, cb) => {
+  const allowed = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
+  if (allowed.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Only video files (mp4, webm, mov, avi, mkv) are allowed.', 400), false);
+  }
+};
+
+const uploadVideoMemory = multer({
+  storage: memoryStorage,
+  fileFilter: videoFilter,
+  limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit
+});
+
 exports.uploadImage      = uploadImageOnly.single('image');
 exports.uploadResume     = uploadMemory.single('resume');
 exports.uploadCertificate = uploadMemory.single('certificate');
 exports.uploadLogo       = uploadImageOnly.single('logo');
+exports.uploadVideo      = uploadVideoMemory.single('video');
 

@@ -5,6 +5,7 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
 const { uploadFile } = require('../../utils/fileUpload');
+const bunnyService = require('../../services/bunny.service');
 
 exports.createCourse = catchAsync(async (req, res, next) => {
   if (!['SUPER_ADMIN', 'COLLEGE_ADMIN', 'TEACHER'].includes(req.user.role)) {
@@ -110,6 +111,16 @@ exports.deleteCourse = catchAsync(async (req, res, next) => {
     return next(new AppError('You do not have permission to delete courses.', 403));
   }
 
+  // Delete all bunny videos for this course's lectures
+  const lectures = await Lecture.find({ course: req.params.id });
+  for (const lecture of lectures) {
+    if (lecture.bunnyVideoId) {
+      try { await bunnyService.deleteVideo(lecture.bunnyVideoId); } catch (err) {
+        console.error(`Failed to delete Bunny video ${lecture.bunnyVideoId}:`, err.message);
+      }
+    }
+  }
+
   await Course.findByIdAndDelete(req.params.id);
   await Lecture.deleteMany({ course: req.params.id });
 
@@ -180,11 +191,10 @@ exports.getCourse = catchAsync(async (req, res, next) => {
   // Protect sensitive content if user doesn't have full access
   if (!hasFullAccess && course.lectures) {
     course.lectures = course.lectures.map(lecture => {
-      // If it's not a preview, redact video identifier and stream key
       if (!lecture.isPreview) {
         const leanLecture = lecture.toObject ? lecture.toObject() : { ...lecture };
+        delete leanLecture.bunnyVideoId;
         delete leanLecture.videoIdentifier;
-        delete leanLecture.streamKey;
         return leanLecture;
       }
       return lecture;
@@ -298,6 +308,16 @@ exports.deleteChapter = catchAsync(async (req, res, next) => {
   const isTeacher = course.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) return next(new AppError('Not authorized', 403));
 
+  // Delete bunny videos for lectures in this chapter
+  const chapterLectures = await Lecture.find({ course: req.params.id, chapter: req.params.chapterId });
+  for (const lecture of chapterLectures) {
+    if (lecture.bunnyVideoId) {
+      try { await bunnyService.deleteVideo(lecture.bunnyVideoId); } catch (err) {
+        console.error(`Failed to delete Bunny video ${lecture.bunnyVideoId}:`, err.message);
+      }
+    }
+  }
+
   course.chapters.pull(req.params.chapterId);
   await course.save();
   await Lecture.deleteMany({ course: req.params.id, chapter: req.params.chapterId });
@@ -384,9 +404,126 @@ exports.deleteLecture = catchAsync(async (req, res, next) => {
     return next(new AppError('Not authorized', 403));
   }
 
+  // Delete from Bunny Stream
+  if (lecture.bunnyVideoId) {
+    try { await bunnyService.deleteVideo(lecture.bunnyVideoId); } catch (err) {
+      console.error(`Failed to delete Bunny video ${lecture.bunnyVideoId}:`, err.message);
+    }
+  }
+
   await Lecture.findByIdAndDelete(req.params.id);
 
   res.status(204).json({ status: 'success', data: null });
+});
+
+// ── Video Upload to Bunny Stream ────────────────────────────────────────────
+
+exports.uploadLectureVideo = catchAsync(async (req, res, next) => {
+  const lecture = await Lecture.findById(req.params.id);
+  if (!lecture) return next(new AppError('Lecture not found', 404));
+
+  const course = await Course.findById(lecture.course);
+  if (!course) return next(new AppError('Course not found', 404));
+
+  const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
+  const isTeacher = course.teacher?.toString() === req.user.id;
+  if (!isAdmin && !isTeacher) {
+    return next(new AppError('Not authorized to upload videos', 403));
+  }
+
+  if (!req.file) {
+    return next(new AppError('Please provide a video file', 400));
+  }
+
+  // If there is an existing bunny video, delete it first
+  if (lecture.bunnyVideoId) {
+    try { await bunnyService.deleteVideo(lecture.bunnyVideoId); } catch (err) {
+      console.error('Failed to delete old Bunny video:', err.message);
+    }
+  }
+
+  // Step 1: Create video object in Bunny
+  const bunnyVideo = await bunnyService.createVideo(lecture.title);
+  const videoId = bunnyVideo.guid;
+
+  // Step 2: Upload the file buffer to Bunny
+  await bunnyService.uploadVideo(videoId, req.file.buffer);
+
+  // Step 3: Update lecture with Bunny references
+  const thumbnailUrl = bunnyService.getThumbnailUrl(videoId);
+
+  lecture.bunnyVideoId = videoId;
+  lecture.videoStatus = 'PROCESSING';
+  lecture.thumbnailUrl = thumbnailUrl;
+  await lecture.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Video uploaded successfully. Processing may take a few minutes.',
+    data: {
+      lecture,
+      embedUrl: bunnyService.getEmbedUrl(videoId)
+    }
+  });
+});
+
+// ── Get Video Status from Bunny ─────────────────────────────────────────────
+
+exports.getVideoStatus = catchAsync(async (req, res, next) => {
+  const lecture = await Lecture.findById(req.params.id);
+  if (!lecture) return next(new AppError('Lecture not found', 404));
+
+  // Authorization: only enrolled users, teachers, or admins can check status
+  const course = await Course.findById(lecture.course);
+  if (!course) return next(new AppError('Course not found', 404));
+
+  const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
+  const isTeacher = (course.teacher?._id || course.teacher)?.toString() === (req.user._id || req.user.id)?.toString();
+  const isEnrolled = course.enrolledStudents?.some(s => (s?._id || s)?.toString() === (req.user._id || req.user.id)?.toString());
+
+  if (!isEnrolled && !isTeacher && !isAdmin) {
+    return next(new AppError('Not authorized to access this video', 403));
+  }
+
+  if (!lecture.bunnyVideoId) {
+    return res.status(200).json({
+      status: 'success',
+      data: { videoStatus: 'PENDING', bunnyStatus: null }
+    });
+  }
+
+  try {
+    const bunnyData = await bunnyService.getVideo(lecture.bunnyVideoId);
+
+    // Bunny status values: 0 = created, 1 = uploaded, 2 = processing, 3 = transcoding, 4 = finished, 5 = error, 6 = upload failed
+    let videoStatus = 'PROCESSING';
+    if (bunnyData.status === 4) {
+      videoStatus = 'READY';
+    } else if (bunnyData.status === 5 || bunnyData.status === 6) {
+      videoStatus = 'FAILED';
+    }
+
+    // Update lecture status if changed
+    if (lecture.videoStatus !== videoStatus) {
+      lecture.videoStatus = videoStatus;
+      await lecture.save();
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        videoStatus,
+        bunnyStatus: bunnyData.status,
+        encodeProgress: bunnyData.encodeProgress || 0,
+        length: bunnyData.length || 0
+      }
+    });
+  } catch (err) {
+    res.status(200).json({
+      status: 'success',
+      data: { videoStatus: lecture.videoStatus, bunnyStatus: null }
+    });
+  }
 });
 
 exports.markLectureComplete = catchAsync(async (req, res, next) => {

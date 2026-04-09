@@ -4,12 +4,12 @@ import axios from '../../utils/axios';
 import { useAuth } from '../../context/AuthContext';
 import {
     ArrowLeft, Edit3, Save, X, Plus, Trash2, BookOpen, Users, Settings,
-    Clock, Tag, Globe, BarChart2, Video, Radio, ChevronDown, ChevronRight,
+    Clock, Tag, Globe, BarChart2, Video, ChevronDown, ChevronRight,
     GripVertical, Calendar, Eye, EyeOff, Star, Award, Target, CheckCircle,
-    UploadCloud, AlertCircle, Check, Play, FileQuestion
+    UploadCloud, AlertCircle, Check, Play, FileQuestion, Loader2
 } from 'lucide-react';
 import Skeleton from '../../components/ui/Skeleton';
-import VideoPlayer, { extractYouTubeId } from '../../components/ui/VideoPlayer';
+import VideoPlayer from '../../components/ui/VideoPlayer';
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -21,7 +21,6 @@ const getImageUrl = (path) => {
 const LEVEL_OPTIONS = ['Beginner', 'Intermediate', 'Advanced'];
 const CATEGORY_OPTIONS = ['Skill', 'AI', 'Technology', 'Business', 'Design', 'Marketing', 'Data Science', 'Web Development', 'Mobile Dev', 'Other'];
 
-// extractYouTubeId now imported from VideoPlayer
 
 // ─── Inline Editable Field ───────────────────────────────────────────────────
 const EditableField = ({ label, value, onSave, multiline = false, type = 'text' }) => {
@@ -153,9 +152,14 @@ const CourseManagement = () => {
     const [editLecture, setEditLecture] = useState(null);
     const [previewLecture, setPreviewLecture] = useState(null);
 
-    // Live form state
-    const DEFAULT_LECTURE_FORM = { show: false, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, liveDuration: 60, scheduledAt: '', isPreview: false, order: 0, youtubeUrl: '', videoIdentifier: '', notesUrl: '' };
+    // Lecture form state
+    const DEFAULT_LECTURE_FORM = { show: false, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: 0, notesUrl: '' };
     const [lectureForm, setLectureForm] = useState(DEFAULT_LECTURE_FORM);
+
+    // Video upload state
+    const [videoFile, setVideoFile] = useState(null);
+    const [videoUploading, setVideoUploading] = useState(false);
+    const [videoUploadProgress, setVideoUploadProgress] = useState(0);
 
     // Settings
     const [coverFile, setCoverFile] = useState(null);
@@ -191,9 +195,9 @@ const CourseManagement = () => {
         }
     }, [id]);
 
-    useEffect(() => { 
-        fetchCourse(); 
-        fetchTests(); 
+    useEffect(() => {
+        fetchCourse();
+        fetchTests();
     }, [fetchCourse, fetchTests]);
 
 
@@ -256,25 +260,27 @@ const CourseManagement = () => {
     const handleAddLecture = async (e) => {
         e.preventDefault();
         try {
-            // Re-derive videoIdentifier from youtubeUrl as a safety fallback
-            // in case React state batching left videoIdentifier stale/empty
-            const vidId = lectureForm.videoIdentifier || extractYouTubeId(lectureForm.youtubeUrl);
             const payload = {
                 title: lectureForm.title,
                 description: lectureForm.description,
-                videoIdentifier: vidId,
-                type: lectureForm.type,
+                type: 'RECORDED',
                 duration: Number(lectureForm.duration),
-                liveDuration: lectureForm.type === 'LIVE' ? Number(lectureForm.liveDuration) : 0,
                 order: Number(lectureForm.order),
                 isPreview: lectureForm.isPreview,
                 ...(lectureForm.chapterId && { chapter: lectureForm.chapterId }),
-                ...(lectureForm.scheduledAt && { scheduledAt: lectureForm.scheduledAt }),
                 notesUrl: lectureForm.notesUrl,
-                status: lectureForm.type === 'LIVE' ? 'LIVE' : 'READY'
+                status: 'READY'
             };
-            await axios.post(`/courses/${id}/lectures`, payload);
+            const res = await axios.post(`/courses/${id}/lectures`, payload);
+            const newLecture = res.data.data.lecture;
+
+            // Upload video file if selected
+            if (videoFile && newLecture._id) {
+                await handleVideoUpload(newLecture._id);
+            }
+
             setLectureForm(DEFAULT_LECTURE_FORM);
+            setVideoFile(null);
             fetchCourse();
             showToast('Lecture added');
         } catch (err) {
@@ -285,25 +291,52 @@ const CourseManagement = () => {
     const handleUpdateLecture = async (e) => {
         e.preventDefault();
         try {
-            // Re-derive videoIdentifier as a safety fallback
-            const vidId = editLecture.videoIdentifier || extractYouTubeId(editLecture.youtubeUrl || '');
             await axios.patch(`/courses/lectures/${editLecture._id}`, {
                 title: editLecture.title,
                 description: editLecture.description,
-                videoIdentifier: vidId,
-                type: editLecture.type,
+                type: 'RECORDED',
                 duration: Number(editLecture.duration),
-                liveDuration: editLecture.type === 'LIVE' ? Number(editLecture.liveDuration) : 0,
                 order: Number(editLecture.order),
                 isPreview: editLecture.isPreview,
                 notesUrl: editLecture.notesUrl,
-                ...(editLecture.scheduledAt && { scheduledAt: editLecture.scheduledAt }),
             });
+
+            // Upload new video file if selected
+            if (videoFile) {
+                await handleVideoUpload(editLecture._id);
+            }
+
             setEditLecture(null);
+            setVideoFile(null);
             fetchCourse();
             showToast('Lecture updated');
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed', 'error');
+        }
+    };
+
+    const handleVideoUpload = async (lectureId) => {
+        if (!videoFile) return;
+        setVideoUploading(true);
+        setVideoUploadProgress(0);
+        try {
+            const fd = new FormData();
+            fd.append('video', videoFile);
+            await axios.post(`/courses/lectures/${lectureId}/upload-video`, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
+                onUploadProgress: (e) => {
+                    const pct = Math.round((e.loaded * 100) / e.total);
+                    setVideoUploadProgress(pct);
+                }
+            });
+            showToast('Video uploaded! Processing may take a few minutes.');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Video upload failed', 'error');
+        } finally {
+            setVideoUploading(false);
+            setVideoUploadProgress(0);
         }
     };
 
@@ -732,7 +765,7 @@ const CourseManagement = () => {
                                                 showToast('Create at least one chapter before adding lectures.', 'error');
                                                 return;
                                             }
-                                            setLectureForm({ show: true, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: 0, youtubeUrl: '' });
+                                            setLectureForm({ show: true, chapterId: null, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: 0, notesUrl: '' }); setVideoFile(null);
                                         }}
                                         className="flex-1 sm:flex-none px-3 py-2 lg:px-4 lg:py-2.5 bg-slate-100 text-slate-700 rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
                                     >
@@ -810,7 +843,7 @@ const CourseManagement = () => {
                                                     {canEdit && (
                                                         <>
                                                             <button
-                                                                onClick={e => { e.stopPropagation(); if (!course.chapters || course.chapters.length === 0) { showToast('Create at least one chapter first.', 'error'); return; } setLectureForm({ show: true, chapterId: chapter._id, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: chLectures.length, youtubeUrl: '' }); }}
+                                                                onClick={e => { e.stopPropagation(); if (!course.chapters || course.chapters.length === 0) { showToast('Create at least one chapter first.', 'error'); return; } setLectureForm({ show: true, chapterId: chapter._id, title: '', description: '', type: 'RECORDED', duration: 0, scheduledAt: '', isPreview: false, order: chLectures.length, notesUrl: '' }); setVideoFile(null); }}
                                                                 className="p-1.5 lg:p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg lg:rounded-xl transition-all"
                                                                 title="Add Lecture to Chapter"
                                                             >
@@ -844,7 +877,7 @@ const CourseManagement = () => {
                                                         <>
                                                             {chLectures.sort((a, b) => a.order - b.order).map((lecture, li) => (
                                                                 <LectureRow key={lecture._id} lecture={lecture} index={li} canEdit={canEdit}
-                                                                    onEdit={() => setEditLecture({ ...lecture, scheduledAt: lecture.scheduledAt ? new Date(lecture.scheduledAt).toISOString().slice(0, 16) : '' })}
+                                                                    onEdit={() => { setEditLecture({ ...lecture }); setVideoFile(null); }}
                                                                     onDelete={() => handleDeleteLecture(lecture._id)}
                                                                     onPreview={() => setPreviewLecture(lecture)}
                                                                 />
@@ -871,7 +904,7 @@ const CourseManagement = () => {
                                         </div>
                                         {uncategorizedLectures.sort((a, b) => a.order - b.order).map((lecture, li) => (
                                             <LectureRow key={lecture._id} lecture={lecture} index={li} canEdit={canEdit}
-                                                onEdit={() => setEditLecture({ ...lecture, scheduledAt: lecture.scheduledAt ? new Date(lecture.scheduledAt).toISOString().slice(0, 16) : '' })}
+                                                onEdit={() => { setEditLecture({ ...lecture }); setVideoFile(null); }}
                                                 onDelete={() => handleDeleteLecture(lecture._id)}
                                                 onPreview={() => setPreviewLecture(lecture)}
                                             />
@@ -1082,7 +1115,7 @@ const CourseManagement = () => {
 
             {/* Add/Edit Lecture Modal */}
             {(lectureForm.show || editLecture) && (
-                <Modal title={editLecture ? 'Edit Lecture' : 'New Lecture'} onClose={() => { setLectureForm({ ...DEFAULT_LECTURE_FORM, show: false }); setEditLecture(null); }}>
+                <Modal title={editLecture ? 'Edit Lecture' : 'New Lecture'} onClose={() => { setLectureForm({ ...DEFAULT_LECTURE_FORM, show: false }); setEditLecture(null); setVideoFile(null); }}>
                     <form onSubmit={editLecture ? handleUpdateLecture : handleAddLecture} className="space-y-5">
                         <FormField label="Lecture Title">
                             <input required className={inputCls} placeholder="e.g. Variables and Data Types"
@@ -1097,88 +1130,86 @@ const CourseManagement = () => {
                             />
                         </FormField>
 
-                        {/* YouTube URL */}
-                        <FormField label="YouTube Video URL">
-                            <input
-                                className={inputCls}
-                                placeholder="https://www.youtube.com/watch?v=… or https://youtu.be/…"
-                                value={editLecture ? (editLecture.youtubeUrl ?? (editLecture.videoIdentifier ? `https://www.youtube.com/watch?v=${editLecture.videoIdentifier}` : '')) : (lectureForm.youtubeUrl ?? '')}
-                                onChange={e => {
-                                    const url = e.target.value;
-                                    const vid = extractYouTubeId(url);
-                                    if (editLecture) {
-                                        setEditLecture({ ...editLecture, youtubeUrl: url, videoIdentifier: vid });
-                                    } else {
-                                        setLectureForm({ ...lectureForm, youtubeUrl: url, videoIdentifier: vid });
-                                    }
-                                }}
-                            />
-                            <p className="text-[10px] text-slate-400 mt-1.5 px-1 font-medium">Paste your unlisted or public YouTube video/live URL</p>
-                            {/* Thumbnail preview */}
-                            {(() => {
-                                const vid = extractYouTubeId(editLecture ? (editLecture.youtubeUrl ?? editLecture.videoIdentifier ?? '') : (lectureForm.youtubeUrl ?? ''));
-                                if (!vid) return null;
-                                return (
-                                    <div className="mt-3 rounded-2xl overflow-hidden border border-slate-200 relative">
-                                        <img
-                                            src={`https://img.youtube.com/vi/${vid}/mqdefault.jpg`}
-                                            alt="Video thumbnail"
-                                            className="w-full h-36 object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-                                                <svg viewBox="0 0 24 24" fill="white" className="w-6 h-6 ml-1"><path d="M8 5v14l11-7z" /></svg>
-                                            </div>
-                                        </div>
-                                        <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 rounded-md text-white text-[10px] font-bold">
-                                            ID: {vid}
+                        {/* Video Upload */}
+                        <FormField label="Upload Video">
+                            <div className="space-y-3">
+                                {/* Show existing video info for edit mode */}
+                                {editLecture?.bunnyVideoId && !videoFile && (
+                                    <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                                        <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-black text-emerald-700">Video uploaded</p>
+                                            <p className="text-[10px] text-emerald-600 font-medium truncate">
+                                                Status: {editLecture.videoStatus || 'READY'}
+                                            </p>
                                         </div>
                                     </div>
-                                );
-                            })()}
+                                )}
+
+                                <label className="flex flex-col items-center gap-3 p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+                                    <UploadCloud className="w-8 h-8 text-slate-300 group-hover:text-indigo-400 transition-colors" />
+                                    <div className="text-center">
+                                        <p className="text-xs font-black text-slate-600 group-hover:text-indigo-600 transition-colors">
+                                            {videoFile ? videoFile.name : (editLecture?.bunnyVideoId ? 'Replace Video' : 'Choose Video File')}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 mt-0.5 font-medium">MP4, WebM, MOV • Max 500MB</p>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska"
+                                        className="hidden"
+                                        onChange={e => {
+                                            const file = e.target.files[0];
+                                            if (file) setVideoFile(file);
+                                        }}
+                                    />
+                                </label>
+
+                                {videoFile && (
+                                    <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-2xl">
+                                        <Video className="w-5 h-5 text-indigo-500 shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-indigo-700 truncate">{videoFile.name}</p>
+                                            <p className="text-[10px] text-indigo-500 font-medium">{(videoFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                                        </div>
+                                        <button type="button" onClick={() => setVideoFile(null)} className="p-1 text-indigo-400 hover:text-rose-500 transition-colors">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {videoUploading && (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+                                            <span className="text-xs font-black text-indigo-600">Uploading... {videoUploadProgress}%</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                                                style={{ width: `${videoUploadProgress}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </FormField>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <FormField label="Type">
-                                <select className={inputCls}
-                                    value={editLecture ? editLecture.type : lectureForm.type}
-                                    onChange={e => editLecture ? setEditLecture({ ...editLecture, type: e.target.value }) : setLectureForm({ ...lectureForm, type: e.target.value })}
-                                >
-                                    <option value="RECORDED">Recorded</option>
-                                    <option value="LIVE">Live</option>
-                                </select>
+                            <FormField label="Duration (minutes)">
+                                <input type="number" min={0} className={inputCls}
+                                    value={editLecture ? editLecture.duration : lectureForm.duration}
+                                    onChange={e => editLecture ? setEditLecture({ ...editLecture, duration: e.target.value }) : setLectureForm({ ...lectureForm, duration: e.target.value })}
+                                />
                             </FormField>
-                            {(editLecture ? editLecture.type === 'LIVE' : lectureForm.type === 'LIVE') ? (
-                                <FormField label="Live Duration (minutes)">
-                                    <input type="number" min={5} required className={`${inputCls} border-red-200 focus:border-red-400`}
-                                        value={editLecture ? (editLecture.liveDuration || 60) : (lectureForm.liveDuration || 60)}
-                                        onChange={e => editLecture ? setEditLecture({ ...editLecture, liveDuration: e.target.value }) : setLectureForm({ ...lectureForm, liveDuration: e.target.value })}
-                                    />
-                                </FormField>
-                            ) : (
-                                <FormField label="Duration (minutes)">
-                                    <input type="number" min={0} className={inputCls}
-                                        value={editLecture ? editLecture.duration : lectureForm.duration}
-                                        onChange={e => editLecture ? setEditLecture({ ...editLecture, duration: e.target.value }) : setLectureForm({ ...lectureForm, duration: e.target.value })}
-                                    />
-                                </FormField>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
                             <FormField label="Order">
                                 <input type="number" min={0} className={inputCls}
                                     value={editLecture ? editLecture.order : lectureForm.order}
                                     onChange={e => editLecture ? setEditLecture({ ...editLecture, order: e.target.value }) : setLectureForm({ ...lectureForm, order: e.target.value })}
                                 />
                             </FormField>
-                            <FormField label="Scheduled At">
-                                <input type="datetime-local" className={inputCls}
-                                    value={editLecture ? editLecture.scheduledAt : lectureForm.scheduledAt}
-                                    onChange={e => editLecture ? setEditLecture({ ...editLecture, scheduledAt: e.target.value }) : setLectureForm({ ...lectureForm, scheduledAt: e.target.value })}
-                                />
-                            </FormField>
                         </div>
-                        
+
                         <FormField label="Notes URL / PDF Link (optional)">
                             <input
                                 className={inputCls}
@@ -1204,8 +1235,8 @@ const CourseManagement = () => {
                                 Free Preview (visible without enrollment)
                             </label>
                         </div>
-                        <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all">
-                            {editLecture ? 'Update Lecture' : 'Add Lecture'}
+                        <button type="submit" disabled={videoUploading} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                            {videoUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : (editLecture ? 'Update Lecture' : 'Add Lecture')}
                         </button>
                     </form>
                 </Modal>
@@ -1262,7 +1293,7 @@ const CourseManagement = () => {
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                     )}
-                                    
+
                                     <div className="space-y-3">
                                         <FormField label={`Question ${qi + 1}`}>
                                             <input required className={inputCls} placeholder="Question text"
@@ -1346,7 +1377,7 @@ const CourseManagement = () => {
                             </button>
                         </div>
                         <div className="p-4 lg:p-6 overflow-y-auto max-h-[70vh]">
-                            {previewLecture.videoIdentifier ? (
+                            {previewLecture.bunnyVideoId ? (
                                 <div className="mb-4">
                                     <VideoPlayer lecture={previewLecture} />
                                     <div className="mt-4 flex items-center justify-center">
@@ -1356,8 +1387,8 @@ const CourseManagement = () => {
                             ) : (
                                 <div className="aspect-video bg-slate-800 rounded-2xl flex flex-col items-center justify-center p-6 text-center shadow-xl mb-4">
                                     <Video className="w-10 h-10 lg:w-12 lg:h-12 text-slate-600 mb-3" />
-                                    <p className="text-slate-400 font-bold text-xs lg:text-sm">No video URL set for this lecture</p>
-                                    <p className="text-slate-500 text-[10px] lg:text-xs mt-1">Add a YouTube URL in the lecture settings to preview</p>
+                                    <p className="text-slate-400 font-bold text-xs lg:text-sm">No video uploaded for this lecture</p>
+                                    <p className="text-slate-500 text-[10px] lg:text-xs mt-1">Upload a video in the lecture settings to preview</p>
                                 </div>
                             )}
                             {previewLecture.description && (
@@ -1414,7 +1445,7 @@ const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) =>
                         {lecture.title}
                     </button>
                     <div className="flex items-center gap-1 shrink-0 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                        {lecture.videoIdentifier && (
+                        {lecture.bunnyVideoId && (
                             <button onClick={onPreview} title="Preview video" className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
                                 <Play className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
                             </button>
@@ -1433,12 +1464,9 @@ const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) =>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5">
                     <div className="flex items-center gap-1.5 shrink-0">
-                        {lecture.type === 'LIVE'
-                            ? <Radio className="w-3 h-3 text-rose-500" />
-                            : <Video className="w-3 h-3 text-indigo-400" />
-                        }
-                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${lecture.type === 'LIVE' ? 'text-rose-600 bg-rose-50' : 'text-indigo-600 bg-indigo-50'}`}>
-                            {lecture.type}
+                        <Video className="w-3 h-3 text-indigo-400" />
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest text-indigo-600 bg-indigo-50">
+                            {lecture.bunnyVideoId ? (lecture.videoStatus === 'READY' ? 'READY' : lecture.videoStatus || 'RECORDED') : 'NO VIDEO'}
                         </span>
                     </div>
                     {lecture.duration > 0 && (

@@ -52,8 +52,8 @@ app.use(cors({
 // app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // DEPRECATED: Files now served via S3/CloudFront
 
 app.use('/api', apiLimiter);
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));

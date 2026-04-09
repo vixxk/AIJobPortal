@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     BookOpen, Play, Video, Plus, Edit, Trash2,
     ChevronRight, BadgeInfo, Clock, Users,
-    Globe, Radio, CheckCircle, ExternalLink,
+    Globe, CheckCircle, ExternalLink,
     ArrowLeft, MonitorPlay, Settings, Key, Lock, User,
     Pause, Volume2, VolumeX, RotateCcw, RotateCw, X,
     Maximize, FileQuestion
@@ -172,9 +172,9 @@ const LectureList = ({ lectures, onSelect, currentId, completedIds = [], dark = 
                         "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105",
                         dark
                             ? isActive ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "bg-white/5 text-slate-400"
-                            : lecture.type === 'LIVE' ? "bg-rose-50 text-rose-500" : "bg-indigo-50 text-indigo-500"
+                            : "bg-indigo-50 text-indigo-500"
                     )}>
-                        {lecture.type === 'LIVE' ? <Radio className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                        <Play className="w-5 h-5 ml-0.5" />
                     </div>
                     <div className="flex-1 text-left min-w-0">
                         <p className={clsx(
@@ -186,32 +186,15 @@ const LectureList = ({ lectures, onSelect, currentId, completedIds = [], dark = 
                             {index + 1}. {lecture.title}
                         </p>
                         <div className="flex items-center gap-2">
-                            {(() => {
-                                const isLiveType = lecture.type === 'LIVE';
-                                const startTime = new Date(lecture.scheduledAt || lecture.createdAt).getTime();
-                                const duration = (lecture.liveDuration || 60) * 60 * 1000;
-                                const isExpired = Date.now() > (startTime + duration);
-                                const isCurrentlyLive = isLiveType && lecture.status === 'LIVE' && !isExpired;
-
-                                return (
-                                    <>
-                                        <span className={clsx(
-                                            "text-[9px] font-black tracking-[0.15em] uppercase",
-                                            isCurrentlyLive ? "text-rose-500" : (dark ? "text-white/30" : "text-slate-400")
-                                        )}>
-                                            {isCurrentlyLive ? '🔴 Live Now' : isLiveType ? 'Past Live' : 'Recorded'}
-                                        </span>
-                                        {isCurrentlyLive && (
-                                            <span className="px-1.5 py-0.5 bg-rose-500 text-white rounded-md text-[8px] font-black animate-pulse">
-                                                LIVE NOW
-                                            </span>
-                                        )}
-                                    </>
-                                );
-                            })()}
+                            <span className={clsx(
+                                "text-[9px] font-black tracking-[0.15em] uppercase",
+                                dark ? "text-white/30" : "text-slate-400"
+                            )}>
+                                Recorded
+                            </span>
                         </div>
                     </div>
-                    {(isCompleted || lecture.status === 'ENDED') && (
+                    {isCompleted && (
                         <CheckCircle className="w-4 h-4 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
                     )}
                 </button>
@@ -417,7 +400,7 @@ const CourseListingPage = () => {
                         Expand Your Skills
                     </h1>
                     <p className="text-indigo-200 font-medium text-base md:text-lg mb-8">
-                        Join live classes and watch expert-led lectures at your own pace.
+                        Watch expert-led lectures at your own pace.
                     </p>
 
                     {/* Search bar */}
@@ -1082,19 +1065,7 @@ const CourseDetailPage = () => {
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] border border-indigo-500/20">Module Overview</span>
                                         {(() => {
-                                            const isLiveType = activeLecture?.type === 'LIVE';
-                                            const startTime = new Date(activeLecture?.scheduledAt || activeLecture?.createdAt).getTime();
-                                            const duration = (activeLecture?.liveDuration || 60) * 60 * 1000;
-                                            const isExpired = Date.now() > (startTime + duration);
-                                            const isCurrentlyLive = isLiveType && activeLecture?.status === 'LIVE' && !isExpired;
-
-                                            if (isCurrentlyLive) {
-                                                return (
-                                                    <span className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 text-rose-500 rounded-lg text-[8px] lg:text-[10px] font-black uppercase tracking-[0.2em] border border-rose-500/20 animate-pulse">
-                                                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse mr-0.5" /> LIVE SESSION
-                                                    </span>
-                                                );
-                                            }
+                                            // No live sessions anymore
                                             return null;
                                         })()}
                                     </div>
@@ -1410,7 +1381,7 @@ const TeacherDashboard = () => {
             <div className="flex items-center justify-between mb-6 md:mb-12 gap-3">
                 <div className="min-w-0">
                     <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-1 md:mb-2 tracking-tight">Academy Console</h2>
-                    <p className="text-slate-500 font-medium text-sm hidden sm:block">Manage your courses, lectures and live streams.</p>
+                    <p className="text-slate-500 font-medium text-sm hidden sm:block">Manage your courses and lectures.</p>
                 </div>
                 {(user?.role === 'SUPER_ADMIN' || user?.role === 'TEACHER' || user?.role === 'COLLEGE_ADMIN') && (
                     <button
@@ -1563,10 +1534,8 @@ const ManageLectures = () => {
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [showLiveModal, setShowLiveModal] = useState(false);
-    const [liveDuration, setLiveDuration] = useState(60);
     const [selectedLecture, setSelectedLecture] = useState(null);
-    const [newLecture, setNewLecture] = useState({ title: '', type: 'RECORDED', videoIdentifier: '', description: '', notesUrl: '' });
+    const [newLecture, setNewLecture] = useState({ title: '', description: '', notesUrl: '' });
     const navigate = useNavigate();
 
     const fetchCourseData = useCallback(async () => {
@@ -1590,22 +1559,10 @@ const ManageLectures = () => {
         try {
             await axios.post(`/courses/${courseId}/lectures`, newLecture);
             setShowAddModal(false);
-            setNewLecture({ title: '', type: 'RECORDED', videoIdentifier: '', description: '', notesUrl: '' });
+            setNewLecture({ title: '', description: '', notesUrl: '' });
             fetchCourseData();
         } catch (err) {
             alert("Failed to add lecture");
-        }
-    };
-
-    const handleEndLive = async (id) => {
-        try {
-            await axios.patch(`/courses/lectures/${id}`, {
-                status: 'ENDED',
-                type: 'RECORDED'
-            });
-            fetchCourseData();
-        } catch (err) {
-            alert("Failed to end live class");
         }
     };
 
@@ -1630,25 +1587,6 @@ const ManageLectures = () => {
         }
     };
 
-    const handleStartLive = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.post(`/courses/${courseId}/lectures`, {
-                title: `Live Class - ${new Date().toLocaleDateString()}`,
-                type: 'LIVE',
-                status: 'LIVE',
-                videoIdentifier: '',
-                description: 'Join the live class now!',
-                liveDuration: Number(liveDuration)
-            });
-            setShowLiveModal(false);
-            alert("Live class entry created! Start your streaming software now.");
-            fetchCourseData();
-        } catch (err) {
-            alert("Failed to start live class");
-        }
-    };
-
     if (loading) return <div className="p-8 text-center">Loading course management...</div>;
 
     return (
@@ -1669,16 +1607,10 @@ const ManageLectures = () => {
                 </div>
                 <div className="flex items-center gap-2 md:gap-3">
                     <button
-                        onClick={() => setShowLiveModal(true)}
-                        className="flex-1 md:flex-none bg-red-50 text-red-600 px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 border border-red-100 hover:bg-red-100 transition-all text-xs sm:text-sm"
-                    >
-                        <Radio className="w-4 h-4" /> <span className="hidden sm:inline">Start</span> Live
-                    </button>
-                    <button
                         onClick={() => setShowAddModal(true)}
                         className="flex-1 md:flex-none bg-blue-600 text-white px-3 sm:px-6 py-3 sm:py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 hover:scale-105 transition-all text-xs sm:text-sm"
                     >
-                        <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Recorded</span> Lecture
+                        <Plus className="w-4 h-4" /> Add Lecture
                     </button>
                 </div>
             </div>
@@ -1696,11 +1628,8 @@ const ManageLectures = () => {
                                 <div className="min-w-0">
                                     <h4 className="font-bold text-slate-900 mb-0.5 sm:mb-1 text-sm sm:text-base truncate">{lecture.title}</h4>
                                     <div className="flex items-center gap-2">
-                                        <span className={clsx(
-                                            "text-[10px] font-bold px-2 py-0.5 rounded-md",
-                                            lecture.type === 'LIVE' ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
-                                        )}>
-                                            {lecture.type}
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600">
+                                            {lecture.bunnyVideoId ? (lecture.videoStatus === 'READY' ? 'READY' : lecture.videoStatus || 'RECORDED') : 'NO VIDEO'}
                                         </span>
                                         <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
                                             Added {new Date(lecture.createdAt).toLocaleDateString()}
@@ -1709,14 +1638,6 @@ const ManageLectures = () => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                                {lecture.status === 'LIVE' && (
-                                    <button
-                                        onClick={() => handleEndLive(lecture._id)}
-                                        className="px-2 sm:px-3 py-1.5 bg-red-600 text-white rounded-xl text-[10px] font-bold hover:bg-red-700 transition-all"
-                                    >
-                                        Stop
-                                    </button>
-                                )}
                                 <button
                                     onClick={() => { setSelectedLecture(lecture); setShowEditModal(true); }}
                                     className="p-2 sm:p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
@@ -1738,24 +1659,22 @@ const ManageLectures = () => {
                 </div>
             </div>
 
-            { }
             <div className="mt-12 p-8 bg-gradient-to-r from-slate-900 to-slate-800 rounded-[32px] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
                 <div className="flex items-center gap-5">
                     <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                        <Key className="w-6 h-6 text-blue-400" />
+                        <Video className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                        <h4 className="font-bold text-lg">Streaming Setup Required?</h4>
-                        <p className="text-slate-400 text-sm">Configure your streaming software for live sessions.</p>
+                        <h4 className="font-bold text-lg">Upload videos via Course Management</h4>
+                        <p className="text-slate-400 text-sm">Use the admin Course Management page to upload video files to Bunny Stream.</p>
                     </div>
                 </div>
-                <Link to="/app/learning/onboarding" className="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold text-sm">View One-Time Setup</Link>
             </div>
 
             {showAddModal && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-[40px] p-10 w-full max-w-lg shadow-2xl animate-in zoom-in duration-300">
-                        <h2 className="text-2xl font-black mb-6">Add Recorded Lecture</h2>
+                        <h2 className="text-2xl font-black mb-6">Add Lecture</h2>
                         <form onSubmit={handleAddLecture} className="space-y-6">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2 px-1">Lecture Title</label>
@@ -1766,17 +1685,6 @@ const ManageLectures = () => {
                                     onChange={e => setNewLecture({ ...newLecture, title: e.target.value })}
                                     required
                                 />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2 px-1">YouTube Video ID</label>
-                                <input
-                                    className="w-full h-14 bg-slate-50 border-none rounded-2xl px-5 font-medium focus:ring-2 ring-blue-500 transition-all"
-                                    placeholder="e.g. dQw4w9WgXcQ"
-                                    value={newLecture.videoIdentifier}
-                                    onChange={e => setNewLecture({ ...newLecture, videoIdentifier: e.target.value })}
-                                    required
-                                />
-                                <p className="text-[10px] text-slate-400 mt-2 px-1">Copy the ID from your YouTube video URL.</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2 px-1">Description (Optional)</label>
@@ -1797,9 +1705,15 @@ const ManageLectures = () => {
                                 />
                                 <p className="text-[10px] text-slate-400 mt-2 px-1">Links to PDF or supplementary materials.</p>
                             </div>
+                            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3">
+                                <BadgeInfo className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-blue-700 font-medium leading-relaxed">
+                                    After creating the lecture, upload the video via the Course Management page.
+                                </p>
+                            </div>
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
-                                <button type="submit" className="flex-1 h-14 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Publish Lecture</button>
+                                <button type="submit" className="flex-1 h-14 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Add Lecture</button>
                             </div>
                         </form>
                     </div>
@@ -1817,15 +1731,6 @@ const ManageLectures = () => {
                                     className="w-full h-14 bg-slate-50 border-none rounded-2xl px-5 font-medium focus:ring-2 ring-blue-500 transition-all"
                                     value={selectedLecture.title}
                                     onChange={e => setSelectedLecture({ ...selectedLecture, title: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2 px-1">YouTube Video ID</label>
-                                <input
-                                    className="w-full h-14 bg-slate-50 border-none rounded-2xl px-5 font-medium focus:ring-2 ring-blue-500 transition-all"
-                                    value={selectedLecture.videoIdentifier}
-                                    onChange={e => setSelectedLecture({ ...selectedLecture, videoIdentifier: e.target.value })}
                                     required
                                 />
                             </div>
@@ -1853,128 +1758,10 @@ const ManageLectures = () => {
                     </div>
                 </div>
             )}
-
-            {showLiveModal && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[40px] p-10 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center">
-                                <Radio className="w-6 h-6 text-red-600" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-black text-slate-900">Go Live</h2>
-                                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-0.5">Define session duration</p>
-                            </div>
-                        </div>
-                        <form onSubmit={handleStartLive} className="space-y-6">
-                            <div className="p-6 bg-slate-50 rounded-[28px] border border-slate-100">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 px-1 text-center">Duration (Minutes)</label>
-                                <div className="flex items-center justify-between gap-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setLiveDuration(Math.max(15, liveDuration - 15))}
-                                        className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-xl font-black text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
-                                    >
-                                        -
-                                    </button>
-                                    <div className="flex-1 text-center">
-                                        <span className="text-4xl font-black text-slate-900">{liveDuration}</span>
-                                        <span className="text-xs font-black text-slate-400 uppercase ml-2">Min</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setLiveDuration(liveDuration + 15)}
-                                        className="w-12 h-12 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-xl font-black text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex gap-3">
-                                <BadgeInfo className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                                    The "LIVE" tag will be automatically removed from the curriculum once this duration expires.
-                                </p>
-                            </div>
-
-                            <div className="flex gap-4">
-                                <button type="button" onClick={() => setShowLiveModal(false)} className="flex-1 h-14 rounded-2xl font-bold text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
-                                <button type="submit" className="flex-2 h-14 bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-200 hover:scale-[1.02] active:scale-95 transition-all">
-                                    Start Session
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
 
-const TeacherOnboarding = () => {
-    const [streamKey] = useState(() => "live_user_" + Math.random().toString(36).substring(7));
-    const navigate = useNavigate();
-
-    return (
-        <div className="max-w-4xl mx-auto p-4 md:p-8">
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 font-bold text-sm mb-6 hover:text-blue-600">
-                <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-            <div className="bg-white rounded-[40px] p-10 border border-slate-100 shadow-2xl">
-                <h1 className="text-3xl font-black text-slate-900 mb-8">One-Time Streaming Setup</h1>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <div className="space-y-8">
-                        <div className="flex gap-5">
-                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0 font-black">1</div>
-                            <div>
-                                <h4 className="font-bold text-slate-900 mb-1">Install Software</h4>
-                                <p className="text-slate-500 text-sm leading-relaxed">Download and install <a href="https://obsproject.com/" target="_blank" className="text-blue-600 underline">OBS Studio</a> or any RTMP-capable streaming software.</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-5">
-                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0 font-black">2</div>
-                            <div>
-                                <h4 className="font-bold text-slate-900 mb-1">Configure OBS</h4>
-                                <p className="text-slate-500 text-sm leading-relaxed">Go to <strong>Settings → Stream</strong>. Select Service: <strong>Custom</strong>.</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-5">
-                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0 font-black">3</div>
-                            <div>
-                                <h4 className="font-bold text-slate-900 mb-1">Enter Server Details</h4>
-                                <p className="text-slate-500 text-sm leading-relaxed">Copy the Server URL and Stream Key below into your software.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 space-y-6">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Stream Server</label>
-                            <div className="bg-white p-4 rounded-xl border border-slate-200 text-slate-600 font-mono text-xs flex justify-between items-center">
-                                <span>rtmp://your-video-platform.com/live</span>
-                                <ExternalLink className="w-4 h-4 text-slate-300" />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Your Personal Stream Key</label>
-                            <div className="bg-white p-4 rounded-xl border border-slate-200 text-slate-900 font-mono text-xs flex justify-between items-center">
-                                <span>{streamKey}</span>
-                                <button onClick={() => { navigator.clipboard.writeText(streamKey); alert("Copied!"); }} className="text-blue-600 font-bold hover:underline">Copy</button>
-                            </div>
-                        </div>
-                        <div className="pt-4 bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
-                            <p className="text-[12px] font-medium text-blue-700 leading-relaxed italic">
-                                "After this setup, simply click 'Start Streaming' in OBS and 'Start Live Class' on our website to begin your session."
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 const SkillLearning = () => {
     return (
         <Routes>
@@ -1983,7 +1770,6 @@ const SkillLearning = () => {
             { }
             <Route path="teacher" element={<TeacherDashboard />} />
             <Route path="manage/:courseId" element={<ManageLectures />} />
-            <Route path="onboarding" element={<TeacherOnboarding />} />
             <Route path="course/:id/payment-verify" element={<PaymentVerify />} />
         </Routes>
     );

@@ -40,6 +40,17 @@ router
   .patch(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.updateLecture)
   .delete(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), courseController.deleteLecture);
 
+// Video upload to Bunny Stream
+router.post(
+  '/lectures/:id/upload-video',
+  restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'),
+  upload.uploadVideo,
+  courseController.uploadLectureVideo
+);
+
+// Video processing status
+router.get('/lectures/:id/video-status', courseController.getVideoStatus);
+
 router.post('/lectures/:id/complete', courseController.markLectureComplete);
 router.delete('/lectures/:id/complete', courseController.unmarkLectureComplete);
 
