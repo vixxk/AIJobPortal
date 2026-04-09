@@ -28,7 +28,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         mainLinks = [
             { name: 'Dashboard', path: '/app/dashboard', icon: Home, exact: true },
             { name: 'Global Job Search', path: '/app/jobs', icon: Briefcase },
-            { name: 'Gradnex Jobs', path: '/app/gradnex-jobs', icon: Rocket },
+            { name: 'Hyrego Jobs', path: '/app/hyrego-jobs', icon: Rocket },
             { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
             { name: 'Competitions', path: '/app/competitions', icon: Trophy },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },

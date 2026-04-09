@@ -141,7 +141,7 @@ const Register = () => {
                             />
                         </div>
                         <h2 className="text-3xl xl:text-4xl font-extrabold text-white text-center leading-tight mb-4">
-                            Join Gradnex
+                            Join Hyrego
                         </h2>
                         <p className="text-blue-200 text-center text-[15px] leading-relaxed max-w-[300px]">
                             Create your profile and get discovered by top recruiters — or find your next great hire.
@@ -185,7 +185,7 @@ const Register = () => {
                     <Logo iconSize="w-10 h-10" textClassName="text-2xl text-slate-900" />
                 </div>
                 <h1 className="text-2xl font-bold text-slate-900 mb-1 text-center">Create Account</h1>
-                <p className="text-slate-500 text-sm text-center mb-7">Start your journey with Gradnex</p>
+                <p className="text-slate-500 text-sm text-center mb-7">Start your journey with Hyrego</p>
                 {formContent()}
                 <div className="mt-6 text-center text-[14px] font-medium text-slate-500">
                     Already have an account?{' '}

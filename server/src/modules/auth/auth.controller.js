@@ -28,7 +28,7 @@ const sendOTPEmail = async (email, otp, name) => {
         <div style="text-align: center; margin-bottom: 28px;">
           <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 800; color: #1e293b;">
             <span style="background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 6px 10px; border-radius: 8px; font-size: 18px;">JP</span>
-            Gradnex
+            Hyrego
           </div>
         </div>
         <h2 style="color: #1e293b; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Your Login OTP</h2>
@@ -42,8 +42,8 @@ const sendOTPEmail = async (email, otp, name) => {
   `;
   await sendEmail({
     email,
-    subject: `${otp} – Your Gradnex Login Code`,
-    message: `Your OTP for Gradnex login is: ${otp}. It expires in 10 minutes.`,
+    subject: `${otp} – Your Hyrego Login Code`,
+    message: `Your OTP for Hyrego login is: ${otp}. It expires in 10 minutes.`,
     html
   });
 };

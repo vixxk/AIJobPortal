@@ -208,7 +208,7 @@ const SpecialJobs = () => {
                             </span>
                         </div>
                         <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight mb-1 md:mb-2">
-                            Gradnex Job Postings
+                            Hyrego Job Postings
                         </h1>
                         <p className="hidden md:block text-blue-100 font-medium text-sm md:text-base max-w-md">
                             Verified opportunities directly from our trusted recruitment partners — curated just for you.

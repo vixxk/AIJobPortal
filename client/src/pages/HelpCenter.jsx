@@ -28,8 +28,8 @@ const HelpCenter = () => {
     const faqs = [
         {
             category: 'General',
-            q: 'What is Gradnex?',
-            a: 'Gradnex is a comprehensive platform connecting students with jobs, internships, and skill-learning opportunities, while helping recruiters find the best talent efficiently.'
+            q: 'What is Hyrego?',
+            a: 'Hyrego is a comprehensive platform connecting students with jobs, internships, and skill-learning opportunities, while helping recruiters find the best talent efficiently.'
         },
         {
             category: 'General',

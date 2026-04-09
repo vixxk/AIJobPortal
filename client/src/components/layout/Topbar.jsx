@@ -55,14 +55,14 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
         if (path === '/app/recruiter/colleges') return 'College Connect';
         if (path.startsWith('/app/recruiter/manage/')) return 'Applicant Management';
 
-        if (path === '/app/gradnex-jobs') return 'Gradnex Job Postings';
+        if (path === '/app/hyrego-jobs') return 'Hyrego Job Postings';
         if (path === '/app/english-tutor') return 'AI English Tutor';
 
         return '';
     };
 
     const pageTitle = getPageTitle();
-    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/competitions', '/app/help', '/app/recruiter', '/app/gradnex-jobs', '/app/english-tutor'].includes(location.pathname) || location.pathname.startsWith('/app/profile') || location.pathname.startsWith('/app/recruiter/manage/')));
+    const showBackButton = customBack || (!(['/app', '/app/jobs', '/app/resume', '/app/saved', '/app/competitions', '/app/help', '/app/recruiter', '/app/hyrego-jobs', '/app/english-tutor'].includes(location.pathname) || location.pathname.startsWith('/app/profile') || location.pathname.startsWith('/app/recruiter/manage/')));
     return (
         <div className={`h-16 md:h-24 px-4 md:px-10 flex items-center justify-between z-40 sticky top-0 transition-all duration-500 ${customTitle && isMobile ? 'bg-white' : 'bg-white/70 md:bg-background/60 backdrop-blur-xl border-b border-slate-200/50 md:border-none'}`}>
             {}

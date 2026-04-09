@@ -237,8 +237,8 @@ const Dashboard = () => {
         },
         { 
             target: '[data-tutorial-id="feature-5"]', 
-            title: 'Gradnex Job Postings', 
-            content: 'Access exclusive job postings from top companies directly on Gradnex. These are high-priority roles just for you.' 
+            title: 'Hyrego Job Postings', 
+            content: 'Access exclusive job postings from top companies directly on Hyrego. These are high-priority roles just for you.' 
         },
         { 
             target: '[data-tutorial-id="feature-0"]', 
@@ -350,7 +350,7 @@ const Dashboard = () => {
         { title: 'AI Mock Interviews', desc: 'Practice with AI', icon: MonitorPlay, color: 'text-orange-600', bg: 'bg-orange-50', link: '/app/interview' },
         { title: 'Skill\nLearning', desc: 'Online Classes', icon: BookOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/app/learning' },
         { title: 'AI English Tutor', desc: 'Spoken Practice', icon: Headphones, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/app/english-tutor' },
-        { title: 'Gradnex Job Postings', desc: 'Top Companies', icon: Rocket, color: 'text-rose-600', bg: 'bg-rose-50', link: '/app/gradnex-jobs' },
+        { title: 'Hyrego Job Postings', desc: 'Top Companies', icon: Rocket, color: 'text-rose-600', bg: 'bg-rose-50', link: '/app/hyrego-jobs' },
     ];
     const name = user?.name || "Andrew Ainsley";
     const firstName = name.split(' ')[0];
@@ -412,8 +412,8 @@ const Dashboard = () => {
                 </div>
                 <div className="mb-10">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Gradnex Job Postings</h3>
-                        <Link to="/app/gradnex-jobs" className="text-sm font-bold text-rose-600 hover:text-rose-700">See All</Link>
+                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Hyrego Job Postings</h3>
+                        <Link to="/app/hyrego-jobs" className="text-sm font-bold text-rose-600 hover:text-rose-700">See All</Link>
                     </div>
                     {loadingSpecial ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -567,8 +567,8 @@ const Dashboard = () => {
                 </div>
                 <div className="mb-8 px-5">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Gradnex Job Postings</h3>
-                        <Link to="/app/gradnex-jobs" className="text-[13px] font-bold text-rose-600">See All</Link>
+                        <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Hyrego Job Postings</h3>
+                        <Link to="/app/hyrego-jobs" className="text-[13px] font-bold text-rose-600">See All</Link>
                     </div>
                     {loadingSpecial ? (
                         <div className="flex overflow-x-auto gap-4 snap-x no-scrollbar pb-10 px-5 -mx-5">

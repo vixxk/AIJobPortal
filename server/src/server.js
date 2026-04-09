@@ -50,7 +50,7 @@ if (process.env.NODE_ENV !== 'production') {
 connectDB();
 
 app.get('/', (req, res) => {
-  res.send('Gradnex API is running... Modular Version.');
+  res.send('Hyrego API is running... Modular Version.');
 });
 
 app.get('/health', (req, res) => {

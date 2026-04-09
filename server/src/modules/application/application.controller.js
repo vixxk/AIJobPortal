@@ -204,7 +204,7 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
                   ${feedback ? `<p><b>Message from Recruiter:</b><br/>${feedback}</p>` : ''}
                   <p>Please log in to your dashboard to view full details and any action items.</p>
                   <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0 20px;"/>
-                  <p style="font-size: 13px; color: #9ca3af;">Sent by ${job.companyName || 'Recruitment Team'} via Gradnex AI</p>
+                  <p style="font-size: 13px; color: #9ca3af;">Sent by ${job.companyName || 'Recruitment Team'} via Hyrego AI</p>
                 </div>
               `
           });

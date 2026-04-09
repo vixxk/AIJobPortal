@@ -222,7 +222,7 @@ const AdminJobs = () => {
                                                 ? "bg-amber-50 text-amber-600 border-amber-100 shadow-sm" 
                                                 : "bg-slate-50 text-slate-400 border-slate-100 hover:text-amber-500 hover:bg-white"
                                         )}
-                                        title={job.isSpecial ? "Remove from Gradnex Jobs" : "Mark as Gradnex Job (Special)"}
+                                        title={job.isSpecial ? "Remove from Hyrego Jobs" : "Mark as Hyrego Job (Special)"}
                                     >
                                         <Sparkles className={clsx("w-4 h-4", job.isSpecial && "fill-current")} />
                                     </button>

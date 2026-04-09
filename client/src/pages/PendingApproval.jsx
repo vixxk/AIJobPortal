@@ -122,8 +122,8 @@ const PendingApproval = () => {
                     </p>
                     <p className="text-xs text-slate-400">
                         Need help? Contact{' '}
-                        <a href="mailto:support@gradnex.com" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
-                            support@gradnex.com
+                        <a href="mailto:support@hyrego.com" className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+                            support@hyrego.com
                         </a>
                     </p>
                 </div>

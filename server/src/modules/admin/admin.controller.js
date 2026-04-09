@@ -88,13 +88,13 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Your Gradnex Account Has Been Approved!',
-        message: `Hi ${user.name}, your account has been approved. You can now log in and start using Gradnex.`,
+        subject: 'Your Hyrego Account Has Been Approved!',
+        message: `Hi ${user.name}, your account has been approved. You can now log in and start using Hyrego.`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 16px;">
             <h2 style="color: #1e293b;">Account Approved! 🎉</h2>
             <p style="color: #475569;">Hi ${user.name},</p>
-            <p style="color: #475569;">Your <strong>${user.role === 'RECRUITER' ? 'Recruiter' : 'College'}</strong> account on Gradnex has been approved by our admin team.</p>
+            <p style="color: #475569;">Your <strong>${user.role === 'RECRUITER' ? 'Recruiter' : 'College'}</strong> account on Hyrego has been approved by our admin team.</p>
             <p style="color: #475569;">You can now log in and access all features available to you.</p>
             <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Login Now</a>
           </div>
@@ -112,7 +112,7 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Gradnex Account Application Update',
+        subject: 'Hyrego Account Application Update',
         message: `Hi ${user.name}, unfortunately your account application was not approved at this time. Please contact support for more information.`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 16px;">
@@ -290,13 +290,13 @@ const notifyStudentsOfJob = async (job, isNewlyApproved) => {
         await Notification.insertMany(notifications, { ordered: false }).catch(() => {});
       }
     } else {
-      // Global special job: notify ALL students (gradnex official)
+      // Global special job: notify ALL students (hyrego official)
       const allStudents = await User.find({ role: 'STUDENT', isActive: true }).select('_id');
       if (allStudents.length > 0) {
         const notifications = allStudents.map(student => ({
           userId: student._id,
-          title: 'Gradnex Exclusive Job! ✨',
-          message: `A new verified job "${job.title}" at ${job.companyName || 'Gradnex Partner'} is now live. Apply now!`,
+          title: 'Hyrego Exclusive Job! ✨',
+          message: `A new verified job "${job.title}" at ${job.companyName || 'Hyrego Partner'} is now live. Apply now!`,
           type: 'JOB_POSTING',
           metadata: { jobId: job._id }
         }));

@@ -81,7 +81,7 @@ function App() {
               <Route path="profile" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER', 'COLLEGE_ADMIN']}><StudentProfile /></ProtectedRoute>} />
               <Route path="profile/:section" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER', 'COLLEGE_ADMIN']}><StudentProfile /></ProtectedRoute>} />
               <Route path="applications" element={<ProtectedRoute allowedRoles={['STUDENT']}><MyApplications /></ProtectedRoute>} />
-              <Route path="gradnex-jobs" element={<ProtectedRoute allowedRoles={['STUDENT']}><SpecialJobs /></ProtectedRoute>} />
+              <Route path="hyrego-jobs" element={<ProtectedRoute allowedRoles={['STUDENT']}><SpecialJobs /></ProtectedRoute>} />
               <Route path="recruiter" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterDashboard /></ProtectedRoute>} />
               <Route path="recruiter/listings" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterJobs /></ProtectedRoute>} />
               <Route path="recruiter/post-job" element={<ProtectedRoute allowedRoles={['RECRUITER']}><PostJob /></ProtectedRoute>} />
