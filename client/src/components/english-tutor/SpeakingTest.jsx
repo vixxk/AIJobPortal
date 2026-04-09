@@ -106,8 +106,8 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
 
         try {
             const voices = {
-                female: ['en-US-AriaNeural', 'en-GB-SoniaNeural', 'en-AU-NatashaNeural'],
-                male: ['en-US-GuyNeural', 'en-GB-SoniaNeural', 'en-AU-WilliamNeural']
+                female: ['en-IN-NeerjaNeural', 'en-US-AriaNeural', 'en-GB-SoniaNeural', 'en-AU-NatashaNeural'],
+                male: ['en-IN-PrabhatNeural', 'en-US-GuyNeural', 'en-GB-RyanNeural', 'en-AU-WilliamNeural']
             };
 
             const speakerMap = {};
@@ -117,14 +117,15 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
             const getChunkAudio = async (idx) => {
                 if (idx >= segments.length) return null;
                 const segment = segments[idx];
-                let voice = 'en-US-AriaNeural';
+                let voice = 'en-IN-NeerjaNeural';
+                const maleNames = ['Sam', 'Bob', 'Guy', 'Ryan', 'William', 'Alex', 'Rahul', 'Rohit', 'Arjun', 'Manager', 'Vikram', 'Kabir', 'John', 'David', 'Amit', 'Raj'];
 
                 if (isDialogue) {
                     const match = segment.match(/^([A-Z][a-z]+):\s/) || segment.match(/My name is\s([A-Z][a-z]+)/);
                     if (match) {
                         const name = match[1].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
                         if (!speakerMap[name]) {
-                            const isMale = ['Sam', 'Bob', 'Guy', 'Ryan', 'William', 'Alex'].includes(name);
+                            const isMale = maleNames.includes(name);
                             if (isMale) {
                                 speakerMap[name] = voices.male[maleIdx % voices.male.length];
                                 maleIdx++;
@@ -134,6 +135,11 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                             }
                         }
                         voice = speakerMap[name];
+                    }
+                } else {
+                    const hasMaleName = maleNames.some(n => text.includes(n) || text.includes(n + "'s"));
+                    if (hasMaleName) {
+                        voice = voices.male[maleIdx % voices.male.length];
                     }
                 }
 
@@ -175,13 +181,13 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                     if (!audio) return resolve();
 
                     audio.src = url;
-                    
+
                     audio.onplay = () => {
                         setIsPreparingAudio(false);
                         setIsElenaSpeaking(true);
                         setContentVisible(true);
                     };
-                    
+
                     audio.onended = () => resolve();
                     audio.onerror = (e) => reject(e);
                     audio.play().catch(reject);
@@ -228,7 +234,7 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                 const nextTask = TASKS[currentStep + 1];
                 if (nextTask && !audioCache[nextTask.id]) {
                     try {
-                        const url = await speakText(nextTask.prompt, 'en-US-AriaNeural');
+                        const url = await speakText(nextTask.prompt, 'en-IN-NeerjaNeural');
                         setAudioCache(prev => ({ ...prev, [nextTask.id]: url }));
                     } catch (e) { console.warn('Prefetch failed:', e); }
                 }
@@ -420,10 +426,10 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                 exit={{ opacity: 0 }}
                                 className="w-full flex-grow flex items-center justify-center p-4"
                             >
-                                <AudioCheck 
-                                    onConfirm={() => setShowAudioCheck(false)} 
-                                    setMicBlocked={setMicBlocked} 
-                                    type="placement" 
+                                <AudioCheck
+                                    onConfirm={() => setShowAudioCheck(false)}
+                                    setMicBlocked={setMicBlocked}
+                                    type="placement"
                                 />
                             </motion.div>
                         ) : testResults ? (
@@ -615,11 +621,10 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                                                         <button
                                                                             onClick={() => handleSpeak(currentTask.content)}
                                                                             disabled={isPreparingAudio || isElenaSpeaking}
-                                                                            className={`p-2 rounded-lg transition-all ${
-                                                                                isPreparingAudio || isElenaSpeaking
+                                                                            className={`p-2 rounded-lg transition-all ${isPreparingAudio || isElenaSpeaking
                                                                                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                                                                     : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-                                                                            }`}
+                                                                                }`}
                                                                             title="Listen to paragraph"
                                                                         >
                                                                             {isPreparingAudio
@@ -643,7 +648,7 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                                                                 key={currentStep}
                                                                 timer={timeRemaining}
                                                                 maxTimer={currentTask.timer || 60}
-                                                                isTimerRunning={!isElenaSpeaking && !showIntro && !isSubmitting && !isProcessingTask && !micBlocked && timeRemaining > 0}
+                                                                isTimerRunning={!isElenaSpeaking && !showIntro && !isSubmitting && !isProcessingTask && !testResults && !micBlocked && timeRemaining > 0}
                                                                 onSubmitAnswer={handleAnswerSubmit}
                                                                 onPermissionChange={setMicBlocked}
                                                             />

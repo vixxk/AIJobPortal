@@ -6,7 +6,7 @@ import {
     ArrowLeft, Edit3, Save, X, Plus, Trash2, BookOpen, Users, Settings,
     Clock, Tag, Globe, BarChart2, Video, Radio, ChevronDown, ChevronRight,
     GripVertical, Calendar, Eye, EyeOff, Star, Award, Target, CheckCircle,
-    UploadCloud, AlertCircle, Check, Play
+    UploadCloud, AlertCircle, Check, Play, FileQuestion
 } from 'lucide-react';
 import Skeleton from '../../components/ui/Skeleton';
 import VideoPlayer, { extractYouTubeId } from '../../components/ui/VideoPlayer';
@@ -139,6 +139,13 @@ const CourseManagement = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [toast, setToast] = useState(null);
 
+    // Tests state
+    const [tests, setTests] = useState([]);
+    const DEFAULT_TEST_FORM = { show: false, chapterId: null, title: '', questions: [{ question: '', options: ['', '', '', ''], correctOptionIndex: 0 }] };
+    const [testForm, setTestForm] = useState(DEFAULT_TEST_FORM);
+    const [editTest, setEditTest] = useState(null);
+    const [testResults, setTestResults] = useState([]);
+
     // Chapter / Lecture state
     const [expandedChapters, setExpandedChapters] = useState({});
     const [chapterForm, setChapterForm] = useState({ show: false, title: '', description: '', order: 0 });
@@ -172,7 +179,23 @@ const CourseManagement = () => {
         }
     }, [id]);
 
-    useEffect(() => { fetchCourse(); }, [fetchCourse]);
+    const fetchTests = useCallback(async () => {
+        try {
+            const res = await axios.get(`/courses/${id}/tests`);
+            setTests(res.data.data.tests);
+            if (res.data.data.testResults) {
+                setTestResults(res.data.data.testResults);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }, [id]);
+
+    useEffect(() => { 
+        fetchCourse(); 
+        fetchTests(); 
+    }, [fetchCourse, fetchTests]);
+
 
     // ── Field Saver ─────────────────────────────────────────────────────────────
     const saveField = async (field, value) => {
@@ -294,6 +317,50 @@ const CourseManagement = () => {
             showToast(err.response?.data?.message || 'Failed', 'error');
         }
     };
+
+    // ── Test Actions ───────────────────────────────────────────────────────────
+    const handleAddTest = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post(`/courses/${id}/tests`, {
+                title: testForm.title,
+                chapter: testForm.chapterId,
+                questions: testForm.questions
+            });
+            setTestForm(DEFAULT_TEST_FORM);
+            fetchTests();
+            showToast('Test added');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed', 'error');
+        }
+    };
+
+    const handleUpdateTest = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.patch(`/courses/tests/${editTest._id}`, {
+                title: editTest.title,
+                questions: editTest.questions
+            });
+            setEditTest(null);
+            fetchTests();
+            showToast('Test updated');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed', 'error');
+        }
+    };
+
+    const handleDeleteTest = async (testId) => {
+        if (!confirm('Delete this test?')) return;
+        try {
+            await axios.delete(`/courses/tests/${testId}`);
+            fetchTests();
+            showToast('Test deleted');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed', 'error');
+        }
+    };
+
 
     // ── Remove Student ──────────────────────────────────────────────────────────
     const handleRemoveStudent = async (studentId) => {
@@ -672,6 +739,18 @@ const CourseManagement = () => {
                                         <Video className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> Add Lecture
                                     </button>
                                     <button
+                                        onClick={() => {
+                                            if (!course.chapters || course.chapters.length === 0) {
+                                                showToast('Create at least one chapter before adding tests.', 'error');
+                                                return;
+                                            }
+                                            setTestForm({ ...DEFAULT_TEST_FORM, show: true, chapterId: course.chapters[0]._id });
+                                        }}
+                                        className="flex-1 sm:flex-none px-3 py-2 lg:px-4 lg:py-2.5 bg-slate-100 text-slate-700 rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black flex items-center justify-center gap-2 hover:bg-slate-200 transition-all"
+                                    >
+                                        <FileQuestion className="w-3.5 h-3.5 lg:w-4 lg:h-4" /> Add Test
+                                    </button>
+                                    <button
                                         onClick={() => setChapterForm({ show: true, title: '', description: '', order: course.chapters?.length || 0 })}
                                         className="flex-1 sm:flex-none px-3 py-2 lg:px-4 lg:py-2.5 bg-indigo-600 text-white rounded-xl lg:rounded-2xl text-[10px] lg:text-xs font-black flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"
                                     >
@@ -722,6 +801,7 @@ const CourseManagement = () => {
                                                     <h4 className="font-black text-slate-900 text-sm lg:text-base tracking-tight truncate">{chapter.title}</h4>
                                                     <div className="flex items-center gap-2 mt-0.5">
                                                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">{chLectures.length} {chLectures.length === 1 ? 'lecture' : 'lectures'}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none"> · {tests.filter(t => t.chapter?.toString() === chapter._id?.toString()).length} tests</span>
                                                         {chapter.description && <span className="w-1 h-1 bg-slate-200 rounded-full shrink-0" />}
                                                         {chapter.description && <p className="text-[10px] text-slate-400 font-medium truncate leading-none">{chapter.description}</p>}
                                                     </div>
@@ -756,18 +836,26 @@ const CourseManagement = () => {
 
                                             {isExpanded && (
                                                 <div className="border-t border-slate-100">
-                                                    {chLectures.length === 0 ? (
+                                                    {chLectures.length === 0 && tests.filter(t => t.chapter?.toString() === chapter._id?.toString()).length === 0 ? (
                                                         <div className="px-6 py-4 text-slate-300 text-xs font-bold italic text-center">
-                                                            No lectures in this chapter yet.
+                                                            No content in this chapter yet.
                                                         </div>
                                                     ) : (
-                                                        chLectures.sort((a, b) => a.order - b.order).map((lecture, li) => (
-                                                            <LectureRow key={lecture._id} lecture={lecture} index={li} canEdit={canEdit}
-                                                                onEdit={() => setEditLecture({ ...lecture, scheduledAt: lecture.scheduledAt ? new Date(lecture.scheduledAt).toISOString().slice(0, 16) : '' })}
-                                                                onDelete={() => handleDeleteLecture(lecture._id)}
-                                                                onPreview={() => setPreviewLecture(lecture)}
-                                                            />
-                                                        ))
+                                                        <>
+                                                            {chLectures.sort((a, b) => a.order - b.order).map((lecture, li) => (
+                                                                <LectureRow key={lecture._id} lecture={lecture} index={li} canEdit={canEdit}
+                                                                    onEdit={() => setEditLecture({ ...lecture, scheduledAt: lecture.scheduledAt ? new Date(lecture.scheduledAt).toISOString().slice(0, 16) : '' })}
+                                                                    onDelete={() => handleDeleteLecture(lecture._id)}
+                                                                    onPreview={() => setPreviewLecture(lecture)}
+                                                                />
+                                                            ))}
+                                                            {tests.filter(t => t.chapter?.toString() === chapter._id?.toString()).map((test, ti) => (
+                                                                <TestRow key={test._id} test={test} index={chLectures.length + ti} canEdit={canEdit}
+                                                                    onEdit={() => setEditTest(test)}
+                                                                    onDelete={() => handleDeleteTest(test._id)}
+                                                                />
+                                                            ))}
+                                                        </>
                                                     )}
                                                 </div>
                                             )}
@@ -1123,6 +1211,125 @@ const CourseManagement = () => {
                 </Modal>
             )}
 
+            {/* Add/Edit Test Modal */}
+            {(testForm.show || editTest) && (
+                <Modal title={editTest ? 'Edit Test' : 'New Test'} onClose={() => { setTestForm(DEFAULT_TEST_FORM); setEditTest(null); }}>
+                    <form onSubmit={editTest ? handleUpdateTest : handleAddTest} className="space-y-6">
+                        <FormField label="Test Title">
+                            <input required className={inputCls} placeholder="e.g. Chapter 1 Quiz"
+                                value={editTest ? editTest.title : testForm.title}
+                                onChange={e => editTest ? setEditTest({ ...editTest, title: e.target.value }) : setTestForm({ ...testForm, title: e.target.value })}
+                            />
+                        </FormField>
+                        {!editTest && course.chapters?.length > 0 && (
+                            <FormField label="Chapter">
+                                <select className={inputCls} required
+                                    value={testForm.chapterId || ''}
+                                    onChange={e => setTestForm({ ...testForm, chapterId: e.target.value })}
+                                >
+                                    <option value="" disabled>Select a Chapter</option>
+                                    {course.chapters.map(c => (
+                                        <option key={c._id} value={c._id}>{c.title}</option>
+                                    ))}
+                                </select>
+                            </FormField>
+                        )}
+
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Questions</h4>
+                                <button type="button" onClick={() => {
+                                    const newQ = { question: '', options: ['', '', '', ''], correctOptionIndex: 0, explanation: '' };
+                                    if (editTest) setEditTest({ ...editTest, questions: [...editTest.questions, newQ] });
+                                    else setTestForm({ ...testForm, questions: [...testForm.questions, newQ] });
+                                }} className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-800 tracking-widest">
+                                    + Add Question
+                                </button>
+                            </div>
+
+                            {(editTest ? editTest.questions : testForm.questions).map((q, qi) => (
+                                <div key={qi} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl relative">
+                                    {((editTest ? editTest.questions.length : testForm.questions.length) > 1) && (
+                                        <button type="button" onClick={() => {
+                                            if (editTest) {
+                                                const rq = editTest.questions.filter((_, idx) => idx !== qi);
+                                                setEditTest({ ...editTest, questions: rq });
+                                            } else {
+                                                const rq = testForm.questions.filter((_, idx) => idx !== qi);
+                                                setTestForm({ ...testForm, questions: rq });
+                                            }
+                                        }} className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-white rounded-full p-1 shadow-sm">
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
+                                    
+                                    <div className="space-y-3">
+                                        <FormField label={`Question ${qi + 1}`}>
+                                            <input required className={inputCls} placeholder="Question text"
+                                                value={q.question}
+                                                onChange={e => {
+                                                    const v = e.target.value;
+                                                    if (editTest) {
+                                                        const qs = [...editTest.questions]; qs[qi].question = v; setEditTest({ ...editTest, questions: qs });
+                                                    } else {
+                                                        const qs = [...testForm.questions]; qs[qi].question = v; setTestForm({ ...testForm, questions: qs });
+                                                    }
+                                                }}
+                                            />
+                                        </FormField>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {q.options.map((opt, oi) => (
+                                                <div key={oi} className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-2">
+                                                    <input type="radio" required name={`correct-${qi}`}
+                                                        className="w-4 h-4 accent-emerald-500 mt-1 cursor-pointer shrink-0"
+                                                        checked={q.correctOptionIndex === oi}
+                                                        onChange={() => {
+                                                            if (editTest) {
+                                                                const qs = [...editTest.questions]; qs[qi].correctOptionIndex = oi; setEditTest({ ...editTest, questions: qs });
+                                                            } else {
+                                                                const qs = [...testForm.questions]; qs[qi].correctOptionIndex = oi; setTestForm({ ...testForm, questions: qs });
+                                                            }
+                                                        }}
+                                                    />
+                                                    <input required className="w-full h-10 px-2 py-1 text-sm font-medium text-slate-700 outline-none" placeholder={`Option ${oi + 1}`}
+                                                        value={opt}
+                                                        onChange={e => {
+                                                            const v = e.target.value;
+                                                            if (editTest) {
+                                                                const qs = [...editTest.questions]; qs[qi].options[oi] = v; setEditTest({ ...editTest, questions: qs });
+                                                            } else {
+                                                                const qs = [...testForm.questions]; qs[qi].options[oi] = v; setTestForm({ ...testForm, questions: qs });
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <FormField label="Explanation for correct answer (Optional)">
+                                            <input className={inputCls} placeholder="Why is this the correct answer?"
+                                                value={q.explanation || ''}
+                                                onChange={e => {
+                                                    const v = e.target.value;
+                                                    if (editTest) {
+                                                        const qs = [...editTest.questions]; qs[qi].explanation = v; setEditTest({ ...editTest, questions: qs });
+                                                    } else {
+                                                        const qs = [...testForm.questions]; qs[qi].explanation = v; setTestForm({ ...testForm, questions: qs });
+                                                    }
+                                                }}
+                                            />
+                                        </FormField>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all">
+                            {editTest ? 'Update Test' : 'Add Test'}
+                        </button>
+                    </form>
+                </Modal>
+            )}
+
             {/* ─── Lecture Preview Modal ───────────────────────────────────────────── */}
             {previewLecture && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200"
@@ -1247,6 +1454,47 @@ const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) =>
                             <BookOpen className="w-3 h-3" /> Notes
                         </span>
                     )}
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const TestRow = ({ test, index, canEdit, onEdit, onDelete }) => (
+    <div className="px-4 lg:px-6 py-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none group">
+        <div className="flex items-start gap-4">
+            <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg lg:rounded-xl bg-orange-100 flex items-center justify-center text-[10px] lg:text-xs font-black text-orange-400 shrink-0 mt-0.5">
+                <FileQuestion className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                    <span
+                        className="text-[13px] lg:text-sm font-bold text-slate-800 truncate block text-left pt-1"
+                    >
+                        {test.title}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+                        {canEdit && (
+                            <>
+                                <button onClick={onEdit} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all">
+                                    <Edit3 className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                                </button>
+                                <button onClick={onDelete} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
+                                    <Trash2 className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest text-orange-600 bg-orange-50">
+                            TEST
+                        </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                        {test.questions.length} Questions
+                    </span>
                 </div>
             </div>
         </div>

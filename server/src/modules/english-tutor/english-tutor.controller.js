@@ -163,12 +163,53 @@ exports.submitLessonTask = catchAsync(async (req, res, next) => {
     }
   }
 
-  const result = await aiService.evaluateLessonTask(
-    task_type,
-    finalTranscript,
-    metrics,
-    context
-  );
+  // If we have no transcript at all (STT failed and no browser fallback),
+  // return a graceful fallback instead of sending empty text to the AI evaluator
+  if (!finalTranscript || !finalTranscript.trim()) {
+    const fallbackResult = {
+      status: 'success',
+      data: {
+        evaluation: {
+          scores: { overall: 0, fluency: 0, grammar: 0, vocabulary: 0, pronunciation: 0 },
+          feedback: "I couldn't hear your response. Please check your microphone and try again.",
+          corrections: "",
+          error_tags: [],
+          missing_words: [],
+          pronunciation_tip: "Make sure your microphone is working and speak clearly."
+        },
+        transcript: '',
+        metrics
+      }
+    };
+    return res.status(200).json(fallbackResult);
+  }
+
+  let result;
+  try {
+    result = await aiService.evaluateLessonTask(
+      task_type,
+      finalTranscript,
+      metrics,
+      context
+    );
+  } catch (err) {
+    console.error('Lesson task AI evaluation failed:', err.message);
+    result = {
+      status: 'success',
+      data: {
+        evaluation: {
+          scores: { overall: 30, fluency: 30, grammar: 30, vocabulary: 30, pronunciation: 30 },
+          feedback: "We couldn't fully evaluate your response right now. Please try again.",
+          corrections: "",
+          error_tags: [],
+          missing_words: [],
+          pronunciation_tip: "Try speaking a bit louder and more clearly."
+        },
+        transcript: finalTranscript,
+        metrics
+      }
+    };
+  }
 
   if (result.status === 'success') {
     const { evaluation } = result.data;

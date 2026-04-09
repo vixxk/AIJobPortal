@@ -9,6 +9,21 @@ const AudioCheck = ({ onConfirm, setMicBlocked, type = 'interview' }) => {
     const analyserRef = useRef(null);
     const animationRef = useRef(null);
 
+    const cleanupStream = () => {
+        if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+        }
+        if (audioCtxRef.current) {
+            audioCtxRef.current.close().catch(() => {});
+            audioCtxRef.current = null;
+        }
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+    };
+
     const startCheck = async () => {
         try {
             setStatus('listening');
@@ -36,11 +51,16 @@ const AudioCheck = ({ onConfirm, setMicBlocked, type = 'interview' }) => {
                     const val = dataArray[i * 2] || 0;
                     if (val > 40) {
                         setStatus('success');
+                        // Release mic immediately after detecting audio — no need to hold it
+                        cleanupStream();
                     }
                     return Math.max(4, (val / 255) * 60);
                 });
                 setAudioLevels(levels);
-                animationRef.current = requestAnimationFrame(update);
+                // Only continue animating if stream is still active
+                if (streamRef.current) {
+                    animationRef.current = requestAnimationFrame(update);
+                }
             };
             animationRef.current = requestAnimationFrame(update);
         } catch (err) {
@@ -63,11 +83,7 @@ const AudioCheck = ({ onConfirm, setMicBlocked, type = 'interview' }) => {
         };
         checkPermission();
 
-        return () => {
-            if (animationRef.current) cancelAnimationFrame(animationRef.current);
-            if (audioCtxRef.current) audioCtxRef.current.close();
-            if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-        };
+        return () => cleanupStream();
     }, []);
 
     const messages = {

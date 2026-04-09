@@ -231,10 +231,20 @@ const speakText = async (text, voice = 'en-US-AriaNeural') => {
         return cached.buf;
     }
 
-    const tts = new EdgeTTS(text, voice, { rate: '+0%', pitch: '+0Hz', volume: '+0%' });
-    const result = await tts.synthesize();
-    const arrayBuffer = await result.audio.arrayBuffer();
-    const buf = Buffer.from(arrayBuffer);
+    let buf;
+    try {
+        const tts = new EdgeTTS(text, voice, { rate: '+0%', pitch: '+0Hz', volume: '+0%' });
+        const result = await tts.synthesize();
+        const arrayBuffer = await result.audio.arrayBuffer();
+        buf = Buffer.from(arrayBuffer);
+    } catch (err) {
+        console.warn(`[TTS] Failed for voice ${voice}, using fallback en-US-AriaNeural`, err.message);
+        const fallbackVoice = 'en-US-AriaNeural';
+        const tts = new EdgeTTS(text, fallbackVoice, { rate: '+0%', pitch: '+0Hz', volume: '+0%' });
+        const result = await tts.synthesize();
+        const arrayBuffer = await result.audio.arrayBuffer();
+        buf = Buffer.from(arrayBuffer);
+    }
 
     // Evict oldest if at capacity
     if (_ttsServerCache.size >= TTS_CACHE_MAX) {
@@ -454,7 +464,7 @@ const generateLessonContent = async (level, lessonIndex) => {
 // ─── English Tutor: Evaluate Lesson Task ─────────────────────────────────────
 const evaluateLessonTask = async (taskType, transcript, metrics, context) => {
     const systemPrompt = `Evaluate a student's spoken English response for a '${taskType}' task.
-    Context (Original Prompt/Text): ${JSON.stringify(context)}
+    Context (Original Task/Text): ${JSON.stringify(context)}
     Audio Metrics: ${JSON.stringify(metrics)}
     
     Goals:
@@ -469,18 +479,23 @@ const evaluateLessonTask = async (taskType, transcript, metrics, context) => {
     Return ONLY a JSON object:
     {
       "scores": {
-        "overall": 0,
-        "fluency": 0,
-        "grammar": 0,
-        "vocabulary": 0,
-        "pronunciation": 0
+        "overall": 0-100,
+        "fluency": 0-100,
+        "grammar": 0-100,
+        "vocabulary": 0-100,
+        "pronunciation": 0-100
       },
       "feedback": "Encouraging and constructive feedback",
       "corrections": "Specific grammar or pronunciation corrections",
       "error_tags": ["grammar", "pronunciation", "vocabulary", "fluency"],
-      "missing_words": ["Words from prompt that were skipped"],
+      "missing_words": ["Words from the requested text that were skipped"],
       "pronunciation_tip": "One specific tip for improvement"
-    }`;
+    }
+    
+    IMPORTANT RULES FOR SCORING:
+    - ALL scores MUST be on a scale of 0 to 100.
+    - For the 'repeat' task: Be highly lenient. If the transcript proves they repeated the 'text_to_repeat' accurately (e.g., they hit most of the words), they MUST receive a passing overall score (80-100) even if audio metrics suggest high pause ratios or hesitations. Do not fail a perfect repetition for a pause.
+    - NEVER use the word "prompt" in your feedback or tips. Always refer to it naturally as "the text", "the sentence", or "the task".`;
     const result = await callFireworks(systemPrompt, `User transcript: ${transcript}`);
     return {
         status: 'success',

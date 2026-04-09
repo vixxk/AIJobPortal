@@ -78,8 +78,8 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
 
         try {
             const voices = {
-                female: ['en-US-AriaNeural', 'en-GB-SoniaNeural', 'en-AU-NatashaNeural'],
-                male: ['en-US-GuyNeural', 'en-GB-RyanNeural', 'en-AU-WilliamNeural']
+                female: ['en-IN-NeerjaNeural', 'en-US-AriaNeural', 'en-GB-SoniaNeural', 'en-AU-NatashaNeural'],
+                male: ['en-IN-PrabhatNeural', 'en-US-GuyNeural', 'en-GB-RyanNeural', 'en-AU-WilliamNeural']
             };
 
             const speakerMap = {};
@@ -89,14 +89,15 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
             const getChunkAudio = async (idx) => {
                 if (idx >= segments.length) return null;
                 const segment = segments[idx];
-                let voice = 'en-US-AriaNeural';
+                let voice = 'en-IN-NeerjaNeural';
+                const maleNames = ['Sam', 'Bob', 'Guy', 'Ryan', 'William', 'Alex', 'Rahul', 'Rohit', 'Arjun', 'Manager', 'Vikram', 'Kabir', 'John', 'David', 'Amit', 'Raj'];
 
                 if (isDialogue) {
                     const match = segment.match(/^([A-Z][a-z]+):\s/) || segment.match(/My name is\s([A-Z][a-z]+)/);
                     if (match) {
                         const name = match[1].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
                         if (!speakerMap[name]) {
-                            const isMale = ['Sam', 'Bob', 'Guy', 'Ryan', 'William', 'Alex'].includes(name);
+                            const isMale = maleNames.includes(name);
                             if (isMale) {
                                 speakerMap[name] = voices.male[maleIdx % voices.male.length];
                                 maleIdx++;
@@ -106,6 +107,11 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
                             }
                         }
                         voice = speakerMap[name];
+                    }
+                } else {
+                    const hasMaleName = maleNames.some(n => text.includes(n) || text.includes(n + "'s"));
+                    if (hasMaleName) {
+                        voice = voices.male[maleIdx % voices.male.length];
                     }
                 }
 
@@ -140,12 +146,12 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
                     if (!audio) return resolve();
 
                     audio.src = url;
-                    
+
                     audio.onplay = () => {
                         setIsPreparingAudio(false);
                         setIsElenaSpeaking(true);
                     };
-                    
+
                     audio.onended = () => resolve();
                     audio.onerror = (e) => reject(e);
                     audio.play().catch(reject);
@@ -326,10 +332,10 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
             {!hasInteracted ? (
                 <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center p-3 md:p-8 text-center">
                     {!hasCheckedAudio ? (
-                        <AudioCheck 
-                            onConfirm={() => setHasCheckedAudio(true)} 
-                            setMicBlocked={setMicBlocked} 
-                            type="placement" 
+                        <AudioCheck
+                            onConfirm={() => setHasCheckedAudio(true)}
+                            setMicBlocked={setMicBlocked}
+                            type="placement"
                         />
                     ) : (
                         <motion.div
@@ -353,395 +359,396 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
                 </div>
             ) : (
                 <>
-            <div className="max-w-3xl mx-auto px-3 md:px-4 pt-2 md:pt-12">
-                <div className="flex items-center justify-between mb-3 md:mb-10">
-                    <div className="flex-1 mr-3 md:mr-4">
-                        <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
-                            <span className="text-[8px] md:text-[11px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-1.5 md:px-2 py-0.5 rounded-md">Level {level}</span>
-                            <span className="text-[8px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest">• {currentTaskIdx === -1 ? 'Warm-up' : `Task ${currentTaskIdx + 1} of ${lesson.tasks.length}`}</span>
-                        </div>
-                        <h1 className="text-base md:text-2xl font-black text-slate-900 tracking-tight">{lesson?.title || 'English Lesson'}</h1>
-                    </div>
-                    <button
-                        onClick={() => window.confirm('Exit lesson?') && onCancel()}
-                        className="p-1.5 md:p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0"
-                    >
-                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                </div>
-
-                <div className="h-1 md:h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3 md:mb-12">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${((currentTaskIdx + 2) / (lesson.tasks.length + 1)) * 100}%` }}
-                        className="h-full bg-indigo-600"
-                    />
-                </div>
-
-                <AnimatePresence mode="wait">
-                    {showIntro ? (
-                        <motion.div
-                            key="intro"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-xl md:rounded-2xl p-5 md:p-12 border border-slate-200 shadow-sm text-center flex flex-col items-center"
-                        >
-                            <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-50 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 border border-indigo-100">
-                                <span className="text-xl md:text-2xl">👩‍🏫</span>
+                    <div className="max-w-3xl mx-auto px-3 md:px-4 pt-2 md:pt-12">
+                        <div className="flex items-center justify-between mb-3 md:mb-10">
+                            <div className="flex-1 mr-3 md:mr-4">
+                                <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
+                                    <span className="text-[8px] md:text-[11px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-1.5 md:px-2 py-0.5 rounded-md">Level {level}</span>
+                                    <span className="text-[8px] md:text-[11px] font-bold text-slate-400 uppercase tracking-widest">• {currentTaskIdx === -1 ? 'Warm-up' : `Task ${currentTaskIdx + 1} of ${lesson.tasks.length}`}</span>
+                                </div>
+                                <h1 className="text-base md:text-2xl font-black text-slate-900 tracking-tight">{lesson?.title || 'English Lesson'}</h1>
                             </div>
-                            <h3 className="text-sm md:text-2xl font-bold text-slate-900 mb-5 md:mb-10 leading-relaxed max-w-lg">
-                                "{currentTaskIdx === -1 ? ELENA_MESSAGES.start : (ELENA_MESSAGES[`task_${currentTask.type}`] || "Let's continue.")}"
-                            </h3>
-                            {isElenaSpeaking || isPreparingAudio ? (
-                                <div className="px-6 md:px-10 py-3 md:py-4 bg-slate-50 rounded-xl flex items-center justify-center gap-2 md:gap-3 border border-slate-100 shadow-sm transition-all">
-                                    <div className="flex space-x-1.5">
-                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-                                    </div>
-                                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-slate-500">
-                                        {isPreparingAudio ? "Preparing..." : "Speaking..."}
-                                    </span>
-                                </div>
-                            ) : !ttsCompleted ? (
-                                <div className="px-6 md:px-10 py-3 md:py-4 bg-slate-50 rounded-xl flex items-center justify-center gap-2 md:gap-3 border border-slate-100 shadow-sm transition-all">
-                                    <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-slate-500">
-                                        Waiting...
-                                    </span>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => setShowIntro(false)}
-                                    className="px-8 md:px-10 py-3 md:py-4 text-white text-xs md:text-base font-bold rounded-xl transition-all shadow-lg active:scale-95 bg-indigo-600 hover:bg-slate-900 shadow-indigo-100"
+                            <button
+                                onClick={() => window.confirm('Exit lesson?') && onCancel()}
+                                className="p-1.5 md:p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0"
+                            >
+                                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+
+                        <div className="h-1 md:h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3 md:mb-12">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${((currentTaskIdx + 2) / (lesson.tasks.length + 1)) * 100}%` }}
+                                className="h-full bg-indigo-600"
+                            />
+                        </div>
+
+                        <AnimatePresence mode="wait">
+                            {showIntro ? (
+                                <motion.div
+                                    key="intro"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    className="bg-white rounded-xl md:rounded-2xl p-5 md:p-12 border border-slate-200 shadow-sm text-center flex flex-col items-center"
                                 >
-                                    {currentTaskIdx === -1 ? "Let's Begin" : "Start Task"}
-                                </button>
-                            )}
-                        </motion.div>
-                    ) : (
-                        <motion.div
-                            key="content"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="space-y-4 md:space-y-6"
-                        >
-                            <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-10 border border-slate-200 shadow-sm min-h-[300px] md:min-h-[400px] flex flex-col justify-center relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/30 rounded-full -translate-y-1/2 translate-x-1/2" />
+                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-indigo-50 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 border border-indigo-100">
+                                        <span className="text-xl md:text-2xl">👩‍🏫</span>
+                                    </div>
+                                    <h3 className="text-sm md:text-2xl font-bold text-slate-900 mb-5 md:mb-10 leading-relaxed max-w-lg">
+                                        "{currentTaskIdx === -1 ? ELENA_MESSAGES.start : (ELENA_MESSAGES[`task_${currentTask.type}`] || "Let's continue.")}"
+                                    </h3>
+                                    {isElenaSpeaking || isPreparingAudio ? (
+                                        <div className="px-6 md:px-10 py-3 md:py-4 bg-slate-50 rounded-xl flex items-center justify-center gap-2 md:gap-3 border border-slate-100 shadow-sm transition-all">
+                                            <div className="flex space-x-1.5">
+                                                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                                            </div>
+                                            <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-slate-500">
+                                                {isPreparingAudio ? "Preparing..." : "Speaking..."}
+                                            </span>
+                                        </div>
+                                    ) : !ttsCompleted ? (
+                                        <div className="px-6 md:px-10 py-3 md:py-4 bg-slate-50 rounded-xl flex items-center justify-center gap-2 md:gap-3 border border-slate-100 shadow-sm transition-all">
+                                            <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                                            <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-slate-500">
+                                                Waiting...
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setShowIntro(false)}
+                                            className="px-8 md:px-10 py-3 md:py-4 text-white text-xs md:text-base font-bold rounded-xl transition-all shadow-lg active:scale-95 bg-indigo-600 hover:bg-slate-900 shadow-indigo-100"
+                                        >
+                                            {currentTaskIdx === -1 ? "Let's Begin" : "Start Task"}
+                                        </button>
+                                    )}
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="content"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-4 md:space-y-6"
+                                >
+                                    <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-10 border border-slate-200 shadow-sm min-h-[300px] md:min-h-[400px] flex flex-col justify-center relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/30 rounded-full -translate-y-1/2 translate-x-1/2" />
 
-                                {!feedback ? (
-                                    <div className="text-center w-full space-y-5 md:space-y-8">
-                                        {currentTaskIdx === -1 ? (
-                                            <div className="space-y-4 md:space-y-8">
-                                                <div className="px-2.5 md:px-3 py-0.5 md:py-1 bg-indigo-50 rounded-full inline-block text-[9px] md:text-[10px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100">Reading Passage</div>
+                                        {!feedback ? (
+                                            <div className="text-center w-full space-y-5 md:space-y-8">
+                                                {currentTaskIdx === -1 ? (
+                                                    <div className="space-y-4 md:space-y-8">
+                                                        <div className="px-2.5 md:px-3 py-0.5 md:py-1 bg-indigo-50 rounded-full inline-block text-[9px] md:text-[10px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100">Reading Passage</div>
 
-                                                <div className="p-3 md:p-8 bg-[#F8FAFF] rounded-xl md:rounded-[2rem] border border-blue-50 relative">
-                                                    <div className="absolute top-4 right-4 z-10 flex gap-2">
-                                                        <button
-                                                            onClick={() => handleSpeak(lesson.content)}
-                                                            disabled={isPreparingAudio || isElenaSpeaking}
-                                                            className={`p-2 rounded-lg transition-all shadow-sm ${
-                                                                isPreparingAudio || isElenaSpeaking
-                                                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                                                    : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-                                                            }`}
-                                                            title="Listen to paragraph"
-                                                        >
-                                                            {isPreparingAudio
-                                                                ? <Loader2 size={16} className="animate-spin" />
-                                                                : <Volume2 size={16} />
-                                                            }
-                                                        </button>
-                                                    </div>
-                                                    {(() => {
-                                                        const content = lesson?.content || '';
-                                                        const dialoguePattern = /[A-Z][a-z]+:\s/;
-                                                        const isDialogueContent = dialoguePattern.test(content);
+                                                        <div className="p-3 md:p-8 bg-[#F8FAFF] rounded-xl md:rounded-[2rem] border border-blue-50 relative">
+                                                            <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                                                <button
+                                                                    onClick={() => handleSpeak(lesson.content)}
+                                                                    disabled={isPreparingAudio || isElenaSpeaking}
+                                                                    className={`p-2 rounded-lg transition-all shadow-sm ${isPreparingAudio || isElenaSpeaking
+                                                                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                                                            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                                                                        }`}
+                                                                    title="Listen to paragraph"
+                                                                >
+                                                                    {isPreparingAudio
+                                                                        ? <Loader2 size={16} className="animate-spin" />
+                                                                        : <Volume2 size={16} />
+                                                                    }
+                                                                </button>
+                                                            </div>
+                                                            {(() => {
+                                                                const content = lesson?.content || '';
+                                                                const dialoguePattern = /[A-Z][a-z]+:\s/;
+                                                                const isDialogueContent = dialoguePattern.test(content);
 
-                                                        if (isDialogueContent) {
-                                                            const parts = content.split(/(?=[A-Z][a-z]+:\s)/).filter(s => s.trim());
-                                                            const speakers = [];
-                                                            parts.forEach(part => {
-                                                                const match = part.match(/^([A-Z][a-z]+):\s(.+)/);
-                                                                if (match) {
-                                                                    speakers.push({ name: match[1], text: match[2].trim() });
+                                                                if (isDialogueContent) {
+                                                                    const parts = content.split(/(?=[A-Z][a-z]+:\s)/).filter(s => s.trim());
+                                                                    const speakers = [];
+                                                                    parts.forEach(part => {
+                                                                        const match = part.match(/^([A-Z][a-z]+):\s(.+)/);
+                                                                        if (match) {
+                                                                            speakers.push({ name: match[1], text: match[2].trim() });
+                                                                        }
+                                                                    });
+                                                                    const uniqueSpeakers = [...new Set(speakers.map(s => s.name))];
+                                                                    const colors = [
+                                                                        { bg: 'bg-indigo-50', border: 'border-indigo-100', name: 'text-indigo-600', text: 'text-slate-800' },
+                                                                        { bg: 'bg-amber-50', border: 'border-amber-100', name: 'text-amber-600', text: 'text-slate-800' },
+                                                                        { bg: 'bg-emerald-50', border: 'border-emerald-100', name: 'text-emerald-600', text: 'text-slate-800' },
+                                                                        { bg: 'bg-rose-50', border: 'border-rose-100', name: 'text-rose-600', text: 'text-slate-800' },
+                                                                    ];
+                                                                    const speakerColors = {};
+                                                                    uniqueSpeakers.forEach((name, i) => {
+                                                                        speakerColors[name] = colors[i % colors.length];
+                                                                    });
+
+                                                                    return (
+                                                                        <div className="space-y-2 md:space-y-3 pt-1 md:pt-2 pr-6 md:pr-8">
+                                                                            {speakers.map((s, i) => {
+                                                                                const c = speakerColors[s.name];
+                                                                                const isEven = uniqueSpeakers.indexOf(s.name) % 2 === 0;
+                                                                                return (
+                                                                                    <div key={i} className={`flex ${isEven ? 'justify-start' : 'justify-end'}`}>
+                                                                                        <div className={`max-w-[88%] md:max-w-[85%] p-2.5 md:p-4 rounded-xl md:rounded-2xl ${c.bg} border ${c.border} ${isEven ? 'rounded-tl-sm md:rounded-tl-md' : 'rounded-tr-sm md:rounded-tr-md'}`}>
+                                                                                            <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest ${c.name} block mb-0.5 md:mb-1`}>{s.name}</span>
+                                                                                            <p className={`text-xs md:text-base ${c.text} font-semibold leading-relaxed`}>"{s.text}"</p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    );
                                                                 }
-                                                            });
-                                                            const uniqueSpeakers = [...new Set(speakers.map(s => s.name))];
-                                                            const colors = [
-                                                                { bg: 'bg-indigo-50', border: 'border-indigo-100', name: 'text-indigo-600', text: 'text-slate-800' },
-                                                                { bg: 'bg-amber-50', border: 'border-amber-100', name: 'text-amber-600', text: 'text-slate-800' },
-                                                                { bg: 'bg-emerald-50', border: 'border-emerald-100', name: 'text-emerald-600', text: 'text-slate-800' },
-                                                                { bg: 'bg-rose-50', border: 'border-rose-100', name: 'text-rose-600', text: 'text-slate-800' },
-                                                            ];
-                                                            const speakerColors = {};
-                                                            uniqueSpeakers.forEach((name, i) => {
-                                                                speakerColors[name] = colors[i % colors.length];
-                                                            });
 
-                                                            return (
-                                                                <div className="space-y-2 md:space-y-3 pt-1 md:pt-2 pr-6 md:pr-8">
-                                                                    {speakers.map((s, i) => {
-                                                                        const c = speakerColors[s.name];
-                                                                        const isEven = uniqueSpeakers.indexOf(s.name) % 2 === 0;
-                                                                        return (
-                                                                            <div key={i} className={`flex ${isEven ? 'justify-start' : 'justify-end'}`}>
-                                                                                <div className={`max-w-[88%] md:max-w-[85%] p-2.5 md:p-4 rounded-xl md:rounded-2xl ${c.bg} border ${c.border} ${isEven ? 'rounded-tl-sm md:rounded-tl-md' : 'rounded-tr-sm md:rounded-tr-md'}`}>
-                                                                                    <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-widest ${c.name} block mb-0.5 md:mb-1`}>{s.name}</span>
-                                                                                    <p className={`text-xs md:text-base ${c.text} font-semibold leading-relaxed`}>"{s.text}"</p>
-                                                                                </div>
+                                                                return (
+                                                                    <p className="text-sm md:text-xl text-slate-800 leading-relaxed font-semibold pt-1 md:pt-2 pr-8 md:pr-10">
+                                                                        "{content}"
+                                                                    </p>
+                                                                );
+                                                            })()}
+                                                            {lesson?.vocabulary && lesson.vocabulary.length > 0 && (
+                                                                <div className="mt-4 md:mt-8 pt-4 md:pt-8 border-t border-blue-100">
+                                                                    <h4 className="text-[10px] md:text-xs font-black text-blue-600 uppercase tracking-widest mb-2 md:mb-4">Vocabulary Focus</h4>
+                                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 md:gap-4">
+                                                                        {lesson.vocabulary.map((vocab, i) => (
+                                                                            <div key={i} className="bg-white p-2 md:p-4 rounded-lg md:rounded-xl shadow-sm border border-blue-50">
+                                                                                <div className="font-bold text-xs md:text-base text-slate-900">{vocab.word}</div>
+                                                                                <div className="text-[9px] md:text-sm text-slate-500 mt-0.5">{vocab.definition}</div>
                                                                             </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            );
-                                                        }
-
-                                                        return (
-                                                            <p className="text-sm md:text-xl text-slate-800 leading-relaxed font-semibold pt-1 md:pt-2 pr-8 md:pr-10">
-                                                                "{content}"
-                                                            </p>
-                                                        );
-                                                    })()}
-                                                    {lesson?.vocabulary && lesson.vocabulary.length > 0 && (
-                                                        <div className="mt-4 md:mt-8 pt-4 md:pt-8 border-t border-blue-100">
-                                                            <h4 className="text-[10px] md:text-xs font-black text-blue-600 uppercase tracking-widest mb-2 md:mb-4">Vocabulary Focus</h4>
-                                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 md:gap-4">
-                                                                {lesson.vocabulary.map((vocab, i) => (
-                                                                    <div key={i} className="bg-white p-2 md:p-4 rounded-lg md:rounded-xl shadow-sm border border-blue-50">
-                                                                        <div className="font-bold text-xs md:text-base text-slate-900">{vocab.word}</div>
-                                                                        <div className="text-[9px] md:text-sm text-slate-500 mt-0.5">{vocab.definition}</div>
+                                                                        ))}
                                                                     </div>
-                                                                ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="pt-3 md:pt-4 flex flex-col items-center gap-3 md:gap-4">
+                                                            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
+                                                                <button
+                                                                    onClick={() => nextTask()}
+                                                                    className="px-5 md:px-8 py-2 md:py-3 bg-indigo-600 text-white rounded-lg md:rounded-xl font-bold text-[11px] md:text-sm shadow-md hover:bg-slate-900 transition-all text-center"
+                                                                >
+                                                                    Continue to Tasks
+                                                                </button>
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                                <div className="pt-3 md:pt-4 flex flex-col items-center gap-3 md:gap-4">
-                                                    <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
-                                                        <button
-                                                            onClick={() => nextTask()}
-                                                            className="px-5 md:px-8 py-2 md:py-3 bg-indigo-600 text-white rounded-lg md:rounded-xl font-bold text-[11px] md:text-sm shadow-md hover:bg-slate-900 transition-all text-center"
-                                                        >
-                                                            Continue to Tasks
-                                                        </button>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4 md:space-y-8">
-                                                <div className="px-2.5 md:px-3 py-0.5 md:py-1 bg-slate-50 rounded-full inline-block text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200">
-                                                    Task {currentTaskIdx + 1}: {currentTask.type.replace('_', ' ')}
-                                                </div>
-                                                <div className="flex flex-col items-center gap-3 md:gap-4 mb-2 md:mb-4">
-                                                    <h3 className="text-sm md:text-2xl font-black text-slate-900 leading-tight tracking-tight text-center max-w-lg">
-                                                        {currentTask.prompt}
-                                                    </h3>
-                                                </div>
+                                                ) : (
+                                                    <div className="space-y-4 md:space-y-8">
+                                                        <div className="px-2.5 md:px-3 py-0.5 md:py-1 bg-slate-50 rounded-full inline-block text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200">
+                                                            Task {currentTaskIdx + 1}: {currentTask.type.replace('_', ' ')}
+                                                        </div>
+                                                        <div className="flex flex-col items-center gap-3 md:gap-4 mb-2 md:mb-4">
+                                                            <h3 className="text-sm md:text-2xl font-black text-slate-900 leading-tight tracking-tight text-center max-w-lg">
+                                                                {currentTask.prompt}
+                                                            </h3>
+                                                        </div>
 
-                                                {/* ---- NEW DYNAMIC TASK VISUALS ---- */}
-                                                {currentTask.type === 'describe_image' && currentTask.image_url && (
-                                                    <div className="relative w-full max-w-md mx-auto aspect-video rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-slate-200">
-                                                        <img 
-                                                            src={currentTask.image_url} 
-                                                            alt="Describe this" 
-                                                            className="w-full h-full object-cover shadow-inner"
+                                                        {/* ---- NEW DYNAMIC TASK VISUALS ---- */}
+                                                        {currentTask.type === 'describe_image' && currentTask.image_url && (
+                                                            <div className="relative w-full max-w-md mx-auto aspect-video rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-slate-200">
+                                                                <img
+                                                                    src={currentTask.image_url}
+                                                                    alt="Describe this"
+                                                                    className="w-full h-full object-cover shadow-inner"
+                                                                />
+                                                            </div>
+                                                        )}
+
+                                                        {currentTask.type === 'roleplay' && currentTask.roleplay_scenario && (
+                                                            <div className="relative p-3 md:p-6 bg-purple-50 rounded-lg md:rounded-2xl border border-purple-100 text-center">
+                                                                <span className="text-[10px] md:text-xs font-black text-purple-600 uppercase tracking-widest block mb-2">Scenario</span>
+                                                                <p className="italic font-bold text-purple-900 text-xs md:text-lg">"{currentTask.roleplay_scenario}"</p>
+                                                            </div>
+                                                        )}
+
+                                                        {currentTask.type === 'idiom_usage' && currentTask.target_idiom && (
+                                                            <div className="relative p-3 md:p-6 bg-amber-50 rounded-lg md:rounded-2xl border border-amber-100 text-center">
+                                                                <span className="text-[10px] md:text-xs font-black text-amber-600 uppercase tracking-widest block mb-2">Target Phrase / Idiom</span>
+                                                                <p className="font-black text-amber-900 text-lg md:text-3xl">"{currentTask.target_idiom}"</p>
+                                                            </div>
+                                                        )}
+
+                                                        {currentTask.type === 'debate' && currentTask.debate_stance && (
+                                                            <div className="relative p-3 md:p-6 bg-rose-50 rounded-lg md:rounded-2xl border border-rose-100 text-center">
+                                                                <span className="text-[10px] md:text-xs font-black text-rose-600 uppercase tracking-widest block mb-2">Your Stance</span>
+                                                                <p className="font-bold text-rose-900 text-xs md:text-lg">"{currentTask.debate_stance}"</p>
+                                                            </div>
+                                                        )}
+
+                                                        {/* ---- ORIGINAL REPEAT FIELD ---- */}
+                                                        {currentTask.text_to_repeat && (
+                                                            <div className="relative p-3 md:p-6 bg-indigo-50/50 rounded-lg md:rounded-2xl border border-indigo-100">
+                                                                <div className="absolute top-2 right-2 flex gap-2">
+                                                                    <button
+                                                                        onClick={() => handleSpeak(currentTask.prompt + ". " + currentTask.text_to_repeat)}
+                                                                        disabled={isPreparingAudio || isElenaSpeaking}
+                                                                        className={`p-1.5 md:p-2 rounded-lg transition-all shadow-sm ${isPreparingAudio || isElenaSpeaking
+                                                                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                                                                : 'bg-white text-indigo-600 hover:bg-indigo-100'
+                                                                            }`}
+                                                                        title="Listen"
+                                                                    >
+                                                                        {isPreparingAudio
+                                                                            ? <Loader2 size={14} className="animate-spin md:w-4 md:h-4" />
+                                                                            : <Volume2 size={14} className="md:w-4 md:h-4" />
+                                                                        }
+                                                                    </button>
+                                                                </div>
+                                                                <p className="italic font-bold text-indigo-900 text-xs md:text-lg pt-1 pr-8">
+                                                                    "{currentTask.text_to_repeat}"
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        <LiveAnswerBox
+                                                            isTimerRunning={!isElenaSpeaking && !isPreparingAudio && !showIntro && !isEvaluating && !feedback && timeRemaining > 0}
+                                                            timer={timeRemaining}
+                                                            maxTimer={
+                                                                currentTask.type === 'debate' ? 120 :
+                                                                    (currentTask.type === 'free_speech' || currentTask.type === 'roleplay') ? 90 :
+                                                                        60
+                                                            }
+                                                            onSubmitAnswer={handleTaskSubmit}
+                                                            onPermissionChange={setMicBlocked}
                                                         />
                                                     </div>
                                                 )}
-
-                                                {currentTask.type === 'roleplay' && currentTask.roleplay_scenario && (
-                                                    <div className="relative p-3 md:p-6 bg-purple-50 rounded-lg md:rounded-2xl border border-purple-100 text-center">
-                                                        <span className="text-[10px] md:text-xs font-black text-purple-600 uppercase tracking-widest block mb-2">Scenario</span>
-                                                        <p className="italic font-bold text-purple-900 text-xs md:text-lg">"{currentTask.roleplay_scenario}"</p>
-                                                    </div>
-                                                )}
-
-                                                {currentTask.type === 'idiom_usage' && currentTask.target_idiom && (
-                                                    <div className="relative p-3 md:p-6 bg-amber-50 rounded-lg md:rounded-2xl border border-amber-100 text-center">
-                                                        <span className="text-[10px] md:text-xs font-black text-amber-600 uppercase tracking-widest block mb-2">Target Phrase / Idiom</span>
-                                                        <p className="font-black text-amber-900 text-lg md:text-3xl">"{currentTask.target_idiom}"</p>
-                                                    </div>
-                                                )}
-
-                                                {currentTask.type === 'debate' && currentTask.debate_stance && (
-                                                    <div className="relative p-3 md:p-6 bg-rose-50 rounded-lg md:rounded-2xl border border-rose-100 text-center">
-                                                        <span className="text-[10px] md:text-xs font-black text-rose-600 uppercase tracking-widest block mb-2">Your Stance</span>
-                                                        <p className="font-bold text-rose-900 text-xs md:text-lg">"{currentTask.debate_stance}"</p>
-                                                    </div>
-                                                )}
-
-                                                {/* ---- ORIGINAL REPEAT FIELD ---- */}
-                                                {currentTask.text_to_repeat && (
-                                                    <div className="relative p-3 md:p-6 bg-indigo-50/50 rounded-lg md:rounded-2xl border border-indigo-100">
-                                                        <div className="absolute top-2 right-2 flex gap-2">
-                                                            <button
-                                                                onClick={() => handleSpeak(currentTask.prompt + ". " + currentTask.text_to_repeat)}
-                                                                disabled={isPreparingAudio || isElenaSpeaking}
-                                                                className={`p-1.5 md:p-2 rounded-lg transition-all shadow-sm ${
-                                                                    isPreparingAudio || isElenaSpeaking
-                                                                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                                                        : 'bg-white text-indigo-600 hover:bg-indigo-100'
-                                                                }`}
-                                                                title="Listen"
-                                                            >
-                                                                {isPreparingAudio
-                                                                    ? <Loader2 size={14} className="animate-spin md:w-4 md:h-4" />
-                                                                    : <Volume2 size={14} className="md:w-4 md:h-4" />
-                                                                }
-                                                            </button>
-                                                        </div>
-                                                        <p className="italic font-bold text-indigo-900 text-xs md:text-lg pt-1 pr-8">
-                                                            "{currentTask.text_to_repeat}"
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                <LiveAnswerBox
-                                                    isTimerRunning={!isElenaSpeaking && !isPreparingAudio && !showIntro && !isEvaluating && timeRemaining > 0}
-                                                    timer={timeRemaining}
-                                                    maxTimer={
-                                                        currentTask.type === 'debate' ? 120 :
-                                                        (currentTask.type === 'free_speech' || currentTask.type === 'roleplay') ? 90 : 
-                                                        60
-                                                    }
-                                                    onSubmitAnswer={handleTaskSubmit}
-                                                    onPermissionChange={setMicBlocked}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.98 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="space-y-4 md:space-y-8"
-                                    >
-                                        <div className="text-center">
-                                            <div className="w-12 h-12 md:w-16 md:h-16 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-6 border border-emerald-100 shadow-sm">
-                                                <span className="text-2xl md:text-3xl font-black">{feedback.scores?.overall || feedback.score || 0}</span>
-                                            </div>
-                                            <h3 className="text-base md:text-xl font-bold text-slate-900 mb-1 md:mb-2">AI Feedback</h3>
-                                            <p className="text-xs md:text-xl text-slate-600 leading-relaxed font-semibold italic max-w-xl mx-auto px-2 md:px-4">
-                                                "{feedback.feedback}"
-                                            </p>
-
-                                            {feedback.scores && (
-                                                <div className="mt-3 md:mt-6 flex flex-wrap justify-center gap-2 md:gap-4 max-w-2xl mx-auto">
-                                                    {['fluency', 'grammar', 'vocabulary', 'pronunciation'].map(metric => (
-                                                        <div key={metric} className="px-2.5 md:px-4 py-1.5 md:py-2 bg-slate-50 rounded-lg md:rounded-xl border border-slate-200">
-                                                            <div className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{metric}</div>
-                                                            <div className="text-sm md:text-lg font-black text-slate-900">{feedback.scores[metric]}</div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-                                            {feedback.corrections && (
-                                                <div className="p-3 md:p-5 bg-amber-50 rounded-xl md:rounded-2xl border border-amber-100">
-                                                    <h4 className="text-[9px] md:text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1.5 md:mb-3">Refinements</h4>
-                                                    <p className="text-slate-700 text-xs md:text-sm font-semibold leading-relaxed">
-                                                        {feedback.corrections}
-                                                    </p>
-                                                </div>
-                                            )}
-                                            {feedback.pronunciation_tip && (
-                                                <div className="p-3 md:p-5 bg-indigo-50 rounded-xl md:rounded-2xl border border-indigo-100">
-                                                    <h4 className="text-[9px] md:text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1.5 md:mb-3">Pronunciation Tip</h4>
-                                                    <p className="text-slate-700 text-xs md:text-sm font-semibold leading-relaxed">
-                                                        {feedback.pronunciation_tip}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {feedback.missing_words?.length > 0 && (
-                                            <div className="p-4 bg-rose-50 rounded-xl border border-rose-100">
-                                                <h4 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2">Skipped Words</h4>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {feedback.missing_words.map((w, i) => (
-                                                        <span key={i} className="px-2 py-1 bg-white rounded-lg text-[10px] font-bold text-rose-400 border border-rose-100">{w}</span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {(feedback.scores?.overall || feedback.score || 0) < 40 ? (
-                                            <div className="space-y-3">
-                                                <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center gap-4">
-                                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-rose-500 shadow-sm shrink-0 font-black">
-                                                        {Math.round(feedback.scores?.overall || feedback.score || 0)}
-                                                    </div>
-                                                    <p className="text-xs font-bold text-rose-800 leading-tight">
-                                                        Your score is low. Elena suggests retrying this task, or you can skip to continue checking more content.
-                                                    </p>
-                                                </div>
-                                                <button
-                                                    onClick={() => {
-                                                        setFeedback(null);
-                                                        setShowIntro(true);
-                                                        setTimeRemaining(currentTask.type === 'free_speech' ? 90 : 60);
-                                                    }}
-                                                    className="w-full py-3.5 md:py-5 bg-indigo-600 hover:bg-slate-900 text-white text-sm md:text-base font-bold rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 md:gap-3"
-                                                >
-                                                    <RotateCcw size={20} />
-                                                    Retry Task
-                                                </button>
-                                                <button
-                                                    onClick={nextTask}
-                                                    className="w-full py-3.5 text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    Skip Task & Continue <span>→</span>
-                                                </button>
                                             </div>
                                         ) : (
-                                            <button
-                                                onClick={nextTask}
-                                                className="w-full py-3.5 md:py-5 bg-slate-900 hover:bg-black text-white text-sm md:text-base font-bold rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-[0.98]"
-                                            >
-                                                {currentTaskIdx === lesson.tasks.length - 1 ? "Finish Lesson" : "Next Task"}
-                                            </button>
-                                        )}
-                                    </motion.div>
-                                )}
-
-                                {isElenaSpeaking && (
-                                    <div className="flex justify-center mt-4 md:mt-10">
-                                        <AnimatePresence mode="wait">
                                             <motion.div
-                                                key="speaking"
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl border backdrop-blur-md transition-all duration-500 bg-slate-50/80 border-slate-200/50 shadow-sm"
+                                                initial={{ opacity: 0, scale: 0.98 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="space-y-4 md:space-y-8"
                                             >
-                                                <div className="relative flex items-center justify-center w-1.5 h-1.5">
-                                                    <div className="w-full h-full rounded-full bg-slate-400" />
-                                                </div>
-                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-slate-400">
-                                                    Elena is Speaking
-                                                </p>
-                                            </motion.div>
-                                        </AnimatePresence>
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                                <div className="text-center">
+                                                    <div className="w-12 h-12 md:w-16 md:h-16 bg-emerald-50 text-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-6 border border-emerald-100 shadow-sm">
+                                                        <span className="text-2xl md:text-3xl font-black">{feedback.scores?.overall || feedback.score || 0}</span>
+                                                    </div>
+                                                    <h3 className="text-base md:text-xl font-bold text-slate-900 mb-1 md:mb-2">AI Feedback</h3>
+                                                    <p className="text-xs md:text-xl text-slate-600 leading-relaxed font-semibold italic max-w-xl mx-auto px-2 md:px-4">
+                                                        "{feedback.feedback}"
+                                                    </p>
 
-                {isEvaluating && (
-                    <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-[100] flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                            <h3 className="text-lg font-bold text-slate-900">Evaluating Speech...</h3>
-                        </div>
+                                                    {feedback.scores && (
+                                                        <div className="mt-3 md:mt-6 flex flex-wrap justify-center gap-2 md:gap-4 max-w-2xl mx-auto">
+                                                            {['fluency', 'grammar', 'vocabulary', 'pronunciation'].map(metric => (
+                                                                <div key={metric} className="px-2.5 md:px-4 py-1.5 md:py-2 bg-slate-50 rounded-lg md:rounded-xl border border-slate-200">
+                                                                    <div className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{metric}</div>
+                                                                    <div className="text-sm md:text-lg font-black text-slate-900">{feedback.scores[metric]}</div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+                                                    {feedback.corrections && (
+                                                        <div className="p-3 md:p-5 bg-amber-50 rounded-xl md:rounded-2xl border border-amber-100">
+                                                            <h4 className="text-[9px] md:text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1.5 md:mb-3">Refinements</h4>
+                                                            <p className="text-slate-700 text-xs md:text-sm font-semibold leading-relaxed">
+                                                                {feedback.corrections}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                    {feedback.pronunciation_tip && (
+                                                        <div className="p-3 md:p-5 bg-indigo-50 rounded-xl md:rounded-2xl border border-indigo-100">
+                                                            <h4 className="text-[9px] md:text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1.5 md:mb-3">Pronunciation Tip</h4>
+                                                            <p className="text-slate-700 text-xs md:text-sm font-semibold leading-relaxed">
+                                                                {feedback.pronunciation_tip}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {feedback.missing_words?.length > 0 && (
+                                                    <div className="p-4 bg-rose-50 rounded-xl border border-rose-100">
+                                                        <h4 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2">Skipped Words</h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {feedback.missing_words.map((w, i) => (
+                                                                <span key={i} className="px-2 py-1 bg-white rounded-lg text-[10px] font-bold text-rose-400 border border-rose-100">{w}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {(feedback.scores?.overall || feedback.score || 0) < 40 ? (
+                                                    <div className="space-y-3">
+                                                        <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center gap-4">
+                                                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-rose-500 shadow-sm shrink-0 font-black">
+                                                                {Math.round(feedback.scores?.overall || feedback.score || 0)}
+                                                            </div>
+                                                            <p className="text-xs font-bold text-rose-800 leading-tight">
+                                                                Your score is low. Elena suggests retrying this task, or you can skip to continue checking more content.
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
+                                                                setFeedback(null);
+                                                                setShowIntro(true);
+                                                                setTtsCompleted(false);
+                                                                // Clear the spoken ref so the intro TTS replays for this task
+                                                                lastSpokenRef.current = null;
+                                                                setTimeRemaining(currentTask.type === 'free_speech' ? 90 : currentTask.type === 'debate' ? 120 : currentTask.type === 'repeat' ? 30 : 60);
+                                                            }}
+                                                            className="w-full py-3.5 md:py-5 bg-indigo-600 hover:bg-slate-900 text-white text-sm md:text-base font-bold rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 md:gap-3"
+                                                        >
+                                                            <RotateCcw size={20} />
+                                                            Retry Task
+                                                        </button>
+                                                        <button
+                                                            onClick={nextTask}
+                                                            className="w-full py-3.5 text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
+                                                        >
+                                                            Skip Task & Continue <span>→</span>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={nextTask}
+                                                        className="w-full py-3.5 md:py-5 bg-slate-900 hover:bg-black text-white text-sm md:text-base font-bold rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-[0.98]"
+                                                    >
+                                                        {currentTaskIdx === lesson.tasks.length - 1 ? "Finish Lesson" : "Next Task"}
+                                                    </button>
+                                                )}
+                                            </motion.div>
+                                        )}
+
+                                        {isElenaSpeaking && (
+                                            <div className="flex justify-center mt-4 md:mt-10">
+                                                <AnimatePresence mode="wait">
+                                                    <motion.div
+                                                        key="speaking"
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -10 }}
+                                                        className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 rounded-xl md:rounded-2xl border backdrop-blur-md transition-all duration-500 bg-slate-50/80 border-slate-200/50 shadow-sm"
+                                                    >
+                                                        <div className="relative flex items-center justify-center w-1.5 h-1.5">
+                                                            <div className="w-full h-full rounded-full bg-slate-400" />
+                                                        </div>
+                                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] leading-none text-slate-400">
+                                                            Elena is Speaking
+                                                        </p>
+                                                    </motion.div>
+                                                </AnimatePresence>
+                                            </div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {isEvaluating && (
+                            <div className="fixed inset-0 bg-white/90 backdrop-blur-sm z-[100] flex items-center justify-center">
+                                <div className="text-center">
+                                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                                    <h3 className="text-lg font-bold text-slate-900">Evaluating Speech...</h3>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
                 </>
             )}
         </div>

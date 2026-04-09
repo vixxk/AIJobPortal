@@ -8,7 +8,7 @@ import {
     Globe, Radio, CheckCircle, ExternalLink,
     ArrowLeft, MonitorPlay, Settings, Key, Lock, User,
     Pause, Volume2, VolumeX, RotateCcw, RotateCw, X,
-    Maximize
+    Maximize, FileQuestion
 } from 'lucide-react';
 import { useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -219,6 +219,149 @@ const LectureList = ({ lectures, onSelect, currentId, completedIds = [], dark = 
         })}
     </div>
 );
+
+const TestTakingView = ({ test, existingResult, onSubmit, fetchingSubmit }) => {
+    const [answers, setAnswers] = useState([]);
+
+    const handleOptionSelect = (qId, optionIdx) => {
+        if (existingResult) return;
+        setAnswers(prev => {
+            const cur = prev.filter(a => a.questionId !== qId);
+            return [...cur, { questionId: qId, selectedOptionIndex: optionIdx }];
+        });
+    };
+
+    if (existingResult) {
+        return (
+            <div className="p-4 md:p-10 max-w-4xl mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500">
+                <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-2xl md:rounded-[32px] p-6 md:p-8 text-center text-indigo-100 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 md:p-8 opacity-20 pointer-events-none">
+                        <CheckCircle className="w-20 h-20 md:w-32 md:h-32" />
+                    </div>
+                    <h2 className="text-2xl md:text-3xl font-black mb-1 md:mb-2">Test Completed</h2>
+                    <p className="text-xs md:text-base text-indigo-200/80 mb-4 md:mb-6 font-medium">You have already submitted this test.</p>
+                    <div className="inline-block bg-indigo-500/20 px-6 md:px-8 py-3 md:py-4 rounded-2xl md:rounded-3xl border border-indigo-500/30">
+                        <p className="text-[10px] md:text-sm font-bold uppercase tracking-[0.2em] mb-1">Your Score</p>
+                        <p className="text-4xl md:text-5xl font-black tracking-tighter text-white">
+                            {existingResult.score} <span className="text-xl md:text-2xl text-indigo-300">/ {existingResult.totalQuestions}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div className="space-y-6 mt-8">
+                    <h3 className="text-white font-black text-xl mb-4">Review Answers</h3>
+                    {test.questions.map((q, i) => {
+                        const ans = existingResult.answers.find(a => a.questionId.toString() === q._id.toString());
+                        return (
+                            <div key={q._id} className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/5">
+                                <p className="text-white font-bold mb-4">
+                                    <span className="text-indigo-400 font-black mr-2">{i + 1}.</span> {q.question}
+                                </p>
+                                <div className="space-y-3">
+                                    {q.options.map((opt, oi) => {
+                                        let bg = "bg-white/5 border border-white/5 text-slate-300";
+                                        let icon = null;
+                                        if (ans?.selectedOptionIndex === oi && ans.isCorrect) {
+                                            bg = "bg-emerald-500/20 border-emerald-500/30 text-emerald-100";
+                                            icon = <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />;
+                                        } else if (ans?.selectedOptionIndex === oi && !ans.isCorrect) {
+                                            bg = "bg-rose-500/20 border-rose-500/30 text-rose-100";
+                                            icon = <X className="w-4 h-4 text-rose-400 shrink-0" />;
+                                        } else if (q.correctOptionIndex === oi) {
+                                            // Show the correct answer
+                                            bg = "bg-emerald-500/10 border-emerald-500/20 text-emerald-200 opacity-80";
+                                            icon = <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />;
+                                        }
+                                        
+                                        return (
+                                            <div key={oi} className={`flex items-center justify-between p-3 rounded-2xl ${bg}`}>
+                                                <span className="text-sm font-medium">{opt}</span>
+                                                {icon}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                {q.explanation && (
+                                    <div className="mt-4 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1.5">Explanation</p>
+                                        <p className="text-sm font-medium text-slate-300 leading-relaxed">{q.explanation}</p>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
+            <div className="mb-8 border-b border-white/10 pb-6">
+                <h2 className="text-white font-black text-3xl mb-2">{test.title}</h2>
+                <div className="flex items-center gap-3 text-slate-400 font-medium text-sm">
+                    <span className="flex items-center gap-1"><FileQuestion className="w-4 h-4" /> {test.questions.length} Questions</span>
+                </div>
+            </div>
+
+            <div className="space-y-8">
+                {test.questions.map((q, i) => {
+                    const selected = answers.find(a => a.questionId === q._id)?.selectedOptionIndex;
+                    return (
+                        <div key={q._id} className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/5">
+                            <p className="text-white font-bold mb-4 text-lg">
+                                <span className="text-indigo-400 font-black mr-2">{i + 1}.</span> {q.question}
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {q.options.map((opt, oi) => (
+                                    <button
+                                        key={oi}
+                                        onClick={() => handleOptionSelect(q._id, oi)}
+                                        className={clsx(
+                                            "flex items-center gap-3 p-4 rounded-2xl border text-left transition-all group",
+                                            selected === oi
+                                                ? "bg-indigo-600/20 border-indigo-500/50 shadow-lg shadow-indigo-600/10"
+                                                : "bg-[#111] border-white/10 hover:border-indigo-500/30 hover:bg-[#1a1a2e]"
+                                        )}
+                                    >
+                                        <div className={clsx(
+                                            "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                                            selected === oi ? "border-indigo-400" : "border-slate-500 group-hover:border-indigo-400"
+                                        )}>
+                                            {selected === oi && <div className="w-2.5 h-2.5 bg-indigo-400 rounded-full" />}
+                                        </div>
+                                        <span className={clsx(
+                                            "text-sm font-medium transition-colors",
+                                            selected === oi ? "text-indigo-100" : "text-slate-300 group-hover:text-indigo-100"
+                                        )}>
+                                            {opt}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="pt-8 flex justify-end">
+                <button
+                    onClick={() => onSubmit(answers)}
+                    disabled={answers.length !== test.questions.length || fetchingSubmit}
+                    className="px-8 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-3xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-indigo-600 flex items-center gap-3"
+                >
+                    {fetchingSubmit ? 'Submitting...' : 'Submit Answers'} <ChevronRight className="w-5 h-5" />
+                </button>
+            </div>
+            
+            {answers.length !== test.questions.length && (
+                <p className="text-right text-rose-400/80 text-xs font-medium uppercase tracking-widest mt-3">
+                    Answer all questions to submit
+                </p>
+            )}
+        </div>
+    );
+};
 
 const CourseListingPage = () => {
     const [courses, setCourses] = useState([]);
@@ -442,6 +585,12 @@ const CourseDetailPage = () => {
     const [previewLecture, setPreviewLecture] = useState(null);
     const [isEnrolled, setIsEnrolled] = useState(false);
     const [completedLectures, setCompletedLectures] = useState([]);
+    
+    // Tests State
+    const [tests, setTests] = useState([]);
+    const [testResults, setTestResults] = useState([]);
+    const [activeTest, setActiveTest] = useState(null);
+
     const [showSidebar, setShowSidebar] = useState(true);
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
     const navigate = useNavigate();
@@ -469,6 +618,16 @@ const CourseDetailPage = () => {
             }
             const completed = res.data.data.completedLectures || [];
             setCompletedLectures(completed);
+
+            let fetchedTests = [];
+            try {
+                const testsRes = await axios.get(`/courses/${id}/tests`);
+                fetchedTests = testsRes.data.data.tests || [];
+                setTests(fetchedTests);
+                setTestResults(testsRes.data.data.testResults || []);
+            } catch (e) {
+                // Ignore if 403 (unenrolled)
+            }
 
             const allLectures = res.data.data.course.lectures || [];
             const allChapters = res.data.data.course.chapters || [];
@@ -548,6 +707,16 @@ const CourseDetailPage = () => {
             }
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleTestSubmit = async (answers) => {
+        try {
+            const res = await axios.post(`/courses/tests/${activeTest._id}/submit`, { answers });
+            setTestResults(prev => [...prev, res.data.data.testResult]);
+            fetchCourse(); // refresh stats
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to submit test');
         }
     };
 
@@ -890,10 +1059,19 @@ const CourseDetailPage = () => {
                             animate={{ opacity: 1, y: 0 }}
                             className="shadow-2xl shadow-black/50 rounded-2xl lg:rounded-[40px] overflow-hidden bg-black"
                         >
-                            <VideoPlayer lecture={activeLecture} />
+                            {activeTest ? (
+                                <TestTakingView 
+                                    test={activeTest} 
+                                    existingResult={testResults.find(tr => tr.test === activeTest._id)} 
+                                    onSubmit={handleTestSubmit} 
+                                />
+                            ) : (
+                                <VideoPlayer lecture={activeLecture} />
+                            )}
                         </motion.div>
 
                         {/* Session Details */}
+                        {!activeTest && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -952,6 +1130,7 @@ const CourseDetailPage = () => {
                             </div>
                             <div className="h-10 lg:hidden" />
                         </motion.div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -1014,7 +1193,9 @@ const CourseDetailPage = () => {
                             {(course.chapters?.length > 0) ? (
                                 course.chapters.sort((a, b) => a.order - b.order).map((ch, ci) => {
                                     const chLects = course.lectures?.filter(l => l.chapter?.toString() === ch._id?.toString()) || [];
-                                    if (chLects.length === 0) return null;
+                                    const chTests = tests.filter(t => t.chapter?.toString() === ch._id?.toString()) || [];
+                                    
+                                    if (chLects.length === 0 && chTests.length === 0) return null;
                                     return (
                                         <div key={ch._id} className="space-y-4">
                                             <div className="flex items-center gap-3 px-4">
@@ -1024,11 +1205,46 @@ const CourseDetailPage = () => {
                                             <div className="space-y-1">
                                                 <LectureList
                                                     lectures={chLects}
-                                                    onSelect={setActiveLecture}
+                                                    onSelect={(l) => { setActiveTest(null); setActiveLecture(l); }}
                                                     currentId={activeLecture?._id}
                                                     completedIds={completedLectures}
                                                     dark={true}
                                                 />
+                                                {chTests.map(test => (
+                                                    <button
+                                                        key={test._id}
+                                                        onClick={() => { setActiveLecture(null); setActiveTest(test); }}
+                                                        className={clsx(
+                                                            "w-full flex items-center gap-4 p-4 rounded-[20px] transition-all border group mt-2",
+                                                            activeTest?._id === test._id
+                                                                ? "bg-white/10 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                                : "hover:bg-white/5 border-transparent"
+                                                        )}
+                                                    >
+                                                        <div className={clsx(
+                                                            "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105",
+                                                            activeTest?._id === test._id ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "bg-white/5 text-slate-400"
+                                                        )}>
+                                                            <FileQuestion className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="flex-1 text-left min-w-0">
+                                                            <p className={clsx(
+                                                                "text-[14px] font-bold leading-tight mb-1 truncate",
+                                                                activeTest?._id === test._id ? "text-white" : "text-white/60 group-hover:text-white"
+                                                            )}>
+                                                                {test.title}
+                                                            </p>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[9px] font-black tracking-[0.15em] uppercase text-white/30">
+                                                                    MCQ Test
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        {testResults.some(tr => tr.test === test._id) && (
+                                                            <CheckCircle className="w-4 h-4 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                                        )}
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
                                     );
@@ -1037,11 +1253,46 @@ const CourseDetailPage = () => {
                                 <div className="space-y-1">
                                     <LectureList
                                         lectures={course.lectures || []}
-                                        onSelect={setActiveLecture}
+                                        onSelect={(l) => { setActiveTest(null); setActiveLecture(l); }}
                                         currentId={activeLecture?._id}
                                         completedIds={completedLectures}
                                         dark={true}
                                     />
+                                    {tests.map((test) => (
+                                        <button
+                                            key={test._id}
+                                            onClick={() => { setActiveLecture(null); setActiveTest(test); }}
+                                            className={clsx(
+                                                "w-full flex items-center gap-4 p-4 rounded-[20px] transition-all border group mt-2",
+                                                activeTest?._id === test._id
+                                                    ? "bg-white/10 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                    : "hover:bg-white/5 border-transparent"
+                                            )}
+                                        >
+                                            <div className={clsx(
+                                                "w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105",
+                                                activeTest?._id === test._id ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" : "bg-white/5 text-slate-400"
+                                            )}>
+                                                <FileQuestion className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-1 text-left min-w-0">
+                                                <p className={clsx(
+                                                    "text-[14px] font-bold leading-tight mb-1 truncate",
+                                                    activeTest?._id === test._id ? "text-white" : "text-white/60 group-hover:text-white"
+                                                )}>
+                                                    {test.title}
+                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[9px] font-black tracking-[0.15em] uppercase text-white/30">
+                                                        MCQ Test
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {testResults.some(tr => tr.test === test._id) && (
+                                                <CheckCircle className="w-4 h-4 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                            )}
+                                        </button>
+                                    ))}
                                 </div>
                             )}
 
@@ -1054,7 +1305,7 @@ const CourseDetailPage = () => {
                                     <div className="space-y-1">
                                         <LectureList
                                             lectures={course.lectures.filter(l => !l.chapter)}
-                                            onSelect={setActiveLecture}
+                                            onSelect={(l) => { setActiveTest(null); setActiveLecture(l); }}
                                             currentId={activeLecture?._id}
                                             completedIds={completedLectures}
                                             dark={true}

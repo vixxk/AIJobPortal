@@ -17,7 +17,7 @@ const TutorLesson = () => {
             level={requestedLevel}
             onComplete={() => {
                 fetchDashboard();
-                navigate('/app/english-tutor');
+                window.location.href = '/app/english-tutor';
             }}
             onCancel={() => navigate('/app/english-tutor')}
         />

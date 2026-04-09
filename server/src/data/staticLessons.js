@@ -3,15 +3,15 @@ module.exports = {
   1: [
     {
       title: "Meeting New People",
-      content: "Anna: Hello! My name is Anna. What is your name?\nBen: Hi, Anna. My name is Ben. It is nice to meet you.",
+      content: "Ananya: Hello! My name is Ananya. What is your name?\nRahul: Hi, Ananya. My name is Rahul. It is nice to meet you.",
       vocabulary: [
         { word: "Hello", definition: "A friendly greeting." },
         { word: "Name", definition: "What people call you." }
       ],
       tasks: [
-        { id: 1, type: "repeat", prompt: "Listen and repeat the greeting.", text_to_repeat: "Hello! My name is Anna." },
-        { id: 2, type: "repeat", prompt: "Now repeat Ben's reply.", text_to_repeat: "Hi, Anna. My name is Ben." },
-        { id: 3, type: "question", prompt: "What are the names of the two people?", correct_answer_hint: "Anna and Ben." }
+        { id: 1, type: "repeat", prompt: "Listen and repeat the greeting.", text_to_repeat: "Hello! My name is Ananya." },
+        { id: 2, type: "repeat", prompt: "Now repeat Rahul's reply.", text_to_repeat: "Hi, Ananya. My name is Rahul." },
+        { id: 3, type: "question", prompt: "What are the names of the two people?", correct_answer_hint: "Ananya and Rahul." }
       ]
     }
   ],
@@ -19,15 +19,15 @@ module.exports = {
   2: [
     {
       title: "My Daily Routine",
-      content: "Mike: I wake up at seven o'clock every morning. First, I brush my teeth. Then, I eat eggs and drink coffee for breakfast.",
+      content: "Rohit: I wake up at seven o'clock every morning. First, I brush my teeth. Then, I eat parathas and drink chai for breakfast.",
       vocabulary: [
         { word: "Routine", definition: "Things you do every day." },
         { word: "Breakfast", definition: "The first meal of the day." }
       ],
       tasks: [
-        { id: 1, type: "repeat", prompt: "Repeat exactly what Mike does first.", text_to_repeat: "First, I brush my teeth." },
+        { id: 1, type: "repeat", prompt: "Repeat exactly what Rohit does first.", text_to_repeat: "First, I brush my teeth." },
         { id: 2, type: "describe_image", prompt: "Describe the food you see in this picture.", image_url: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?q=80&w=800&auto=format&fit=crop" },
-        { id: 3, type: "question", prompt: "What time does Mike wake up?", correct_answer_hint: "He wakes up at seven o'clock." },
+        { id: 3, type: "question", prompt: "What time does Rohit wake up?", correct_answer_hint: "He wakes up at seven o'clock." },
         { id: 4, type: "free_speech", prompt: "What do you usually eat for breakfast?" }
       ]
     }
@@ -36,14 +36,14 @@ module.exports = {
   3: [
     {
       title: "Planning a Weekend Trip",
-      content: "Lucy: The weather is going to be sunny this weekend. Do you want to go to the beach with me?\nTom: That sounds like a great idea! We can swim in the ocean.",
+      content: "Priya: The weather is going to be sunny this weekend. Do you want to go to the market with me?\nArjun: That sounds like a great idea! We can shop and eat some street food.",
       vocabulary: [
         { word: "Weekend", definition: "Saturday and Sunday." },
-        { word: "Ocean", definition: "A very large area of salt water." }
+        { word: "Market", definition: "A public place where people buy and sell things." }
       ],
       tasks: [
         { id: 1, type: "describe_image", prompt: "What activities are happening in this sunny picture?", image_url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop" },
-        { id: 2, type: "roleplay", prompt: "I am Lucy. Tell me what you want to do at the beach.", roleplay_scenario: "Respond to Lucy's invitation and suggest a fun beach activity." }
+        { id: 2, type: "roleplay", prompt: "I am Priya. Tell me what you want to do at the market.", roleplay_scenario: "Respond to Priya's invitation and suggest a fun activity." }
       ]
     }
   ],
@@ -51,13 +51,13 @@ module.exports = {
   4: [
     {
       title: "A Job Interview",
-      content: "Manager: Welcome to our office. Can you tell me about your previous work experience?\nDavid: Thank you. I worked as a sales assistant for three years. I enjoyed helping customers and solving their problems.\nManager: That is excellent. We are looking for someone who is friendly and organized.",
+      content: "Manager: Welcome to our office. Can you tell me about your previous work experience?\nVikram: Thank you. I worked as a software consultant for three years. I enjoyed helping clients and solving their technical problems in Bangalore.\nManager: That is excellent. We are looking for someone who is friendly and organized.",
       vocabulary: [
         { word: "Experience", definition: "Knowledge gained from doing a job." },
         { word: "Organized", definition: "Able to plan things carefully and keep things neat." }
       ],
       tasks: [
-        { id: 1, type: "question", prompt: "How long did David work as a sales assistant?", correct_answer_hint: "Three years." },
+        { id: 1, type: "question", prompt: "How long did Vikram work as a software consultant?", correct_answer_hint: "Three years." },
         { id: 2, type: "roleplay", prompt: "I will be the manager. You tell me why you want to work here.", roleplay_scenario: "You are applying for a job as a manager. Explain why you are the best person for it." },
         { id: 3, type: "idiom_usage", prompt: "Try to use this phrase when talking about being organized at work.", target_idiom: "stay on top of things" },
         { id: 4, type: "free_speech", prompt: "What makes a good employee in your opinion?" }
@@ -68,13 +68,13 @@ module.exports = {
   5: [
     {
       title: "Dealing with Stress",
-      content: "Emma: I have been feeling incredibly overwhelmed lately with all the deadlines at work.\nJames: You should try to take short breaks. When I feel stressed, I usually go for a quick walk outside to clear my head.",
+      content: "Neha: I have been feeling incredibly overwhelmed lately with all the deadlines at work and traffic during my commute.\nKabir: You should try to take short breaks. When I feel stressed, I usually go for a quick walk outside to clear my head.",
       vocabulary: [
         { word: "Overwhelmed", definition: "Feeling like you have too much to handle." },
         { word: "Deadline", definition: "The time by which something must be finished." }
       ],
       tasks: [
-        { id: 1, type: "describe_image", prompt: "Describe how the person in this picture looks like they are feeling.", image_url: "https://images.unsplash.com/photo-1498622205843-3b0ac17be8af?q=80&w=800&auto=format&fit=crop" },
+        { id: 1, type: "describe_image", prompt: "Describe how the person in this picture looks like they are feeling.", image_url: "https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800&auto=format&fit=crop" },
         { id: 2, type: "roleplay", prompt: "I am feeling very tired and stressed about a big project. Give me some advice on what to do.", roleplay_scenario: "Comfort a friend who is stressed out and suggest a relaxing activity." },
         { id: 3, type: "debate", prompt: "Argue your stance on working hard versus taking breaks.", debate_stance: "Taking frequent breaks actually makes you more productive than working 8 hours straight." }
       ]
@@ -110,7 +110,7 @@ module.exports = {
         { word: "Irreversible", definition: "Impossible to change back to a previous condition." }
       ],
       tasks: [
-        { id: 1, type: "describe_image", prompt: "Analyze the environmental threat shown in this image.", image_url: "https://images.unsplash.com/photo-1611273426858-450d8e8715bf?q=80&w=800&auto=format&fit=crop" },
+        { id: 1, type: "describe_image", prompt: "Analyze the environmental threat shown in this image.", image_url: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=800&auto=format&fit=crop" },
         { id: 2, type: "debate", prompt: "Argue against this statement.", debate_stance: "Individual recycling is pointless unless large corporations change first." }
       ]
     }

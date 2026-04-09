@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 
-const LiveAnswerBox = ({ isTimerRunning, micEnabled, timer, maxTimer, onSubmitAnswer, onEndInterview, layout = 'footer', onPermissionChange }) => {
+const LiveAnswerBox = ({ isTimerRunning, micEnabled = true, timer, maxTimer, onSubmitAnswer, onEndInterview, layout = 'footer', onPermissionChange }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [typedText, setTypedText] = useState('');
     const [interimText, setInterimText] = useState('');
@@ -36,7 +36,7 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled, timer, maxTimer, onSubmitAn
             }
         } catch (_) { }
 
-        // Stop all stream tracks (releases the mic)
+        // Stop all stream tracks (releases the mic hardware)
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => { try { t.stop(); } catch (_) { } });
             streamRef.current = null;
@@ -54,8 +54,8 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled, timer, maxTimer, onSubmitAn
             audioContextRef.current = null;
         }
 
-        // Stop speech recognition
-        try { recognitionRef.current?.stop(); } catch (_) { }
+        // Abort speech recognition (abort is immediate, stop allows onend to fire)
+        try { recognitionRef.current?.abort(); } catch (_) { }
 
         setAudioLevels(Array(15).fill(4));
         setIsRecording(false);
@@ -160,12 +160,17 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled, timer, maxTimer, onSubmitAn
     };
 
     // Derive whether we should be recording from props
-    const shouldRecord = isTimerRunning && micEnabled;
+    // Include !isSubmitting to prevent mic restart after handleSubmit→stopAll
+    // but before the parent sets isEvaluating (which makes isTimerRunning false)
+    const shouldRecord = isTimerRunning && micEnabled && !isSubmitting;
 
     useEffect(() => {
         if (shouldRecord && !isRecordingRef.current) {
             startRecording();
-        } else if (!shouldRecord && isRecordingRef.current) {
+        } else if (!shouldRecord) {
+            // Always enforce mic-off when shouldRecord is false,
+            // even if isRecordingRef is already false (handles edge cases
+            // where refs were cleared but streams/recognition survived)
             stopAll();
         }
     }, [shouldRecord]);
@@ -187,8 +192,9 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled, timer, maxTimer, onSubmitAn
             if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
             if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
                 audioContextRef.current.close().catch(() => {});
+                audioContextRef.current = null;
             }
-            try { recognitionRef.current?.stop(); } catch (_) { }
+            try { recognitionRef.current?.abort(); } catch (_) { }
         };
     }, []);
 
@@ -218,17 +224,19 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled, timer, maxTimer, onSubmitAn
             }
         };
         r.onend = () => {
-            if (isRecordingRef.current && !hasError) {
+            if (isRecordingRef.current && !stoppedRef.current && !hasError) {
                 try {
                     // Small delay to avoid rapid-fire restarts
                     setTimeout(() => {
-                        if (isRecordingRef.current) recognitionRef.current?.start();
+                        if (isRecordingRef.current && !stoppedRef.current) {
+                            recognitionRef.current?.start();
+                        }
                     }, 500);
                 } catch { }
             }
         };
         recognitionRef.current = r;
-        return () => { try { r.stop(); } catch { } };
+        return () => { try { r.abort(); } catch { } };
     }, []);
     useEffect(() => {
         const checkBrave = async () => {

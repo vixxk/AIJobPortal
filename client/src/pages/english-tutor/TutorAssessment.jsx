@@ -11,7 +11,7 @@ const TutorAssessment = () => {
         <SpeakingTest
             onComplete={(data) => {
                 setTutorData(data);
-                navigate('/app/english-tutor', { replace: true });
+                window.location.href = '/app/english-tutor';
             }}
             onCancel={() => navigate('/app/english-tutor')}
         />

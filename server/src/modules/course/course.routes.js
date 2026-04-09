@@ -43,4 +43,18 @@ router
 router.post('/lectures/:id/complete', courseController.markLectureComplete);
 router.delete('/lectures/:id/complete', courseController.unmarkLectureComplete);
 
+// Test routes
+const testController = require('./test.controller');
+router
+  .route('/:courseId/tests')
+  .get(testController.getCourseTests)
+  .post(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), testController.createTest);
+
+router
+  .route('/tests/:id')
+  .patch(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), testController.updateTest)
+  .delete(restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'), testController.deleteTest);
+
+router.post('/tests/:id/submit', testController.submitTest);
+
 module.exports = router;
