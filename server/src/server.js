@@ -98,6 +98,11 @@ app.use((req, res, next) => {
 app.use(globalErrorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
 });
+
+// Allow long-running uploads (30 minutes) for large video files
+server.timeout = 30 * 60 * 1000;
+server.keepAliveTimeout = 30 * 60 * 1000;
+server.headersTimeout = 31 * 60 * 1000;

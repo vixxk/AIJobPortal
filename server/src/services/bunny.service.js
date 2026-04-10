@@ -27,15 +27,73 @@ exports.createVideo = async (title) => {
 };
 
 /**
- * Upload a video file buffer to Bunny Stream
+ * Upload a video file to Bunny Stream via native HTTPS streaming
  * @param {string} videoId - The video GUID from createVideo
- * @param {Buffer} fileBuffer - Raw file buffer
+ * @param {ReadableStream} fileStream - Readable file stream
+ * @param {number} fileSize - File size in bytes
+ * @param {Function} onProgress - Progress callback ({ loaded, total })
  * @returns {Promise<object>}
  */
-exports.uploadVideo = async (videoId, fileBuffer) => {
-  const res = await axios.put(
-    `${BUNNY_BASE_URL}/library/${BUNNY_LIBRARY_ID()}/videos/${videoId}`,
-    fileBuffer,
+exports.uploadVideo = (videoId, fileStream, fileSize, onProgress) => {
+  const https = require('https');
+
+  return new Promise((resolve, reject) => {
+    const url = new URL(`${BUNNY_BASE_URL}/library/${BUNNY_LIBRARY_ID()}/videos/${videoId}`);
+
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname,
+      method: 'PUT',
+      headers: {
+        AccessKey: BUNNY_API_KEY(),
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': fileSize,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try { resolve(JSON.parse(body)); } catch { resolve(body); }
+        } else {
+          reject(new Error(`Bunny upload failed with status ${res.statusCode}: ${body}`));
+        }
+      });
+    });
+
+    req.on('error', reject);
+
+    // Track upload progress
+    let uploaded = 0;
+    fileStream.on('data', (chunk) => {
+      uploaded += chunk.length;
+      if (onProgress) {
+        onProgress({ loaded: uploaded, total: fileSize });
+      }
+    });
+
+    fileStream.on('error', (err) => {
+      req.destroy();
+      reject(err);
+    });
+
+    // Pipe file data directly to the HTTPS request socket
+    fileStream.pipe(req);
+  });
+};
+
+/**
+ * Upload a custom thumbnail to a Bunny Stream video
+ * @param {string} videoId - The video GUID
+ * @param {Buffer} imageBuffer - Raw image data
+ * @returns {Promise<object>}
+ */
+exports.setThumbnail = async (videoId, imageBuffer) => {
+  const res = await axios.post(
+    `${BUNNY_BASE_URL}/library/${BUNNY_LIBRARY_ID()}/videos/${videoId}/thumbnail`,
+    imageBuffer,
     {
       headers: {
         AccessKey: BUNNY_API_KEY(),

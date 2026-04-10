@@ -418,7 +418,104 @@ exports.deleteLecture = catchAsync(async (req, res, next) => {
 
 // ── Video Upload to Bunny Stream ────────────────────────────────────────────
 
-exports.uploadLectureVideo = catchAsync(async (req, res, next) => {
+exports.uploadLectureVideo = async (req, res, next) => {
+  const fs = require('fs');
+  let tempFilePath = null;
+
+  try {
+    const lecture = await Lecture.findById(req.params.id);
+    if (!lecture) return next(new AppError('Lecture not found', 404));
+
+    const course = await Course.findById(lecture.course);
+    if (!course) return next(new AppError('Course not found', 404));
+
+    const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
+    const isTeacher = course.teacher?.toString() === req.user.id;
+    if (!isAdmin && !isTeacher) {
+      return next(new AppError('Not authorized to upload videos', 403));
+    }
+
+    if (!req.file) {
+      return next(new AppError('Please provide a video file', 400));
+    }
+
+    tempFilePath = req.file.path;
+    const fileSize = req.file.size;
+
+    // Set up Server-Sent Events for progress streaming
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+
+    const sendProgress = (phase, percent, message) => {
+      try { res.write(`data: ${JSON.stringify({ phase, percent, message })}\n\n`); } catch (e) { /* connection closed */ }
+    };
+
+    try {
+      sendProgress('preparing', 0, 'Preparing upload...');
+
+      // If there is an existing bunny video, delete it first
+      if (lecture.bunnyVideoId) {
+        try { await bunnyService.deleteVideo(lecture.bunnyVideoId); } catch (err) {
+          console.error('Failed to delete old Bunny video:', err.message);
+        }
+      }
+
+      // Step 1: Create video object in Bunny
+      sendProgress('creating', 5, 'Creating video entry...');
+      const bunnyVideo = await bunnyService.createVideo(lecture.title);
+      const videoId = bunnyVideo.guid;
+
+      // Step 2: Stream the file from disk to Bunny CDN
+      sendProgress('uploading', 10, 'Uploading to CDN...');
+      const fileStream = fs.createReadStream(tempFilePath, { highWaterMark: 1024 * 1024 }); // 1MB chunks
+      let lastProgressPct = 10;
+      let lastProgressTime = 0;
+      await bunnyService.uploadVideo(videoId, fileStream, fileSize, (progressEvent) => {
+        const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        const scaledPct = 10 + Math.round(pct * 0.85);
+        const now = Date.now();
+        // Only send progress if percentage changed and at least 500ms since last update
+        if (scaledPct > lastProgressPct && (now - lastProgressTime > 500 || scaledPct >= 95)) {
+          lastProgressPct = scaledPct;
+          lastProgressTime = now;
+          sendProgress('uploading', scaledPct, 'Uploading to CDN...');
+        }
+      });
+
+      // Step 3: Update lecture with Bunny references
+      sendProgress('saving', 96, 'Saving video details...');
+      const thumbnailUrl = bunnyService.getThumbnailUrl(videoId);
+
+      lecture.bunnyVideoId = videoId;
+      lecture.videoStatus = 'PROCESSING';
+      lecture.thumbnailUrl = thumbnailUrl;
+      await lecture.save();
+
+      sendProgress('done', 100, 'Upload complete!');
+      res.write(`data: ${JSON.stringify({ phase: 'complete', percent: 100, message: 'Video uploaded successfully!', lecture: { _id: lecture._id, bunnyVideoId: videoId, videoStatus: 'PROCESSING' } })}\n\n`);
+      res.end();
+    } catch (err) {
+      console.error('Video upload error:', err);
+      sendProgress('error', 0, err.message || 'Video upload failed');
+      res.end();
+    }
+  } catch (err) {
+    // Errors before SSE was started (auth, DB lookup failures)
+    next(err);
+  } finally {
+    // Clean up temp file
+    if (tempFilePath) {
+      try { require('fs').unlink(tempFilePath, () => {}); } catch (e) { /* ignore */ }
+    }
+  }
+};
+
+// ── Custom Thumbnail Upload to Bunny Stream ─────────────────────────────────
+
+exports.uploadLectureThumbnail = catchAsync(async (req, res, next) => {
   const lecture = await Lecture.findById(req.params.id);
   if (!lecture) return next(new AppError('Lecture not found', 404));
 
@@ -428,42 +525,28 @@ exports.uploadLectureVideo = catchAsync(async (req, res, next) => {
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
   const isTeacher = course.teacher?.toString() === req.user.id;
   if (!isAdmin && !isTeacher) {
-    return next(new AppError('Not authorized to upload videos', 403));
+    return next(new AppError('Not authorized', 403));
   }
 
   if (!req.file) {
-    return next(new AppError('Please provide a video file', 400));
+    return next(new AppError('Please provide an image file', 400));
   }
 
-  // If there is an existing bunny video, delete it first
-  if (lecture.bunnyVideoId) {
-    try { await bunnyService.deleteVideo(lecture.bunnyVideoId); } catch (err) {
-      console.error('Failed to delete old Bunny video:', err.message);
-    }
+  if (!lecture.bunnyVideoId) {
+    return next(new AppError('Please upload a video first before setting a thumbnail', 400));
   }
 
-  // Step 1: Create video object in Bunny
-  const bunnyVideo = await bunnyService.createVideo(lecture.title);
-  const videoId = bunnyVideo.guid;
+  // Upload custom thumbnail to Bunny
+  await bunnyService.setThumbnail(lecture.bunnyVideoId, req.file.buffer);
 
-  // Step 2: Upload the file buffer to Bunny
-  await bunnyService.uploadVideo(videoId, req.file.buffer);
-
-  // Step 3: Update lecture with Bunny references
-  const thumbnailUrl = bunnyService.getThumbnailUrl(videoId);
-
-  lecture.bunnyVideoId = videoId;
-  lecture.videoStatus = 'PROCESSING';
-  lecture.thumbnailUrl = thumbnailUrl;
+  // Update the thumbnail URL (Bunny serves it from CDN after setting)
+  lecture.thumbnailUrl = bunnyService.getThumbnailUrl(lecture.bunnyVideoId);
   await lecture.save();
 
   res.status(200).json({
     status: 'success',
-    message: 'Video uploaded successfully. Processing may take a few minutes.',
-    data: {
-      lecture,
-      embedUrl: bunnyService.getEmbedUrl(videoId)
-    }
+    message: 'Thumbnail updated successfully',
+    data: { thumbnailUrl: lecture.thumbnailUrl }
   });
 });
 

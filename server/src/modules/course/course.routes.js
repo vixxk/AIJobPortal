@@ -48,6 +48,14 @@ router.post(
   courseController.uploadLectureVideo
 );
 
+// Custom thumbnail upload
+router.post(
+  '/lectures/:id/upload-thumbnail',
+  restrictTo('TEACHER', 'SUPER_ADMIN', 'COLLEGE_ADMIN'),
+  upload.uploadImage,
+  courseController.uploadLectureThumbnail
+);
+
 // Video processing status
 router.get('/lectures/:id/video-status', courseController.getVideoStatus);
 

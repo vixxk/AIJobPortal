@@ -6,7 +6,7 @@ import {
     ArrowLeft, Edit3, Save, X, Plus, Trash2, BookOpen, Users, Settings,
     Clock, Tag, Globe, BarChart2, Video, ChevronDown, ChevronRight,
     GripVertical, Calendar, Eye, EyeOff, Star, Award, Target, CheckCircle,
-    UploadCloud, AlertCircle, Check, Play, FileQuestion, Loader2
+    UploadCloud, AlertCircle, Check, Play, FileQuestion, Loader2, Image as ImageIcon
 } from 'lucide-react';
 import Skeleton from '../../components/ui/Skeleton';
 import VideoPlayer from '../../components/ui/VideoPlayer';
@@ -160,6 +160,7 @@ const CourseManagement = () => {
     const [videoFile, setVideoFile] = useState(null);
     const [videoUploading, setVideoUploading] = useState(false);
     const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+    const [videoUploadMessage, setVideoUploadMessage] = useState('');
 
     // Settings
     const [coverFile, setCoverFile] = useState(null);
@@ -168,7 +169,7 @@ const CourseManagement = () => {
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
+        setTimeout(() => setToast(null), type === 'error' ? 10000 : 3000);
     };
 
     const fetchCourse = useCallback(async () => {
@@ -276,7 +277,7 @@ const CourseManagement = () => {
 
             // Upload video file if selected
             if (videoFile && newLecture._id) {
-                await handleVideoUpload(newLecture._id);
+                await handleVideoUpload(newLecture._id, videoFile);
             }
 
             setLectureForm(DEFAULT_LECTURE_FORM);
@@ -303,7 +304,7 @@ const CourseManagement = () => {
 
             // Upload new video file if selected
             if (videoFile) {
-                await handleVideoUpload(editLecture._id);
+                await handleVideoUpload(editLecture._id, videoFile);
             }
 
             setEditLecture(null);
@@ -315,28 +316,126 @@ const CourseManagement = () => {
         }
     };
 
-    const handleVideoUpload = async (lectureId) => {
-        if (!videoFile) return;
+    const handleVideoUpload = async (lectureId, fileToUpload) => {
+        if (!fileToUpload) return;
         setVideoUploading(true);
         setVideoUploadProgress(0);
+        setVideoUploadMessage('Sending file to server...');
+
+        const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        const token = localStorage.getItem('token');
+
         try {
+            // ── Phase 1: Upload file from browser to server (0-10%) ──
             const fd = new FormData();
-            fd.append('video', videoFile);
-            await axios.post(`/courses/lectures/${lectureId}/upload-video`, fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity,
-                onUploadProgress: (e) => {
-                    const pct = Math.round((e.loaded * 100) / e.total);
-                    setVideoUploadProgress(pct);
-                }
+            fd.append('video', fileToUpload);
+
+            await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${baseURL}/courses/lectures/${lectureId}/upload-video`);
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                // responseType must be empty or 'text' to allow streaming
+                xhr.responseType = '';
+
+                // Track browser → server progress (0-10%)
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const pct = Math.round((e.loaded * 100) / e.total);
+                        const scaled = Math.round(pct * 0.10); // Scale to 0-10%
+                        setVideoUploadProgress(scaled);
+                        setVideoUploadMessage('Sending file to server...');
+                    }
+                };
+
+                xhr.upload.onload = () => {
+                    setVideoUploadProgress(10);
+                    setVideoUploadMessage('Uploading to CDN...');
+                };
+
+                // ── Phase 2: Read SSE stream for server → Bunny CDN progress ──
+                let lastProcessedIndex = 0;
+                xhr.onprogress = () => {
+                    const text = xhr.responseText;
+                    // Parse new SSE events from the stream
+                    const newText = text.substring(lastProcessedIndex);
+                    lastProcessedIndex = text.length;
+
+                    const lines = newText.split('\n');
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                setVideoUploadProgress(data.percent);
+                                setVideoUploadMessage(data.message);
+
+                                if (data.phase === 'error') {
+                                    reject(new Error(data.message));
+                                    return;
+                                }
+                            } catch (e) { /* ignore parse errors */ }
+                        }
+                    }
+                };
+
+                xhr.onload = () => {
+                    // Process any remaining SSE events
+                    const text = xhr.responseText;
+                    const remaining = text.substring(lastProcessedIndex);
+                    const lines = remaining.split('\n');
+                    let hasError = false;
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                if (data.phase === 'error') {
+                                    hasError = true;
+                                    reject(new Error(data.message));
+                                    return;
+                                }
+                            } catch (e) { /* ignore */ }
+                        }
+                    }
+                    if (!hasError) resolve();
+                };
+
+                xhr.onerror = () => reject(new Error('Network error during upload'));
+                xhr.ontimeout = () => reject(new Error('Upload timed out'));
+                xhr.timeout = 0; // No timeout for large files
+                xhr.send(fd);
             });
-            showToast('Video uploaded! Processing may take a few minutes.');
+
+            showToast('Video uploaded successfully!');
+            fetchCourse();
         } catch (err) {
-            showToast(err.response?.data?.message || 'Video upload failed', 'error');
+            const errorMsg = err.message || 'Video upload failed';
+            showToast(errorMsg, 'error');
         } finally {
             setVideoUploading(false);
             setVideoUploadProgress(0);
+            setVideoUploadMessage('');
+        }
+    };
+
+    const handleThumbnailUpload = async (lectureId, file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showToast('Please select an image file (JPG, PNG).', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Thumbnail must be under 5 MB.', 'error');
+            return;
+        }
+        try {
+            const fd = new FormData();
+            fd.append('image', file);
+            await axios.post(`/courses/lectures/${lectureId}/upload-thumbnail`, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            showToast('Thumbnail updated!');
+            fetchCourse();
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to upload thumbnail', 'error');
         }
     };
 
@@ -880,6 +979,7 @@ const CourseManagement = () => {
                                                                     onEdit={() => { setEditLecture({ ...lecture }); setVideoFile(null); }}
                                                                     onDelete={() => handleDeleteLecture(lecture._id)}
                                                                     onPreview={() => setPreviewLecture(lecture)}
+                                                                    onUploadThumbnail={(file) => handleThumbnailUpload(lecture._id, file)}
                                                                 />
                                                             ))}
                                                             {tests.filter(t => t.chapter?.toString() === chapter._id?.toString()).map((test, ti) => (
@@ -907,6 +1007,7 @@ const CourseManagement = () => {
                                                 onEdit={() => { setEditLecture({ ...lecture }); setVideoFile(null); }}
                                                 onDelete={() => handleDeleteLecture(lecture._id)}
                                                 onPreview={() => setPreviewLecture(lecture)}
+                                                onUploadThumbnail={(file) => handleThumbnailUpload(lecture._id, file)}
                                             />
                                         ))}
                                     </div>
@@ -1115,7 +1216,7 @@ const CourseManagement = () => {
 
             {/* Add/Edit Lecture Modal */}
             {(lectureForm.show || editLecture) && (
-                <Modal title={editLecture ? 'Edit Lecture' : 'New Lecture'} onClose={() => { setLectureForm({ ...DEFAULT_LECTURE_FORM, show: false }); setEditLecture(null); setVideoFile(null); }}>
+                <Modal title={editLecture ? 'Edit Lecture' : 'New Lecture'} disableClose={videoUploading} onClose={() => { setLectureForm({ ...DEFAULT_LECTURE_FORM, show: false }); setEditLecture(null); setVideoFile(null); }}>
                     <form onSubmit={editLecture ? handleUpdateLecture : handleAddLecture} className="space-y-5">
                         <FormField label="Lecture Title">
                             <input required className={inputCls} placeholder="e.g. Variables and Data Types"
@@ -1152,15 +1253,30 @@ const CourseManagement = () => {
                                         <p className="text-xs font-black text-slate-600 group-hover:text-indigo-600 transition-colors">
                                             {videoFile ? videoFile.name : (editLecture?.bunnyVideoId ? 'Replace Video' : 'Choose Video File')}
                                         </p>
-                                        <p className="text-[10px] text-slate-400 mt-0.5 font-medium">MP4, WebM, MOV • Max 2GB</p>
+                                        <p className="text-[10px] text-slate-400 mt-0.5 font-medium">MP4, WebM, MOV, AVI, MKV • Max 2GB</p>
                                     </div>
                                     <input
                                         type="file"
-                                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska"
+                                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/x-matroska,.mp4,.webm,.mov,.avi,.mkv"
                                         className="hidden"
                                         onChange={e => {
                                             const file = e.target.files[0];
-                                            if (file) setVideoFile(file);
+                                            if (file) {
+                                                const maxSize = 2000 * 1024 * 1024; // 2GB
+                                                if (file.size > maxSize) {
+                                                    showToast(`File is too large (${(file.size / (1024 * 1024 * 1024)).toFixed(2)} GB). Maximum allowed size is 2 GB.`, 'error');
+                                                    e.target.value = '';
+                                                    return;
+                                                }
+                                                const ext = file.name.split('.').pop()?.toLowerCase();
+                                                const allowedExts = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
+                                                if (!allowedExts.includes(ext)) {
+                                                    showToast(`Unsupported file format (.${ext}). Allowed: MP4, WebM, MOV, AVI, MKV.`, 'error');
+                                                    e.target.value = '';
+                                                    return;
+                                                }
+                                                setVideoFile(file);
+                                            }
                                         }}
                                     />
                                 </label>
@@ -1177,19 +1293,21 @@ const CourseManagement = () => {
                                         </button>
                                     </div>
                                 )}
-
                                 {videoUploading && (
-                                    <div className="space-y-2">
+                                    <div className="space-y-2.5 mt-4 p-4 border border-indigo-100 bg-indigo-50/50 rounded-xl">
                                         <div className="flex items-center gap-2">
-                                            <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
-                                            <span className="text-xs font-black text-indigo-600">Uploading... {videoUploadProgress}%</span>
+                                            <Loader2 className="w-4 h-4 text-indigo-500 animate-spin shrink-0" />
+                                            <span className="text-xs font-black text-indigo-600">
+                                                {videoUploadMessage || 'Uploading...'}
+                                            </span>
                                         </div>
-                                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                        <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                                                className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500 ease-out"
                                                 style={{ width: `${videoUploadProgress}%` }}
                                             />
                                         </div>
+                                        <p className="text-[10px] text-indigo-400 font-medium">Do not close this window.</p>
                                     </div>
                                 )}
                             </div>
@@ -1415,12 +1533,12 @@ const FormField = ({ label, children }) => (
     </div>
 );
 
-const Modal = ({ title, children, onClose }) => (
+const Modal = ({ title, children, onClose, disableClose }) => (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
         <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-8 border-b border-slate-100">
                 <h3 className="font-black text-slate-900 text-xl tracking-tight">{title}</h3>
-                <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all">
+                <button onClick={onClose} disabled={disableClose} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400">
                     <X className="w-5 h-5" />
                 </button>
             </div>
@@ -1429,7 +1547,7 @@ const Modal = ({ title, children, onClose }) => (
     </div>
 );
 
-const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) => (
+const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview, onUploadThumbnail }) => (
     <div className="px-4 lg:px-6 py-4 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none group">
         <div className="flex items-start gap-4">
             <div className="w-6 h-6 lg:w-7 lg:h-7 rounded-lg lg:rounded-xl bg-slate-100 flex items-center justify-center text-[10px] lg:text-xs font-black text-slate-400 shrink-0 mt-0.5">
@@ -1439,10 +1557,10 @@ const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) =>
                 <div className="flex items-start justify-between gap-4">
                     <button
                         onClick={onPreview}
-                        className="text-[13px] lg:text-sm font-bold text-slate-800 hover:text-indigo-600 truncate block text-left transition-colors"
+                        className="text-[13px] lg:text-sm font-bold text-slate-800 hover:text-indigo-600 block text-left transition-colors max-w-[200px] sm:max-w-[300px] md:max-w-md lg:max-w-lg xl:max-w-xl"
                         title="Click to preview as student"
                     >
-                        {lecture.title}
+                        <span className="truncate block">{lecture.title}</span>
                     </button>
                     <div className="flex items-center gap-1 shrink-0 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                         {lecture.bunnyVideoId && (
@@ -1452,10 +1570,16 @@ const LectureRow = ({ lecture, index, canEdit, onEdit, onDelete, onPreview }) =>
                         )}
                         {canEdit && (
                             <>
-                                <button onClick={onEdit} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all">
+                                <button onClick={onEdit} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all" title="Edit lecture">
                                     <Edit3 className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
                                 </button>
-                                <button onClick={onDelete} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
+                                {lecture.bunnyVideoId && (
+                                    <label title="Upload thumbnail" className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all cursor-pointer">
+                                        <ImageIcon className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                                        <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files[0]) onUploadThumbnail(e.target.files[0]); e.target.value = ''; }} />
+                                    </label>
+                                )}
+                                <button onClick={onDelete} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Delete lecture">
                                     <Trash2 className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
                                 </button>
                             </>

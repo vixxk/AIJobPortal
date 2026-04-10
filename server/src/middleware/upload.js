@@ -33,18 +33,31 @@ const uploadImageOnly = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// For video uploads (lectures → Bunny Stream)
+// For video uploads (lectures → Bunny Stream) — use disk storage to avoid OOM on large files
+const fs = require('fs');
+const os = require('os');
+const videoTmpDir = path.join(os.tmpdir(), 'hyrego-video-uploads');
+if (!fs.existsSync(videoTmpDir)) fs.mkdirSync(videoTmpDir, { recursive: true });
+
+const videoDiskStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, videoTmpDir),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
+
 const videoFilter = (req, file, cb) => {
-  const allowed = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
-  if (allowed.includes(file.mimetype)) {
+  const allowedMime = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/mkv'];
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const allowedExts = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
+  
+  if (allowedMime.includes(file.mimetype) || allowedExts.includes(ext)) {
     cb(null, true);
   } else {
     cb(new AppError('Only video files (mp4, webm, mov, avi, mkv) are allowed.', 400), false);
   }
 };
 
-const uploadVideoMemory = multer({
-  storage: memoryStorage,
+const uploadVideoDisk = multer({
+  storage: videoDiskStorage,
   fileFilter: videoFilter,
   limits: { fileSize: 2000 * 1024 * 1024 } // 2GB limit
 });
@@ -53,5 +66,5 @@ exports.uploadImage      = uploadImageOnly.single('image');
 exports.uploadResume     = uploadMemory.single('resume');
 exports.uploadCertificate = uploadMemory.single('certificate');
 exports.uploadLogo       = uploadImageOnly.single('logo');
-exports.uploadVideo      = uploadVideoMemory.single('video');
+exports.uploadVideo      = uploadVideoDisk.single('video');
 

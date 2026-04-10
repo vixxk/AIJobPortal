@@ -416,6 +416,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 exports.updateProfile = catchAsync(async (req, res, next) => {
   const {
+    name,
     nickname,
     dateOfBirth,
     phoneNumber,
@@ -427,6 +428,7 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('User not found', 404));
   }
+  if (name) user.name = name;
   if (nickname) user.nickname = nickname;
   if (dateOfBirth) user.dateOfBirth = dateOfBirth;
   if (phoneNumber) user.phoneNumber = phoneNumber;

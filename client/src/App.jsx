@@ -49,6 +49,7 @@ import SkillLearning from './pages/SkillLearning';
 import TeacherLayout from './pages/teacher/TeacherLayout';
 import TeacherOverview from './pages/teacher/TeacherOverview';
 import TeacherCourses from './pages/teacher/TeacherCourses';
+import TeacherProfile from './pages/teacher/TeacherProfile';
 import SpecialJobs from './pages/SpecialJobs';
 import StudentCompetitions from './pages/StudentCompetitions';
 import StudentCompetitionDetail from './pages/StudentCompetitionDetail';
@@ -117,7 +118,7 @@ function App() {
                 <Route index element={<TeacherOverview />} />
                 <Route path="courses" element={<TeacherCourses />} />
                 <Route path="courses/:id" element={<CourseManagement />} />
-
+                <Route path="profile" element={<TeacherProfile />} />
               </Route>
               <Route path="interview" element={<ProtectedRoute allowedRoles={['STUDENT']}><InterviewPage /></ProtectedRoute>} />
               <Route path="english-tutor" element={<ProtectedRoute allowedRoles={['STUDENT']}><TutorLayout /></ProtectedRoute>}>

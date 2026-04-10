@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { BookOpen, Video, LayoutDashboard, Menu, X } from 'lucide-react';
+import { BookOpen, Video, LayoutDashboard, Menu, X, UserCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
 
@@ -35,6 +35,7 @@ const SidebarLink = ({ to, label, icon: Icon }) => (
 
 const TeacherLayout = () => {
     const { logout, user } = useAuth();
+    const navigate = useNavigate();
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -78,6 +79,7 @@ const TeacherLayout = () => {
                 <div className="space-y-2">
                     <SidebarLink to="/app/teacher" label="DASHBOARD" icon={LayoutDashboard} />
                     <SidebarLink to="/app/teacher/courses" label="MY COURSES" icon={Video} />
+                    <SidebarLink to="/app/teacher/profile" label="MY PROFILE" icon={UserCircle} />
                 </div>
 
                 <div className="mt-auto pt-10">
@@ -111,12 +113,12 @@ const TeacherLayout = () => {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/app/teacher/profile')}>
                             <div className="text-right hidden sm:block">
                                 <p className="text-xs font-black text-slate-900 uppercase leading-none">{user?.name}</p>
                                 <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Instructor</p>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-indigo-600 border-2 border-white shadow-sm overflow-hidden shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-indigo-600 border-2 border-white shadow-sm overflow-hidden shrink-0 hover:ring-2 hover:ring-indigo-400 transition-all">
                                 {user?.avatar ? (
                                     <img src={getImageUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover" />
                                 ) : (
