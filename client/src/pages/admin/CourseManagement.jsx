@@ -1152,7 +1152,7 @@ const CourseManagement = () => {
                                         <p className="text-xs font-black text-slate-600 group-hover:text-indigo-600 transition-colors">
                                             {videoFile ? videoFile.name : (editLecture?.bunnyVideoId ? 'Replace Video' : 'Choose Video File')}
                                         </p>
-                                        <p className="text-[10px] text-slate-400 mt-0.5 font-medium">MP4, WebM, MOV • Max 500MB</p>
+                                        <p className="text-[10px] text-slate-400 mt-0.5 font-medium">MP4, WebM, MOV • Max 2GB</p>
                                     </div>
                                     <input
                                         type="file"

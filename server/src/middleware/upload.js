@@ -46,7 +46,7 @@ const videoFilter = (req, file, cb) => {
 const uploadVideoMemory = multer({
   storage: memoryStorage,
   fileFilter: videoFilter,
-  limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit
+  limits: { fileSize: 2000 * 1024 * 1024 } // 2GB limit
 });
 
 exports.uploadImage      = uploadImageOnly.single('image');
