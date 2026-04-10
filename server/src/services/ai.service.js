@@ -281,23 +281,27 @@ const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '', diff
 
 // ─── Interview: Evaluate Single Answer ───────────────────────────────────────
 const evaluateAnswer = async (question, transcript, metrics, jobRole) => {
-    const systemPrompt = `You are to act as a brutally precise and highly strict technical interviewer evaluating a candidate for a ${jobRole} role.
-    You must evaluate the candidate's answer based on technical precision and communication quality.
+    const systemPrompt = `You are a professional and fair technical interviewer evaluating a candidate for a ${jobRole} role.
+    Your goal is to provide an accurate but constructive assessment of the candidate's performance.
     
     IMPORTANT: The "Candidate's Answer Transcript" is generated using Speech-to-Text (STT).
     - Ignore missing or incorrect punctuation (commas, exclamation marks, etc.).
     - Be lenient with minor spelling or phonetic mistakes that are common STT artifacts (e.g., "to" vs "too", "there" vs "their", or similar sounding words).
-    - Focus on the substance and technical accuracy of the speech rather than orthographic perfection.
+    - Focus on the substance and technical accuracy of the speech rather than transcript perfection.
     
     Audio Metrics provided: ${JSON.stringify(metrics)}
     
-    ### CRITICAL GRADING RULES ###
-    1. ZERO TOLERANCE FOR NON-ANSWERS: If the candidate's transcript merely repeats the question, is incomplete, contains irrelevant junk, or entirely misses the core concept, you MUST award an "answer_score" of 0. Do not give "effort" or "pity" points.
-    2. EXACT TECHNICAL PRECISION: To score above 50, the candidate must actively answer the question with correct domain knowledge. To score above 80, the candidate must cite specific examples, architectures, or frameworks correctly.
-    3. DELIVERY SCORE: If the answer_score is 0, the communication_score must also be harshly penalized (under 20) because reciting a question back is not effective communication.
+    ### GRADING GUIDELINES ###
+    1. TECHNICAL ACCURACY: Evaluate if the candidate understands the core concepts. Credit should be given for correct identification of technologies, patterns, and logic, even if the delivery is not perfect.
+    2. SCORING RANGE: 
+       - 80-100: Excellent understanding with specific details and clear explanation.
+       - 60-79: Good understanding of the core concept with some minor omissions.
+       - 40-59: Basic understanding but lacks depth or has some technical inaccuracies.
+       - 0-39: Significant misunderstanding or failed to answer the question.
+    3. CONSTRUCTIVE FEEDBACK: Identify what was good and specifically what could be improved.
     
     ### OUTPUT FORMAT ###
-    For the "technical_pointers" field, provide 2-4 short, highly specific bullet points brutally auditing the technical accuracy of their answer.
+    For the "technical_pointers" field, provide 2-4 specific bullet points auditing the technical accuracy of their answer.
     
     Return ONLY a JSON object with strictly this schema:
     {
@@ -343,19 +347,19 @@ const generateReport = async (answers, jobRole) => {
         };
     }
 
-    const systemPrompt = `Generate a comprehensive performance scorecard for a ${jobRole || 'General'} interview.
+    const systemPrompt = `Generate a comprehensive and balanced performance scorecard for a ${jobRole || 'General'} interview.
     Synthesize the candidate's performance across all questions: ${JSON.stringify(answers)}
     
     The scorecard MUST be divided into two main sections:
     1. Spoken English Evaluation (focusing on communication, fluency, and confidence)
     2. Answer Content Evaluation (focusing on technical accuracy, relevance, and depth of answers)
 
-    STRICT GUIDELINES & ZERO-TOLERANCE SCORING:
-    1. ZERO POINTS FOR NON-ANSWERS: Any question with "skipped": true, an empty transcript, or a transcript that just repeats the question MUST mathematically pull the "technical_accuracy" and "overall_score" down heavily. Do NOT artificially inflate scores.
-    2. TECHNICAL VALIDATION: Only award above 50% for technical_accuracy if the candidate actively demonstrated precise domain knowledge, frameworks, or correct terminology. 
-    3. PENALIZE BABBLING: If a candidate talks a lot but provides no substantive technical value, crash their answer_evaluation score.
-    4. DETAILED BREAKDOWN: Strengths and weaknesses must be ruthlessly precise. Never output generic advice like "work on technical skills." Tell them exactly which concept they failed.
-    5. CRITICAL CAP: If more than 50% of questions are skipped or scored effectively 0, the maximum possible overall_score is 30.
+    SCORING PHILOSOPHY:
+    1. HOLISTIC EVALUATION: The overall_score should be a fair weighted average of technical accuracy and communication skills.
+    2. FAIRNESS: Do not use arbitrary score caps. If a candidate provided reasonable answers, their score should reflect their actual performance level.
+    3. RECOGNITION: Acknowledge when a candidate correctly identifies core concepts, even if they miss advanced details.
+    4. DETAILED BREAKDOWN: Provide specific, actionable feedback. Instead of "work on technical skills," mention the specific topics or gaps identified.
+    5. ENCOURAGEMENT: Maintain a professional and constructive tone that helps the candidate grow.
     
     Return ONLY a JSON object with:
     {
