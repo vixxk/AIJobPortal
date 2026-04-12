@@ -254,11 +254,18 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
 });
 
 exports.createJob = catchAsync(async (req, res, next) => {
-  const newJob = await Job.create({
+  const jobData = {
     ...req.body,
-    recruiterId: req.body.recruiterId || req.user._id,
-    status: 'APPROVED'
-  });
+    status: 'APPROVED',
+  };
+
+  if (req.body.recruiterId) {
+    jobData.recruiterId = req.body.recruiterId;
+  } else if (req.user && req.user.role !== 'SUPER_ADMIN') {
+    jobData.recruiterId = req.user._id;
+  }
+
+  const newJob = await Job.create(jobData);
 
   // Trigger notifications
   await notifyStudentsOfJob(newJob, true);
@@ -473,11 +480,19 @@ exports.createCompetition = catchAsync(async (req, res, next) => {
   }
 
   
-  if (typeof data.rounds === 'string') {
-    try {
-      data.rounds = JSON.parse(data.rounds);
-    } catch (e) {
-      data.rounds = [];
+  if (data.rounds) {
+    if (typeof data.rounds === 'string') {
+      try {
+        data.rounds = JSON.parse(data.rounds);
+      } catch (e) {
+        data.rounds = [];
+      }
+    }
+    if (Array.isArray(data.rounds)) {
+      data.rounds = data.rounds.map(r => ({
+        ...r,
+        date: r.date === "" ? null : r.date
+      }));
     }
   }
 
@@ -501,11 +516,19 @@ exports.updateCompetition = catchAsync(async (req, res, next) => {
   }
 
   
-  if (typeof data.rounds === 'string') {
-    try {
-      data.rounds = JSON.parse(data.rounds);
-    } catch (e) {
-      data.rounds = [];
+  if (data.rounds) {
+    if (typeof data.rounds === 'string') {
+      try {
+        data.rounds = JSON.parse(data.rounds);
+      } catch (e) {
+        data.rounds = [];
+      }
+    }
+    if (Array.isArray(data.rounds)) {
+      data.rounds = data.rounds.map(r => ({
+        ...r,
+        date: r.date === "" ? null : r.date
+      }));
     }
   }
 

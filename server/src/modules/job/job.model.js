@@ -34,8 +34,7 @@ const jobSchema = new mongoose.Schema({
   },
   recruiterId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'User'
   },
   status: {
     type: String,

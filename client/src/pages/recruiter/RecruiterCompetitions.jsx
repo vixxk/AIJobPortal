@@ -154,7 +154,10 @@ const RecruiterCompetitions = () => {
             eligibility: comp.eligibility || '',
             avatar: null,
             preview: comp.bannerImage ? getImageUrl(comp.bannerImage) : null,
-            rounds: comp.rounds || [{ title: '', description: '', date: '' }]
+            rounds: comp.rounds?.length ? comp.rounds.map(r => ({
+                ...r,
+                date: r.date ? new Date(r.date).toISOString().split('T')[0] : ''
+            })) : [{ title: '', description: '', date: '' }]
         });
         setShowModal(true);
     };

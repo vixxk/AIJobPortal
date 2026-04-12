@@ -213,7 +213,7 @@ const StudentCompetitionDetail = () => {
                                             <h3 className="font-bold text-slate-900">{round.title}</h3>
                                             <div className="flex items-center gap-2 text-xs text-slate-500 font-bold mb-2">
                                                 <Calendar className="w-3.5 h-3.5" />
-                                                {new Date(round.date).toLocaleDateString()}
+                                                {round.date ? new Date(round.date).toLocaleDateString() : 'TBA'}
                                             </div>
                                             <p className="text-sm text-slate-600 font-medium">
                                                 {round.description}

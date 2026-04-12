@@ -25,11 +25,19 @@ exports.createCompetition = catchAsync(async (req, res, next) => {
     data.bannerImage = result.url;
   }
   
-  if (data.rounds && typeof data.rounds === 'string') {
-    try {
-      data.rounds = JSON.parse(data.rounds);
-    } catch (e) {
-      data.rounds = [];
+  if (data.rounds) {
+    if (typeof data.rounds === 'string') {
+      try {
+        data.rounds = JSON.parse(data.rounds);
+      } catch (e) {
+        data.rounds = [];
+      }
+    }
+    if (Array.isArray(data.rounds)) {
+      data.rounds = data.rounds.map(r => ({
+        ...r,
+        date: r.date === "" ? null : r.date
+      }));
     }
   }
 
@@ -128,11 +136,19 @@ exports.updateCompetition = catchAsync(async (req, res, next) => {
         data.bannerImage = result.url;
     }
 
-    if (data.rounds && typeof data.rounds === 'string') {
-        try {
-            data.rounds = JSON.parse(data.rounds);
-        } catch (e) {
-            // Keep existing if error
+    if (data.rounds) {
+        if (typeof data.rounds === 'string') {
+            try {
+                data.rounds = JSON.parse(data.rounds);
+            } catch (e) {
+                // Keep existing if error
+            }
+        }
+        if (Array.isArray(data.rounds)) {
+            data.rounds = data.rounds.map(r => ({
+                ...r,
+                date: r.date === "" ? null : r.date
+            }));
         }
     }
 
