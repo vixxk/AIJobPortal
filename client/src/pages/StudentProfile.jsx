@@ -440,8 +440,8 @@ const StudentProfile = () => {
                     <div className="flex-1 space-y-2 overflow-y-auto hide-scrollbar min-h-0">
                         {list.map((item, idx) => (
                             <div key={idx} onClick={() => { setLocalItem(item); setEditIndex(idx); }} className="p-5 bg-white border border-slate-200 rounded-2xl cursor-pointer hover:border-blue-300 hover:shadow-md transition-all shadow-sm">
-                                <h4 className="font-bold">{item.title || item.organization || item.topic || item.name || item.language}</h4>
-                                <p className="text-sm text-slate-500">{item.company || item.issuer || item.organizer || item.publishingOrganization || item.role}</p>
+                                <h4 className="font-bold">{item.title || item.organization || item.topic || item.name || item.language || item.position || item.institution}</h4>
+                                <p className="text-sm text-slate-500">{item.company || item.issuer || item.organizer || item.publishingOrganization || item.role || item.degree || item.url}</p>
                             </div>
                         ))}
                         {list.length === 0 && <p className="text-center text-slate-500 mt-10">No entries added yet.</p>}
@@ -986,7 +986,9 @@ const StudentProfile = () => {
                                                             <div className="min-w-0 flex-1 mt-1">
                                                                 {profile.expectedSalary ? (
                                                                     <>
-                                                                        <h4 className="text-[15px] font-bold text-slate-800 truncate">{profile.expectedSalary}</h4>
+                                                                        <h4 className="text-[15px] font-bold text-slate-800 truncate">
+                                                                            {profile.expectedSalary.minimum} - {profile.expectedSalary.maximum} {profile.expectedSalary.currency || 'INR'} {profile.expectedSalary.frequency ? `/ ${profile.expectedSalary.frequency.split(' ')[1] || 'yr'}` : ''}
+                                                                        </h4>
                                                                         <p className="text-[12px] text-slate-400 font-medium mt-0.5">Expectation</p>
                                                                     </>
                                                                 ) : (
@@ -1011,7 +1013,7 @@ const StudentProfile = () => {
                                                                 <div className="min-w-0 flex-1 mt-0.5">
                                                                     <h4 className="text-[15px] font-bold text-slate-800 truncate">{proj.name || proj.title}</h4>
                                                                     {proj.description && <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{proj.description}</p>}
-                                                                    {proj.link && <p className="text-[11px] text-blue-500 font-medium mt-1 truncate">{proj.link}</p>}
+                                                                    {proj.url && <p className="text-[11px] text-blue-500 font-medium mt-1 truncate">{proj.url}</p>}
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -1036,10 +1038,10 @@ const StudentProfile = () => {
                                                                     <FileBadge className="w-5 h-5 text-amber-500" />
                                                                 </div>
                                                                 <div className="min-w-0 flex-1 mt-0.5">
-                                                                    <h4 className="text-[15px] font-bold text-slate-800 truncate">{cert.name}</h4>
-                                                                    <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{cert.issuingOrganization}</p>
+                                                                    <h4 className="text-[15px] font-bold text-slate-800 truncate">{cert.title}</h4>
+                                                                    <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{cert.publishingOrganization}</p>
                                                                     <p className="text-[11px] text-slate-400 font-medium mt-1">
-                                                                        {cert.issueDate && cert.issueDate.substring(0,4)} {cert.expirationDate ? `- ${cert.expirationDate.substring(0,4)}` : ''}
+                                                                        {cert.dateOfIssue && cert.dateOfIssue.substring(0,4)} {cert.expirationDate ? `- ${cert.expirationDate.substring(0,4)}` : ''}
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -1067,7 +1069,7 @@ const StudentProfile = () => {
                                                                 <div className="min-w-0 flex-1 mt-0.5">
                                                                     <h4 className="text-[15px] font-bold text-slate-800 truncate">{award.title}</h4>
                                                                     <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{award.issuer}</p>
-                                                                    {award.date && <p className="text-[11px] text-slate-400 font-medium mt-1">{award.date.substring(0,4)}</p>}
+                                                                    {award.dateAwarded && <p className="text-[11px] text-slate-400 font-medium mt-1">{award.dateAwarded.substring(0,4)}</p>}
                                                                 </div>
                                                             </div>
                                                         ))}
