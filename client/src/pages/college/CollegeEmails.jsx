@@ -6,6 +6,7 @@ import { Send, Mail, FileText, Clock, CheckCircle, Loader, Inbox, AlertCircle, S
 const TEMPLATES = [
   {
     label: 'Standard Invitation',
+    value: 'STANDARD_INVITATION',
     color: 'text-indigo-600',
     bg: 'bg-indigo-50',
     border: 'border-indigo-100',
@@ -14,6 +15,7 @@ const TEMPLATES = [
   },
   {
     label: 'Interview Scheduling',
+    value: 'SCHEDULING',
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
     border: 'border-emerald-100',
@@ -22,6 +24,7 @@ const TEMPLATES = [
   },
   {
     label: 'Placement Proposal',
+    value: 'PROPOSAL',
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     border: 'border-blue-100',
@@ -30,6 +33,7 @@ const TEMPLATES = [
   },
   {
     label: 'Follow-up',
+    value: 'FOLLOWUP',
     color: 'text-amber-600',
     bg: 'bg-amber-50',
     border: 'border-amber-100',
@@ -72,7 +76,7 @@ const CollegeEmails = () => {
   }, []);
 
   const applyTemplate = (tpl) => {
-    setFormData(f => ({ ...f, subject: tpl.subject, message: tpl.message, templateType: tpl.label.toUpperCase().replace(/ /g, '_') }));
+    setFormData(f => ({ ...f, subject: tpl.subject, message: tpl.message, templateType: tpl.value || 'CUSTOM' }));
   };
 
   const handleSubmit = async (e) => {

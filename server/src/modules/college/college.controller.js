@@ -2,6 +2,7 @@ const { CollegeProfile, PlacementDrive, CollegeMessage, PlacementSession, Recrui
 const RecruiterProfile = require('../recruiter/recruiter.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
+const sendEmail = require('../../config/mailer');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLLEGE PROFILE
@@ -103,6 +104,16 @@ exports.sendMessage = catchAsync(async (req, res) => {
   if (!resolvedRecruiterId && toRecruiterEmail) {
     const rp = await RecruiterProfile.findOne().populate({ path: 'userId', match: { email: toRecruiterEmail } });
     if (rp?.userId) resolvedRecruiterId = rp._id;
+  }
+
+  try {
+    await sendEmail({
+      email: toRecruiterEmail,
+      subject: subject,
+      message: message
+    });
+  } catch (err) {
+    return res.status(500).json({ status: 'fail', message: 'There was an error sending the email. Try again later.' });
   }
 
   const msg = await CollegeMessage.create({

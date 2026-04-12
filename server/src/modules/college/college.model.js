@@ -43,7 +43,7 @@ const collegeMessageSchema = new mongoose.Schema({
   toRecruiterId: { type: mongoose.Schema.ObjectId, ref: 'RecruiterProfile' },
   subject: { type: String, required: true },
   message: { type: String, required: true },
-  templateType: { type: String, enum: ['INVITATION', 'SCHEDULING', 'FOLLOWUP', 'PROPOSAL', 'CUSTOM'], default: 'CUSTOM' },
+  templateType: { type: String, enum: ['INVITATION', 'STANDARD_INVITATION', 'SCHEDULING', 'INTERVIEW_SCHEDULING', 'FOLLOWUP', 'FOLLOW-UP', 'PROPOSAL', 'PLACEMENT_PROPOSAL', 'CUSTOM'], default: 'CUSTOM' },
   status: { type: String, enum: ['SENT', 'READ', 'REPLIED'], default: 'SENT' }
 }, { timestamps: true });
 
