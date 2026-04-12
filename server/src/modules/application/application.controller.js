@@ -73,12 +73,15 @@ exports.applyToJob = catchAsync(async (req, res, next) => {
             : "Candidate shows baseline qualifications for the role. Recommended for initial screening to assess specific niche skills."
   });
 
-  await Notification.create({
+  if (job.recruiterId) {
+    await Notification.create({
       userId: job.recruiterId,
       title: 'New Application',
       message: `A new student applied for the job: ${job.title} (Match Score: ${matchingScore}%)`,
       type: 'APPLICATION_UPDATE'
-  });
+    }).catch(err => console.error("Recruiter notification failed:", err));
+  }
+
   res.status(201).json({
     status: 'success',
     data: {
@@ -164,7 +167,8 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
       message: `Your application for ${job.title} is now: ${status}`,
       type: 'APPLICATION_UPDATE',
       link: '/app/applications'
-  });
+  }).catch(err => console.error("Applicant notification failed:", err));
+
 
   // Email Notification
   try {
@@ -421,7 +425,8 @@ exports.sendNotificationToApplicant = catchAsync(async (req, res, next) => {
         title: type === 'MEETING' ? 'Interview Scheduled' : 'New Message from Recruiter',
         message: notificationMessage,
         type: type === 'MEETING' ? 'INTERVIEW_SCHEDULE' : 'APPLICATION_UPDATE'
-    });
+    }).catch(err => console.error("Applicant manual notification failed:", err));
+
 
     // 2. Send Email
     try {

@@ -182,11 +182,10 @@ const AdminJobs = () => {
                                 <div>
                                     <h4 className="font-black text-slate-900 text-lg lg:text-xl leading-tight uppercase line-clamp-1">{job.title}</h4>
                                     <p className="text-indigo-500 text-[9px] lg:text-[10px] font-black uppercase tracking-[0.1em]">{job.companyName || job.recruiterId?.companyName || 'Organization'}</p>
-                                    <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase ${
-                                        (job.status === 'APPROVED' && (job.isSpecial || job.courseId)) ? 'bg-emerald-50 text-emerald-600' : 
-                                        job.status === 'CLOSED' ? 'bg-slate-50 text-slate-600' :
-                                        'bg-amber-50 text-amber-600 animate-pulse'
-                                    }`}>
+                                    <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase ${(job.status === 'APPROVED' && (job.isSpecial || job.courseId)) ? 'bg-emerald-50 text-emerald-600' :
+                                            job.status === 'CLOSED' ? 'bg-slate-50 text-slate-600' :
+                                                'bg-amber-50 text-amber-600 animate-pulse'
+                                        }`}>
                                         {job.status === 'CLOSED' ? 'CLOSED' : (
                                             (job.status === 'APPROVED' && (job.isSpecial || job.courseId)) ? 'APPROVED' : 'PENDING'
                                         )}
@@ -221,12 +220,12 @@ const AdminJobs = () => {
                             <div className="flex items-center justify-between mt-4">
                                 <span className="text-[10px] font-bold text-slate-400 tracking-wider">Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                                 <div className="flex gap-2">
-                                    <button 
-                                        onClick={() => handleToggleSpecial(job._id, job.isSpecial)} 
+                                    <button
+                                        onClick={() => handleToggleSpecial(job._id, job.isSpecial)}
                                         className={clsx(
                                             "p-3 rounded-2xl transition-all border shrink-0",
-                                            job.isSpecial 
-                                                ? "bg-amber-50 text-amber-600 border-amber-100 shadow-sm" 
+                                            job.isSpecial
+                                                ? "bg-amber-50 text-amber-600 border-amber-100 shadow-sm"
                                                 : "bg-slate-50 text-slate-400 border-slate-100 hover:text-amber-500 hover:bg-white"
                                         )}
                                         title={job.isSpecial ? "Remove from Hyrego Jobs" : "Mark as Hyrego Job (Special)"}

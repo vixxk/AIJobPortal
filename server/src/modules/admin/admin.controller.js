@@ -313,7 +313,7 @@ const notifyStudentsOfJob = async (job, isNewlyApproved) => {
     }
   } else {
     // 2. Regular Jobs: Notify recruiter + Match skills for students
-    if (isNewlyApproved) {
+    if (isNewlyApproved && job.recruiterId) {
         await Notification.create({
           userId: job.recruiterId,
           title: 'Job Approved ✅',
@@ -322,6 +322,7 @@ const notifyStudentsOfJob = async (job, isNewlyApproved) => {
           metadata: { jobId: job._id }
         }).catch(() => {});
     }
+
 
     // Notify students with matching skills
     const matchingProfiles = await StudentProfile.find({
