@@ -327,21 +327,25 @@ const TestTakingView = ({ test, existingResult, onSubmit, fetchingSubmit }) => {
                 })}
             </div>
 
-            <div className="pt-8 flex justify-end">
+            <div className="pt-8 border-t border-white/10 flex flex-col items-end gap-3 pb-12">
                 <button
                     onClick={() => onSubmit(answers)}
                     disabled={answers.length !== test.questions.length || fetchingSubmit}
-                    className="px-8 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-3xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-indigo-600 flex items-center gap-3"
+                    className={clsx(
+                        "px-8 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all",
+                        answers.length === test.questions.length && !fetchingSubmit
+                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:scale-105"
+                            : "bg-white/5 text-slate-500 cursor-not-allowed"
+                    )}
                 >
-                    {fetchingSubmit ? 'Submitting...' : 'Submit Answers'} <ChevronRight className="w-5 h-5" />
+                    {fetchingSubmit ? 'Submitting...' : 'Submit Answers'}
                 </button>
+                {answers.length !== test.questions.length && (
+                    <p className="text-right text-rose-400/80 text-xs font-medium uppercase tracking-widest mt-3">
+                        Answer all questions to submit
+                    </p>
+                )}
             </div>
-            
-            {answers.length !== test.questions.length && (
-                <p className="text-right text-rose-400/80 text-xs font-medium uppercase tracking-widest mt-3">
-                    Answer all questions to submit
-                </p>
-            )}
         </div>
     );
 };
@@ -1042,7 +1046,10 @@ const CourseDetailPage = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="sticky top-0 lg:relative z-20 shadow-2xl shadow-black/50 lg:rounded-[40px] overflow-hidden bg-black -mx-4 lg:mx-0"
+                            className={clsx(
+                                "z-20 shadow-2xl shadow-black/50 lg:rounded-[40px] overflow-hidden bg-black -mx-4 lg:mx-0",
+                                !activeTest ? "sticky top-0 lg:relative" : "relative"
+                            )}
                         >
                             {activeTest ? (
                                 <TestTakingView 
