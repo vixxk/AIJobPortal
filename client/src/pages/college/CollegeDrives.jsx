@@ -9,6 +9,15 @@ const statusConfig = {
   CANCELLED: { bg: 'bg-red-50', text: 'text-red-500', border: 'border-red-100', dot: 'bg-red-400' },
 };
 
+const InputField = ({ label, name, type = 'text', value, onChange, placeholder, required, className = '' }) => (
+  <div className={className}>
+    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}{required && ' *'}</label>
+    <input required={required} name={name} type={type} value={value} onChange={onChange}
+      placeholder={placeholder}
+      className="w-full h-10 px-3 rounded-xl border border-slate-200 focus:border-indigo-400 outline-none font-medium text-sm text-slate-800 transition-all" />
+  </div>
+);
+
 const CollegeDrives = () => {
   const [drives, setDrives] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,21 +70,22 @@ const CollegeDrives = () => {
   };
 
   const handleStatusUpdate = async (driveId, status) => {
+    // Optimistic UI updates
+    const previousDrives = [...drives];
+    const previousSelected = selectedDrive;
+    setDrives(drives.map(d => d._id === driveId ? { ...d, status } : d));
+    if (selectedDrive?._id === driveId) setSelectedDrive({ ...selectedDrive, status });
+
     try {
       await axios.patch(`/college/drives/${driveId}`, { status });
-      setDrives(drives.map(d => d._id === driveId ? { ...d, status } : d));
-      if (selectedDrive?._id === driveId) setSelectedDrive({ ...selectedDrive, status });
-    } catch { alert('Failed to update status.'); }
+    } catch { 
+      // Revert if failed
+      setDrives(previousDrives);
+      setSelectedDrive(previousSelected);
+      alert('Failed to update status.'); 
+    }
   };
 
-  const InputField = ({ label, name, type = 'text', placeholder, required, className = '' }) => (
-    <div className={className}>
-      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}{required && ' *'}</label>
-      <input required={required} name={name} type={type} defaultValue={form[name]} onChange={handleChange}
-        placeholder={placeholder}
-        className="w-full h-10 px-3 rounded-xl border border-slate-200 focus:border-indigo-400 outline-none font-medium text-sm text-slate-800 transition-all" />
-    </div>
-  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
@@ -252,31 +262,31 @@ const CollegeDrives = () => {
             </div>
             <form onSubmit={handleCreate} className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-3">
-                <InputField label="Company Name" name="companyName" placeholder="e.g. Amazon" required className="col-span-2" />
-                <InputField label="Drive Title" name="driveTitle" placeholder="Campus Placement 2026" required className="col-span-2" />
-                <InputField label="Drive Date" name="driveDate" type="date" required />
-                <InputField label="Registration Deadline" name="registrationDeadline" type="date" />
+                <InputField label="Company Name" name="companyName" value={form.companyName} onChange={handleChange} placeholder="e.g. Amazon" required className="col-span-2" />
+                <InputField label="Drive Title" name="driveTitle" value={form.driveTitle} onChange={handleChange} placeholder="Campus Placement 2026" required className="col-span-2" />
+                <InputField label="Drive Date" name="driveDate" value={form.driveDate} onChange={handleChange} type="date" required />
+                <InputField label="Registration Deadline" name="registrationDeadline" value={form.registrationDeadline} onChange={handleChange} type="date" />
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mode</label>
-                  <select name="mode" onChange={handleChange} defaultValue="OFFLINE"
+                  <select name="mode" onChange={handleChange} value={form.mode}
                     className="w-full h-10 px-3 rounded-xl border border-slate-200 focus:border-indigo-400 outline-none font-medium text-sm text-slate-800 transition-all">
                     <option value="OFFLINE">Offline</option>
                     <option value="ONLINE">Online</option>
                     <option value="HYBRID">Hybrid</option>
                   </select>
                 </div>
-                <InputField label="Package Offered" name="packageOffered" placeholder="e.g. 12-18 LPA" />
-                <InputField label="Venue" name="venue" placeholder="Main Auditorium" className="col-span-2" />
-                <InputField label="Roles (comma-separated)" name="roles" placeholder="SDE-1, Product Manager" className="col-span-2" />
+                <InputField label="Package Offered" name="packageOffered" value={form.packageOffered} onChange={handleChange} placeholder="e.g. 12-18 LPA" />
+                <InputField label="Venue" name="venue" value={form.venue} onChange={handleChange} placeholder="Main Auditorium" className="col-span-2" />
+                <InputField label="Roles (comma-separated)" name="roles" value={form.roles} onChange={handleChange} placeholder="SDE-1, Product Manager" className="col-span-2" />
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Eligibility Criteria</label>
-                  <textarea name="eligibilityCriteria" onChange={handleChange} rows={2}
+                  <textarea name="eligibilityCriteria" value={form.eligibilityCriteria} onChange={handleChange} rows={2}
                     placeholder="e.g. 7.0+ CGPA, No active backlogs"
                     className="w-full p-3 rounded-xl border border-slate-200 focus:border-indigo-400 outline-none font-medium text-sm text-slate-800 transition-all resize-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Description</label>
-                  <textarea name="description" onChange={handleChange} rows={2}
+                  <textarea name="description" value={form.description} onChange={handleChange} rows={2}
                     placeholder="Brief description of the drive and company..."
                     className="w-full p-3 rounded-xl border border-slate-200 focus:border-indigo-400 outline-none font-medium text-sm text-slate-800 transition-all resize-none" />
                 </div>

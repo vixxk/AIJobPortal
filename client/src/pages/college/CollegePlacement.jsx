@@ -69,11 +69,21 @@ const CollegePlacement = () => {
   };
 
   const handleUpdateSessionStatus = async (sessionId, status) => {
+    // Optimistic UI updates
+    const previousSessions = [...sessions];
+    const previousSelected = selectedSession;
+    
+    setSessions(prev => prev.map(s => s._id === sessionId ? { ...s, status } : s));
+    if (selectedSession?._id === sessionId) setSelectedSession(prev => ({ ...prev, status }));
+
     try {
       await axios.patch(`/college/sessions/${sessionId}`, { status });
-      setSessions(prev => prev.map(s => s._id === sessionId ? { ...s, status } : s));
-      if (selectedSession?._id === sessionId) setSelectedSession(prev => ({ ...prev, status }));
-    } catch { }
+    } catch { 
+      // Revert if failed
+      setSessions(previousSessions);
+      setSelectedSession(previousSelected);
+      alert('Failed to update session status.'); 
+    }
   };
 
   const pendingInvites = invites.filter(i => i.status === 'PENDING');
