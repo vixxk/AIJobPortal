@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
-import { MapPin, IndianRupee, Trash2, Users, Eye, Plus, X, Briefcase, List, Building2, CheckCircle2, Clock, Sparkles } from 'lucide-react';
+import { MapPin, IndianRupee, Trash2, Users, Eye, Plus, X, Briefcase, List, Building2, CheckCircle2, Clock, Sparkles, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
@@ -183,11 +183,13 @@ const AdminJobs = () => {
                                     <h4 className="font-black text-slate-900 text-lg lg:text-xl leading-tight uppercase line-clamp-1">{job.title}</h4>
                                     <p className="text-indigo-500 text-[9px] lg:text-[10px] font-black uppercase tracking-[0.1em]">{job.companyName || job.recruiterId?.companyName || 'Organization'}</p>
                                     <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase ${
-                                        job.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600' : 
-                                        job.status === 'PENDING' ? 'bg-amber-50 text-amber-600 animate-pulse' : 
-                                        'bg-slate-50 text-slate-600'
+                                        (job.status === 'APPROVED' && (job.isSpecial || job.courseId)) ? 'bg-emerald-50 text-emerald-600' : 
+                                        job.status === 'CLOSED' ? 'bg-slate-50 text-slate-600' :
+                                        'bg-amber-50 text-amber-600 animate-pulse'
                                     }`}>
-                                        {job.status || 'PENDING'}
+                                        {job.status === 'CLOSED' ? 'CLOSED' : (
+                                            (job.status === 'APPROVED' && (job.isSpecial || job.courseId)) ? 'APPROVED' : 'PENDING'
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -207,6 +209,11 @@ const AdminJobs = () => {
                                 {job.experienceRange && (
                                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-xl text-[10px] font-black text-amber-600 tracking-wider uppercase">
                                         <Clock className="w-3 h-3" /> {job.experienceRange}
+                                    </div>
+                                )}
+                                {job.courseId && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 rounded-xl text-[10px] font-black text-violet-600 tracking-wider uppercase" title="Job requires enrollment in this course">
+                                        <BookOpen className="w-3 h-3" /> For Course: {job.courseId.title || 'Specific Course'}
                                     </div>
                                 )}
                             </div>

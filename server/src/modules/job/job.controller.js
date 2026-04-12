@@ -176,16 +176,21 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
     // 2. They see special jobs IF (no courseId OR courseId is in their enrolled list)
     
     const studentFilter = {
-      $or: [
-        { isSpecial: { $ne: true } },
-        { 
-          isSpecial: true, 
-          $or: [
-            { courseId: { $exists: false } },
-            { courseId: null },
-            { courseId: { $in: enrolledCourseIds } }
-          ]
-        }
+      $and: [
+          { status: 'APPROVED' },
+          {
+            $or: [
+              { isSpecial: true },
+              { courseId: { $ne: null } }
+            ]
+          },
+          {
+              $or: [
+                  { courseId: { $exists: false } },
+                  { courseId: null },
+                  { courseId: { $in: enrolledCourseIds } }
+              ]
+          }
       ]
     };
 

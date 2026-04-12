@@ -436,29 +436,29 @@ const CourseListingPage = () => {
                 {/* ── Stats strip */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-6 mb-8">
                     {[
-                        { id: 'all', label: 'Total Courses', value: courses.length, icon: BookOpen, color: 'indigo' },
-                        { id: 'enrolled', label: 'Enrolled', value: enrolledCount, icon: CheckCircle, color: 'emerald' },
-                    ].map(({ id, label, value, icon: Icon, color }) => (
+                        { id: 'all', label: 'Total Courses', value: courses.length, icon: BookOpen, activeColor: 'border-indigo-500 shadow-indigo-500/10', bgColor: 'bg-indigo-50', textColor: 'text-indigo-500', valueColor: 'text-indigo-600' },
+                        { id: 'enrolled', label: 'Enrolled', value: enrolledCount, icon: CheckCircle, activeColor: 'border-emerald-500 shadow-emerald-500/10', bgColor: 'bg-emerald-50', textColor: 'text-emerald-500', valueColor: 'text-emerald-600' },
+                    ].map(({ id, label, value, icon: Icon, activeColor, bgColor, textColor, valueColor }) => (
                         <div 
                             key={id} 
                             onClick={() => setFilterType(id)}
                             className={clsx(
                                 "bg-white rounded-[24px] p-4 sm:p-6 border-2 transition-all cursor-pointer flex flex-col sm:flex-row items-center sm:gap-5 gap-2 text-center sm:text-left group",
                                 filterType === id 
-                                    ? `border-${color}-500 shadow-lg shadow-${color}-500/10` 
+                                    ? `${activeColor} shadow-lg` 
                                     : "border-slate-100 hover:border-slate-200 hover:shadow-md"
                             )}
                         >
                             <div className={clsx(
                                 "w-10 h-10 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110",
-                                `bg-${color}-50 text-${color}-500`
+                                bgColor, textColor
                             )}>
                                 <Icon className="w-5 h-5 sm:w-7 sm:h-7" />
                             </div>
                             <div>
                                 <div className={clsx(
                                     "text-xl sm:text-3xl font-black leading-none mb-1",
-                                    `text-${color}-600`
+                                    valueColor
                                 )}>
                                     {loading ? <Skeleton className="h-8 w-10" /> : value}
                                 </div>
@@ -703,8 +703,10 @@ const CourseDetailPage = () => {
         }
     };
 
-    const progress = course?.lectures?.length > 0
-        ? Math.round((completedLectures.length / course.lectures.length) * 100)
+    const totalItems = (course?.lectures?.length || 0) + (tests.length || 0);
+    const completedItems = completedLectures.length + testResults.length;
+    const progress = totalItems > 0
+        ? Math.round((completedItems / totalItems) * 100)
         : 0;
 
     const CourseDetailSkeleton = () => (
@@ -1004,19 +1006,19 @@ const CourseDetailPage = () => {
             {/* Cinematic Main Workspace */}
             <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden">
                 {/* Header Bar */}
-                <div className="h-16 px-6 bg-slate-950/50 backdrop-blur-xl border-b border-white/5 flex items-center justify-between shrink-0 relative z-20">
-                    <div className="flex items-center gap-4">
+                <div className="h-16 px-4 sm:px-6 bg-slate-950/50 backdrop-blur-xl border-b border-white/5 flex items-center justify-between shrink-0 relative z-20">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                         <button
                             onClick={() => navigate('/app/learning')}
-                            className="p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </button>
-                        <div className="h-4 w-px bg-white/10 mx-2" />
-                        <h2 className="text-sm font-black text-white/90 uppercase tracking-[0.15em] truncate max-w-[300px]">{course.title}</h2>
+                        <div className="h-4 w-px bg-white/10 mx-1 sm:mx-2 hidden sm:block" />
+                        <h2 className="text-[11px] sm:text-sm font-black text-white/90 uppercase tracking-[0.1em] sm:tracking-[0.15em] truncate max-w-[150px] sm:max-w-[300px] lg:max-w-none">{course.title}</h2>
                     </div>
 
-                    <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <button
                             onClick={() => setShowSidebar(!showSidebar)}
                             className={clsx(
@@ -1025,8 +1027,8 @@ const CourseDetailPage = () => {
                             )}
                         >
                             <MonitorPlay className="w-3.5 h-3.5 sm:w-4 h-4" />
-                            <span className="hidden xs:inline">{showSidebar ? 'Hide Curriculum' : 'Show Curriculum'}</span>
-                            <span className="xs:hidden">{showSidebar ? 'Hide' : 'Show'}</span>
+                            <span className="hidden sm:inline">{showSidebar ? 'Hide Curriculum' : 'Show Curriculum'}</span>
+                            <span className="sm:hidden">{showSidebar ? 'Hide' : 'Curriculum'}</span>
                         </button>
                     </div>
                 </div>
@@ -1040,7 +1042,7 @@ const CourseDetailPage = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="shadow-2xl shadow-black/50 rounded-2xl lg:rounded-[40px] overflow-hidden bg-black"
+                            className="sticky top-0 lg:relative z-20 shadow-2xl shadow-black/50 lg:rounded-[40px] overflow-hidden bg-black -mx-4 lg:mx-0"
                         >
                             {activeTest ? (
                                 <TestTakingView 
@@ -1110,10 +1112,15 @@ const CourseDetailPage = () => {
             <AnimatePresence mode="wait">
                 {showSidebar && (
                     <motion.div
-                        initial={isMobile ? { opacity: 0, y: '100%' } : { width: 0, opacity: 0, x: 20 }}
-                        animate={isMobile ? { opacity: 1, y: 0, width: '100%' } : { width: 400, opacity: 1, x: 0 }}
-                        exit={isMobile ? { opacity: 0, y: '100%' } : { width: 0, opacity: 0, x: 20 }}
-                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                        initial={isMobile ? { y: '100%' } : { width: 0, opacity: 0, x: 20 }}
+                        animate={isMobile ? { y: 0 } : { width: 400, opacity: 1, x: 0 }}
+                        exit={isMobile ? { y: '100%' } : { width: 0, opacity: 0, x: 20 }}
+                        transition={{ 
+                            type: isMobile ? "spring" : "tween",
+                            damping: 25,
+                            stiffness: 200,
+                            duration: 0.3 
+                        }}
                         className={clsx(
                             "bg-slate-900 border-l border-white/5 flex flex-col shrink-0 overflow-hidden shadow-2xl",
                             isMobile ? "fixed inset-0 z-[100] h-full" : "h-full z-30 relative"

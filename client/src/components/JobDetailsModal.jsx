@@ -107,7 +107,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                     missing.push("Resume");
                 } else {
                     setProfileResumeUrl(profile.resumeUrl);
-                    if (!uploadedResume) setUploadedResume(profile.resumeUrl);
+                    setUploadedResume(profile.resumeUrl);
                 }
                 if (!profile.skills || profile.skills.length === 0) missing.push("Critical Skills");
                 if (!profile.education || profile.education.length === 0) missing.push("Education History");
@@ -265,7 +265,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                     </div>
                 </div>
                 {!effectiveHideActions && (
-                    <div className="p-4 md:p-5 border-t border-slate-100 bg-white flex flex-col gap-3 shrink-0 relative">
+                    <div className="p-3 md:p-5 border-t border-slate-100 bg-white flex flex-col gap-2 md:gap-3 shrink-0 relative">
                         {showWarning && (
                             <div className="mb-1 p-4 bg-amber-50 border border-amber-100 rounded-2xl animate-in slide-in-from-bottom-2 duration-300">
                                 <div className="flex gap-3">
@@ -299,15 +299,15 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                             </div>
                         )}
                         {job.isInternal && !applied && (
-                            <div className="mb-4 space-y-3 p-4 bg-slate-50/50 rounded-2xl border border-slate-100/60 transition-all">
-                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Upload/Select Resume (Mandatory)</label>
-                                <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="mb-2 sm:mb-4 space-y-2 sm:space-y-3 p-3 sm:p-4 bg-slate-50/50 rounded-2xl border border-slate-100/60 transition-all">
+                                <label className="block text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Upload/Select Resume (Mandatory)</label>
+                                <div className="flex flex-row gap-2">
                                     {profileResumeUrl && !profileResumeUrl.includes('default.pdf') && !profileResumeUrl.includes('dummy.pdf') ? (
                                         <button 
                                             onClick={() => setUploadedResume(profileResumeUrl)}
-                                            className={`flex-1 py-3 px-4 rounded-xl text-[13px] font-bold border transition-all flex items-center justify-center gap-2 ${uploadedResume === profileResumeUrl ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                            className={`flex-1 py-1.5 sm:py-3 px-2 sm:px-4 rounded-xl text-[11px] sm:text-[13px] font-bold border transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-center leading-tight ${uploadedResume === profileResumeUrl ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                                         >
-                                            {uploadedResume === profileResumeUrl ? <><Check className="w-4 h-4 shrink-0" /> Profile Resume Selected</> : 'Use Profile Resume'}
+                                            {uploadedResume === profileResumeUrl ? <><Check className="w-3.5 h-3.5 shrink-0" /> Profile Resume</> : 'Use Profile'}
                                         </button>
                                     ) : null}
                                     <div className="flex-1 relative">
@@ -320,57 +320,55 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                                         />
                                         <label 
                                             htmlFor="resume-upload"
-                                            className={`w-full py-3 px-4 rounded-xl text-[13px] font-bold border transition-all flex items-center justify-center gap-2 cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : (uploadedResume && !uploadedResume.includes('default') && uploadedResume !== profileResumeUrl ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300')}`}
+                                            className={`w-full py-1.5 sm:py-3 px-2 sm:px-4 rounded-xl text-[11px] sm:text-[13px] font-bold border transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-center leading-tight ${isUploading ? 'opacity-50 pointer-events-none' : (uploadedResume && !uploadedResume.includes('default') && uploadedResume !== profileResumeUrl ? 'bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300')}`}
                                         >
-                                            {isUploading ? 'Uploading...' : (uploadedResume && !uploadedResume.includes('default') && uploadedResume !== profileResumeUrl ? <><Check className="w-4 h-4 shrink-0" /> Custom PDF</> : 'Upload New PDF')}
+                                            {isUploading ? 'Uploading...' : (uploadedResume && !uploadedResume.includes('default') && uploadedResume !== profileResumeUrl ? <><Check className="w-3.5 h-3.5 shrink-0" /> Custom PDF</> : 'Custom PDF')}
                                         </label>
                                     </div>
                                 </div>
                                 {uploadedResume && (
-                                    <p className="text-[10px] text-indigo-500 font-bold mt-2 text-center truncate px-2">Chosen: {uploadedResume.split('?')[0].split('/').pop() || 'document.pdf'}</p>
+                                    <p className="text-[9px] sm:text-[10px] text-indigo-500 font-bold mt-1 sm:mt-2 text-center truncate px-2">Chosen: {uploadedResume.split('?')[0].split('/').pop() || 'document.pdf'}</p>
                                 )}
                             </div>
                         )}
 
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-center w-full">
-                            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
-                                <button
-                                    onClick={handleCopyLink}
-                                    className="h-12 w-12 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center shrink-0 bg-white"
-                                    title="Copy Job Link"
-                                >
-                                    {copied ? <Check className="w-[18px] h-[18px] text-emerald-500" /> : <Copy className="w-[18px] h-[18px]" />}
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        setIsSaving(true);
-                                        try {
-                                            const title = job.title || 'Untitled Position';
-                                            const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
-                                            const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
-                                            if (didSave) {
-                                                await axios.delete('/jobs/unsave', {
-                                                    data: { jobId }
-                                                });
-                                                setDidSave(false);
-                                                if (onToggleSave) onToggleSave(jobId, false);
-                                            } else {
-                                                await axios.post('/jobs/save', { job });
-                                                setDidSave(true);
-                                                if (onToggleSave) onToggleSave(jobId, true);
-                                            }
-                                        } catch (err) {
-                                            console.error('Failed to toggle save job', err);
-                                        } finally {
-                                            setIsSaving(false);
+                        <div className="flex flex-row gap-2 sm:gap-3 items-center w-full">
+                            <button
+                                onClick={handleCopyLink}
+                                className="h-10 sm:h-12 w-10 sm:w-12 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center shrink-0 bg-white"
+                                title="Copy Job Link"
+                            >
+                                {copied ? <Check className="w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] text-emerald-500" /> : <Copy className="w-[16px] h-[16px] sm:w-[18px] sm:h-[18px]" />}
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setIsSaving(true);
+                                    try {
+                                        const title = job.title || 'Untitled Position';
+                                        const company = job.company || job.companyName || (job.recruiterId?.companyName) || 'Organization';
+                                        const jobId = job._id || job.id || job.link || `${title}-${company}`.replace(/\s+/g, '-').toLowerCase();
+                                        if (didSave) {
+                                            await axios.delete('/jobs/unsave', {
+                                                data: { jobId }
+                                            });
+                                            setDidSave(false);
+                                            if (onToggleSave) onToggleSave(jobId, false);
+                                        } else {
+                                            await axios.post('/jobs/save', { job });
+                                            setDidSave(true);
+                                            if (onToggleSave) onToggleSave(jobId, true);
                                         }
-                                    }}
-                                    disabled={isSaving}
-                                    className={`flex-1 sm:w-36 h-12 font-bold px-4 rounded-xl text-[13px] sm:text-sm whitespace-nowrap transition-all border outline-none ${didSave ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 hover:border-rose-300 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm'}`}
-                                >
-                                    {isSaving ? 'Processing...' : didSave ? 'Saved' : 'Save'}
-                                </button>
-                            </div>
+                                    } catch (err) {
+                                        console.error('Failed to toggle save job', err);
+                                    } finally {
+                                        setIsSaving(false);
+                                    }
+                                }}
+                                disabled={isSaving}
+                                className={`h-10 sm:h-12 w-16 sm:w-24 border outline-none font-bold px-2 sm:px-4 rounded-xl text-[12px] sm:text-sm whitespace-nowrap transition-all shrink-0 ${didSave ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 hover:border-rose-300 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 shadow-sm'}`}
+                            >
+                                {isSaving ? '...' : didSave ? 'Saved' : 'Save'}
+                            </button>
 
                             {job.isInternal ? (
                                 <button
@@ -386,12 +384,12 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                                         }
                                     }}
                                     disabled={isApplying || applied}
-                                    className={`w-full h-12 font-bold px-4 rounded-xl text-[13px] sm:text-sm whitespace-nowrap transition-all flex items-center justify-center gap-2 shadow-lg outline-none ${applied ? 'bg-emerald-500 text-white cursor-default shadow-emerald-500/20' : 'bg-[#1a56f0] text-white hover:bg-[#1546c7] shadow-blue-500/20'}`}
+                                    className={`w-full h-10 sm:h-12 font-bold px-3 sm:px-4 rounded-xl text-[12px] sm:text-sm whitespace-nowrap transition-all flex items-center justify-center gap-2 shadow-lg outline-none ${applied ? 'bg-emerald-500 text-white cursor-default shadow-emerald-500/20' : 'bg-[#1a56f0] text-white hover:bg-[#1546c7] shadow-blue-500/20'}`}
                                 >
                                     {isApplying ? 'Applying...' : applied ? (
-                                        <><Check className="w-4 h-4 shrink-0" /> Applied Successfully</>
+                                        <><Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> Applied</>
                                     ) : (
-                                        <span className="truncate">Apply to {companyDisplayName} {showWarning ? 'Anyway' : ''}</span>
+                                        <span className="truncate">Apply {showWarning ? 'Anyway' : ''}</span>
                                     )}
                                 </button>
                             ) : (
@@ -399,7 +397,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                                     href={job.link || '#'}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full h-12 bg-[#1a56f0] text-white font-bold px-4 rounded-xl text-[13px] sm:text-sm whitespace-nowrap hover:bg-[#1546c7] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 outline-none"
+                                    className="w-full h-10 sm:h-12 bg-[#1a56f0] text-white font-bold px-3 sm:px-4 rounded-xl text-[12px] sm:text-sm whitespace-nowrap hover:bg-[#1546c7] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 outline-none"
                                 >
                                     Apply Now <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                                 </a>

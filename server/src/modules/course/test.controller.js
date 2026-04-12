@@ -27,20 +27,37 @@ exports.getCourseTests = catchAsync(async (req, res, next) => {
 
   if (!course) return next(new AppError('Course not found', 404));
 
+  const userId = (req.user._id || req.user.id);
   const isAdmin = ['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role);
-  const isTeacher = (course.teacher?._id || course.teacher)?.toString() === (req.user._id || req.user.id)?.toString();
-  const isEnrolled = course.enrolledStudents?.some(s => (s?._id || s)?.toString() === (req.user._id || req.user.id)?.toString());
+  const isTeacher = (course.teacher?._id || course.teacher)?.toString() === userId?.toString();
+  const isEnrolled = course.enrolledStudents?.some(s => (s?._id || s)?.toString() === userId?.toString());
 
   if (!isEnrolled && !isTeacher && !isAdmin) {
     return next(new AppError('You must be enrolled in this course to view the tests', 403));
   }
 
-  const tests = await Test.find({ course: courseId }).sort({ createdAt: 1 });
-
-  // Add submission info for students
+  let tests = await Test.find({ course: courseId }).sort({ createdAt: 1 });
   let testResults = [];
+  
   if (req.user.role === 'STUDENT' || isEnrolled) {
-      testResults = await TestResult.find({ user: req.user.id, course: courseId });
+      testResults = await TestResult.find({ user: userId, course: courseId });
+  }
+
+  // Sanitize tests for students: hide correct answers for unsubmitted tests
+  if (!isAdmin && !isTeacher) {
+      tests = tests.map(t => {
+          const tObj = t.toObject();
+          const submitted = testResults.some(tr => tr.test.toString() === tObj._id.toString());
+          if (!submitted) {
+              tObj.questions = tObj.questions.map(q => {
+                  const qObj = { ...q };
+                  delete qObj.correctOptionIndex;
+                  delete qObj.explanation;
+                  return qObj;
+              });
+          }
+          return tObj;
+      });
   }
 
   res.status(200).json({ 

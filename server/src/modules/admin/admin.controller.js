@@ -244,7 +244,8 @@ exports.createTeacher = catchAsync(async (req, res, next) => {
 exports.getAllJobs = catchAsync(async (req, res, next) => {
   const jobs = await Job.find()
     .sort('-createdAt')
-    .populate('recruiterId', 'name email');
+    .populate('recruiterId', 'name email')
+    .populate('courseId', 'title');
     
   res.status(200).json({
     status: 'success',
