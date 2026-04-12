@@ -752,11 +752,18 @@ const AdminCompetitions = () => {
                                         <div className="space-y-3">
                                             <h6 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Technical Skills</h6>
                                             <div className="flex flex-wrap gap-2">
-                                                {viewingParticipant.studentProfile.skills.map((skill, i) => (
-                                                    <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-tight shadow-sm border border-indigo-100">
-                                                        {skill}
-                                                    </span>
-                                                ))}
+                                                {(() => {
+                                                    const rawSkills = viewingParticipant.studentProfile.skills || [];
+                                                    const skills = (Array.isArray(rawSkills) ? rawSkills : [rawSkills])
+                                                        .flatMap(s => typeof s === 'string' ? s.split(/[,/]+/).map(item => item.trim()) : [s])
+                                                        .filter(Boolean);
+                                                    
+                                                    return skills.map((skill, i) => (
+                                                        <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-tight shadow-sm border border-indigo-100">
+                                                            {skill}
+                                                        </span>
+                                                    ));
+                                                })()}
                                             </div>
                                         </div>
                                     )}

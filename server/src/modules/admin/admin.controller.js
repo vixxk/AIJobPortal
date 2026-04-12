@@ -258,7 +258,9 @@ exports.createJob = catchAsync(async (req, res, next) => {
   const jobData = {
     ...req.body,
     status: 'APPROVED',
+    isSpecial: true,
   };
+
 
   if (req.body.recruiterId) {
     jobData.recruiterId = req.body.recruiterId;
@@ -352,8 +354,13 @@ exports.updateJob = catchAsync(async (req, res, next) => {
   
   // If status is updated to APPROVED, or a job becomes Special
   if (req.body.status === 'APPROVED' && oldJob.status !== 'APPROVED') {
+    // Automatically mark as Hyrego/Special job when approved by admin
+    job.isSpecial = true;
+    await job.save();
+    
     await notifyStudentsOfJob(job, true);
   } else if (job.status === 'APPROVED' && req.body.isSpecial === true && !oldJob.isSpecial) {
+
       await notifyStudentsOfJob(job, false);
   }
 
