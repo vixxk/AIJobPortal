@@ -568,6 +568,7 @@ const StudentProfile = () => {
                     <>
                         <Input label="Title" value={localItem.position} onChange={e => handleUpdateItem('position', e.target.value)} />
                         <Input label="Company" value={localItem.company} onChange={e => handleUpdateItem('company', e.target.value)} />
+                        <Select label="Employment Type" options={['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance']} value={localItem.employmentType || 'Full-time'} onChange={e => handleUpdateItem('employmentType', e.target.value)} />
                         <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="From" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="To" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
@@ -580,6 +581,7 @@ const StudentProfile = () => {
                 return renderListOrForm('education', 'Education', () => (
                     <>
                         <Input label="Institution" value={localItem.institution} onChange={e => handleUpdateItem('institution', e.target.value)} />
+                        <Select label="Education Level" options={['High School', 'Higher Secondary', 'Diploma', 'Bachelor\'s', 'Master\'s', 'PhD', 'Bootcamp/Certification', 'Other']} value={localItem.educationLevel || ''} onChange={e => handleUpdateItem('educationLevel', e.target.value)} />
                         <Input label="Degree" value={localItem.degree} onChange={e => handleUpdateItem('degree', e.target.value)} />
                         <Input label="Field of Study" value={localItem.fieldOfStudy} onChange={e => handleUpdateItem('fieldOfStudy', e.target.value)} />
                         <div className="flex gap-2 sm:gap-4">
@@ -592,7 +594,8 @@ const StudentProfile = () => {
                 return renderListOrForm('projects', 'Projects', () => (
                     <>
                         <Input label="Title" value={localItem.title} onChange={e => handleUpdateItem('title', e.target.value)} />
-                        <Input label="URL" value={localItem.url} onChange={e => handleUpdateItem('url', e.target.value)} />
+                        <Input label="Live URL" value={localItem.liveUrl || localItem.url} onChange={e => handleUpdateItem('liveUrl', e.target.value)} placeholder="https://my-app.com" />
+                        <Input label="GitHub URL" value={localItem.githubUrl} onChange={e => handleUpdateItem('githubUrl', e.target.value)} placeholder="https://github.com/username/project" />
                         <div className="flex gap-2 sm:gap-4">
                             <DatePicker label="Start Date" value={localItem.startDate} onChange={e => handleUpdateItem('startDate', e.target.value)} />
                             <DatePicker label="End Date" value={localItem.endDate} onChange={e => handleUpdateItem('endDate', e.target.value)} />
@@ -864,7 +867,7 @@ const StudentProfile = () => {
                                                             </div>
                                                             <div className="min-w-0 flex-1 mt-0.5">
                                                                 <h4 className="text-[15px] font-bold text-slate-800 truncate">{exp.position}</h4>
-                                                                <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{exp.company} {exp.current ? '• Full-time' : '• Contract'}</p>
+                                                                <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{exp.company}{exp.employmentType ? ` • ${exp.employmentType}` : ''}</p>
                                                                 <p className="text-[11px] text-slate-400 font-medium mt-1">
                                                                     {exp.startDate ? exp.startDate.substring(0,4) : 'Past'} - {exp.current ? 'Present' : (exp.endDate ? exp.endDate.substring(0,4) : '')}
                                                                 </p>
@@ -893,7 +896,7 @@ const StudentProfile = () => {
                                                             </div>
                                                             <div className="min-w-0 flex-1 mt-0.5">
                                                                 <h4 className="text-[15px] font-bold text-slate-800 leading-tight pr-2">{edu.degree}{edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ''}</h4>
-                                                                <p className="text-[13px] text-slate-500 font-medium mt-1 truncate">{edu.institution}</p>
+                                                                <p className="text-[13px] text-slate-500 font-medium mt-1 truncate">{edu.institution}{edu.educationLevel ? ` • ${edu.educationLevel}` : ''}</p>
                                                                 {edu.endDate && <p className="text-[11px] text-slate-400 font-medium mt-1">Graduated {edu.endDate.substring(0,4)}</p>}
                                                             </div>
                                                         </div>
@@ -1013,7 +1016,8 @@ const StudentProfile = () => {
                                                                 <div className="min-w-0 flex-1 mt-0.5">
                                                                     <h4 className="text-[15px] font-bold text-slate-800 truncate">{proj.name || proj.title}</h4>
                                                                     {proj.description && <p className="text-[13px] text-slate-500 font-medium truncate mt-0.5">{proj.description}</p>}
-                                                                    {proj.url && <p className="text-[11px] text-blue-500 font-medium mt-1 truncate">{proj.url}</p>}
+                                                                    {(proj.liveUrl || proj.url) && <p className="text-[11px] text-blue-500 font-medium mt-1 truncate">Live: {proj.liveUrl || proj.url}</p>}
+                                                                    {proj.githubUrl && <p className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">GitHub: {proj.githubUrl}</p>}
                                                                 </div>
                                                             </div>
                                                         ))}

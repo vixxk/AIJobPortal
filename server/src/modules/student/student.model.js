@@ -33,7 +33,8 @@ const studentProfileSchema = new mongoose.Schema({
     fieldOfStudy: String,
     startDate: Date,
     endDate: Date,
-    current: Boolean
+    current: Boolean,
+    educationLevel: String
   }],
   experience: [{
     company: String,
@@ -41,14 +42,17 @@ const studentProfileSchema = new mongoose.Schema({
     startDate: Date,
     endDate: Date,
     description: String,
-    current: Boolean
+    current: Boolean,
+    employmentType: String
   }],
   projects: [{
     title: String,
     description: String,
     startDate: Date,
     endDate: Date,
-    url: String
+    url: String,
+    liveUrl: String,
+    githubUrl: String
   }],
   certifications: [{
     title: String,

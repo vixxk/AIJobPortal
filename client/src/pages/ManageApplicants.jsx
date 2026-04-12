@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../utils/axios';
-import { User, Mail, Link as LinkIcon, CheckCircle, XCircle, ArrowLeft, Download, Users, Briefcase, Building, Award, FileText, Globe, Calendar, MapPin, Phone, ShieldCheck, Layers, Sparkles, Filter, ArrowUpDown, SlidersHorizontal, Zap, HelpCircle } from 'lucide-react';
+import { User, Mail, Link as LinkIcon, CheckCircle, XCircle, ArrowLeft, Download, Users, Briefcase, Building, Award, FileText, Globe, Calendar, MapPin, Phone, ShieldCheck, Layers, Sparkles, Filter, ArrowUpDown, SlidersHorizontal, Zap, HelpCircle, Github } from 'lucide-react';
 import AIInterviewSetupModal from '../components/interview/AIInterviewSetupModal';
 
 const ManageApplicants = () => {
@@ -699,7 +699,7 @@ const StudentProfileModal = ({ student, onClose }) => {
                                                 </div>
                                                 <div className="pt-0.5">
                                                     <h4 className="font-bold text-slate-900 text-[15px] leading-tight">{exp.position}</h4>
-                                                    <p className="text-[13px] text-slate-500 font-semibold">{exp.company}</p>
+                                                    <p className="text-[13px] text-slate-500 font-semibold">{exp.company}{exp.employmentType ? ` • ${exp.employmentType}` : ''}</p>
                                                     <p className="text-[10px] text-slate-400 font-black mt-1 uppercase tracking-widest bg-slate-50 inline-block px-2 py-0.5 rounded">
                                                         {new Date(exp.startDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} - {exp.current ? 'Present' : new Date(exp.endDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
                                                     </p>
@@ -770,7 +770,7 @@ const StudentProfileModal = ({ student, onClose }) => {
                                                 </div>
                                                 <div>
                                                     <h4 className="font-black text-slate-900 text-sm leading-tight pr-4">{edu.degree}</h4>
-                                                    <p className="text-xs text-slate-500 font-bold mt-0.5 uppercase tracking-tighter">{edu.institution}</p>
+                                                    <p className="text-xs text-slate-500 font-bold mt-0.5 uppercase tracking-tighter">{edu.institution}{edu.educationLevel ? ` • ${edu.educationLevel}` : ''}</p>
                                                     <div className="flex items-center gap-1.5 mt-2">
                                                         <Calendar className="w-3.5 h-3.5 text-slate-300" />
                                                         <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
@@ -792,11 +792,18 @@ const StudentProfileModal = ({ student, onClose }) => {
                                             <div key={i} className="p-5 rounded-3xl border border-slate-100 bg-white hover:border-indigo-200 transition-all shadow-sm">
                                                 <h4 className="font-bold text-slate-900 text-sm flex items-center justify-between">
                                                     {proj.title}
-                                                    {proj.url && (
-                                                        <a href={proj.url} target="_blank" rel="noreferrer" className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors">
-                                                            <LinkIcon className="w-3 h-3" />
-                                                        </a>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        {(proj.liveUrl || proj.url) && (
+                                                            <a href={proj.liveUrl || proj.url} target="_blank" rel="noreferrer" className="p-1.5 bg-indigo-50 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors" title="Live URL">
+                                                                <Globe className="w-3 h-3" />
+                                                            </a>
+                                                        )}
+                                                        {proj.githubUrl && (
+                                                            <a href={proj.githubUrl} target="_blank" rel="noreferrer" className="p-1.5 bg-slate-100 rounded-lg text-slate-700 hover:bg-slate-200 transition-colors" title="GitHub Repository">
+                                                                <Github className="w-3 h-3" />
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </h4>
                                                 <p className="text-[12px] text-slate-600 mt-2 leading-relaxed">{proj.description}</p>
                                             </div>
