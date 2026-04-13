@@ -168,22 +168,11 @@ const HyregoJobDetail = () => {
                 )}
 
                 {/* Floating action buttons on banner */}
-                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-8 md:right-8 flex items-center justify-between z-20">
-                    {user ? (
-                        <Link
-                            to="/app"
-                            className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/20 hover:bg-white/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/10 shadow-lg"
-                            title="Go to Dashboard"
-                        >
-                            <Menu className="w-5 h-5" />
-                        </Link>
-                    ) : (
-                        <div />
-                    )}
+                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-8 md:right-8 flex items-center justify-end z-20">
                     <div className="flex items-center gap-2">
                         <button
                             onClick={handleCopyLink}
-                            className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/20 hover:bg-white/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/10 shadow-lg"
+                            className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/10 shadow-lg"
                             title={copied ? 'Copied!' : 'Share'}
                         >
                             <Share2 className="w-5 h-5" />
@@ -191,7 +180,7 @@ const HyregoJobDetail = () => {
                         {!user && (
                             <Link
                                 to={`/login?redirect=/hyrego/${id}`}
-                                className="px-4 py-2.5 md:px-5 rounded-2xl bg-white/20 hover:bg-white/40 backdrop-blur-md text-white text-sm font-bold transition-all border border-white/10 shadow-lg"
+                                className="px-4 py-2.5 md:px-5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md text-white text-sm font-bold transition-all border border-white/10 shadow-lg"
                             >
                                 Login
                             </Link>
