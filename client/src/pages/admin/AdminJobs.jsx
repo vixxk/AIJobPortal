@@ -582,30 +582,30 @@ const AdminJobs = () => {
                                 </div>
 
                                 <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100/50">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div>
                                             <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                                 {formData.applyLinkVisibility === 'public' ? <Unlock className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-amber-500" />}
                                                 Apply Button Visibility
                                             </p>
-                                            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                                            <p className="text-[11px] text-slate-500 font-medium mt-1">
                                                 {formData.applyLinkVisibility === 'public'
                                                     ? 'Anyone can see and use the apply button without logging in.'
                                                     : 'Only registered & logged-in users can see the apply button.'}
                                             </p>
                                         </div>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3 w-full sm:w-auto">
                                             <button
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, applyLinkVisibility: 'internal' })}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.applyLinkVisibility === 'internal' ? 'bg-amber-500 text-white shadow-sm' : 'bg-white text-slate-500 border border-slate-200'}`}
+                                                className={`flex-1 sm:flex-none px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all ${formData.applyLinkVisibility === 'internal' ? 'bg-amber-500 text-white shadow-sm' : 'bg-white text-slate-500 border border-slate-200'}`}
                                             >
                                                 Login Required
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, applyLinkVisibility: 'public' })}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.applyLinkVisibility === 'public' ? 'bg-green-500 text-white shadow-sm' : 'bg-white text-slate-500 border border-slate-200'}`}
+                                                className={`flex-1 sm:flex-none px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all ${formData.applyLinkVisibility === 'public' ? 'bg-green-500 text-white shadow-sm' : 'bg-white text-slate-500 border border-slate-200'}`}
                                             >
                                                 Public
                                             </button>
