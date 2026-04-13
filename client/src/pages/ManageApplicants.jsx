@@ -420,7 +420,7 @@ const ManageApplicants = () => {
                                                     .filter(Boolean);
                                                 
                                                 return (
-                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                    <div className="flex fflex-wrap gap-1.5 mt-2">
                                                         {skills.slice(0, 3).map((skill, i) => (
                                                             <button 
                                                                 key={i} 

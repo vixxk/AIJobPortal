@@ -36,7 +36,7 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
     const companyLogo = job?.logo || job?.recruiterId?.logo || job?.recruiterId?.avatar;
 
     const handleCopyLink = () => {
-        const shareUrl = job?.link || `${window.location.origin}/app/hyrego-jobs?id=${job?._id || ''}`;
+        const shareUrl = job?.link || `${window.location.origin}/hyrego/${job?._id || ''}`;
         
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(shareUrl)

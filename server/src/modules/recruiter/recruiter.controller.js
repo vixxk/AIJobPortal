@@ -13,19 +13,25 @@ exports.getMe = catchAsync(async (req, res, next) => {
   });
 });
 exports.createOrUpdateProfile = catchAsync(async (req, res, next) => {
-  const { companyName, companyDescription, website } = req.body;
+  const { companyName, companyDescription, website, companyBanner, address, phoneNumber } = req.body;
   let profile = await RecruiterProfile.findOne({ userId: req.user.id });
   if (profile) {
-    profile.companyName = companyName || profile.companyName;
-    profile.companyDescription = companyDescription || profile.companyDescription;
-    profile.website = website || profile.website;
+    if (companyName) profile.companyName = companyName;
+    if (companyDescription !== undefined) profile.companyDescription = companyDescription;
+    if (website !== undefined) profile.website = website;
+    if (companyBanner !== undefined) profile.companyBanner = companyBanner;
+    if (address !== undefined) profile.address = address;
+    if (phoneNumber !== undefined) profile.phoneNumber = phoneNumber;
     await profile.save();
   } else {
     profile = await RecruiterProfile.create({
       userId: req.user.id,
       companyName,
       companyDescription,
-      website
+      website,
+      companyBanner,
+      address,
+      phoneNumber
     });
   }
   res.status(200).json({
@@ -49,6 +55,27 @@ exports.uploadLogo = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       logo: profile.logo
+    }
+  });
+});
+
+exports.uploadBanner = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    return next(new AppError('Please upload an image file.', 400));
+  }
+  const result = await uploadFile(req.file, 'recruiter/banners', false, 'avatars', 'image');
+  const profile = await RecruiterProfile.findOneAndUpdate(
+    { userId: req.user.id },
+    { companyBanner: result.url },
+    { new: true }
+  );
+  if (!profile) {
+    return next(new AppError('Recruiter profile not found. Please create your profile first.', 404));
+  }
+  res.status(200).json({
+    status: 'success',
+    data: {
+      companyBanner: profile.companyBanner
     }
   });
 });

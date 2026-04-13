@@ -14,7 +14,13 @@ const jobSchema = new mongoose.Schema({
   },
   salaryRange: String,
   companyName: String,
+  companyLogo: String,
+  companyBanner: String,
   responsibilities: {
+    type: [String],
+    default: []
+  },
+  eligibilityCriteria: {
     type: [String],
     default: []
   },
@@ -31,6 +37,22 @@ const jobSchema = new mongoose.Schema({
     type: String,
     enum: ['Full-time', 'Part-time', 'Internship', 'Contract'],
     default: 'Full-time'
+  },
+  workMode: {
+    type: String,
+    enum: ['Onsite', 'Remote', 'Hybrid'],
+    default: 'Onsite'
+  },
+  duration: String,
+  applicationDeadline: Date,
+  startDate: String,
+  aboutCompany: String,
+  companyWebsite: String,
+  applyLink: String,
+  applyLinkVisibility: {
+    type: String,
+    enum: ['public', 'internal'],
+    default: 'internal'
   },
   recruiterId: {
     type: mongoose.Schema.Types.ObjectId,

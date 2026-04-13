@@ -261,6 +261,28 @@ exports.createJob = catchAsync(async (req, res, next) => {
     isSpecial: true,
   };
 
+  // Handle file uploads for company logo and banner
+  if (req.files) {
+    if (req.files.companyLogo && req.files.companyLogo[0]) {
+      const logoResult = await uploadFile(req.files.companyLogo[0], 'jobs/logos', true, 'avatars');
+      jobData.companyLogo = logoResult.url;
+    }
+    if (req.files.companyBanner && req.files.companyBanner[0]) {
+      const bannerResult = await uploadFile(req.files.companyBanner[0], 'jobs/banners', false, 'avatars');
+      jobData.companyBanner = bannerResult.url;
+    }
+  }
+
+  // Parse array fields if sent as strings
+  if (typeof jobData.skillsRequired === 'string') {
+    jobData.skillsRequired = jobData.skillsRequired.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  if (typeof jobData.responsibilities === 'string') {
+    jobData.responsibilities = jobData.responsibilities.split('\n').map(s => s.trim()).filter(Boolean);
+  }
+  if (typeof jobData.eligibilityCriteria === 'string') {
+    jobData.eligibilityCriteria = jobData.eligibilityCriteria.split('\n').map(s => s.trim()).filter(Boolean);
+  }
 
   if (req.body.recruiterId) {
     jobData.recruiterId = req.body.recruiterId;
@@ -350,7 +372,21 @@ exports.updateJob = catchAsync(async (req, res, next) => {
   const oldJob = await Job.findById(req.params.jobId);
   if (!oldJob) return next(new AppError('Job not found', 404));
 
-  const job = await Job.findByIdAndUpdate(req.params.jobId, req.body, { new: true });
+  const updateData = { ...req.body };
+
+  // Handle file uploads for company logo and banner on update
+  if (req.files) {
+    if (req.files.companyLogo && req.files.companyLogo[0]) {
+      const logoResult = await uploadFile(req.files.companyLogo[0], 'jobs/logos', true, 'avatars');
+      updateData.companyLogo = logoResult.url;
+    }
+    if (req.files.companyBanner && req.files.companyBanner[0]) {
+      const bannerResult = await uploadFile(req.files.companyBanner[0], 'jobs/banners', false, 'avatars');
+      updateData.companyBanner = bannerResult.url;
+    }
+  }
+
+  const job = await Job.findByIdAndUpdate(req.params.jobId, updateData, { new: true });
   
   // If status is updated to APPROVED, or a job becomes Special
   if (req.body.status === 'APPROVED' && oldJob.status !== 'APPROVED') {

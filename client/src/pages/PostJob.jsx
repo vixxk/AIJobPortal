@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
-import { Briefcase, MapPin, IndianRupee, List, Building, Building2, CheckCircle2, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { Briefcase, MapPin, IndianRupee, List, Building, Building2, CheckCircle2, ShieldCheck, ArrowRight, Sparkles, Image, UploadCloud, X } from 'lucide-react';
 import { useEffect } from 'react';
 const PostJob = () => {
     const navigate = useNavigate();
@@ -19,19 +19,39 @@ const PostJob = () => {
         experienceLevel: 'Entry Level',
         responsibilities: '',
         isSpecial: false,
-        courseId: ''
+        courseId: '',
+        aboutCompany: '',
+        companyWebsite: ''
     });
     const [courses, setCourses] = useState([]);
+    // Logo/banner from profile (URL strings) or new file uploads
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [bannerPreview, setBannerPreview] = useState(null);
+    const [logoFile, setLogoFile] = useState(null);
+    const [bannerFile, setBannerFile] = useState(null);
+    const [profileLogoUrl, setProfileLogoUrl] = useState(null);
+    const [profileBannerUrl, setProfileBannerUrl] = useState(null);
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 const res = await axios.get('/recruiter/me');
                 if (res.data.status === 'success' && res.data.data.profile) {
+                    const profile = res.data.data.profile;
                     setFormData(prev => ({
                         ...prev,
-                        organization: res.data.data.profile.companyName || ''
+                        organization: profile.companyName || '',
+                        aboutCompany: profile.companyDescription || '',
+                        companyWebsite: profile.website || ''
                     }));
+                    if (profile.logo) {
+                        setProfileLogoUrl(profile.logo);
+                        setLogoPreview(profile.logo);
+                    }
+                    if (profile.companyBanner) {
+                        setProfileBannerUrl(profile.companyBanner);
+                        setBannerPreview(profile.companyBanner);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to fetch recruiter profile', err);
@@ -70,7 +90,12 @@ const PostJob = () => {
                 experienceRange: formData.experienceLevel,
                 jobType: formData.type,
                 isSpecial: formData.isSpecial,
-                courseId: formData.isSpecial ? formData.courseId : undefined
+                courseId: formData.isSpecial ? formData.courseId : undefined,
+                aboutCompany: formData.aboutCompany || undefined,
+                companyWebsite: formData.companyWebsite || undefined,
+                // Use profile URLs – they're already uploaded to S3
+                companyLogo: profileLogoUrl || undefined,
+                companyBanner: profileBannerUrl || undefined
             };
             const res = await axios.post('/jobs', payload);
             if (res.data.status === 'success') {
@@ -92,6 +117,37 @@ const PostJob = () => {
                     </div>
                 )}
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Company Branding Preview - auto-filled from profile */}
+                    {(logoPreview || bannerPreview) && (
+                        <div className="space-y-3">
+                            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4 flex items-center gap-2">
+                                <Image className="w-5 h-5 text-blue-500" />
+                                Company Branding
+                            </h3>
+                            <p className="text-xs text-slate-500 font-medium -mt-2 mb-3">
+                                Auto-filled from your <span className="text-blue-600 font-semibold">profile</span>. Update your profile to change these.
+                            </p>
+                            <div className="flex items-center gap-4">
+                                {logoPreview && (
+                                    <div className="relative">
+                                        <div className="w-16 h-16 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                                            <img src={logoPreview} alt="Company Logo" className="w-full h-full object-contain p-1" />
+                                        </div>
+                                        <span className="block text-[10px] font-semibold text-slate-400 text-center mt-1">Logo</span>
+                                    </div>
+                                )}
+                                {bannerPreview && (
+                                    <div className="relative flex-1">
+                                        <div className="h-16 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                                            <img src={bannerPreview} alt="Company Banner" className="w-full h-full object-cover" />
+                                        </div>
+                                        <span className="block text-[10px] font-semibold text-slate-400 text-center mt-1">Banner</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-4">
                         <h3 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4">Core Details</h3>
                         <div>

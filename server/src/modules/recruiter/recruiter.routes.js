@@ -10,4 +10,5 @@ router.use(roleMiddleware.restrictTo('RECRUITER'));
 router.get('/me', recruiterController.getMe);
 router.post('/profile', recruiterController.createOrUpdateProfile);
 router.patch('/profile/logo', uploadLogo, recruiterController.uploadLogo);
+router.patch('/profile/banner', uploadLogo, recruiterController.uploadBanner);
 module.exports = router;

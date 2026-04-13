@@ -325,7 +325,10 @@ const StudentProfile = () => {
     };
     const renderBasicEdit = () => (
         <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
-            <div className="flex justify-center mb-6">
+            <div className="flex flex-col items-center mb-6">
+                {user?.role === 'RECRUITER' && (
+                    <p className="text-[11px] font-semibold text-slate-400 text-center mb-2">Company Logo</p>
+                )}
                 <div className="relative w-24 h-24">
                     <SmartImage
                         src={profile.logo || profile.profileImage || user?.avatar}
@@ -347,7 +350,8 @@ const StudentProfile = () => {
                             const file = e.target.files[0];
                             if (file) {
                                 const fm = new FormData();
-                                fm.append('image', file);
+                                const fieldName = user?.role === 'RECRUITER' ? 'logo' : 'image';
+                                fm.append(fieldName, file);
                                 setSaving(true);
                                 try {
                                     const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/logo' : 
@@ -376,6 +380,50 @@ const StudentProfile = () => {
                     <>
                         <Input label="Company Name" value={profile.companyName} onChange={e => handleUpdateField('companyName', e.target.value)} />
                         <Input label="Company Website" value={profile.website} onChange={e => handleUpdateField('website', e.target.value)} />
+                        
+                        {/* Company Banner */}
+                        <div className="mb-3">
+                            <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">Company Banner</label>
+                            <div className="relative">
+                                {profile.companyBanner ? (
+                                    <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm mb-2">
+                                        <img src={profile.companyBanner} alt="Company Banner" className="w-full h-24 object-cover" />
+                                        <button
+                                            onClick={async () => {
+                                                await saveProfile({ companyBanner: '' });
+                                            }}
+                                            className="absolute top-2 right-2 w-7 h-7 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-white transition-all shadow-sm"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ) : null}
+                                <label className="block cursor-pointer">
+                                    <div className={`px-4 py-3 bg-white border border-dashed border-slate-300 rounded-2xl text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all ${saving ? 'opacity-50 pointer-events-none' : ''}`}>
+                                        <UploadCloud className="w-5 h-5 text-slate-400 mx-auto mb-1" />
+                                        <p className="text-xs font-semibold text-slate-500">{profile.companyBanner ? 'Replace banner' : 'Upload company banner'}</p>
+                                    </div>
+                                    <input type="file" accept="image/*" className="hidden" disabled={saving} onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            const fm = new FormData();
+                                            fm.append('logo', file);
+                                            setSaving(true);
+                                            try {
+                                                const res = await axios.patch('/recruiter/profile/banner', fm);
+                                                if (res.data.status === 'success') {
+                                                    setProfile({ ...profile, companyBanner: res.data.data.companyBanner });
+                                                    toast.success('Banner uploaded');
+                                                }
+                                            } catch (error) {
+                                                console.error("Banner upload error", error);
+                                                toast.error('Failed to upload banner');
+                                            } finally { setSaving(false); }
+                                        }
+                                    }} />
+                                </label>
+                            </div>
+                        </div>
                     </>
                 ) : user?.role === 'COLLEGE_ADMIN' ? (
                     <>
@@ -391,7 +439,7 @@ const StudentProfile = () => {
                     </>
                 )}
             </div>
-            <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
+            <button onClick={() => saveProfile({ companyName: profile.companyName, website: profile.website })} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderContact = () => (
@@ -401,7 +449,7 @@ const StudentProfile = () => {
                 <Input label="Phone Number" value={profile.phoneNumber || user?.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
                 <Input label="Email" value={user?.email} disabled={true} icon={<Mail className="w-4 h-4" />} />
             </div>
-            <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
+            <button onClick={() => saveProfile({ address: profile.address, phoneNumber: profile.phoneNumber })} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderSummary = () => (
@@ -415,7 +463,7 @@ const StudentProfile = () => {
                     onChange={e => handleUpdateField(user?.role === 'RECRUITER' ? 'companyDescription' : user?.role === 'COLLEGE_ADMIN' ? 'about' : 'summary', e.target.value)} 
                 />
             </div>
-            <button onClick={() => saveProfile(profile)} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
+            <button onClick={() => saveProfile(user?.role === 'RECRUITER' ? { companyDescription: profile.companyDescription } : user?.role === 'COLLEGE_ADMIN' ? { about: profile.about } : { summary: profile.summary })} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderSalary = () => (
@@ -828,32 +876,32 @@ const StudentProfile = () => {
                                         </button>
                                     </div>
 
-                                    {user?.role !== 'RECRUITER' && (
-                                        <>
-                                            <div className="mb-6">
-                                                <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">Contact Information</h3>
-                                                <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100">
-                                                    <div className="flex items-center gap-4 p-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 rounded-t-2xl transition-colors" onClick={() => navigate('/app/profile/contact')}>
-                                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                                                            <Mail className="w-5 h-5 text-blue-600" />
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Email Address</p>
-                                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.email || user?.email || 'N/A'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 p-3 cursor-pointer hover:bg-slate-50 rounded-b-2xl transition-colors" onClick={() => navigate('/app/profile/contact')}>
-                                                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                                                            <Phone className="w-5 h-5 text-blue-600" />
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Phone Number</p>
-                                                            <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.phoneNumber || user?.phoneNumber || '+1 Add Phone Number'}</p>
-                                                        </div>
-                                                    </div>
+                                    <div className="mb-6 mt-4">
+                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">Contact Information</h3>
+                                        <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-100">
+                                            <div className="flex items-center gap-4 p-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50 rounded-t-2xl transition-colors" onClick={() => navigate('/app/profile/contact')}>
+                                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                                    <Mail className="w-5 h-5 text-blue-600" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Email Address</p>
+                                                    <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.email || user?.email || 'N/A'}</p>
                                                 </div>
                                             </div>
+                                            <div className="flex items-center gap-4 p-3 cursor-pointer hover:bg-slate-50 rounded-b-2xl transition-colors" onClick={() => navigate('/app/profile/contact')}>
+                                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                                    <Phone className="w-5 h-5 text-blue-600" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Phone Number</p>
+                                                    <p className="text-[14px] font-semibold text-slate-800 truncate">{profile.phoneNumber || user?.phoneNumber || '+1 Add Phone Number'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
+                                    {user?.role !== 'RECRUITER' && (
+                                        <>
                                             <div className="mb-6">
                                                 <div className="flex items-center justify-between px-2 mb-3">
                                                     <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Work Experience</h3>
@@ -967,10 +1015,18 @@ const StudentProfile = () => {
                                                             <FileText className="w-5 h-5 text-blue-400" />
                                                         </div>
                                                         <div className="min-w-0 flex-1 mt-0.5">
-                                                            {profile.summary ? (
-                                                                <p className="text-[13px] text-slate-600 font-medium line-clamp-2 leading-relaxed">{profile.summary}</p>
+                                                            {user?.role === 'COLLEGE_ADMIN' ? (
+                                                                profile.about ? (
+                                                                    <p className="text-[13px] text-slate-600 font-medium line-clamp-2 leading-relaxed">{profile.about}</p>
+                                                                ) : (
+                                                                    <p className="text-[13px] text-slate-400 font-medium pt-1">No about details added yet.</p>
+                                                                )
                                                             ) : (
-                                                                <p className="text-[13px] text-slate-400 font-medium pt-1">No summary added yet.</p>
+                                                                profile.summary ? (
+                                                                    <p className="text-[13px] text-slate-600 font-medium line-clamp-2 leading-relaxed">{profile.summary}</p>
+                                                                ) : (
+                                                                    <p className="text-[13px] text-slate-400 font-medium pt-1">No summary added yet.</p>
+                                                                )
                                                             )}
                                                         </div>
                                                     </div>
@@ -1140,8 +1196,8 @@ const StudentProfile = () => {
                                                             <FileText className="w-5 h-5 text-blue-400" />
                                                         </div>
                                                         <div className="min-w-0 flex-1 mt-0.5">
-                                                            {profile.summary ? (
-                                                                <p className="text-[13px] text-slate-600 font-medium line-clamp-2 leading-relaxed">{profile.summary}</p>
+                                                            {profile.companyDescription ? (
+                                                                <p className="text-[13px] text-slate-600 font-medium line-clamp-2 leading-relaxed">{profile.companyDescription}</p>
                                                             ) : (
                                                                 <p className="text-[13px] text-slate-400 font-medium pt-1">No company details added.</p>
                                                             )}

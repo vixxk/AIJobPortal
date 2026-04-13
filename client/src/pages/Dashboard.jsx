@@ -427,17 +427,17 @@ const Dashboard = () => {
                                 const internalJob = {
                                     ...job,
                                     jobId: job._id,
-                                    company: job.companyName || job.recruiterId?.companyName || 'Organization', // Recruiters display company
-                                    logo: job.recruiterId?.logo,
+                                    company: job.companyName || job.recruiterId?.companyName || 'Organization',
+                                    logo: job.companyLogo || job.recruiterId?.logo,
                                     salary: job.salaryRange,
-                                    type: 'full-time', // Defaulting for display
+                                    type: 'full-time',
                                     isInternal: true
                                 };
                                 return (
                                     <JobCard
                                         key={job._id}
                                         job={internalJob}
-                                        onClick={setSelectedJob}
+                                        onClick={() => navigate(`/hyrego/${job._id}`)}
                                         initiallySaved={savedJobsIds.has(job._id)}
                                         onToggleSave={(id, isSaved) => {
                                             const newIds = new Set(savedJobsIds);
@@ -584,7 +584,7 @@ const Dashboard = () => {
                                     ...job,
                                     jobId: job._id,
                                     company: job.companyName || job.recruiterId?.companyName || 'Organization',
-                                    logo: job.recruiterId?.logo,
+                                    logo: job.companyLogo || job.recruiterId?.logo,
                                     salary: job.salaryRange,
                                     type: 'full-time',
                                     isInternal: true
@@ -593,7 +593,7 @@ const Dashboard = () => {
                                     <JobCard
                                         key={job._id}
                                         job={internalJob}
-                                        onClick={setSelectedJob}
+                                        onClick={() => navigate(`/hyrego/${job._id}`)}
                                         className="mb-0 w-[280px] shrink-0 snap-center"
                                         initiallySaved={savedJobsIds.has(job._id)}
                                         onToggleSave={(id, isSaved) => {

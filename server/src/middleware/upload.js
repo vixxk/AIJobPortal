@@ -67,4 +67,8 @@ exports.uploadResume     = uploadMemory.single('resume');
 exports.uploadCertificate = uploadMemory.single('certificate');
 exports.uploadLogo       = uploadImageOnly.single('logo');
 exports.uploadVideo      = uploadVideoDisk.single('video');
+exports.uploadJobImages  = uploadImageOnly.fields([
+  { name: 'companyLogo', maxCount: 1 },
+  { name: 'companyBanner', maxCount: 1 }
+]);
 

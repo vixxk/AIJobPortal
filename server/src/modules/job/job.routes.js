@@ -15,6 +15,7 @@ router.delete('/unsave', authMiddleware.protect, jobController.unsaveJob);
 
 // Shared/Public routes
 router.get('/search', jobController.searchJobs);
+router.get('/public/:id', authMiddleware.isLoggedIn, jobController.getPublicJob);
 router.get('/', jobController.getAllJobs);
 router.get('/:id', authMiddleware.isLoggedIn, jobController.getJob);
 

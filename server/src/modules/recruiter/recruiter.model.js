@@ -13,6 +13,9 @@ const recruiterProfileSchema = new mongoose.Schema({
   companyDescription: String,
   website: String,
   logo: String,
+  companyBanner: String,
+  address: String,
+  phoneNumber: String,
   approved: {
     type: Boolean,
     default: false

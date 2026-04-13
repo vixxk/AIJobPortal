@@ -51,6 +51,7 @@ import TeacherOverview from './pages/teacher/TeacherOverview';
 import TeacherCourses from './pages/teacher/TeacherCourses';
 import TeacherProfile from './pages/teacher/TeacherProfile';
 import SpecialJobs from './pages/SpecialJobs';
+import HyregoJobDetail from './pages/HyregoJobDetail';
 import StudentCompetitions from './pages/StudentCompetitions';
 import StudentCompetitionDetail from './pages/StudentCompetitionDetail';
 
@@ -72,6 +73,7 @@ function App() {
             <Route path="/select-role" element={<RoleSelection />} />
             <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
+            <Route path="/hyrego/:id" element={<HyregoJobDetail />} />
             <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
               <Route index element={<RoleRedirect />} />
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['STUDENT']}><Dashboard /></ProtectedRoute>} />

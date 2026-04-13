@@ -248,6 +248,37 @@ exports.getJob = catchAsync(async (req, res, next) => {
   });
 });
 
+// Public endpoint - no auth required, but conditionally hides apply link
+exports.getPublicJob = catchAsync(async (req, res, next) => {
+  const job = await Job.findById(req.params.id).populate('recruiterId', 'name email companyName logo').lean();
+  if (!job) {
+    return next(new AppError('No job found with that ID', 404));
+  }
+
+  // Only approved jobs are publicly visible
+  if (job.status !== 'APPROVED') {
+    return next(new AppError('This job is not available.', 404));
+  }
+
+  // If applyLinkVisibility is 'internal', hide the apply link unless user is logged in
+  const isLoggedIn = !!req.user;
+  const jobData = { ...job };
+  
+  if (job.applyLinkVisibility === 'internal' && !isLoggedIn) {
+    jobData.applyLink = null;
+    jobData.applyHidden = true;
+  } else {
+    jobData.applyHidden = false;
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      job: jobData
+    }
+  });
+});
+
 exports.searchJobs = catchAsync(async (req, res, next) => {
   const { role, location, type, salaryRange, experience } = req.query;
 

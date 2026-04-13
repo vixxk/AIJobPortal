@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Sparkles, Search, MapPin, Briefcase, IndianRupee, Clock, ChevronRight, Building2, ArrowDownUp, X } from 'lucide-react';
-import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
 
 
@@ -47,9 +46,9 @@ const JobCard = ({ job, onClick }) => {
             <div className="flex items-start gap-3 mb-4 pr-16">
                 {/* Company logo / avatar */}
                 <div className="shrink-0">
-                    {job.logo ? (
+                    {(job.companyLogo || job.logo) ? (
                         <div className="w-12 h-12 rounded-2xl border border-slate-100 bg-white shadow-sm flex items-center justify-center overflow-hidden">
-                            <img src={job.logo} alt={job.company} className="w-8 h-8 object-contain" />
+                            <img src={job.companyLogo || job.logo} alt={job.company} className="w-8 h-8 object-contain" />
                         </div>
                     ) : (
                         <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${grad} flex items-center justify-center shadow-md`}>
@@ -115,15 +114,14 @@ const JobCard = ({ job, onClick }) => {
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 const SpecialJobs = () => {
+    const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedJob, setSelectedJob] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [type, setType] = useState('any');
     const [salaryRange, setSalaryRange] = useState('any');
     const [experience, setExperience] = useState('any');
     const [openDropdown, setOpenDropdown] = useState(null);
-    const [savedJobsIds, setSavedJobsIds] = useState(new Set());
     const [searchParams] = useSearchParams();
     const jobIdFromUrl = searchParams.get('id');
 
@@ -142,24 +140,11 @@ const SpecialJobs = () => {
     useEffect(() => { fetchSpecialJobs(); }, [fetchSpecialJobs]);
 
     useEffect(() => {
-        if (jobIdFromUrl && jobs.length > 0) {
-            const job = jobs.find(j => j._id === jobIdFromUrl);
-            if (job) setSelectedJob(normalise(job));
+        if (jobIdFromUrl) {
+            // Redirect to the dedicated page
+            navigate(`/hyrego/${jobIdFromUrl}`, { replace: true });
         }
-    }, [jobIdFromUrl, jobs]);
-
-    useEffect(() => {
-        const fetchSaved = async () => {
-            try {
-                const res = await axios.get('/jobs/saved');
-                const ids = new Set((res.data.jobs || []).map(j => j._id || j.id || j.link || `${j.title || 'Untitled Position'}-${j.company || j.companyName || j.recruiterId?.companyName || 'Organization'}`.replace(/\s+/g, '-').toLowerCase()));
-                setSavedJobsIds(ids);
-            } catch (err) {
-                console.error('Failed to fetch saved jobs', err);
-            }
-        };
-        fetchSaved();
-    }, []);
+    }, [jobIdFromUrl, navigate]);
 
     const filteredJobs = jobs.filter(job => {
         const searchMode = searchTerm.toLowerCase();
@@ -182,10 +167,14 @@ const SpecialJobs = () => {
     const normalise = (job) => ({
         ...job,
         company: job.companyName || job.recruiterId?.companyName || 'Organization',
-        logo: job.recruiterId?.logo,
+        logo: job.companyLogo || job.recruiterId?.logo,
         salary: job.salaryRange,
         isInternal: true
     });
+
+    const handleJobClick = (job) => {
+        navigate(`/hyrego/${job._id || job.id}`);
+    };
 
     return (
         <div className="max-w-6xl mx-auto animate-in fade-in duration-500 pb-16">
@@ -379,24 +368,12 @@ const SpecialJobs = () => {
                             <JobCard
                                 key={job._id}
                                 job={normalise(job)}
-                                onClick={setSelectedJob}
+                                onClick={handleJobClick}
                             />
                         ))}
                     </div>
                 </>
             )}
-
-            <JobDetailsModal
-                job={selectedJob}
-                onClose={() => setSelectedJob(null)}
-                initiallySaved={selectedJob ? savedJobsIds.has(selectedJob._id || selectedJob.id || selectedJob.link || `${selectedJob.title || 'Untitled Position'}-${selectedJob.company || selectedJob.companyName || selectedJob.recruiterId?.companyName || 'Organization'}`.replace(/\s+/g, '-').toLowerCase()) : false}
-                onToggleSave={(jobId, isSaved) => {
-                    const newIds = new Set(savedJobsIds);
-                    if (isSaved) newIds.add(jobId);
-                    else newIds.delete(jobId);
-                    setSavedJobsIds(newIds);
-                }}
-            />
         </div>
     );
 };
