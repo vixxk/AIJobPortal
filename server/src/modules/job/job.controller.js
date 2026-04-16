@@ -282,13 +282,99 @@ exports.getPublicJob = catchAsync(async (req, res, next) => {
 exports.searchJobs = catchAsync(async (req, res, next) => {
   const { role, location, type, salaryRange, experience } = req.query;
 
-  // 1. Fetch External Jobs (Existing Logic)
+  const internalJobsRaw = await Job.find({ status: 'APPROVED', isSpecial: { $ne: true } }).populate('recruiterId', 'companyName logo').lean();
+  
+  // Apply filtering in JavaScript for better flexibility (similar to externalJobService)
+  let filteredInternal = internalJobsRaw.filter(job => {
+    // Role/Search match
+    if (role) {
+       const roleLower = role.toLowerCase();
+       const matchesRole = 
+          job.title?.toLowerCase().includes(roleLower) || 
+          job.companyName?.toLowerCase().includes(roleLower) ||
+          job.recruiterId?.companyName?.toLowerCase().includes(roleLower) ||
+          job.skillsRequired?.some(s => s.toLowerCase().includes(roleLower));
+       if (!matchesRole) return false;
+    }
+
+    // Location match
+    if (location && location !== 'any') {
+      const locLower = location.toLowerCase();
+      if (!job.location?.toLowerCase().includes(locLower)) return false;
+    }
+
+    // Type match
+    if (type && type !== 'any') {
+      const typeLower = type.toLowerCase().replace(/[\s-]/g, '');
+      const jobTypeLower = (job.jobType || '').toLowerCase().replace(/[\s-]/g, '');
+      if (!jobTypeLower.includes(typeLower)) return false;
+    }
+
+    // Experience match
+    if (experience && experience !== 'any') {
+      const expLower = experience.toLowerCase().replace(/[\s-]/g, '').replace('level', '');
+      const jobExpLower = (job.experienceRange || '').toLowerCase().replace(/[\s-]/g, '').replace('level', '');
+      if (jobExpLower === '' || expLower === '' || (!jobExpLower.includes(expLower) && !expLower.includes(jobExpLower))) return false;
+    }
+
+    // Salary match
+    if (salaryRange && salaryRange !== 'any') {
+        const jobSalary = (job.salaryRange || '').toLowerCase();
+        const selectedRange = salaryRange.toLowerCase();
+        
+        let salaryMatch = jobSalary.includes(selectedRange.replace('₹', '').trim().replace(/\s/g, ''));
+        if (!salaryMatch) {
+            const jobNumsOrig = jobSalary.match(/\d+(\.\d+)?/g)?.map(Number) || [];
+            const rangeNums = selectedRange.match(/\d+(\.\d+)?/g)?.map(Number) || [];
+            
+            const jobNums = jobNumsOrig.map(n => n > 1000 ? n / 100000 : n);
+            
+            if (rangeNums.length > 0 && jobNums.length > 0) {
+                const maxJob = Math.max(...jobNums);
+                const minJob = Math.min(...jobNums);
+                
+                if (selectedRange.includes('<')) {
+                    salaryMatch = minJob < rangeNums[0];
+                } else if (selectedRange.includes('>')) {
+                    salaryMatch = maxJob > rangeNums[0];
+                } else if (rangeNums.length >= 2) {
+                    const [minR, maxR] = rangeNums;
+                    salaryMatch = jobNums.some(n => n >= minR && n <= maxR) || 
+                                 (minJob >= minR && minJob <= maxR) ||
+                                 (maxJob >= minR && maxJob <= maxR);
+                }
+            }
+        }
+        if (!salaryMatch) return false;
+    }
+
+    return true;
+  });
+
+  const internalJobs = filteredInternal.map(job => ({
+    _id: job._id,
+    title: job.title,
+    company: job.companyName || job.recruiterId?.companyName || 'Organization',
+    location: job.location,
+    type: job.jobType,
+    salary: job.salaryRange || 'Not specified',
+    link: `/hyrego/${job._id}`,
+    snippet: job.description?.slice(0, 200) + '...',
+    source: 'Hyrego',
+    logo: job.companyLogo || job.recruiterId?.logo,
+    isInternal: true
+  }));
+
+  // 2. Fetch External Jobs
   const externalJobs = await externalJobService.searchExternalJobs(role, location, type, salaryRange, experience);
+
+  // Combine and prioritize internal jobs
+  const combinedJobs = [...internalJobs, ...externalJobs];
 
   res.status(200).json({
     status: 'success',
-    results: externalJobs.length,
-    jobs: externalJobs
+    results: combinedJobs.length,
+    jobs: combinedJobs
   });
 });
 

@@ -128,7 +128,7 @@ const SpecialJobs = () => {
     const fetchSpecialJobs = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get('/jobs?isSpecial=true');
+            const res = await axios.get('/jobs?isSpecial=true&limit=1000');
             if (res.data.status === 'success') setJobs(res.data.data.jobs);
         } catch (err) {
             console.error('Failed to fetch special jobs', err);
@@ -146,30 +146,71 @@ const SpecialJobs = () => {
         }
     }, [jobIdFromUrl, navigate]);
 
-    const filteredJobs = jobs.filter(job => {
-        const searchMode = searchTerm.toLowerCase();
-        const matchesSearch = !searchTerm ||
-            job.title?.toLowerCase().includes(searchMode) ||
-            (job.companyName || job.recruiterId?.companyName || '').toLowerCase().includes(searchMode) ||
-            (job.location || '').toLowerCase().includes(searchMode);
-
-        const matchesType = type === 'any' ||
-            job.jobType?.toLowerCase() === type.toLowerCase() ||
-            (type === 'fulltime' && job.jobType?.toLowerCase().includes('full'));
-
-        const matchesSalary = salaryRange === 'any' || job.salaryRange === salaryRange;
-        const matchesExperience = experience === 'any' || job.experience === experience;
-
-        return matchesSearch && matchesType && matchesSalary && matchesExperience;
-    });
-
     // Normalize job shape
     const normalise = (job) => ({
         ...job,
         company: job.companyName || job.recruiterId?.companyName || 'Organization',
         logo: job.companyLogo || job.recruiterId?.logo,
         salary: job.salaryRange,
+        experience: job.experienceRange || job.experience,
         isInternal: true
+    });
+
+    const filteredJobs = jobs.filter(rawJob => {
+        const job = normalise(rawJob);
+        const searchMode = searchTerm.toLowerCase();
+        
+        const matchesSearch = !searchTerm ||
+            job.title?.toLowerCase().includes(searchMode) ||
+            (job.company || '').toLowerCase().includes(searchMode) ||
+            (job.location || '').toLowerCase().includes(searchMode);
+
+        const standardize = (s) => (s || '').toLowerCase().replace(/[\s-]/g, '');
+
+        const jobTypeStd = standardize(job.jobType);
+        const selectedTypeStd = standardize(type);
+        const matchesType = type === 'any' || 
+            jobTypeStd === selectedTypeStd ||
+            (selectedTypeStd === 'fulltime' && jobTypeStd.includes('full'));
+
+        const jobExpStd = standardize(job.experience).replace('level', '');
+        const selectedExpStd = standardize(experience).replace('level', '');
+        const matchesExperience = experience === 'any' || 
+            (jobExpStd !== '' && selectedExpStd !== '' && (jobExpStd.includes(selectedExpStd) || selectedExpStd.includes(jobExpStd)));
+
+        let matchesSalary = salaryRange === 'any';
+        if (!matchesSalary) {
+            const jobSalary = (job.salaryRange || '').toLowerCase();
+            const selectedRange = salaryRange.toLowerCase();
+            
+            if (jobSalary.includes(selectedRange.replace('₹', '').trim().replace(/\s/g, ''))) {
+                matchesSalary = true;
+            } else {
+                const jobNumsOrig = jobSalary.match(/\d+(\.\d+)?/g)?.map(Number) || [];
+                const rangeNums = selectedRange.match(/\d+(\.\d+)?/g)?.map(Number) || [];
+                
+                // Convert absolute numbers roughly over 1000 to Lakhs for apples-to-apples comparison
+                const jobNums = jobNumsOrig.map(n => n > 1000 ? n / 100000 : n);
+                
+                if (rangeNums.length > 0 && jobNums.length > 0) {
+                    const maxJob = Math.max(...jobNums);
+                    const minJob = Math.min(...jobNums);
+                    
+                    if (selectedRange.includes('<')) {
+                        matchesSalary = minJob < rangeNums[0];
+                    } else if (selectedRange.includes('>')) {
+                        matchesSalary = maxJob > rangeNums[0];
+                    } else if (rangeNums.length >= 2) {
+                        const [minR, maxR] = rangeNums;
+                        matchesSalary = jobNums.some(n => n >= minR && n <= maxR) || 
+                                       (minJob >= minR && minJob <= maxR) ||
+                                       (maxJob >= minR && maxJob <= maxR);
+                    }
+                }
+            }
+        }
+
+        return matchesSearch && matchesType && matchesSalary && matchesExperience;
     });
 
     const handleJobClick = (job) => {
@@ -239,76 +280,31 @@ const SpecialJobs = () => {
 
                 <div className="flex overflow-x-auto no-scrollbar gap-2 md:gap-3 pb-1">
                     {/* Job Type */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
-                            className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${type !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
-                        >
-                            {type === 'any' ? 'Job Type' : <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>}
-                            <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                        </button>
-                        {openDropdown === 'type' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
-                                {['any', 'fulltime', 'contract', 'internship', 'parttime'].map((v) => (
-                                    <button
-                                        key={v}
-                                        onClick={() => { setType(v); setOpenDropdown(null); }}
-                                        className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 capitalize ${type === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                                    >
-                                        {v === 'any' ? 'Any Type' : v === 'fulltime' ? 'Full Time' : v}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <button
+                        onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
+                        className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${type !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
+                    >
+                        {type === 'any' ? 'Job Type' : type}
+                        <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    </button>
 
                     {/* Salary Range */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
-                            className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${salaryRange !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
-                        >
-                            {salaryRange === 'any' ? 'Salary Range' : salaryRange}
-                            <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                        </button>
-                        {openDropdown === 'salary' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-56 z-50 animate-in fade-in zoom-in-95 duration-100">
-                                {['any', '< ₹ 5L', '₹ 5L - 10L', '₹ 10L - 20L', '₹ 20L - 40L', '> ₹ 40L'].map((v) => (
-                                    <button
-                                        key={v}
-                                        onClick={() => { setSalaryRange(v); setOpenDropdown(null); }}
-                                        className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${salaryRange === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                                    >
-                                        {v === 'any' ? 'Any Salary' : v}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <button
+                        onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
+                        className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${salaryRange !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
+                    >
+                        {salaryRange === 'any' ? 'Salary Range' : salaryRange}
+                        <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    </button>
 
                     {/* Experience */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
-                            className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${experience !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
-                        >
-                            {experience === 'any' ? 'Experience' : experience}
-                            <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                        </button>
-                        {openDropdown === 'experience' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
-                                {['any', 'Entry Level', 'Junior', 'Mid-Level', 'Senior', 'Lead'].map((v) => (
-                                    <button
-                                        key={v}
-                                        onClick={() => { setExperience(v); setOpenDropdown(null); }}
-                                        className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${experience === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                                    >
-                                        {v === 'any' ? 'Any Experience' : v}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <button
+                        onClick={() => setOpenDropdown(openDropdown === 'experience' ? null : 'experience')}
+                        className={`flex items-center shrink-0 gap-1 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl border transition-all text-[11px] md:text-[13px] font-bold ${experience !== 'any' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}
+                    >
+                        {experience === 'any' ? 'Experience' : experience}
+                        <ArrowDownUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    </button>
 
                     {/* Clear All */}
                     {(type !== 'any' || salaryRange !== 'any' || experience !== 'any' || searchTerm) && (
@@ -324,6 +320,51 @@ const SpecialJobs = () => {
                             <X className="w-3 h-3" />
                             Clear Filters
                         </button>
+                    )}
+                </div>
+
+                {/* Dropdowns */}
+                <div className="relative">
+                    {openDropdown === 'type' && (
+                        <div className="absolute top-0 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
+                            {['any', 'Full Time', 'Contract', 'Internship', 'Parttime'].map((v) => (
+                                <button
+                                    key={v}
+                                    onClick={() => { setType(v); setOpenDropdown(null); }}
+                                    className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 capitalize ${type === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                >
+                                    {v === 'any' ? 'Any Type' : v}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {openDropdown === 'salary' && (
+                        <div className="absolute top-0 left-32 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-56 z-50 animate-in fade-in zoom-in-95 duration-100">
+                            {['any', '< ₹ 5L', '₹ 5L - 10L', '₹ 10L - 20L', '₹ 20L - 40L', '> ₹ 40L'].map((v) => (
+                                <button
+                                    key={v}
+                                    onClick={() => { setSalaryRange(v); setOpenDropdown(null); }}
+                                    className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${salaryRange === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                >
+                                    {v === 'any' ? 'Any Salary' : v}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {openDropdown === 'experience' && (
+                        <div className="absolute top-0 left-64 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
+                            {['any', 'Entry Level', 'Junior', 'Mid-Level', 'Senior', 'Lead'].map((v) => (
+                                <button
+                                    key={v}
+                                    onClick={() => { setExperience(v); setOpenDropdown(null); }}
+                                    className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 ${experience === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                                >
+                                    {v === 'any' ? 'Any Experience' : v}
+                                </button>
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>

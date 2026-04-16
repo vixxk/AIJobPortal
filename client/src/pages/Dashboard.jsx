@@ -297,7 +297,7 @@ const Dashboard = () => {
                     const jobsRes = await axios.get('/jobs/search', {
                         params: { role: roleQuery }
                     });
-                    const fetchedJobs = jobsRes.data.jobs?.slice(0, 3) || [];
+                    const fetchedJobs = (jobsRes.data.jobs || []).filter(job => !job.isInternal).slice(0, 3);
                     setRecentJobs(fetchedJobs);
                     if (fetchedJobs.length > 0) {
                         sessionStorage.setItem(cacheKey, JSON.stringify(fetchedJobs));

@@ -4,8 +4,9 @@ import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import {
     MapPin, Briefcase, IndianRupee, Clock, Calendar, Globe, Monitor,
-    ArrowLeft, Menu, Share2, ExternalLink, CheckCircle, ChevronRight,
-    Building2, BookOpen, Users, AlertCircle, Lock, Sparkles, Timer, Play
+    ArrowLeft, Share2, ExternalLink, CheckCircle, ChevronRight,
+    Building2, BookOpen, Users, AlertCircle, Lock, Sparkles, Timer, Play,
+    Linkedin, Twitter, MessageCircle, Copy
 } from 'lucide-react';
 
 const HyregoJobDetail = () => {
@@ -19,6 +20,7 @@ const HyregoJobDetail = () => {
     const [isApplying, setIsApplying] = useState(false);
     const [applied, setApplied] = useState(false);
     const [applyError, setApplyError] = useState(null);
+    const [shareOpen, setShareOpen] = useState(false);
 
     useEffect(() => {
         const fetchJob = async () => {
@@ -168,15 +170,62 @@ const HyregoJobDetail = () => {
                 )}
 
                 {/* Floating action buttons on banner */}
-                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-8 md:right-8 flex items-center justify-end z-20">
-                    <div className="flex items-center gap-2">
+                <div className="absolute top-4 left-4 right-4 md:top-6 md:left-8 md:right-8 flex items-center justify-end z-30">
+                    <div className="flex items-center gap-2 relative">
                         <button
-                            onClick={handleCopyLink}
-                            className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/10 shadow-lg"
-                            title={copied ? 'Copied!' : 'Share'}
+                            onClick={() => setShareOpen(!shareOpen)}
+                            className={`w-10 h-10 md:w-11 md:h-11 rounded-full backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/10 shadow-lg ${shareOpen ? 'bg-blue-600 scale-110' : 'bg-white/20 hover:bg-white/40'}`}
+                            title="Share Job"
                         >
                             <Share2 className="w-5 h-5" />
                         </button>
+
+                        {shareOpen && (
+                            <div className="absolute top-full mt-3 right-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-100 p-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-2">Share via</p>
+                                <div className="space-y-1">
+                                    <button 
+                                        onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out this job: ' + window.location.href)}`, '_blank')}
+                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:bg-green-50 hover:text-green-600 transition-all font-bold text-xs"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-white">
+                                            <MessageCircle className="w-4 h-4" />
+                                        </div>
+                                        WhatsApp
+                                    </button>
+                                    <button 
+                                        onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-xs"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                                            <Linkedin className="w-4 h-4" />
+                                        </div>
+                                        LinkedIn
+                                    </button>
+                                    <button 
+                                        onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all font-bold text-xs"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center text-white">
+                                            <Twitter className="w-4 h-4" />
+                                        </div>
+                                        X / Twitter
+                                    </button>
+                                    <div className="pt-1 mt-1 border-t border-slate-100">
+                                        <button 
+                                            onClick={() => { handleCopyLink(); setShareOpen(false); }}
+                                            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-all font-bold text-xs"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600">
+                                                <Copy className="w-4 h-4" />
+                                            </div>
+                                            {copied ? 'Copied!' : 'Copy Link'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {!user && (
                             <Link
                                 to={`/login?redirect=/hyrego/${id}`}
@@ -479,15 +528,50 @@ const HyregoJobDetail = () => {
                             </div>
 
                             {/* Share Card */}
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border border-blue-100 p-6 text-center">
-                                <p className="text-sm font-bold text-slate-700 mb-3">Know someone perfect for this role?</p>
-                                <button
-                                    onClick={handleCopyLink}
-                                    className="w-full py-3 bg-white border border-blue-200 text-blue-600 rounded-2xl font-bold text-sm hover:bg-blue-50 transition-all flex items-center justify-center gap-2 shadow-sm"
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                    {copied ? 'Link Copied!' : 'Share this Job'}
-                                </button>
+                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border border-blue-100 p-6">
+                                <p className="text-sm font-black text-slate-800 mb-4 text-center">Know someone perfect for this role?</p>
+                                <div className="grid grid-cols-4 gap-2">
+                                    <button 
+                                        onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out this job: ' + window.location.href)}`, '_blank')}
+                                        className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                                        title="Share on WhatsApp"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white shadow-lg shadow-green-100">
+                                            <MessageCircle className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500">WhatsApp</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                                        className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                                        title="Share on LinkedIn"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-100">
+                                            <Linkedin className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500">LinkedIn</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`, '_blank')}
+                                        className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                                        title="Share on X"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white shadow-lg shadow-slate-200">
+                                            <Twitter className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500">X / Twitter</span>
+                                    </button>
+                                    <button 
+                                        onClick={handleCopyLink}
+                                        className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                                        title="Copy Link"
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-lg ${copied ? 'bg-blue-600 text-white shadow-blue-100' : 'bg-white text-slate-600 shadow-slate-100 border border-slate-100'}`}>
+                                            <Copy className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500">{copied ? 'Copied!' : 'Copy Link'}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

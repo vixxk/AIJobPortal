@@ -34,8 +34,16 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
             console.error('Failed to toggle save job', err);
         }
     };
+    const handleClick = () => {
+        if (job.isInternal) {
+            window.open(`/hyrego/${job._id || job.id}`, '_blank');
+        } else {
+            onClick(job);
+        }
+    };
+
     return (
-        <div onClick={() => onClick(job)} className="bg-white rounded-[16px] md:rounded-[24px] p-3.5 md:p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-lg hover:border-blue-100 transition-all relative">
+        <div onClick={handleClick} className="bg-white rounded-[16px] md:rounded-[24px] p-3.5 md:p-5 border border-slate-100 shadow-sm cursor-pointer hover:shadow-lg hover:border-blue-100 transition-all relative">
             <div className="flex justify-between items-start">
                 <div className="flex gap-3 md:gap-4">
                     <div className="w-[42px] h-[42px] md:w-[52px] md:h-[52px] rounded-xl md:rounded-2xl border border-slate-100 flex items-center justify-center bg-white shadow-sm shrink-0 overflow-hidden relative">
@@ -50,6 +58,12 @@ const JobCard = ({ job, onClick, initiallySaved, onToggleSave }) => {
                     <div className="max-w-[200px] md:max-w-xs pt-0 md:pt-0.5">
                         <h4 className="font-bold text-slate-900 tracking-tight text-[15px] md:text-[16px] leading-tight mb-1 truncate">{job.title}</h4>
                         <p className="text-[12px] md:text-[13px] font-semibold text-slate-500 leading-none truncate">{job.company}</p>
+                        {job.isInternal && (
+                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 border border-blue-100 rounded text-[9px] font-bold text-blue-600 mt-1">
+                                <Sparkles className="w-2 h-2 fill-blue-600" />
+                                HYREGO EXCLUSIVE
+                            </span>
+                        )}
                     </div>
                 </div>
                 <button onClick={handleSave} className={`${saved ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-blue-500 hover:bg-blue-50'} p-1 md:p-1.5 rounded-lg -mt-1 md:mt-0 z-10 transition-colors`}>
@@ -243,14 +257,14 @@ const AiJobSearch = () => {
                         onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${type !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                     >
-                        {type === 'any' ? 'Job Type' : <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>}
+                        {type === 'any' ? 'Job Type' : type}
                         <ArrowDownUp className="w-3 h-3" />
                     </button>
                     <button
                         onClick={() => setOpenDropdown(openDropdown === 'salary' ? null : 'salary')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 transition-all text-[12px] font-bold ${salaryRange !== 'any' ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                     >
-                        {salaryRange === 'any' ? 'Salary' : salaryRange}
+                        {salaryRange === 'any' ? 'Salary Range' : salaryRange}
                         <ArrowDownUp className="w-3 h-3" />
                     </button>
                     <button
@@ -266,13 +280,13 @@ const AiJobSearch = () => {
                 <div className="relative">
                     {openDropdown === 'type' && (
                         <div className="absolute top-0 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-44 z-30 animate-in fade-in slide-in-from-top-2 duration-200 mt-1">
-                            {['any', 'fulltime', 'contract', 'internship', 'parttime'].map((v) => (
+                            {['any', 'Full Time', 'Contract', 'Internship', 'Parttime'].map((v) => (
                                 <button
                                     key={v}
                                     onClick={() => { setType(v); setOpenDropdown(null); }}
                                     className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 capitalize ${type === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
                                 >
-                                    {v === 'any' ? 'Any Type' : v === 'fulltime' ? 'Full Time' : v}
+                                    {v === 'any' ? 'Any Type' : v}
                                 </button>
                             ))}
                         </div>
@@ -356,18 +370,18 @@ const AiJobSearch = () => {
                                 onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition-all text-sm font-semibold ${type !== 'any' ? 'bg-white text-blue-700 border-white shadow-md' : 'bg-white/10 text-white border-white/20 hover:bg-white/20'}`}
                             >
-                                {type === 'any' ? 'Job Type' : <span className="capitalize">{type === 'fulltime' ? 'Full Time' : type}</span>}
+                                {type === 'any' ? 'Job Type' : type}
                                 <ArrowDownUp className={`w-3.5 h-3.5 transition-transform ${openDropdown === 'type' ? 'rotate-180' : ''}`} />
                             </button>
                             {openDropdown === 'type' && (
                                 <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-xl border border-slate-100 py-2 w-48 z-50 animate-in fade-in zoom-in-95 duration-100">
-                                    {['any', 'fulltime', 'contract', 'internship', 'parttime'].map((v) => (
+                                    {['any', 'Full Time', 'Contract', 'Internship', 'Parttime'].map((v) => (
                                         <button
                                             key={v}
                                             onClick={() => { setType(v); setOpenDropdown(null); }}
                                             className={`w-full text-left px-4 py-2 text-sm font-semibold hover:bg-slate-50 capitalize ${type === v ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
                                         >
-                                            {v === 'any' ? 'Any Type' : v === 'fulltime' ? 'Full Time' : v}
+                                            {v === 'any' ? 'Any Type' : v}
                                         </button>
                                     ))}
                                 </div>
