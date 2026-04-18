@@ -439,7 +439,17 @@ const StudentProfile = () => {
                     </>
                 )}
             </div>
-            <button onClick={() => saveProfile({ companyName: profile.companyName, website: profile.website })} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
+            <button onClick={() => {
+                let payload = {};
+                if (user?.role === 'RECRUITER') {
+                    payload = { companyName: profile.companyName, website: profile.website };
+                } else if (user?.role === 'COLLEGE_ADMIN') {
+                    payload = { collegeName: profile.collegeName, location: profile.location };
+                } else {
+                    payload = { firstName: profile.firstName, middleName: profile.middleName, lastName: profile.lastName, currentPosition: profile.currentPosition };
+                }
+                saveProfile(payload);
+            }} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
         </div>
     );
     const renderContact = () => (
@@ -705,10 +715,14 @@ const StudentProfile = () => {
                     <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                         <div className="flex-1">
                             <p className="font-semibold mb-4">Upload CV/Resume</p>
-                            <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-3xl p-6 bg-slate-50 relative">
-                                <input type="file" accept=".pdf,.doc,.docx" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={async e => {
+                            <div className={`flex flex-col items-center justify-center border-2 border-dashed ${saving ? 'border-blue-400 bg-blue-50/50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'} rounded-3xl p-6 transition-all relative`}>
+                                <input type="file" accept=".pdf,.doc,.docx" className="absolute inset-0 opacity-0 cursor-pointer z-10" disabled={saving} onChange={async e => {
                                     const file = e.target.files[0];
                                     if (file) {
+                                        if (file.size > 5 * 1024 * 1024) {
+                                            toast.error('File size should not exceed 5MB');
+                                            return;
+                                        }
                                         const fm = new FormData();
                                         fm.append('resume', file);
                                         setSaving(true);
@@ -719,12 +733,23 @@ const StudentProfile = () => {
                                             const { data } = await axios.patch(endpoint, fm);
                                             if (data.success || data.status === 'success') {
                                                 setProfile({ ...profile, resumeUrl: data.data.resumeUrl });
+                                                toast.success('Resume uploaded successfully!');
+                                            } else {
+                                                toast.error(data.message || 'Failed to upload resume.');
                                             }
-                                        } finally { setSaving(false); }
+                                        } catch (error) {
+                                            toast.error('An error occurred while uploading. Please try again.');
+                                        } finally { 
+                                            setSaving(false); 
+                                            e.target.value = ''; 
+                                        }
                                     }
                                 }} />
-                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4"><UploadCloud className="w-6 h-6 text-blue-600" /></div>
-                                <span className="font-bold text-slate-700">Browse File</span>
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                                    {saving ? <Loader2 className="w-6 h-6 text-blue-600 animate-spin" /> : <UploadCloud className="w-6 h-6 text-blue-600" />}
+                                </div>
+                                <span className="font-bold text-slate-700">{saving ? 'Uploading...' : 'Browse File'}</span>
+                                {!saving && <span className="text-xs text-slate-400 mt-1">PDF, DOC, DOCX up to 5MB</span>}
                             </div>
                             {profile.resumeUrl && (
                                 <div className="mt-3 flex items-center justify-between p-3 bg-red-50 rounded-2xl border border-red-100 overflow-hidden">
