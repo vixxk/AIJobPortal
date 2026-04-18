@@ -6,7 +6,7 @@ import {
     MapPin, Briefcase, IndianRupee, Clock, Calendar, Globe, Monitor,
     ArrowLeft, Share2, ExternalLink, CheckCircle, ChevronRight,
     Building2, BookOpen, Users, AlertCircle, Lock, Sparkles, Timer, Play,
-    Linkedin, Twitter, MessageCircle, Copy
+    Linkedin, Twitter, MessageCircle, Copy, UploadCloud, Loader2
 } from 'lucide-react';
 
 const HyregoJobDetail = () => {
@@ -21,6 +21,8 @@ const HyregoJobDetail = () => {
     const [applied, setApplied] = useState(false);
     const [applyError, setApplyError] = useState(null);
     const [shareOpen, setShareOpen] = useState(false);
+    const [showResumeUpload, setShowResumeUpload] = useState(false);
+    const [isUploadingResume, setIsUploadingResume] = useState(false);
 
     useEffect(() => {
         const fetchJob = async () => {
@@ -84,9 +86,16 @@ const HyregoJobDetail = () => {
         }
         setIsApplying(true);
         setApplyError(null);
+        setShowResumeUpload(false);
         try {
             const profileRes = await axios.get('/student/me');
             const resumeUrl = profileRes.data?.data?.profile?.resumeUrl;
+            if (!resumeUrl) {
+                setApplyError('Please provide a resume for your application.');
+                setShowResumeUpload(true);
+                setIsApplying(false);
+                return;
+            }
             const res = await axios.post('/applications', { jobId: job._id, resume: resumeUrl });
             if (res.data.status === 'success') {
                 setApplied(true);
@@ -95,6 +104,32 @@ const HyregoJobDetail = () => {
             setApplyError(err.response?.data?.message || 'Failed to apply. Please complete your profile first.');
         } finally {
             setIsApplying(false);
+        }
+    };
+
+    const handleQuickResumeUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+             setApplyError('File size should not exceed 5MB');
+             return;
+        }
+        setIsUploadingResume(true);
+        setApplyError(null);
+        try {
+            const fm = new FormData();
+            fm.append('resume', file);
+            const { data } = await axios.patch('/student/profile/resume', fm);
+            if (data.status === 'success' || data.success) {
+                 setApplyError(null);
+                 setShowResumeUpload(false);
+                 handleApplyInternal();
+            }
+        } catch(error) {
+             setApplyError('Failed to upload resume. Please try again.');
+        } finally {
+             setIsUploadingResume(false);
+             e.target.value = '';
         }
     };
 
@@ -448,6 +483,21 @@ const HyregoJobDetail = () => {
                                         </div>
                                     )}
 
+                                    {showResumeUpload && (
+                                        <div className="mb-4">
+                                            <div className="relative border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all hover:bg-blue-50">
+                                                <input type="file" accept=".pdf,.doc,.docx" disabled={isUploadingResume} onChange={handleQuickResumeUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                                                {isUploadingResume ? (
+                                                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
+                                                ) : (
+                                                    <UploadCloud className="w-8 h-8 text-blue-500 mb-2" />
+                                                )}
+                                                <p className="text-sm font-bold text-slate-700">{isUploadingResume ? 'Uploading...' : 'Quick Upload Resume'}</p>
+                                                {!isUploadingResume && <p className="text-xs text-slate-500 mt-1">PDF, DOC, DOCX up to 5MB</p>}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {applied ? (
                                         <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl mb-4">
                                             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
@@ -584,6 +634,14 @@ const HyregoJobDetail = () => {
                     <div className="flex items-center justify-center gap-2 py-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700 font-bold text-sm">
                         <CheckCircle className="w-4 h-4" /> Already Applied
                     </div>
+                ) : showResumeUpload ? (
+                     <div className="relative border-2 border-dashed border-blue-200 bg-blue-50/90 rounded-2xl p-3 flex flex-col items-center justify-center text-center transition-all">
+                        <input type="file" accept=".pdf,.doc,.docx" disabled={isUploadingResume} onChange={handleQuickResumeUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                        <div className="flex items-center gap-2">
+                           {isUploadingResume ? <Loader2 className="w-5 h-5 text-blue-600 animate-spin" /> : <UploadCloud className="w-5 h-5 text-blue-500" />}
+                           <p className="text-sm font-bold text-slate-700">{isUploadingResume ? 'Uploading...' : 'Tap to Upload Quick Resume'}</p>
+                        </div>
+                     </div>
                 ) : job.applyHidden ? (
                     <Link
                         to={`/login?redirect=/hyrego/${id}`}

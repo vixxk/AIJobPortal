@@ -372,7 +372,43 @@ const AiResumeBuilder = () => {
         skills: [{ category: '', items: '' }]
     });
 
-    useEffect(() => { fetchInitialData(); }, []);
+    useEffect(() => { 
+        let hasSavedProgress = false;
+        const savedDataStr = localStorage.getItem('hyrego_resume_progress');
+        if (savedDataStr) {
+            try {
+                const saved = JSON.parse(savedDataStr);
+                if (saved.resumeData) {
+                    setResumeData(saved.resumeData);
+                    hasSavedProgress = true;
+                }
+                if (saved.selectedTemplate) setSelectedTemplate(saved.selectedTemplate);
+                if (saved.fontSizeOffset !== undefined) setFontSizeOffset(saved.fontSizeOffset);
+                if (saved.fontFamily) setFontFamily(saved.fontFamily);
+            } catch (e) {
+                console.error("Failed to parse resume progress", e);
+            }
+        }
+        
+        if (!hasSavedProgress) {
+            fetchInitialData(); 
+        } else {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        // Save progress whenever these states change, unless it's still loading
+        if (!loading) {
+            const saveData = {
+                resumeData,
+                selectedTemplate,
+                fontSizeOffset,
+                fontFamily
+            };
+            localStorage.setItem('hyrego_resume_progress', JSON.stringify(saveData));
+        }
+    }, [resumeData, selectedTemplate, fontSizeOffset, fontFamily, loading]);
 
     const fetchInitialData = async () => {
         try {
