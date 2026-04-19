@@ -164,6 +164,11 @@ const AdminCourses = () => {
                                                 Rejected
                                             </span>
                                         )}
+                                        {course.priceChangeRequest?.status === 'PENDING' && (
+                                            <span className="px-3 py-1 bg-violet-500/90 backdrop-blur-md rounded-full text-[10px] font-black text-white tracking-widest uppercase">
+                                                Price Change Req
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="absolute top-4 right-4 flex gap-2">
                                         {course.approvalStatus === 'PENDING' && (

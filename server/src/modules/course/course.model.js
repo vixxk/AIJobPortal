@@ -35,6 +35,10 @@ const courseSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  priceChangeRequest: {
+    requestedPrice: { type: Number },
+    status: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED'] }
+  },
   category: {
     type: String,
     default: 'Skill'
@@ -64,6 +68,10 @@ const courseSchema = new mongoose.Schema({
     type: String,
     enum: ['PENDING', 'APPROVED', 'REJECTED'],
     default: 'PENDING'
+  },
+  createdByAdmin: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,

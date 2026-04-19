@@ -810,7 +810,41 @@ const CourseManagement = () => {
                                         </div>
                                         <EditableField label="Language" value={course.language} onSave={v => saveField('language', v)} />
                                         <EditableField label="Total Duration (hours)" value={String(course.duration || 0)} type="number" onSave={v => saveField('duration', Number(v))} />
-                                        <EditableField label="Price (₹)" value={String(course.price || 0)} type="number" onSave={v => saveField('price', Number(v))} />
+                                        <div className="space-y-3 pt-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Price (₹)</label>
+                                                {course.priceChangeRequest?.status === 'PENDING' && (
+                                                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[9px] font-bold uppercase tracking-widest">
+                                                        Pending Request: ₹{course.priceChangeRequest.requestedPrice}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <EditableField 
+                                                label="Price (₹)" 
+                                                value={String(course.price || 0)} 
+                                                type="number" 
+                                                onSave={v => saveField('price', Number(v))} 
+                                            />
+                                            {user?.role === 'TEACHER' && (
+                                                <p className="text-[10px] text-slate-400 italic">Changing the price will send a request to the admin for approval.</p>
+                                            )}
+                                            {(user?.role === 'SUPER_ADMIN' || user?.role === 'COLLEGE_ADMIN') && course.priceChangeRequest?.status === 'PENDING' && (
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <button 
+                                                        onClick={() => saveField('approvePriceChange', true)} 
+                                                        className="flex-1 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-xs font-black uppercase hover:bg-emerald-500 hover:text-white transition-all"
+                                                    >
+                                                        Approve ₹{course.priceChangeRequest.requestedPrice}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => saveField('approvePriceChange', false)} 
+                                                        className="flex-1 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-black uppercase hover:bg-rose-500 hover:text-white transition-all"
+                                                    >
+                                                        Reject Request
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-3 text-sm">
@@ -1118,7 +1152,41 @@ const CourseManagement = () => {
                             </div>
                             <EditableField label="Language" value={course.language} onSave={v => saveField('language', v)} />
                             <EditableField label="Total Duration (hours)" value={String(course.duration || 0)} type="number" onSave={v => saveField('duration', Number(v))} />
-                            <EditableField label="Price (₹)" value={String(course.price || 0)} type="number" onSave={v => saveField('price', Number(v))} />
+                            <div className="space-y-3 pt-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Price (₹)</label>
+                                    {course.priceChangeRequest?.status === 'PENDING' && (
+                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[9px] font-bold uppercase tracking-widest">
+                                            Pending Request: ₹{course.priceChangeRequest.requestedPrice}
+                                        </span>
+                                    )}
+                                </div>
+                                <EditableField 
+                                    label="Price (₹)" 
+                                    value={String(course.price || 0)} 
+                                    type="number" 
+                                    onSave={v => saveField('price', Number(v))} 
+                                />
+                                {user?.role === 'TEACHER' && (
+                                    <p className="text-[10px] text-slate-400 italic">Changing the price will send a request to the admin for approval.</p>
+                                )}
+                                {(user?.role === 'SUPER_ADMIN' || user?.role === 'COLLEGE_ADMIN') && course.priceChangeRequest?.status === 'PENDING' && (
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <button 
+                                            onClick={() => saveField('approvePriceChange', true)} 
+                                            className="flex-1 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-xs font-black uppercase hover:bg-emerald-500 hover:text-white transition-all"
+                                        >
+                                            Approve ₹{course.priceChangeRequest.requestedPrice}
+                                        </button>
+                                        <button 
+                                            onClick={() => saveField('approvePriceChange', false)} 
+                                            className="flex-1 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-black uppercase hover:bg-rose-500 hover:text-white transition-all"
+                                        >
+                                            Reject Request
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Cover Image */}

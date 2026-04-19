@@ -15,8 +15,10 @@ exports.createCourse = catchAsync(async (req, res, next) => {
   const courseData = { ...req.body };
   if (['SUPER_ADMIN', 'COLLEGE_ADMIN'].includes(req.user.role)) {
     courseData.approvalStatus = 'APPROVED';
+    courseData.createdByAdmin = true;
   } else {
     courseData.approvalStatus = 'PENDING';
+    courseData.createdByAdmin = false;
   }
   if (req.file) {
     const result = await uploadFile(req.file, 'courses/covers', false, 'avatars');
@@ -58,9 +60,33 @@ exports.updateCourse = catchAsync(async (req, res, next) => {
 
   const updateData = { ...req.body };
 
-  // If a teacher edits the course (including price), it requires admin approval
+  // If a teacher edits the course (including price), it requires admin approval unless the course was made by an admin
   if (isTeacher && !isAdmin) {
-    updateData.approvalStatus = 'PENDING';
+    if ('price' in updateData) {
+      updateData.priceChangeRequest = {
+        requestedPrice: updateData.price,
+        status: 'PENDING'
+      };
+      delete updateData.price;
+    } else if (!course.createdByAdmin) {
+      updateData.approvalStatus = 'PENDING';
+    }
+  }
+
+  // If admin is approving/rejecting a price change request
+  if (isAdmin && 'approvePriceChange' in updateData) {
+    if (updateData.approvePriceChange === true && course.priceChangeRequest?.status === 'PENDING') {
+      updateData.price = course.priceChangeRequest.requestedPrice;
+      updateData.priceChangeRequest = { requestedPrice: course.priceChangeRequest.requestedPrice, status: 'APPROVED' };
+    } else if (updateData.approvePriceChange === false && course.priceChangeRequest?.status === 'PENDING') {
+      updateData.priceChangeRequest = { requestedPrice: course.priceChangeRequest.requestedPrice, status: 'REJECTED' };
+    }
+    delete updateData.approvePriceChange;
+  }
+
+  // Clear pending request if admin updates price directly
+  if (isAdmin && 'price' in updateData && !('approvePriceChange' in req.body)) {
+      updateData.priceChangeRequest = { requestedPrice: updateData.price, status: 'APPROVED' };
   }
 
   // Parse JSON fields
