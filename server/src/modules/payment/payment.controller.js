@@ -54,11 +54,11 @@ exports.createOrder = catchAsync(async (req, res, next) => {
           customer_id: user._id.toString(),
           customer_email: user.email,
           customer_phone: user.phone || '9999999999', // Fallback if phone not available
-          customer_name: user.name
+          customer_name: user.name || 'Student'
         },
         order_meta: {
-          return_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/course/${courseId}/payment-verify?order_id={order_id}`,
-          notify_url: `${process.env.BACKEND_URL}/api/v1/payment/webhook`
+          return_url: `${req.headers.origin || process.env.CLIENT_URL || 'http://localhost:5173'}/app/learning/course/${courseId}/payment-verify?order_id={order_id}`,
+          notify_url: `${(process.env.BACKEND_URL || 'https://app.hyrego.com').replace(/\/$/, '')}/api/v1/payment/webhook`
         }
       },
       {
