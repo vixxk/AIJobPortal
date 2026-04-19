@@ -8,7 +8,12 @@ const Notification = require('../notification/notification.model');
 const CASHFREE_CLIENT_ID = process.env.CASHFREE_CLIENT_ID;
 const CASHFREE_CLIENT_SECRET = process.env.CASHFREE_CLIENT_SECRET;
 const CASHFREE_API_VERSION = '2025-01-01';
-const CASHFREE_BASE_URL = process.env.NODE_ENV === 'production' 
+
+const isProdEnvironment = process.env.CASHFREE_ENVIRONMENT === 'production' || 
+                          (CASHFREE_CLIENT_SECRET && CASHFREE_CLIENT_SECRET.includes('prod')) ||
+                          process.env.NODE_ENV === 'production';
+
+const CASHFREE_BASE_URL = isProdEnvironment 
   ? 'https://api.cashfree.com/pg/orders' 
   : 'https://sandbox.cashfree.com/pg/orders';
 
@@ -79,7 +84,8 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      data: response.data
+      data: response.data,
+      environment: isProdEnvironment ? 'production' : 'sandbox'
     });
 
   } catch (err) {

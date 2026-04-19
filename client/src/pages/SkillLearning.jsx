@@ -664,7 +664,7 @@ const CourseDetailPage = () => {
 
             // Cashfree logic
             const cashfree = new window.Cashfree({
-                mode: import.meta.env.MODE === 'production' ? 'production' : 'sandbox'
+                mode: res.data.environment || (import.meta.env.MODE === 'production' ? 'production' : 'sandbox')
             });
 
             const checkoutOptions = {
