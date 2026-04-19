@@ -607,13 +607,15 @@ const CourseDetailPage = () => {
             setCompletedLectures(completed);
 
             let fetchedTests = [];
-            try {
-                const testsRes = await axios.get(`/courses/${id}/tests`);
-                fetchedTests = testsRes.data.data.tests || [];
-                setTests(fetchedTests);
-                setTestResults(testsRes.data.data.testResults || []);
-            } catch (e) {
-                // Ignore if 403 (unenrolled)
+            if (res.data.data.isEnrolled) {
+                try {
+                    const testsRes = await axios.get(`/courses/${id}/tests`);
+                    fetchedTests = testsRes.data.data.tests || [];
+                    setTests(fetchedTests);
+                    setTestResults(testsRes.data.data.testResults || []);
+                } catch (e) {
+                    console.error('Failed to load tests:', e);
+                }
             }
 
             const allLectures = res.data.data.course.lectures || [];
