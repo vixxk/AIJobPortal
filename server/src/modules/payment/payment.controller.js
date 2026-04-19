@@ -7,7 +7,7 @@ const Notification = require('../notification/notification.model');
 
 const CASHFREE_CLIENT_ID = process.env.CASHFREE_CLIENT_ID;
 const CASHFREE_CLIENT_SECRET = process.env.CASHFREE_CLIENT_SECRET;
-const CASHFREE_API_VERSION = '2025-01-01';
+const CASHFREE_API_VERSION = '2023-08-01'; // Use a known stable Cashfree API version
 
 const isProdEnvironment = process.env.CASHFREE_ENVIRONMENT === 'production' || 
                           (CASHFREE_CLIENT_SECRET && CASHFREE_CLIENT_SECRET.includes('prod')) ||
@@ -90,7 +90,11 @@ exports.createOrder = catchAsync(async (req, res, next) => {
 
   } catch (err) {
     console.error('Cashfree Create Order Error:', err.response?.data || err.message);
-    return next(new AppError(err.response?.data?.message || 'Error creating payment order', 500));
+    const cfErrorMsg = err.response?.data?.message || err.response?.data || err.message;
+    return res.status(500).json({
+      status: 'error',
+      message: `Cashfree Error: ${typeof cfErrorMsg === 'object' ? JSON.stringify(cfErrorMsg) : cfErrorMsg}`
+    });
   }
 });
 
