@@ -17,77 +17,75 @@ const CASHFREE_BASE_URL = isProdEnvironment
   ? 'https://api.cashfree.com/pg/orders' 
   : 'https://sandbox.cashfree.com/pg/orders';
 
-exports.createOrder = catchAsync(async (req, res, next) => {
-  const { courseId } = req.body;
-  const user = req.user;
-
-  const course = await Course.findById(courseId);
-  if (!course) {
-    return next(new AppError('No course found with that ID', 404));
-  }
-
-  // Check if course is free
-  if (course.price === 0) {
-    // If free, just enroll the student
-    await Course.findByIdAndUpdate(courseId, { 
-      $addToSet: { enrolledStudents: user._id } 
-    });
-    
-    return res.status(200).json({
-      status: 'success',
-      message: 'Successfully enrolled in free course',
-      isFree: true
-    });
-  }
-
-  // Check if already enrolled
-  const isAlreadyEnrolled = course.enrolledStudents?.some(
-    s => (s?._id || s)?.toString() === user._id.toString()
-  );
-  if (isAlreadyEnrolled) {
-    return res.status(200).json({
-      status: 'success',
-      message: 'You are already enrolled in this course',
-      isFree: true  // Reuse the same flow to refresh the page
-    });
-  }
-
-  // Create internal order record
-  const orderId = `order_${Date.now()}_${user._id.toString().slice(-4)}`;
-  
-  // Determine the return URL - use origin header (set by browser) or fall back to CLIENT_URL
-  const clientOrigin = req.headers.origin || process.env.CLIENT_URL || 'https://user.hyrego.com';
-  const returnUrl = `${clientOrigin.replace(/\/$/, '')}/app/learning/course/${courseId}/payment-verify?order_id={order_id}`;
-  const notifyUrl = `${(process.env.BACKEND_URL || 'https://app.hyrego.com').replace(/\/$/, '')}/api/v1/payment/webhook`;
-
-  const orderPayload = {
-    order_id: orderId,
-    order_amount: Number(course.price),
-    order_currency: 'INR',
-    customer_details: {
-      customer_id: user._id.toString(),
-      customer_email: user.email,
-      customer_phone: user.phone || '9999999999',
-      customer_name: user.name || 'Student'
-    },
-    order_meta: {
-      return_url: returnUrl,
-      notify_url: notifyUrl
-    }
-  };
-
-  console.log('[Payment] Creating Cashfree order:', JSON.stringify({
-    orderId,
-    amount: orderPayload.order_amount,
-    env: isProdEnvironment ? 'production' : 'sandbox',
-    baseUrl: CASHFREE_BASE_URL,
-    returnUrl,
-    notifyUrl,
-    clientId: CASHFREE_CLIENT_ID ? `${CASHFREE_CLIENT_ID.slice(0, 6)}...` : 'MISSING',
-    secretSet: !!CASHFREE_CLIENT_SECRET
-  }));
-
+exports.createOrder = async (req, res) => {
   try {
+    const { courseId } = req.body;
+    const user = req.user;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ status: 'error', message: 'No course found with that ID' });
+    }
+
+    // Check if course is free
+    if (course.price === 0) {
+      await Course.findByIdAndUpdate(courseId, { 
+        $addToSet: { enrolledStudents: user._id } 
+      });
+      return res.status(200).json({
+        status: 'success',
+        message: 'Successfully enrolled in free course',
+        isFree: true
+      });
+    }
+
+    // Check if already enrolled
+    const isAlreadyEnrolled = course.enrolledStudents?.some(
+      s => (s?._id || s)?.toString() === user._id.toString()
+    );
+    if (isAlreadyEnrolled) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'You are already enrolled in this course',
+        isFree: true
+      });
+    }
+
+    // Create internal order record
+    const orderId = `order_${Date.now()}_${user._id.toString().slice(-4)}`;
+    
+    // Determine the return URL
+    const clientOrigin = req.headers.origin || process.env.CLIENT_URL || 'https://user.hyrego.com';
+    const returnUrl = `${clientOrigin.replace(/\/$/, '')}/app/learning/course/${courseId}/payment-verify?order_id={order_id}`;
+    const notifyUrl = `${(process.env.BACKEND_URL || 'https://app.hyrego.com').replace(/\/$/, '')}/api/v1/payment/webhook`;
+
+    const orderPayload = {
+      order_id: orderId,
+      order_amount: Number(course.price),
+      order_currency: 'INR',
+      customer_details: {
+        customer_id: user._id.toString(),
+        customer_email: user.email,
+        customer_phone: user.phone || '9999999999',
+        customer_name: user.name || 'Student'
+      },
+      order_meta: {
+        return_url: returnUrl,
+        notify_url: notifyUrl
+      }
+    };
+
+    console.log('[Payment] Creating Cashfree order:', JSON.stringify({
+      orderId,
+      amount: orderPayload.order_amount,
+      env: isProdEnvironment ? 'production' : 'sandbox',
+      baseUrl: CASHFREE_BASE_URL,
+      returnUrl,
+      notifyUrl,
+      clientId: CASHFREE_CLIENT_ID ? `${CASHFREE_CLIENT_ID.slice(0, 6)}...` : 'MISSING',
+      secretSet: !!CASHFREE_CLIENT_SECRET
+    }));
+
     const response = await axios.post(
       CASHFREE_BASE_URL,
       orderPayload,
@@ -119,14 +117,14 @@ exports.createOrder = catchAsync(async (req, res, next) => {
     });
 
   } catch (err) {
-    console.error('Cashfree Create Order Error:', JSON.stringify(err.response?.data || err.message));
+    console.error('Cashfree Create Order Error:', err.response?.data || err.message);
     const cfErrorMsg = err.response?.data?.message || err.response?.data || err.message;
     return res.status(500).json({
       status: 'error',
-      message: `Cashfree Error: ${typeof cfErrorMsg === 'object' ? JSON.stringify(cfErrorMsg) : cfErrorMsg}`
+      message: `Payment Error: ${typeof cfErrorMsg === 'object' ? JSON.stringify(cfErrorMsg) : cfErrorMsg}`
     });
   }
-});
+};
 
 exports.verifyPayment = catchAsync(async (req, res, next) => {
   const { orderId } = req.params;
