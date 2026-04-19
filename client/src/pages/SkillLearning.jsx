@@ -665,7 +665,7 @@ const CourseDetailPage = () => {
             }
 
             // Cashfree logic
-            const cashfree = new window.Cashfree({
+            const cashfree = window.Cashfree({
                 mode: res.data.environment || (import.meta.env.MODE === 'production' ? 'production' : 'sandbox')
             });
 
