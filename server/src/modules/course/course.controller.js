@@ -58,6 +58,11 @@ exports.updateCourse = catchAsync(async (req, res, next) => {
 
   const updateData = { ...req.body };
 
+  // If a teacher edits the course (including price), it requires admin approval
+  if (isTeacher && !isAdmin) {
+    updateData.approvalStatus = 'PENDING';
+  }
+
   // Parse JSON fields
   if (typeof updateData.tags === 'string') {
     try { updateData.tags = JSON.parse(updateData.tags); } catch { delete updateData.tags; }

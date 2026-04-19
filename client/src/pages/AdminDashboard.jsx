@@ -10,6 +10,7 @@ import {
     MapPin, IndianRupee, Calendar, ChevronRight, ArrowUpRight, Ban, Plus
 } from 'lucide-react';
 import clsx from 'clsx';
+import AdminPayments from './admin/AdminPayments';
 
 const ROLE_CONFIG = {
     STUDENT: { label: 'Student', color: 'blue', gradient: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50', text: 'text-blue-600' },
@@ -134,6 +135,16 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleApproveCourse = async (id) => {
+        if (!confirm('Approve this course to be published?')) return;
+        try {
+            await axios.patch(`/admin/courses/${id}`, { approvalStatus: 'APPROVED' });
+            fetchTabData('courses');
+        } catch (err) {
+            alert('Failed to approve course');
+        }
+    };
+
     const handleCreateTeacher = async (e) => {
         e.preventDefault();
         try {
@@ -204,6 +215,10 @@ const AdminDashboard = () => {
                     <SidebarItem id="courses" label="ACADEMY CONTENT" icon={BookOpen} activeTab={activeTab} onClick={handleTabChange} />
                     <SidebarItem id="applications" label="APPLICATIONS" icon={FileText} activeTab={activeTab} onClick={handleTabChange} />
                     <SidebarItem id="competitions" label="COMPETITIONS" icon={Globe} activeTab={activeTab} onClick={handleTabChange} />
+
+                    <div className="h-px bg-slate-100 my-4 mx-2" />
+                    <div className="px-5 mb-2"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Finance</span></div>
+                    <SidebarItem id="payments" label="PAYMENTS & ORDERS" icon={IndianRupee} activeTab={activeTab} onClick={handleTabChange} />
                 </div>
 
                 <div className="mt-auto pt-10">
@@ -505,13 +520,23 @@ const AdminDashboard = () => {
                                                     {course.category || 'Skill'}
                                                 </div>
                                                 <div className="absolute top-6 right-6 flex gap-2">
+                                                    {course.approvalStatus === 'PENDING' && (
+                                                        <button onClick={() => handleApproveCourse(course._id)} className="px-3 py-1 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-xl hover:bg-emerald-700 transition-all">
+                                                            Approve
+                                                        </button>
+                                                    )}
                                                     <button onClick={() => handleDeleteEntity('course', course._id)} className="p-2.5 bg-rose-600 text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all shadow-xl">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </div>
                                             <div className="p-8">
-                                                <h4 className="font-black text-slate-900 text-lg mb-4 line-clamp-1">{course.title}</h4>
+                                                <div className="flex items-start justify-between gap-4 mb-4">
+                                                    <h4 className="font-black text-slate-900 text-lg line-clamp-1">{course.title}</h4>
+                                                    <span className="shrink-0 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-xl text-[11px] font-black tracking-widest">
+                                                        {course.price > 0 ? `₹${course.price}` : 'FREE'}
+                                                    </span>
+                                                </div>
                                                 <div className="flex items-center justify-between mb-6">
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center font-black text-indigo-600 text-[10px]">
@@ -620,6 +645,10 @@ const AdminDashboard = () => {
                                     </div>
                                 ))}
                             </div>
+                        )}
+
+                        {activeTab === 'payments' && (
+                            <AdminPayments />
                         )}
                     </div>
                 </main>
