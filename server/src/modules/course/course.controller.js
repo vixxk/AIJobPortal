@@ -448,11 +448,13 @@ exports.uploadLectureVideo = async (req, res, next) => {
     const fileSize = req.file.size;
 
     // Set up Server-Sent Events for progress streaming
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    });
+    // Use setHeader + flushHeaders instead of writeHead to preserve CORS headers
+    // set by the cors middleware (writeHead replaces all headers)
+    res.status(200);
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
 
     const sendProgress = (phase, percent, message) => {
       try { res.write(`data: ${JSON.stringify({ phase, percent, message })}\n\n`); } catch (e) { /* connection closed */ }
