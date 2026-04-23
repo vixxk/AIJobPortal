@@ -324,7 +324,7 @@ const StudentProfile = () => {
         }
     };
     const renderBasicEdit = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
             <div className="flex flex-col items-center mb-6">
                 {user?.role === 'RECRUITER' && (
                     <p className="text-[11px] font-semibold text-slate-400 text-center mb-2">Company Logo</p>
@@ -375,7 +375,7 @@ const StudentProfile = () => {
                     </label>
                 </div>
             </div>
-            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
+            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 {user?.role === 'RECRUITER' ? (
                     <>
                         <Input label="Company Name" value={profile.companyName} onChange={e => handleUpdateField('companyName', e.target.value)} />
@@ -453,8 +453,8 @@ const StudentProfile = () => {
         </div>
     );
     const renderContact = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
-            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
+        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 <Input label="Address" value={profile.address} onChange={e => handleUpdateField('address', e.target.value)} icon={<Globe className="w-4 h-4" />} />
                 <Input label="Phone Number" value={profile.phoneNumber || user?.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
                 <Input label="Email" value={user?.email} disabled={true} icon={<Mail className="w-4 h-4" />} />
@@ -463,8 +463,8 @@ const StudentProfile = () => {
         </div>
     );
     const renderSummary = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
-            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
+        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 <Textarea 
                     label={user?.role === 'RECRUITER' ? "Company Description" : user?.role === 'COLLEGE_ADMIN' ? "About College" : "Summary (Max. 500 characters)"} 
                     maxLength={500} 
@@ -477,8 +477,8 @@ const StudentProfile = () => {
         </div>
     );
     const renderSalary = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
-            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
+        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 <Input label="Minimum" type="number" value={profile.expectedSalary?.minimum} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, minimum: e.target.value })} />
                 <Input label="Maximum" type="number" value={profile.expectedSalary?.maximum} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, maximum: e.target.value })} />
                 <Select label="Currency" options={['INR', 'USD', 'EUR', 'GBP']} value={profile.expectedSalary?.currency || 'INR'} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, currency: e.target.value })} />
@@ -491,7 +491,7 @@ const StudentProfile = () => {
         const list = profile[listName] || [];
         if (editIndex === -1) {
             return (
-                <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                     <div className="flex justify-end mb-4">
                         <button className="flex items-center gap-2 text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-xl text-sm transition-all hover:bg-blue-100" onClick={() => { setLocalItem({}); setEditIndex(list.length); }}><Plus className="w-4 h-4" /> Add New</button>
                     </div>
@@ -508,7 +508,7 @@ const StudentProfile = () => {
             );
         }
         return (
-            <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+            <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                 <div className="flex-1 mt-1 overflow-y-auto hide-scrollbar pr-2 space-y-2 pb-4">
                     {renderFormFields()}
                 </div>
@@ -663,7 +663,7 @@ const StudentProfile = () => {
                 ));
             case 'STATUS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                         <div className="flex-1 space-y-4">
                             {['Actively looking for jobs', 'Passively looking for jobs', 'Not looking for jobs'].map(status => (
                                 <label key={status} className="flex gap-4 p-4 border rounded-2xl cursor-pointer">
@@ -684,7 +684,7 @@ const StudentProfile = () => {
                 );
             case 'SKILLS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                         <div className="flex-1">
                             <Input placeholder="Type here and press Enter" value={localItem.title || ''} onChange={e => handleUpdateItem('title', e.target.value)} onKeyDown={(e) => {
                                 if (e.key === 'Enter' && e.target.value) {
@@ -712,7 +712,7 @@ const StudentProfile = () => {
                 );
             case 'RESUME':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
                         <div className="flex-1">
                             <p className="font-semibold mb-4">Upload CV/Resume</p>
                             <div className={`flex flex-col items-center justify-center border-2 border-dashed ${saving ? 'border-blue-400 bg-blue-50/50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'} rounded-3xl p-6 transition-all relative`}>
@@ -775,8 +775,8 @@ const StudentProfile = () => {
                 );
             case 'SETTINGS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
-                        <div className="flex-1 space-y-4 pt-1 overflow-y-auto hide-scrollbar pr-2 pb-16">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                        <div className="flex-1 space-y-4 pt-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                             {user?.role !== 'RECRUITER' && (
                                 <>
                                     <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-4 text-white shadow-lg flex items-center gap-4">
@@ -833,8 +833,8 @@ const StudentProfile = () => {
                 );
             case 'NOTIFICATIONS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-8 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
-                        <div className="flex-1 space-y-2 overflow-y-auto hide-scrollbar pr-2 pb-16">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                        <div className="flex-1 space-y-2 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                             <Toggle 
                                 label="Platform Notifications" 
                                 description="Get real-time updates within the app dashboard." 
@@ -1310,7 +1310,7 @@ const StudentProfile = () => {
                                 </button>
                             )}
                         </div>
-                        <div className="flex-1 relative">
+                        <div className="flex-1 overflow-hidden min-h-0">
                             {renderActiveForm()}
                         </div>
                     </div>

@@ -29,6 +29,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
             { name: 'Dashboard', path: '/app/dashboard', icon: Home, exact: true },
             { name: 'Global Job Search', path: '/app/jobs', icon: Briefcase },
             { name: 'Hyrego Jobs', path: '/app/hyrego-jobs', icon: Rocket },
+            { name: 'My Applications', path: '/app/applications', icon: ClipboardList },
             { name: 'Saved Jobs', path: '/app/saved', icon: Bookmark },
             { name: 'Competitions', path: '/app/competitions', icon: Trophy },
             { name: 'Skill Learning', path: '/app/learning', icon: BookOpen },
