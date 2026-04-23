@@ -6,6 +6,7 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const externalJobService = require('./job.service.external');
 const Course = require('../course/course.model');
+const redisClient = require('../../config/redis');
 exports.createJob = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
   const profile = await RecruiterProfile.findOne({ userId });
@@ -282,6 +283,21 @@ exports.getPublicJob = catchAsync(async (req, res, next) => {
 exports.searchJobs = catchAsync(async (req, res, next) => {
   const { role, location, type, salaryRange, experience } = req.query;
 
+  const cacheKey = `jobs:search:${(role || '').toLowerCase()}|${(location || '').toLowerCase()}|${type || ''}|${salaryRange || ''}|${experience || ''}`.replace(/\s+/g, '-');
+
+  try {
+    if (redisClient.isOpen) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        const parsedData = JSON.parse(cached);
+        console.log(`📦 REDIS CACHE HIT - searchJobs: ${cacheKey}`);
+        return res.status(200).json(parsedData);
+      }
+    }
+  } catch (err) {
+    console.error('Redis cache get error in searchJobs:', err);
+  }
+
   const internalJobsRaw = await Job.find({ status: 'APPROVED', isSpecial: { $ne: true } }).populate('recruiterId', 'companyName logo').lean();
   
   // Apply filtering in JavaScript for better flexibility (similar to externalJobService)
@@ -371,11 +387,21 @@ exports.searchJobs = catchAsync(async (req, res, next) => {
   // Combine and prioritize internal jobs
   const combinedJobs = [...internalJobs, ...externalJobs];
 
-  res.status(200).json({
+  const responseData = {
     status: 'success',
     results: combinedJobs.length,
     jobs: combinedJobs
-  });
+  };
+
+  try {
+    if (redisClient.isOpen) {
+      await redisClient.setEx(cacheKey, 15 * 60, JSON.stringify(responseData)); // 15 mins cache
+    }
+  } catch (err) {
+    console.error('Redis cache set error in searchJobs:', err);
+  }
+
+  res.status(200).json(responseData);
 });
 
 exports.getSavedJobs = catchAsync(async (req, res, next) => {

@@ -11,8 +11,8 @@ const CAREERJET_KEY = process.env.CAREERJET_API_KEY;
 const MUSE_KEY = process.env.MUSE_API_KEY;
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
-const cache = new Map();
-const CACHE_TTL_MS = 15 * 60 * 1000;
+const redisClient = require('../../config/redis');
+const CACHE_TTL_SECONDS = 15 * 60; // 15 minutes
 
 function getCacheKey(role, location, type, salaryRange, experience) {
     return `${(role || '').toLowerCase()}|${(location || '').toLowerCase()}|${(type || '')}|${(salaryRange || '')}|${(experience || '')}`;
@@ -169,14 +169,21 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
         searchRole = trending[Math.floor(Date.now() / (1000 * 60 * 60)) % trending.length]; // Rotate every hour
     }
 
-    const cacheKey = getCacheKey(role, location, type, salaryRange, experience);
-    const cached = cache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-        if (cached.jobs && cached.jobs.length > 0) {
-            console.log(`  📦 CACHE HIT — "${role}" → ${cached.jobs.length} jobs`);
-            return cached.jobs;
+    const cacheKey = `jobs:external:${getCacheKey(role, location, type, salaryRange, experience).replace(/\s+/g, '-')}`;
+    
+    try {
+        if (redisClient.isOpen) {
+            const cached = await redisClient.get(cacheKey);
+            if (cached) {
+                const parsedCache = JSON.parse(cached);
+                if (parsedCache.jobs && parsedCache.jobs.length > 0) {
+                    console.log(`  📦 REDIS CACHE HIT — "${role}" → ${parsedCache.jobs.length} jobs`);
+                    return parsedCache.jobs;
+                }
+            }
         }
+    } catch (err) {
+        console.error('Redis cache get error', err);
     }
 
     const isRemote = !location || location.toLowerCase() === 'remote';
@@ -467,6 +474,12 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
         allJobs = allJobs.filter(j => matchesExperience(j, experience));
     }
 
-    cache.set(cacheKey, { jobs: allJobs, timestamp: Date.now() });
+    try {
+        if (redisClient.isOpen) {
+            await redisClient.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify({ jobs: allJobs, timestamp: Date.now() }));
+        }
+    } catch (err) {
+        console.error('Redis cache set error', err);
+    }
     return allJobs;
 };
