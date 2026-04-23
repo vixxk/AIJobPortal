@@ -13,6 +13,7 @@ const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
 const redisClient = require('../../config/redis');
 const CACHE_TTL_SECONDS = 15 * 60; // 15 minutes
+const fallbackCache = new Map();
 
 function getCacheKey(role, location, type, salaryRange, experience) {
     return `${(role || '').toLowerCase()}|${(location || '').toLowerCase()}|${(type || '')}|${(salaryRange || '')}|${(experience || '')}`;
@@ -171,19 +172,24 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
 
     const cacheKey = `jobs:external:${getCacheKey(role, location, type, salaryRange, experience).replace(/\s+/g, '-')}`;
     
+    let parsedJobs = null;
     try {
-        if (redisClient.isOpen) {
+        if (redisClient.isReady) {
             const cached = await redisClient.get(cacheKey);
-            if (cached) {
-                const parsedCache = JSON.parse(cached);
-                if (parsedCache.jobs && parsedCache.jobs.length > 0) {
-                    console.log(`  📦 REDIS CACHE HIT — "${role}" → ${parsedCache.jobs.length} jobs`);
-                    return parsedCache.jobs;
-                }
+            if (cached) parsedJobs = JSON.parse(cached).jobs;
+        } else {
+            const cached = fallbackCache.get(cacheKey);
+            if (cached && Date.now() - cached.timestamp < CACHE_TTL_SECONDS * 1000) {
+                parsedJobs = cached.jobs;
             }
         }
     } catch (err) {
-        console.error('Redis cache get error', err);
+        console.error('Cache get error', err);
+    }
+
+    if (parsedJobs && parsedJobs.length > 0) {
+        console.log(`  📦 CACHE HIT — "${role}" → ${parsedJobs.length} jobs`);
+        return parsedJobs;
     }
 
     const isRemote = !location || location.toLowerCase() === 'remote';
@@ -475,11 +481,13 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
     }
 
     try {
-        if (redisClient.isOpen) {
+        if (redisClient.isReady) {
             await redisClient.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify({ jobs: allJobs, timestamp: Date.now() }));
+        } else {
+            fallbackCache.set(cacheKey, { jobs: allJobs, timestamp: Date.now() });
         }
     } catch (err) {
-        console.error('Redis cache set error', err);
+        console.error('Cache set error', err);
     }
     return allJobs;
 };

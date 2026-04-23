@@ -7,6 +7,9 @@ const catchAsync = require('../../utils/catchAsync');
 const externalJobService = require('./job.service.external');
 const Course = require('../course/course.model');
 const redisClient = require('../../config/redis');
+
+// Fallback in-memory cache if Redis is down
+const fallbackCache = new Map();
 exports.createJob = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
   const profile = await RecruiterProfile.findOne({ userId });
@@ -153,6 +156,30 @@ exports.getRecruiterStats = catchAsync(async (req, res, next) => {
   });
 });
 exports.getAllJobs = catchAsync(async (req, res, next) => {
+  const queryStr = JSON.stringify(req.query);
+  const userKey = req.user ? `${req.user.role}:${req.user.role === 'STUDENT' ? req.user._id : 'all'}` : 'guest';
+  const cacheKey = `jobs:internal:${queryStr}:${userKey}`.replace(/\s+/g, '-');
+
+  let parsedData = null;
+  try {
+    if (redisClient.isReady) {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) parsedData = JSON.parse(cached);
+    } else {
+      const cached = fallbackCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) { // 5 min TTL
+        parsedData = cached.data;
+      }
+    }
+  } catch (err) {
+    console.error('Cache get error in getAllJobs:', err);
+  }
+
+  if (parsedData) {
+    console.log(`📦 CACHE HIT - getAllJobs: ${cacheKey}`);
+    return res.status(200).json(parsedData);
+  }
+
   const queryObj = { ...req.query };
   const excludedFields = ['page', 'sort', 'limit', 'fields'];
   excludedFields.forEach(el => delete queryObj[el]);
@@ -212,7 +239,8 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
   query = query.skip(skip).limit(limit).lean();
   const jobs = await query;
   const total = await Job.countDocuments(queryObj);
-  res.status(200).json({
+  
+  const responseData = {
     status: 'success',
     results: jobs.length,
     pagination: {
@@ -223,7 +251,19 @@ exports.getAllJobs = catchAsync(async (req, res, next) => {
     data: {
       jobs
     }
-  });
+  };
+
+  try {
+    if (redisClient.isReady) {
+      await redisClient.setEx(cacheKey, 5 * 60, JSON.stringify(responseData)); // 5 mins cache
+    } else {
+      fallbackCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    }
+  } catch (err) {
+    console.error('Cache set error in getAllJobs:', err);
+  }
+
+  res.status(200).json(responseData);
 });
 exports.getJob = catchAsync(async (req, res, next) => {
   const job = await Job.findById(req.params.id).populate('recruiterId', 'name email').lean();
@@ -285,17 +325,24 @@ exports.searchJobs = catchAsync(async (req, res, next) => {
 
   const cacheKey = `jobs:search:${(role || '').toLowerCase()}|${(location || '').toLowerCase()}|${type || ''}|${salaryRange || ''}|${experience || ''}`.replace(/\s+/g, '-');
 
+  let parsedData = null;
   try {
-    if (redisClient.isOpen) {
+    if (redisClient.isReady) {
       const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        const parsedData = JSON.parse(cached);
-        console.log(`📦 REDIS CACHE HIT - searchJobs: ${cacheKey}`);
-        return res.status(200).json(parsedData);
+      if (cached) parsedData = JSON.parse(cached);
+    } else {
+      const cached = fallbackCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < 15 * 60 * 1000) {
+        parsedData = cached.data;
       }
     }
   } catch (err) {
-    console.error('Redis cache get error in searchJobs:', err);
+    console.error('Cache get error in searchJobs:', err);
+  }
+
+  if (parsedData) {
+    console.log(`📦 CACHE HIT - searchJobs: ${cacheKey}`);
+    return res.status(200).json(parsedData);
   }
 
   const internalJobsRaw = await Job.find({ status: 'APPROVED', isSpecial: { $ne: true } }).populate('recruiterId', 'companyName logo').lean();
@@ -394,11 +441,13 @@ exports.searchJobs = catchAsync(async (req, res, next) => {
   };
 
   try {
-    if (redisClient.isOpen) {
+    if (redisClient.isReady) {
       await redisClient.setEx(cacheKey, 15 * 60, JSON.stringify(responseData)); // 15 mins cache
+    } else {
+      fallbackCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
     }
   } catch (err) {
-    console.error('Redis cache set error in searchJobs:', err);
+    console.error('Cache set error in searchJobs:', err);
   }
 
   res.status(200).json(responseData);
