@@ -133,6 +133,7 @@ const AiJobSearch = () => {
         }, 80);
     }, []);
     const handleSearch = useCallback(async (e, isInitial = false) => {
+        const isManualSubmit = !!e;
         if (e) e.preventDefault();
         setLoading(true);
         setError(null);
@@ -156,7 +157,7 @@ const AiJobSearch = () => {
             setJobs(fetched.slice(0, PAGE_SIZE));
             setTotalCount(res.data.totalCount || fetched.length);
             setTotalPages(Math.ceil((res.data.totalCount || fetched.length) / PAGE_SIZE));
-            if (!isInitial && fetched.length > 0) {
+            if (isManualSubmit && fetched.length > 0) {
                 scrollToResults();
             }
         } catch (err) {
@@ -186,11 +187,19 @@ const AiJobSearch = () => {
         fetchInitialData();
     }, []); // Run only once on mount
 
+    const isFirstRender = useRef(true);
     useEffect(() => {
-        if (hasSearched) {
-            handleSearch();
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
         }
-    }, [type, salaryRange, experience, handleSearch]);
+        
+        const timer = setTimeout(() => {
+            handleSearch(null, false);
+        }, 500);
+        
+        return () => clearTimeout(timer);
+    }, [role, location, type, salaryRange, experience, handleSearch]);
     const goToPage = (page) => {
         const p = Math.max(1, Math.min(page, totalPages));
         setCurrentPage(p);

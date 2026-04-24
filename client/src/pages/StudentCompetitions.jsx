@@ -66,27 +66,30 @@ const CompCard = ({ comp, registered, onRegister, onUnregister, onClick, isProce
     return (
         <div 
             onClick={onClick}
-            className="group relative bg-white rounded-3xl border border-slate-100 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_-6px_rgba(59,130,246,0.15)] hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 flex flex-col lg:flex-col overflow-hidden cursor-pointer"
+            className="group relative bg-white rounded-3xl border border-slate-100 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_-6px_rgba(59,130,246,0.15)] hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden cursor-pointer"
         >
-            {/* Banner Section */}
-            <div className="h-40 md:h-48 lg:h-32 bg-slate-100 relative overflow-hidden shrink-0">
+            {/* Banner Section — fixed 16:9 aspect ratio across all breakpoints */}
+            <div className="w-full aspect-video bg-slate-100 relative overflow-hidden shrink-0">
                 {comp.bannerImage ? (
                     <img 
                         src={getImageUrl(comp.bannerImage)} 
                         alt={comp.title} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center opacity-80" />
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                        <span className="text-5xl opacity-30 select-none">{typeIcon}</span>
+                    </div>
                 )}
                 
-                {/* Overlay Icon */}
-                <div className="absolute top-4 left-4 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-xl shadow-lg shadow-black/5">
+                {/* Overlay Type Icon */}
+                <div className="absolute top-3 left-3 w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-lg shadow-lg shadow-black/5">
                     {typeIcon}
                 </div>
 
-                <div className="absolute top-4 right-4 md:top-auto md:bottom-4 md:left-4 md:right-auto lg:top-4 lg:right-4 lg:bottom-auto lg:left-auto">
-                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border backdrop-blur-md uppercase tracking-wider ${status.bg.replace('bg-', 'bg-')}/40 ${status.border} ${status.color.replace('text-', 'text-white')} border-white/20`}>
+                {/* Status Badge — always top-right */}
+                <div className="absolute top-3 right-3">
+                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border backdrop-blur-md uppercase tracking-wider ${status.bg}/40 ${status.border} ${status.color.replace('text-', 'text-white')} border-white/20`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
                         {status.label}
                     </span>

@@ -131,39 +131,46 @@ const StudentCompetitionDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6">
                 {/* Left Column: Main Content */}
                 <div className="lg:col-span-2 space-y-8">
-                    {/* Banner & Title */}
+                    {/* Banner & Title — 16:9 aspect ratio, matching admin & card */}
                     <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
-                        <div className="h-48 md:h-64 bg-slate-900 relative">
+                        <div className="w-full aspect-video bg-slate-900 relative">
                             {comp.bannerImage ? (
-                                <img src={getImageUrl(comp.bannerImage)} alt={comp.title} className="w-full h-full object-cover" />
+                                <a href={getImageUrl(comp.bannerImage)} target="_blank" rel="noopener noreferrer" className="block w-full h-full z-0 relative">
+                                    <img src={getImageUrl(comp.bannerImage)} alt={comp.title} className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" />
+                                </a>
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center opacity-90">
+                                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center opacity-90 z-0 relative">
                                     <Trophy className="w-24 h-24 text-white/20" />
                                 </div>
                             )}
-                            <div className="absolute bottom-6 left-6 right-6">
-                                <div className="flex flex-wrap gap-2 mb-3">
+
+                            {/* Bottom gradient veil for text legibility */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
+
+                            {/* Title + badges — anchored to bottom-left safe area */}
+                            <div className="absolute bottom-5 left-5 right-14">
+                                <div className="flex flex-wrap gap-2 mb-2">
                                     {comp.category && (
                                         <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest">
                                             {comp.category}
                                         </span>
                                     )}
-                                    <span className={`px-3 py-1 rounded-full backdrop-blur-md border ${status.bg.replace('bg-', 'bg-')}/40 ${status.border} ${status.color.replace('text-', 'text-white')} text-[10px] font-bold uppercase tracking-widest bg-white/10`}>
+                                    <span className={`px-3 py-1 rounded-full backdrop-blur-md border ${status.bg}/40 ${status.border} ${status.color.replace('text-', 'text-white')} text-[10px] font-bold uppercase tracking-widest bg-white/10`}>
                                         {status.label}
                                     </span>
                                 </div>
-                                <h1 className="text-2xl md:text-3xl font-black text-white leading-tight">
+                                <h1 className="text-xl md:text-2xl font-black text-white leading-tight drop-shadow-sm">
                                     {comp.title}
                                 </h1>
                             </div>
 
-                            {/* Share Button on Cover */}
-                            <div className="absolute top-6 right-6">
+                            {/* Share Button — top-right */}
+                            <div className="absolute top-4 right-4">
                                 <button 
                                     onClick={handleShare}
-                                    className="p-3 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all shadow-lg shadow-black/10 group"
+                                    className="p-2.5 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all shadow-lg shadow-black/10 group"
                                 >
-                                    <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                    <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                 </button>
                             </div>
                         </div>

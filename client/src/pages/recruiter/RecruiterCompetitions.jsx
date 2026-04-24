@@ -221,20 +221,22 @@ const RecruiterCompetitions = () => {
                         <Skeleton className="h-11 w-48 rounded-2xl" />
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="bg-white rounded-[40px] border border-slate-100 shadow-sm flex flex-col lg:flex-row overflow-hidden">
-                            <Skeleton className="w-full lg:w-48 h-48 md:h-56 lg:h-auto shrink-0" />
-                            <div className="p-8 flex-1 space-y-6">
-                                <Skeleton className="h-6 w-3/4" />
-                                <Skeleton className="h-3 w-1/4" />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Skeleton className="h-4 w-full" />
-                                    <Skeleton className="h-4 w-full" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-6">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col overflow-hidden">
+                            <Skeleton className="w-full aspect-video shrink-0" />
+                            <div className="p-5 flex-1 space-y-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-5 w-3/4" />
+                                    <Skeleton className="h-3 w-1/4" />
                                 </div>
-                                <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Skeleton className="h-3 w-full" />
+                                    <Skeleton className="h-3 w-full" />
+                                </div>
+                                <div className="pt-4 border-t border-slate-50 flex justify-between items-center">
                                     <Skeleton className="h-6 w-12 rounded-lg" />
-                                    <Skeleton className="h-3 w-20" />
+                                    <Skeleton className="h-4 w-16" />
                                 </div>
                             </div>
                         </div>
@@ -274,28 +276,54 @@ const RecruiterCompetitions = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-                {competitions.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(comp => (
-                    <div key={comp._id} className="bg-white rounded-[40px] border border-slate-100 shadow-sm group overflow-hidden flex flex-col xl:flex-row">
-                        <div className="w-full xl:w-48 h-40 md:h-64 xl:h-auto bg-slate-100 relative shrink-0 cursor-pointer" onClick={() => handleEditCompetition(comp)}>
-                            {comp.bannerImage ? (
-                                <img src={getImageUrl(comp.bannerImage)} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-400">
-                                    <Globe className="w-12 h-12" />
-                                </div>
-                            )}
-                            <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-xs lg:text-sm font-black text-indigo-600 tracking-widest uppercase shadow-sm">
-                                {comp.category}
-                            </div>
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-6">
+                {competitions.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map(comp => {
+                    const now = new Date();
+                    const start = new Date(comp.startDate);
+                    const end = new Date(comp.endDate);
+                    let temporalStatus = 'UPCOMING';
+                    if (now >= start && now <= end) temporalStatus = 'ONGOING';
+                    else if (now > end) temporalStatus = 'ENDED';
 
-                        <div className="p-6 lg:p-8 flex-1 flex flex-col font-jakarta min-w-0">
-                            <div className="flex items-start justify-between mb-3 gap-2">
-                                <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handleEditCompetition(comp)}>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-black text-slate-900 text-sm lg:text-xl tracking-tight leading-tight group-hover:text-indigo-600 transition-colors uppercase truncate min-w-0">{comp.title}</h4>
-                                        <div className={`px-2 py-0.5 rounded-full text-xs font-black tracking-widest uppercase shrink-0 ${
+                    const TYPE_ICONS = { HACKATHON: '⚙️', QUIZ: '🧠', DESIGN: '🎨', CODING: '💻' };
+                    const typeIcon = TYPE_ICONS[comp.category?.toUpperCase()] || '🏆';
+                    
+                    const statusObj = temporalStatus === 'UPCOMING' ? { label: 'Upcoming', bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-white', dot: 'bg-amber-400' } :
+                                      temporalStatus === 'ONGOING' ? { label: 'Live', bg: 'bg-green-50', border: 'border-green-100', text: 'text-white', dot: 'bg-green-400 animate-pulse' } :
+                                      { label: 'Ended', bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-white', dot: 'bg-slate-300' };
+
+                    return (
+                        <div key={comp._id} className="group relative bg-white rounded-3xl border border-slate-100 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_-6px_rgba(59,130,246,0.15)] hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
+                            <div className="w-full aspect-video bg-slate-100 relative overflow-hidden shrink-0 cursor-pointer" onClick={() => handleEditCompetition(comp)}>
+                                {comp.bannerImage ? (
+                                    <img src={getImageUrl(comp.bannerImage)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={comp.title} />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                                        <span className="text-5xl opacity-30 select-none">{typeIcon}</span>
+                                    </div>
+                                )}
+                                
+                                <div className="absolute top-3 left-3 w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-lg shadow-lg shadow-black/5">
+                                    {typeIcon}
+                                </div>
+                                
+                                <div className="absolute top-3 right-3">
+                                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border backdrop-blur-md uppercase tracking-wider ${statusObj.bg}/40 ${statusObj.border} ${statusObj.text} border-white/20`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${statusObj.dot}`} />
+                                        {statusObj.label}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="p-5 flex-1 relative bg-white flex flex-col lg:flex-col lg:gap-0">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-indigo-50/0 group-hover:from-blue-50/50 group-hover:to-indigo-50/30 transition-all duration-300 pointer-events-none" />
+                                
+                                <div className="flex-1 min-w-0 relative">
+                                    <div className="flex items-start justify-between mb-2 gap-2">
+                                        <h3 className="font-extrabold text-slate-900 text-[16px] md:text-lg lg:text-[16px] leading-tight line-clamp-1 flex-1">
+                                            {comp.title}
+                                        </h3>
+                                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase shrink-0 ${
                                             comp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600' : 
                                             comp.status === 'PENDING' ? 'bg-amber-50 text-amber-600 animate-pulse' : 
                                             'bg-slate-50 text-slate-600'
@@ -303,59 +331,48 @@ const RecruiterCompetitions = () => {
                                             {comp.status || 'PENDING'}
                                         </div>
                                     </div>
-                                    <p className="text-slate-400 text-sm lg:text-xs font-black uppercase tracking-widest mt-1 truncate">{comp.organizer}</p>
+                                    
+                                    <p className="text-[13px] text-slate-500 font-medium leading-relaxed line-clamp-2 mb-4 md:mb-2 lg:mb-4">
+                                        {comp.description || 'No description provided.'}
+                                    </p>
+                                    
+                                    <div className="flex flex-wrap gap-2 mb-2 mt-auto">
+                                        <span className="flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600">
+                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                            {comp.startDate ? new Date(comp.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'Date TBD'}
+                                        </span>
+                                        {comp.mode && (
+                                            <span className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-[11px] font-semibold text-blue-600">
+                                                {comp.mode}
+                                            </span>
+                                        )}
+                                        <span className="flex items-center gap-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600">
+                                            <Users className="w-3.5 h-3.5 text-slate-400" />
+                                            {comp.participants?.length || 0}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex gap-2 shrink-0">
-                                    <button onClick={(e) => { e.stopPropagation(); handleEditCompetition(comp); }} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl transition-all hover:bg-indigo-100">
-                                        <Pencil className="w-3.5 h-3.5" />
+                                
+                                <div className="relative pt-4 border-t border-slate-50 lg:border-t lg:pt-4 lg:w-full shrink-0 flex items-center justify-between">
+                                    <div className="flex gap-1.5">
+                                        <button onClick={(e) => { e.stopPropagation(); handleEditCompetition(comp); }} className="p-2 bg-indigo-50 text-indigo-600 rounded-lg transition-all hover:bg-indigo-100">
+                                            <Pencil className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteCompetition(comp._id); }} className="p-2 bg-rose-50 text-rose-600 rounded-lg transition-all hover:bg-rose-100">
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => handleShowAnalytics(comp._id)}
+                                        className="text-[11px] font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest flex items-center gap-1"
+                                    >
+                                        MGMT <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteCompetition(comp._id); }} className="p-2.5 bg-rose-50 text-rose-600 rounded-xl transition-all hover:bg-rose-100">
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
                                 </div>
-                            </div>
-
-                            <p className="text-slate-500 text-xs lg:text-xs font-semibold leading-relaxed line-clamp-2 mb-6 group-hover:text-slate-600 transition-colors">
-                                {comp.description || 'No description provided.'}
-                            </p>
-
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="flex items-center gap-2 text-sm lg:text-xs font-bold text-slate-500 uppercase tracking-tight">
-                                    <Calendar className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-indigo-500" />
-                                    <span>Starts: {new Date(comp.startDate).toLocaleDateString()}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm lg:text-xs font-bold text-slate-500 uppercase tracking-tight">
-                                    <Layers className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-indigo-500" />
-                                    <span>{comp.rounds?.length || 0} Rounds</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm lg:text-xs font-bold text-slate-500 uppercase tracking-tight">
-                                    <Users className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-emerald-500" />
-                                    <span>{comp.participants?.length || 0} Registered</span>
-                                </div>
-                            </div>
-
-                            <div className="mt-auto flex items-center justify-between pt-4 lg:pt-6 border-t border-slate-50 gap-2">
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className={clsx(
-                                        "px-2 lg:px-3 py-1 rounded-lg text-xs lg:text-sm font-black uppercase tracking-widest",
-                                        new Date(comp.endDate) > new Date() ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"
-                                    )}>
-                                        {new Date(comp.endDate) > new Date() ? 'LIVE' : 'CLOSED'}
-                                    </span>
-                                    <span className="px-2 lg:px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs lg:text-sm font-black uppercase tracking-widest">
-                                        {comp.mode}
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={() => handleShowAnalytics(comp._id)}
-                                    className="text-sm lg:text-xs font-black text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-widest underline decoration-2 underline-offset-4 shrink-0"
-                                >
-                                    MANAGEMENT
-                                </button>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Creation Modal */}
@@ -455,21 +472,29 @@ const RecruiterCompetitions = () => {
                                             </div>
 
                                             <div className="space-y-3 lg:space-y-4">
-                                                <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest px-1">Event Poster</label>
-                                                <div className="flex items-center gap-4 lg:gap-6">
-                                                    <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-2xl lg:rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shrink-0 group">
-                                                        {form.preview ? (
-                                                            <img src={form.preview} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                                                        ) : (
-                                                            <Layers className="w-6 h-6 lg:w-8 lg:h-8 text-slate-300" />
-                                                        )}
-                                                    </div>
-                                                    <label className="flex-1 h-12 lg:h-14 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-xl lg:rounded-2xl flex items-center justify-center cursor-pointer hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all font-black text-indigo-600 text-xs lg:text-sm tracking-widest uppercase gap-2 group">
-                                                        <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
-                                                        Upload Media
-                                                        <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                                                    </label>
+                                                <div className="flex items-center justify-between px-1">
+                                                    <label className="text-xs lg:text-sm font-black text-slate-500 uppercase tracking-widest">Event Poster</label>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">16:9 · 1200×675px ideal</span>
                                                 </div>
+                                                <div className="w-full aspect-video rounded-2xl lg:rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden relative group">
+                                                    {form.preview ? (
+                                                        <img src={form.preview} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" alt="Banner preview" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-300">
+                                                            <Layers className="w-8 h-8 lg:w-10 lg:h-10" />
+                                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">No image uploaded</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-[12%] border border-dashed border-white/30 rounded-lg pointer-events-none" />
+                                                </div>
+                                                <label className="flex items-center justify-center gap-2 h-12 lg:h-14 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-xl lg:rounded-2xl cursor-pointer hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all font-black text-indigo-600 text-xs lg:text-sm tracking-widest uppercase group">
+                                                    <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+                                                    Upload Media (16:9)
+                                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                                </label>
+                                                <p className="text-[10px] text-slate-400 font-semibold text-center leading-snug">
+                                                    Recommended: 1200×675 px · Min: 800×450 px · Keep text &amp; CTA centred in the safe area
+                                                </p>
                                             </div>
                                         </div>
 
