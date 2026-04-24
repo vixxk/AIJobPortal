@@ -151,11 +151,11 @@ const StudentCompetitionDetail = () => {
                             <div className="absolute bottom-5 left-5 right-14">
                                 <div className="flex flex-wrap gap-2 mb-2">
                                     {comp.category && (
-                                        <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest">
+                                        <span className="px-3 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest shadow-sm">
                                             {comp.category}
                                         </span>
                                     )}
-                                    <span className={`px-3 py-1 rounded-full backdrop-blur-md border ${status.bg}/40 ${status.border} ${status.color.replace('text-', 'text-white')} text-[10px] font-bold uppercase tracking-widest bg-white/10`}>
+                                    <span className={`px-3 py-1 rounded-full border ${status.bg} ${status.border} ${status.color} text-[10px] font-bold uppercase tracking-widest shadow-sm`}>
                                         {status.label}
                                     </span>
                                 </div>
