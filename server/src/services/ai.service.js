@@ -259,16 +259,28 @@ const speakText = async (text, voice = 'en-US-AriaNeural') => {
 // ─── Interview: Generate Questions ───────────────────────────────────────────
 const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '', difficulty = 'medium') => {
     const isEasy = difficulty.toLowerCase() === 'easy';
+    
+    // Clean and maximize extracted resume text up to the safe upper limit (12,000 characters / ~2,000 words)
+    let cleanResume = '';
+    if (resumeText) {
+        cleanResume = resumeText.replace(/\s+/g, ' ').trim();
+        const UPPER_LIMIT = 12000;
+        if (cleanResume.length > UPPER_LIMIT) {
+            cleanResume = cleanResume.substring(0, UPPER_LIMIT) + '... [Resume text truncated to safe upper limit]';
+        }
+    }
+
     const systemPrompt = `You are an expert interviewer for a ${jobRole} position.
     Generate 5 high-quality ${interviewType} interview questions.
     The difficulty level should be: ${difficulty}.
-    ${resumeText ? `Candidate's Resume Context: ${resumeText}` : ''}
+    ${cleanResume ? `Candidate's Resume Context: ${cleanResume}` : ''}
     
     Guidelines:
     - Stick to the specified difficulty level: ${difficulty}.
     ${isEasy ? '- Include simple, generic, and foundational questions. Focus on definitions and basic concepts (e.g., "What is React?", "What is a REST API?", etc.).' : ''}
     - If a resume is provided, personalize at least 2 questions to their experience ${isEasy ? '(keep them simple)' : ''}.
     - Keep each "ideal_answer" concise, highly focused, and strictly under 150 words.
+    - Keep reasoning brief to avoid token limits, and return ONLY the final JSON object.
     - Return ONLY a JSON object with:
     {
       "role_clear": true,
