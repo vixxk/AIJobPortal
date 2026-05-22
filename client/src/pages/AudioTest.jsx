@@ -227,7 +227,7 @@ const AudioTest = () => {
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Service Health</p>
                             <div className="space-y-2">
                                 {[
-                                    { label: 'Python Backend', status: 'online' },
+                                    { label: 'Express Backend', status: 'online' },
                                     { label: 'Azure TTS Engine', status: 'online' },
                                     { label: 'Whisper STT', status: 'ready' },
                                 ].map((s) => (

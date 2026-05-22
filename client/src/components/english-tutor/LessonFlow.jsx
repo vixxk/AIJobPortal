@@ -5,6 +5,7 @@ import { getLesson, submitLessonTask, completeLesson } from '../../services/engl
 import { speakText } from '../../services/interviewApi';
 import LiveAnswerBox from '../interview/LiveAnswerBox';
 import AudioCheck from '../interview/AudioCheck';
+import { customConfirm } from '../layout/ConfirmDialog';
 
 const ELENA_MESSAGES = {
     start: "Welcome to today's session! Let's dive into our topic and practice your spoken English.",
@@ -262,9 +263,13 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
             if (blob && blob.size > 0) fd.append('audio', blob, 'task.webm');
 
             const res = await submitLessonTask(fd);
-            const evalResult = res.data.data.evaluation;
+            const evalResult = res.data.data.evaluation || {};
+            
+            // Normalize "scares" typo to "scores"
+            if (!evalResult.scores && evalResult.scares) {
+                evalResult.scores = evalResult.scares;
+            }
 
-            setFeedback(evalResult);
             const taskFullScores = evalResult.scores || {
                 overall: evalResult.score || 0,
                 fluency: evalResult.score || 0,
@@ -272,6 +277,23 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
                 vocabulary: evalResult.score || 0,
                 pronunciation: evalResult.score || 0
             };
+
+            // Ensure all score metrics are populated and scaled from 0-10 if necessary
+            const defaultScore = taskFullScores.overall !== undefined ? taskFullScores.overall : 85;
+            taskFullScores.overall = taskFullScores.overall ?? defaultScore;
+            taskFullScores.fluency = taskFullScores.fluency ?? defaultScore;
+            taskFullScores.grammar = taskFullScores.grammar ?? defaultScore;
+            taskFullScores.vocabulary = taskFullScores.vocabulary ?? defaultScore;
+            taskFullScores.pronunciation = taskFullScores.pronunciation ?? defaultScore;
+
+            ['overall', 'fluency', 'grammar', 'vocabulary', 'pronunciation'].forEach(k => {
+                if (typeof taskFullScores[k] === 'number' && taskFullScores[k] <= 10) {
+                    taskFullScores[k] = Math.round(taskFullScores[k] * 10);
+                }
+            });
+
+            evalResult.scores = taskFullScores;
+            setFeedback(evalResult);
             setTaskScores([...taskScores, taskFullScores]);
         } catch (err) {
             console.error('Task evaluation failed', err);
@@ -369,7 +391,11 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
                                 <h1 className="text-base md:text-2xl font-black text-slate-900 tracking-tight">{lesson?.title || 'English Lesson'}</h1>
                             </div>
                             <button
-                                onClick={() => window.confirm('Exit lesson?') && onCancel()}
+                                onClick={async () => {
+                                    if (await customConfirm('Are you sure you want to exit the current lesson? Any unsaved progress will be lost.', 'Exit Lesson')) {
+                                        onCancel();
+                                    }
+                                }}
                                 className="p-1.5 md:p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0"
                             >
                                 <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>

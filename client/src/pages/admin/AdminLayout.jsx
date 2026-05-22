@@ -6,6 +6,7 @@ import {
     LayoutDashboard, FileText, Globe, Search, Plus, BookOpen, Menu, X, AlertCircle, CreditCard
 } from 'lucide-react';
 import clsx from 'clsx';
+import { customConfirm } from '../../components/layout/ConfirmDialog';
 
 const SidebarItem = ({ to, label, icon: Icon }) => {
     const location = useLocation();
@@ -114,7 +115,11 @@ const AdminLayout = () => {
                             <span className="text-[11px] font-bold text-slate-400 mt-0.5">Systems Online</span>
                         </div>
                         <button
-                            onClick={logout}
+                            onClick={async () => {
+                                if (await customConfirm('Are you sure you want to sign out from the Admin panel?', 'Sign Out')) {
+                                    logout();
+                                }
+                            }}
                             className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-xl text-[11px] font-black transition-all relative z-10"
                         >
                             LOG OUT

@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import axios from '../../utils/axios';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
+import { customConfirm } from '../../components/layout/ConfirmDialog';
 
 const navItems = [
     { path: '/app/college', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -211,7 +212,11 @@ const CollegeLayout = () => {
                     
                     {!isCollapsed && (
                         <button
-                            onClick={logout}
+                            onClick={async () => {
+                                if (await customConfirm('Are you sure you want to sign out from the College panel?', 'Sign Out')) {
+                                    logout();
+                                }
+                            }}
                             className="w-full mt-4 flex justify-between items-center px-4 py-3 rounded-xl bg-gradient-to-r from-red-500/10 to-transparent hover:from-red-500/20 hover:to-red-500/5 text-red-400 hover:text-red-300 border border-red-500/20 transition-all duration-300 group"
                         >
                             <span className="text-xs font-bold uppercase tracking-widest">Sign Out</span>

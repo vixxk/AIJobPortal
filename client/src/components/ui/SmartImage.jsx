@@ -10,7 +10,7 @@ const SmartImage = ({ src, alt, className, containerClassName = "", fallbackIcon
         <div className={`relative overflow-hidden bg-slate-50 ${containerClassName}`}>
             {/* Skeleton / Placeholder */}
             <AnimatePresence>
-                {!loaded && !error && (
+                {!loaded && !error && src && (
                     <motion.div
                         initial={{ opacity: 1 }}
                         exit={{ opacity: 0 }}

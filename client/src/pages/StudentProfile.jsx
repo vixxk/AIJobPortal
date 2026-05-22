@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import ReportIssueModal from '../components/ReportIssueModal';
 import toast from 'react-hot-toast';
+import { customConfirm } from '../components/layout/ConfirmDialog';
 
 const Toggle = ({ label, description, enabled, onChange }) => (
     <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mb-3">
@@ -273,15 +274,15 @@ const StudentProfile = () => {
                 navigate(`/app/profile/${sectionKey.toLowerCase()}`);
                 setEditIndex(-1);
             }}
-            className={`flex items-center justify-between p-3.5 mb-1.5 rounded-2xl cursor-pointer transition-all ${currentView === sectionKey ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20' : 'hover:bg-slate-50 text-slate-700 font-medium'}`}
+            className={`flex items-center justify-between p-[0.7vw] mb-[0.3vw] rounded-[1vw] cursor-pointer transition-all ${currentView === sectionKey ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20' : 'hover:bg-slate-50 text-slate-700 font-medium'}`}
         >
-            <div className="flex items-center gap-4">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${currentView === sectionKey ? 'bg-white/20' : 'bg-slate-100/80 shadow-sm border border-slate-200/50'}`}>
-                    {React.cloneElement(icons[sectionKey], { className: `w-4 h-4 ${currentView === sectionKey ? 'text-white' : 'text-slate-500'}` })}
+            <div className="flex items-center gap-[0.8vw]">
+                <div className={`w-[2.2vw] h-[2.2vw] min-w-[32px] min-h-[32px] rounded-[0.7vw] flex items-center justify-center ${currentView === sectionKey ? 'bg-white/20' : 'bg-slate-100/80 shadow-sm border border-slate-200/50'}`}>
+                    {React.cloneElement(icons[sectionKey], { className: `w-[1vw] h-[1vw] min-w-[14px] min-h-[14px] ${currentView === sectionKey ? 'text-white' : 'text-slate-500'}` })}
                 </div>
-                <span className="text-[14px]">{label}</span>
+                <span className="text-[0.9vw] min-text-[12px] whitespace-nowrap">{label}</span>
             </div>
-            <ChevronLeft className={`w-4 h-4 rotate-180 transition-opacity ${currentView === sectionKey ? 'text-white/70 opacity-100' : 'text-slate-400 opacity-0 group-hover:opacity-100'}`} />
+            <ChevronLeft className={`w-[1vw] h-[1vw] min-w-[14px] min-h-[14px] rotate-180 transition-opacity ${currentView === sectionKey ? 'text-white/70 opacity-100' : 'text-slate-400 opacity-0 group-hover:opacity-100'}`} />
         </div>
     );
     const calculateCompletion = () => {
@@ -324,7 +325,7 @@ const StudentProfile = () => {
         }
     };
     const renderBasicEdit = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+        <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
             <div className="flex flex-col items-center mb-6">
                 {user?.role === 'RECRUITER' && (
                     <p className="text-[11px] font-semibold text-slate-400 text-center mb-2">Company Logo</p>
@@ -453,7 +454,7 @@ const StudentProfile = () => {
         </div>
     );
     const renderContact = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+        <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 <Input label="Address" value={profile.address} onChange={e => handleUpdateField('address', e.target.value)} icon={<Globe className="w-4 h-4" />} />
                 <Input label="Phone Number" value={profile.phoneNumber || user?.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
@@ -463,7 +464,7 @@ const StudentProfile = () => {
         </div>
     );
     const renderSummary = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+        <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 <Textarea 
                     label={user?.role === 'RECRUITER' ? "Company Description" : user?.role === 'COLLEGE_ADMIN' ? "About College" : "Summary (Max. 500 characters)"} 
@@ -477,7 +478,7 @@ const StudentProfile = () => {
         </div>
     );
     const renderSalary = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+        <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 <Input label="Minimum" type="number" value={profile.expectedSalary?.minimum} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, minimum: e.target.value })} />
                 <Input label="Maximum" type="number" value={profile.expectedSalary?.maximum} onChange={e => handleUpdateField('expectedSalary', { ...profile.expectedSalary, maximum: e.target.value })} />
@@ -491,7 +492,7 @@ const StudentProfile = () => {
         const list = profile[listName] || [];
         if (editIndex === -1) {
             return (
-                <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
                     <div className="flex justify-end mb-4">
                         <button className="flex items-center gap-2 text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-xl text-sm transition-all hover:bg-blue-100" onClick={() => { setLocalItem({}); setEditIndex(list.length); }}><Plus className="w-4 h-4" /> Add New</button>
                     </div>
@@ -508,7 +509,7 @@ const StudentProfile = () => {
             );
         }
         return (
-            <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+            <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
                 <div className="flex-1 mt-1 overflow-y-auto hide-scrollbar pr-2 space-y-2 pb-4">
                     {renderFormFields()}
                 </div>
@@ -663,7 +664,7 @@ const StudentProfile = () => {
                 ));
             case 'STATUS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
                         <div className="flex-1 space-y-4">
                             {['Actively looking for jobs', 'Passively looking for jobs', 'Not looking for jobs'].map(status => (
                                 <label key={status} className="flex gap-4 p-4 border rounded-2xl cursor-pointer">
@@ -684,7 +685,7 @@ const StudentProfile = () => {
                 );
             case 'SKILLS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
                         <div className="flex-1">
                             <Input placeholder="Type here and press Enter" value={localItem.title || ''} onChange={e => handleUpdateItem('title', e.target.value)} onKeyDown={(e) => {
                                 if (e.key === 'Enter' && e.target.value) {
@@ -712,7 +713,7 @@ const StudentProfile = () => {
                 );
             case 'RESUME':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
                         <div className="flex-1">
                             <p className="font-semibold mb-4">Upload CV/Resume</p>
                             <div className={`flex flex-col items-center justify-center border-2 border-dashed ${saving ? 'border-blue-400 bg-blue-50/50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100'} rounded-3xl p-6 transition-all relative`}>
@@ -763,7 +764,7 @@ const StudentProfile = () => {
                                         </div>
                                     </div>
                                     <X className="w-5 h-5 text-red-500 cursor-pointer shrink-0 ml-2" onClick={async () => {
-                                        if (window.confirm('Are you sure you want to remove your resume?')) {
+                                        if (await customConfirm('Are you sure you want to remove your resume? This action cannot be undone.', 'Remove Resume')) {
                                             await saveProfile({ resumeUrl: '' });
                                         }
                                     }} />
@@ -775,7 +776,7 @@ const StudentProfile = () => {
                 );
             case 'SETTINGS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
                         <div className="flex-1 space-y-4 pt-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                             {user?.role !== 'RECRUITER' && (
                                 <>
@@ -833,7 +834,7 @@ const StudentProfile = () => {
                 );
             case 'NOTIFICATIONS':
                 return (
-                    <div className="p-4 md:px-8 md:py-4 lg:p-6 flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-none md:mx-auto w-full overflow-hidden">
+                    <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
                         <div className="flex-1 space-y-2 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                             <Toggle 
                                 label="Platform Notifications" 
@@ -1243,14 +1244,14 @@ const StudentProfile = () => {
                         renderActiveForm()
                     )}
                 </div>
-                <div className="hidden lg:flex max-w-[1400px] mx-auto w-full p-6 xl:p-8 gap-6 xl:gap-8 h-full shrink-0 min-h-0">
-                    <div className="w-[340px] shrink-0 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
-                        <div className="p-8 border-b border-slate-100 flex flex-col items-center gap-4 bg-gradient-to-b from-blue-50/50 to-white text-center">
+                <div className="hidden lg:flex w-[96vw] mx-auto p-[2vw] gap-[2vw] h-full shrink-0 min-h-0">
+                    <div className="w-[24vw] min-w-[260px] max-w-[340px] shrink-0 bg-white rounded-[2vw] border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
+                        <div className="p-[2vw] border-b border-slate-100 flex flex-col items-center gap-[1.2vw] bg-gradient-to-b from-blue-50/50 to-white text-center">
                             <div className="relative">
                                 <SmartImage
                                     src={profile.logo || profile.profileImage || user?.avatar}
                                     alt="User"
-                                    containerClassName="w-24 h-24 rounded-full border-4 border-white shadow-md relative z-10"
+                                    containerClassName="w-[6.5vw] h-[6.5vw] min-w-[70px] min-h-[70px] max-w-[96px] max-h-[96px] rounded-full border-4 border-white shadow-md relative z-10"
                                     fallbackIcon={() => (
                                         user?.role === 'RECRUITER' ? (
                                             <div className="w-full h-full bg-indigo-500 flex items-center justify-center text-white text-4xl font-bold">
@@ -1262,40 +1263,40 @@ const StudentProfile = () => {
                                     )}
                                 />
                             </div>
-                            <div className="min-w-0 flex-1">
-                                <h2 className="text-xl font-bold tracking-tight text-slate-800 truncate" title={user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}>{user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}</h2>
-                                <p className="text-slate-500 text-sm mt-1 font-medium truncate">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
+                            <div className="min-w-0 flex-1 w-full">
+                                <h2 className="text-[1.3vw] min-text-[15px] font-bold tracking-tight text-slate-800 truncate" title={user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}>{user?.role === 'RECRUITER' ? (profile.companyName || user?.name) : user?.role === 'COLLEGE_ADMIN' ? (profile.collegeName || user?.name) : (profile.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.name || 'User Name'))}</h2>
+                                <p className="text-slate-500 text-[0.9vw] min-text-[12px] mt-[0.2vw] font-medium truncate">{profile.currentPosition || (user?.role === 'RECRUITER' ? 'Recruiter' : 'Job Hunter @ Application')}</p>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-0.5">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-2 px-3">Profile Details</h4>
+                        <div className="flex-1 overflow-y-auto hide-scrollbar p-[1.2vw] space-y-[0.3vw]">
+                            <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[0.4vw] px-[0.6vw]">Profile Details</h4>
                             <NavButtonDesktop sectionKey="BASIC" label={user?.role === 'RECRUITER' ? 'Recruiter Profile' : 'Edit Profile'} />
                             <NavButtonDesktop sectionKey="CONTACT" label="Contact Information" />
                             <NavButtonDesktop sectionKey="SUMMARY" label={user?.role === 'RECRUITER' ? 'Company Details' : 'Summary'} />
                             {user?.role !== 'RECRUITER' && (
                                 <>
                                     <NavButtonDesktop sectionKey="SALARY" label="Expected Salary" />
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Experience & Education</h4>
+                                    <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[1.2vw] px-[0.6vw]">Experience & Education</h4>
                                     <NavButtonDesktop sectionKey="EXPERIENCE" label="Work Experience" />
                                     <NavButtonDesktop sectionKey="EDUCATION" label="Education" />
                                     <NavButtonDesktop sectionKey="PROJECTS" label="Projects" />
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Qualifications</h4>
+                                    <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[1.2vw] px-[0.6vw]">Qualifications</h4>
                                     <NavButtonDesktop sectionKey="CERTIFICATIONS" label="Certification & Licenses" />
                                     <NavButtonDesktop sectionKey="AWARDS" label="Awards & Achievements" />
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">Other Information</h4>
+                                    <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[1.2vw] px-[0.6vw]">Other Information</h4>
                                     <NavButtonDesktop sectionKey="LANGUAGES" label="Languages" />
                                     <NavButtonDesktop sectionKey="SKILLS" label="Skills" />
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">System</h4>
+                                    <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[1.2vw] px-[0.6vw]">System</h4>
                                     <NavButtonDesktop sectionKey="RESUME" label="CV/Resume" />
                                     <NavButtonDesktop sectionKey="STATUS" label="Job Seeking Status" />
                                 </>
                             )}
-                            {user?.role === 'RECRUITER' && <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6 px-3">System</h4>}
+                            {user?.role === 'RECRUITER' && <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[1.2vw] px-[0.6vw]">System</h4>}
                             <NavButtonDesktop sectionKey="SETTINGS" label="Settings" />
                         </div>
                     </div>
-                    <div className="flex-1 bg-white rounded-3xl border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col relative overflow-hidden">
-                        <div className="p-6 xl:p-8 border-b border-slate-100 bg-white z-10 flex justify-between items-center">
+                    <div className="flex-1 bg-white rounded-[2vw] border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col relative overflow-hidden">
+                        <div className="p-[1.8vw] border-b border-slate-100 bg-white z-10 flex justify-between items-center">
                             <h2 className="text-[22px] font-bold text-slate-800 tracking-tight">
                                 {editIndex !== -1 ? 'Edit Entry' :
                                     (currentView === 'BASIC' ? 'Edit Profile' :

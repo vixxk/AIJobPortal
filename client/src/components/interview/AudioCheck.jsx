@@ -37,6 +37,9 @@ const AudioCheck = ({ onConfirm, setMicBlocked, type = 'interview' }) => {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') {
+                await ctx.resume();
+            }
             const analyser = ctx.createAnalyser();
             const source = ctx.createMediaStreamSource(stream);
             source.connect(analyser);

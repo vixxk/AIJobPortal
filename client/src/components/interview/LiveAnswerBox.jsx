@@ -21,6 +21,7 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled = true, timer, maxTimer, onS
     const [permissionError, setPermissionError] = useState(false);
     const isRecordingRef = useRef(false);
     const stoppedRef = useRef(false); // guards against async race conditions
+    const hasErrorRef = useRef(false);
     useEffect(() => { typedTextRef.current = typedText; }, [typedText]);
     useEffect(() => { interimTextRef.current = interimText; }, [interimText]);
 
@@ -64,6 +65,7 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled = true, timer, maxTimer, onS
     const startRecording = async () => {
         // Reset the stop guard — we're intentionally starting
         stoppedRef.current = false;
+        hasErrorRef.current = false;
         setTypedText('');
         setInterimText('');
         setPermissionError(false);
@@ -80,6 +82,9 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled = true, timer, maxTimer, onS
 
             streamRef.current = stream;
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
             const analyser = audioCtx.createAnalyser();
             const source = audioCtx.createMediaStreamSource(stream);
             source.connect(analyser);
@@ -213,18 +218,17 @@ const LiveAnswerBox = ({ isTimerRunning, micEnabled = true, timer, maxTimer, onS
             if (final) setTypedText(prev => (prev + final).trimStart());
             setInterimText(interim);
         };
-        let hasError = false;
+        r.onstart = () => {
+            hasErrorRef.current = false;
+        };
         r.onerror = (e) => {
             // console.error('STT Error:', e.error); // Removed console.error
-            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                hasError = true;
-            }
-            if (e.error === 'network') {
-                hasError = true;
+            if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'network') {
+                hasErrorRef.current = true;
             }
         };
         r.onend = () => {
-            if (isRecordingRef.current && !stoppedRef.current && !hasError) {
+            if (isRecordingRef.current && !stoppedRef.current && !hasErrorRef.current) {
                 try {
                     // Small delay to avoid rapid-fire restarts
                     setTimeout(() => {

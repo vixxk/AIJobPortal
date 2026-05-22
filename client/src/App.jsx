@@ -56,14 +56,93 @@ import StudentCompetitions from './pages/StudentCompetitions';
 import StudentCompetitionDetail from './pages/StudentCompetitionDetail';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
+
+if (typeof window !== 'undefined') {
+  window.alert = (message) => {
+    if (!message) return;
+    const msgString = typeof message === 'object' ? JSON.stringify(message) : String(message);
+    const lower = msgString.toLowerCase();
+    const isError = lower.includes('fail') || 
+                    lower.includes('error') || 
+                    lower.includes('invalid') || 
+                    lower.includes('denied') || 
+                    lower.includes('wrong') || 
+                    lower.includes('incorrect') || 
+                    lower.includes('block') ||
+                    lower.includes('missing') ||
+                    lower.includes('cannot') ||
+                    lower.includes('failed');
+                    
+    const isSuccess = lower.includes('success') || 
+                      lower.includes('complete') || 
+                      lower.includes('save') || 
+                      lower.includes('update') || 
+                      lower.includes('create') || 
+                      lower.includes('done') || 
+                      lower.includes('approve') || 
+                      lower.includes('enroll') || 
+                      lower.includes('send') || 
+                      lower.includes('finish') ||
+                      lower.includes('shortlist') ||
+                      lower.includes('optimization');
+
+    if (isError) {
+      toast.error(msgString, { duration: 5000 });
+    } else if (isSuccess) {
+      toast.success(msgString, { duration: 4000 });
+    } else {
+      toast(msgString, { duration: 4000 });
+    }
+  };
+}
 
 function App() {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID_HERE'}>
       <Router>
         <AuthProvider>
-          <Toaster position="top-center" reverseOrder={false} />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              className: 'modern-toast',
+              style: {
+                background: '#ffffff',
+                border: '1px solid rgba(59, 130, 246, 0.15)',
+                color: '#1e293b',
+                padding: '14px 20px',
+                borderRadius: '16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.05)',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                letterSpacing: '-0.01em',
+              },
+              success: {
+                style: {
+                  borderLeft: '4px solid #10B981',
+                },
+                iconTheme: {
+                  primary: '#10B981',
+                  secondary: '#ffffff',
+                },
+              },
+              error: {
+                style: {
+                  borderLeft: '4px solid #EF4444',
+                },
+                iconTheme: {
+                  primary: '#EF4444',
+                  secondary: '#ffffff',
+                },
+              },
+              loading: {
+                style: {
+                  borderLeft: '4px solid #3B82F6',
+                },
+              },
+            }}
+          />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

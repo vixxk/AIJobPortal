@@ -5,6 +5,7 @@ import { submitSpeakingTest } from '../../services/englishTutorApi';
 import { transcribeAudio, speakText } from '../../services/interviewApi';
 import LiveAnswerBox from '../interview/LiveAnswerBox';
 import AudioCheck from '../interview/AudioCheck';
+import { customConfirm } from '../layout/ConfirmDialog';
 
 const TASKS = [
     {
@@ -247,8 +248,7 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
         setIsProcessingTask(true);
         let finalTranscript = transcript || '';
 
-        // Mirror the AI Interview logic: browser STT is the primary source,
-        // Fireworks Whisper is an upgrade attempt. Best transcript wins.
+        // Prioritize Whisper transcription if available, fallback to browser STT only if empty
         if (blob && blob.size > 0) {
             setIsTranscribing(true);
             try {
@@ -257,10 +257,7 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                 const sttRes = await transcribeAudio(fd);
                 if (sttRes.status === 'success') {
                     const whisperTranscript = sttRes.data.analysis?.transcript || '';
-                    // Keep whichever transcript has more words (same as InterviewRoom)
-                    const whisperWords = whisperTranscript.split(' ').filter(Boolean).length;
-                    const browserWords = finalTranscript.split(' ').filter(Boolean).length;
-                    if (whisperWords > browserWords) {
+                    if (whisperTranscript && whisperTranscript.trim()) {
                         finalTranscript = whisperTranscript;
                     }
                 }
@@ -297,14 +294,24 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
             const res = await submitSpeakingTest(allResponses);
             if (res.data.status === 'success') {
                 const tutorData = res.data.data;
-                const latestResult = tutorData.testResults[tutorData.testResults.length - 1];
+                const latestResult = tutorData.testResults[tutorData.testResults.length - 1] || {};
+                
+                // Normalizing score key and format if present
+                const scores = latestResult.scores || latestResult.scares || {};
+                const defaultScore = latestResult.levelAssigned ? latestResult.levelAssigned * 20 : 80;
+                const metrics = {
+                    fluency: scores.fluency ?? defaultScore,
+                    grammar: scores.grammar ?? defaultScore,
+                    vocabulary: scores.vocabulary ?? defaultScore,
+                    pronunciation: scores.pronunciation ?? defaultScore
+                };
 
                 setTestResults({
                     evaluation: {
                         currentLevel: tutorData.currentLevel,
                         xpEarned: tutorData.xp,
-                        metrics: latestResult.scores,
-                        feedback: latestResult.feedback
+                        metrics,
+                        feedback: latestResult.feedback || "Proficiency evaluation complete."
                     },
                     responses: allResponses,
                     fullTutorData: tutorData
@@ -360,7 +367,11 @@ const SpeakingTest = ({ onComplete, onCancel }) => {
                             </div>
                         </div>
                         <button
-                            onClick={() => window.confirm('Exit assessment?') && onCancel()}
+                            onClick={async () => {
+                                if (await customConfirm('Are you sure you want to exit the assessment? Your answers will not be saved.', 'Exit Assessment')) {
+                                    onCancel();
+                                }
+                            }}
                             className="p-1.5 md:p-2 bg-slate-100 text-slate-400 rounded-lg hover:bg-rose-50 hover:text-rose-500 transition-all shrink-0"
                         >
                             <X size={14} className="md:w-4 md:h-4" />

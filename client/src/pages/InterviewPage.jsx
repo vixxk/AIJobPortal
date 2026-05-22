@@ -138,8 +138,8 @@ const InterviewPage = () => {
             }
             setQuestions(questions || []);
         } catch (error) {
-            console.error('Failed to start interview:', error);
-            alert('Interview service error. Please ensure the Python backend is active.');
+            const errMsg = error.response?.data?.message || error.message || 'Unknown error occurred.';
+            alert(`Interview service error: ${errMsg}`);
         } finally {
             setIsStarting(false);
         }

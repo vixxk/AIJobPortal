@@ -4,9 +4,9 @@ const staticLessons = require('../data/staticLessons');
 
 // ─── Fireworks AI Configuration ──────────────────────────────────────────────
 const FIREWORKS_API_URL = 'https://api.fireworks.ai/inference/v1/chat/completions';
-const FIREWORKS_MODEL = 'accounts/fireworks/models/qwen3-8b';
+const FIREWORKS_MODEL = 'accounts/fireworks/models/deepseek-v4-pro';
 
-const callFireworks = async (systemPrompt, userPrompt, maxTokens = 2048) => {
+const callFireworks = async (systemPrompt, userPrompt, maxTokens = 4096) => {
     const apiKey = process.env.FIREWORKS_API_KEY;
     if (!apiKey) throw new Error('FIREWORKS_API_KEY is not configured');
 
@@ -268,6 +268,7 @@ const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '', diff
     - Stick to the specified difficulty level: ${difficulty}.
     ${isEasy ? '- Include simple, generic, and foundational questions. Focus on definitions and basic concepts (e.g., "What is React?", "What is a REST API?", etc.).' : ''}
     - If a resume is provided, personalize at least 2 questions to their experience ${isEasy ? '(keep them simple)' : ''}.
+    - Keep each "ideal_answer" concise, highly focused, and strictly under 150 words.
     - Return ONLY a JSON object with:
     {
       "role_clear": true,
@@ -276,7 +277,7 @@ const generateQuestionsV2 = async (jobRole, interviewType, resumeText = '', diff
       ]
     }
     If the job role is nonsense, return "role_clear": false and suggestions for valid roles.`;
-    return await callFireworks(systemPrompt, `Generate ${interviewType} questions for ${jobRole} at ${difficulty} difficulty`);
+    return await callFireworks(systemPrompt, `Generate ${interviewType} questions for ${jobRole} at ${difficulty} difficulty`, 4096);
 };
 
 // ─── Interview: Evaluate Single Answer ───────────────────────────────────────
@@ -441,9 +442,48 @@ const evaluateSpeakingTest = async (responses) => {
       "detailed_breakdown": [
         { "task_name": "...", "feedback": "...", "missing_words": [] }
       ]
-    }`;
+    }
+    
+    IMPORTANT: Make sure the JSON key is "scores" and NOT "scares" or any other typo.`;
     const result = await callFireworks(systemPrompt, `Evaluate proficiency test: ${tasksText}`);
-    return { status: 'success', data: result };
+    
+    // Normalize evaluation format
+    let evaluation = result || {};
+    
+    // Check for "scares" typo
+    if (!evaluation.scores && evaluation.scares) {
+        evaluation.scores = evaluation.scares;
+        delete evaluation.scares;
+    }
+    
+    // If scores is missing, initialize
+    if (!evaluation.scores) {
+        evaluation.scores = {};
+    }
+    
+    // Normalize root scores to scores object if present
+    const rootKeys = ['fluency', 'grammar', 'vocabulary', 'pronunciation'];
+    rootKeys.forEach(k => {
+        if (evaluation[k] !== undefined && evaluation.scores[k] === undefined) {
+            evaluation.scores[k] = evaluation[k];
+        }
+    });
+    
+    // Ensure all scores are present
+    const defaultScore = evaluation.suggested_level !== undefined ? Math.min(10, evaluation.suggested_level * 2) : 8;
+    evaluation.scores.fluency = evaluation.scores.fluency ?? defaultScore;
+    evaluation.scores.grammar = evaluation.scores.grammar ?? defaultScore;
+    evaluation.scores.vocabulary = evaluation.scores.vocabulary ?? defaultScore;
+    evaluation.scores.pronunciation = evaluation.scores.pronunciation ?? defaultScore;
+    
+    // Normalize 0-100 scale down to 0-10
+    rootKeys.forEach(k => {
+        if (typeof evaluation.scores[k] === 'number' && evaluation.scores[k] > 10) {
+            evaluation.scores[k] = Math.round(evaluation.scores[k] / 10);
+        }
+    });
+
+    return { status: 'success', data: evaluation };
 };
 
 // ─── English Tutor: Generate Lesson Content ──────────────────────────────────
@@ -513,12 +553,51 @@ const evaluateLessonTask = async (taskType, transcript, metrics, context) => {
     IMPORTANT RULES FOR SCORING:
     - ALL scores MUST be on a scale of 0 to 100.
     - For the 'repeat' task: Be highly lenient. If the transcript proves they repeated the 'text_to_repeat' accurately (allowing for STT misinterpretation of similar-sounding words), they MUST receive a passing overall score (80-100). Do not fail a perfect repetition for a pause or a minor STT error.
+    - Double check that your output JSON contains the exact key "scores" and NOT "scares" or any other misspelling.
     - NEVER use the word "prompt" in your feedback or tips. Always refer to it naturally as "the text", "the sentence", or "the task".`;
     const result = await callFireworks(systemPrompt, `User transcript: ${transcript}`);
+    
+    // Normalize evaluation format
+    let evaluation = result || {};
+    
+    // Check for "scares" typo
+    if (!evaluation.scores && evaluation.scares) {
+        evaluation.scores = evaluation.scares;
+        delete evaluation.scares;
+    }
+    
+    // If scores is missing, initialize
+    if (!evaluation.scores) {
+        evaluation.scores = {};
+    }
+    
+    // Normalize root scores to scores object if present
+    const rootKeys = ['overall', 'fluency', 'grammar', 'vocabulary', 'pronunciation'];
+    rootKeys.forEach(k => {
+        if (evaluation[k] !== undefined && evaluation.scores[k] === undefined) {
+            evaluation.scores[k] = evaluation[k];
+        }
+    });
+    
+    // Ensure all scores are present
+    const defaultScore = evaluation.scores.overall !== undefined ? evaluation.scores.overall : (evaluation.score || 85);
+    evaluation.scores.overall = evaluation.scores.overall ?? defaultScore;
+    evaluation.scores.fluency = evaluation.scores.fluency ?? defaultScore;
+    evaluation.scores.grammar = evaluation.scores.grammar ?? defaultScore;
+    evaluation.scores.vocabulary = evaluation.scores.vocabulary ?? defaultScore;
+    evaluation.scores.pronunciation = evaluation.scores.pronunciation ?? defaultScore;
+    
+    // Normalize 0-10 scale to 0-100
+    rootKeys.forEach(k => {
+        if (typeof evaluation.scores[k] === 'number' && evaluation.scores[k] <= 10) {
+            evaluation.scores[k] = Math.round(evaluation.scores[k] * 10);
+        }
+    });
+
     return {
         status: 'success',
         data: {
-            evaluation: result,
+            evaluation,
             transcript,
             metrics
         }

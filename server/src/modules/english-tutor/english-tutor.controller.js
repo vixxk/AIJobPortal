@@ -151,10 +151,8 @@ exports.submitLessonTask = catchAsync(async (req, res, next) => {
       metrics = aiService.buildMetricsFromSegments(whisperText, sttResult.segments, sttResult.duration);
       metrics.confidence = sttResult.confidence;
 
-      // Keep whichever transcript has more words (mirrors InterviewRoom logic)
-      const whisperWords = whisperText.split(' ').filter(Boolean).length;
-      const browserWords = finalTranscript.split(' ').filter(Boolean).length;
-      if (whisperWords > browserWords) {
+      // Prioritize high-quality Whisper transcript if available; fall back to browser STT only if Whisper is empty
+      if (whisperText && whisperText.trim()) {
         finalTranscript = whisperText;
       }
       metrics.transcript = finalTranscript;

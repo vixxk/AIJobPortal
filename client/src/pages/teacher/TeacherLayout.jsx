@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { BookOpen, Video, LayoutDashboard, Menu, X, UserCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import clsx from 'clsx';
+import { customConfirm } from '../../components/layout/ConfirmDialog';
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -91,7 +92,11 @@ const TeacherLayout = () => {
                             <span className="text-[11px] font-bold text-slate-400 mt-0.5">Online • Teaching</span>
                         </div>
                         <button
-                            onClick={logout}
+                            onClick={async () => {
+                                if (await customConfirm('Are you sure you want to sign out?', 'Sign Out')) {
+                                    logout();
+                                }
+                            }}
                             className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-xl text-[11px] font-black transition-all relative z-10"
                         >
                             LOG OUT
