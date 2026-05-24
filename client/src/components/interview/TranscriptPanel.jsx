@@ -32,10 +32,10 @@ const TranscriptPanel = ({ transcript, analysis, evaluation }) => {
                         AI Evaluation
                         <div className="flex gap-2">
                             <span className="px-3 py-1 bg-white text-indigo-700 rounded-full shadow-sm text-sm">
-                                Score: {evaluation.answer_score}/100
+                                Score: {evaluation.answer_score !== undefined ? evaluation.answer_score : (evaluation.answerScore !== undefined ? evaluation.answerScore : (evaluation.content_score !== undefined ? evaluation.content_score : 0))}/100
                             </span>
                             <span className="px-3 py-1 bg-white text-blue-700 rounded-full shadow-sm text-sm">
-                                Comm: {evaluation.communication_score}/100
+                                Comm: {evaluation.communication_score !== undefined ? evaluation.communication_score : (evaluation.communicationScore !== undefined ? evaluation.communicationScore : (evaluation.delivery_score !== undefined ? evaluation.delivery_score : 0))}/100
                             </span>
                         </div>
                     </h3>

@@ -5,7 +5,7 @@ import LiveAnswerBox from './LiveAnswerBox';
 import PrepRing from './PrepRing';
 import AudioCheck from './AudioCheck';
 import { evaluateAnswer, generateReport, prefetchTts } from '../../services/interviewApi';
-const TIMER_BY_DIFFICULTY = { Easy: 45, Medium: 60, Hard: 90 };
+const TIMER_BY_DIFFICULTY = { Easy: 45, easy: 45, Medium: 60, medium: 60, Hard: 90, hard: 90 };
 
 const InterviewRoom = ({ questions, jobRole, onComplete }) => {
     const [currentIdx, setCurrentIdx] = useState(0);

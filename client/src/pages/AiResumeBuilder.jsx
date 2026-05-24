@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import axios from '../utils/axios';
 import Skeleton from '../components/ui/Skeleton';
+import { customConfirm } from '../components/layout/ConfirmDialog';
 
 const SAMPLE_ATS_URL = 'https://www.overleaf.com/latex/templates/jakes-resume/syzfjbzwjncs.pdf';
 
@@ -32,9 +33,9 @@ const TEMPLATES = {
         desc: 'Traditional ATS format',
         font: "'Times New Roman', Times, serif",
         nameSize: '18pt', nameWeight: 700, nameTransform: 'uppercase', nameSpacing: '0',
-        headingSize: '11.5pt',
+        headingSize: '12.5pt',
         heading: { fontWeight: 700, textTransform: 'uppercase', borderBottom: '1.5px solid #000', paddingBottom: '1px', color: '#000', letterSpacing: '0' },
-        bodySize: '10.5pt', lineHeight: '1.18',
+        bodySize: '11pt', lineHeight: '1.18',
         pagePadding: '10mm 14mm 10mm 14mm',
         linkColor: '#0563C1',
         sectionGap: '4px', itemGap: '3px',
@@ -47,9 +48,9 @@ const TEMPLATES = {
         desc: 'Clean blue accents',
         font: "'Calibri', 'Segoe UI', 'Helvetica Neue', sans-serif",
         nameSize: '20pt', nameWeight: 700, nameTransform: 'none', nameSpacing: '0.5px',
-        headingSize: '11pt',
+        headingSize: '12pt',
         heading: { fontWeight: 700, textTransform: 'uppercase', borderBottom: '2px solid #2563EB', paddingBottom: '2px', color: '#1e40af', letterSpacing: '1px' },
-        bodySize: '10pt', lineHeight: '1.22',
+        bodySize: '11pt', lineHeight: '1.22',
         pagePadding: '12mm 15mm 12mm 15mm',
         linkColor: '#2563EB',
         sectionGap: '6px', itemGap: '4px',
@@ -62,9 +63,9 @@ const TEMPLATES = {
         desc: 'Compact & clean',
         font: "'Arial', Helvetica, sans-serif",
         nameSize: '17pt', nameWeight: 700, nameTransform: 'uppercase', nameSpacing: '2px',
-        headingSize: '10.5pt',
+        headingSize: '12pt',
         heading: { fontWeight: 700, textTransform: 'uppercase', borderBottom: '1px solid #444', paddingBottom: '1px', color: '#222', letterSpacing: '1px' },
-        bodySize: '9.5pt', lineHeight: '1.18',
+        bodySize: '11pt', lineHeight: '1.18',
         pagePadding: '9mm 12mm 9mm 12mm',
         linkColor: '#0066cc',
         sectionGap: '4px', itemGap: '3px',
@@ -77,9 +78,9 @@ const TEMPLATES = {
         desc: 'Refined serif styling',
         font: "'Georgia', Cambria, 'Times New Roman', serif",
         nameSize: '20pt', nameWeight: 700, nameTransform: 'uppercase', nameSpacing: '2px',
-        headingSize: '11pt',
+        headingSize: '12.5pt',
         heading: { fontWeight: 700, textTransform: 'uppercase', borderBottom: '1.5px solid #1a1a2e', paddingBottom: '2px', color: '#1a1a2e', letterSpacing: '1.5px' },
-        bodySize: '10pt', lineHeight: '1.2',
+        bodySize: '11pt', lineHeight: '1.2',
         pagePadding: '12mm 15mm 12mm 15mm',
         linkColor: '#2c3e6b',
         sectionGap: '5px', itemGap: '4px',
@@ -350,6 +351,80 @@ const ResumeContent = ({ data, templateId, fontSizeOffset = 0, fontFamily = 'def
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   SAMPLE DATA — Professional candidate details to fully fill the A4 preview page.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const SAMPLE_DATA = {
+    personal: {
+        name: 'John Doe',
+        email: 'johndoe@email.com',
+        phone: '+1 (555) 019-2834',
+        linkedin: 'linkedin.com/in/johndoe',
+        github: 'github.com/johndoe',
+        leetcode: 'leetcode.com/u/johndoe',
+        gfg: 'geeksforgeeks.org/user/johndoe',
+        location: 'San Francisco, CA'
+    },
+    summary: 'Highly motivated Software Engineering student with experience building scalable web applications and REST APIs. Proficient in React, Node.js, and cloud technologies, with a strong foundation in data structures and algorithms.',
+    education: [
+        { institution: 'University of California, Berkeley', degree: 'Bachelor of Science in Computer Science', duration: '2022 – 2026', location: 'Berkeley, CA', cgpa: '3.92 / 4.0' },
+        { institution: 'High School of Science & Tech', degree: 'Advanced Regents Diploma', duration: '2018 – 2022', location: 'New York, NY', cgpa: '98.5 / 100' }
+    ],
+    experience: [
+        {
+            title: 'Software Engineering Intern',
+            company: 'Google',
+            techStack: 'TypeScript, React, Go, Docker',
+            duration: 'June 2025 – August 2025',
+            location: 'Mountain View, CA',
+            description: '• Engineered and deployed a real-time analytics dashboard using React and Go, reducing data latency by 40%.\n• Containerized microservices using Docker and orchestrated deployments on Kubernetes cluster, improving scalability.\n• Collaborative team member in an Agile environment, contributing to daily stand-ups and code reviews.'
+        },
+        {
+            title: 'Junior Frontend Developer',
+            company: 'Acme Software Corp',
+            techStack: 'JavaScript, React, Tailwind CSS, Git',
+            duration: 'June 2024 – May 2025',
+            location: 'San Francisco, CA',
+            description: '• Designed and implemented 15+ responsive React components, improving UI/UX consistency across 3 web products.\n• Optimized web asset delivery and API queries, boosting page load speeds by 25%.\n• Wrote comprehensive unit tests using Jest and React Testing Library, raising code coverage from 70% to 88%.'
+        }
+    ],
+    projects: [
+        {
+            name: 'AI-Powered Job Portal',
+            github: 'github.com/johndoe/ai-job-portal',
+            liveLink: 'ai-job-portal.demo.com',
+            techStack: 'Node.js, Express, MongoDB, React, Tailwind CSS',
+            duration: 'Jan 2026 – Present',
+            description: '• Developed an interactive AI mock interview platform featuring real-time speech transcription and scoring.\n• Integrated Fireworks AI DeepSeek models to automate resume optimization and candidate evaluation pipelines.\n• Designed and implemented JWT-based authentication and secure file storage for resume uploads.'
+        },
+        {
+            name: 'Collaborative Task Planner',
+            github: 'github.com/johndoe/task-planner',
+            liveLink: 'task-planner.demo.com',
+            techStack: 'React, Node.js, Socket.io, Redis',
+            duration: 'Sept 2025 – Dec 2025',
+            description: '• Built a real-time collaborative kanban board supporting simultaneous edits for up to 100 active users.\n• Leveraged Redis Pub/Sub and WebSocket connections to achieve sub-100ms state updates.\n• Implemented drag-and-drop tasks using React Beautiful DND with optimistic UI rendering.'
+        },
+        {
+            name: 'Distributed Web Crawler',
+            github: 'github.com/johndoe/dist-crawler',
+            liveLink: 'crawler-monitor.demo.com',
+            techStack: 'Python, Go, Redis, ElasticSearch, Docker',
+            duration: 'March 2025 – May 2025',
+            description: '• Designed and implemented a high-throughput distributed web crawler capable of parsing 5,000+ pages per minute.\n• Leveraged Redis sorting sets as a centralized URL frontier queue to ensure politeness and avoid duplicate crawls.\n• Indexed scraped web document data into ElasticSearch clusters, enabling sub-second keyword search queries.'
+        }
+    ],
+    certifications: [
+        { name: 'AWS Certified Solutions Architect – Associate', link: 'aws.amazon.com/verification' },
+        { name: 'Google IT Support Professional Certificate', link: 'coursera.org/verify/google' }
+    ],
+    skills: [
+        { category: 'Languages', items: 'JavaScript, TypeScript, Python, C++, Go, HTML/CSS' },
+        { category: 'Frameworks', items: 'React.js, Next.js, Node.js, Express.js, Tailwind CSS' },
+        { category: 'Developer Tools', items: 'Git, Docker, Kubernetes, AWS (S3, EC2), MongoDB, PostgreSQL, Redis' }
+    ]
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 const AiResumeBuilder = () => {
@@ -362,23 +437,21 @@ const AiResumeBuilder = () => {
     const [fontSizeOffset, setFontSizeOffset] = useState(0);
     const [fontFamily, setFontFamily] = useState('default');
 
-    const [resumeData, setResumeData] = useState({
-        personal: { name: '', email: '', phone: '', linkedin: '', github: '', leetcode: '', gfg: '', location: '' },
-        summary: '',
-        education: [{ institution: '', degree: '', duration: '', location: '', cgpa: '' }],
-        experience: [{ title: '', company: '', techStack: '', duration: '', location: '', description: '' }],
-        projects: [{ name: '', github: '', liveLink: '', techStack: '', duration: '', description: '' }],
-        certifications: [{ name: '', link: '' }],
-        skills: [{ category: '', items: '' }]
-    });
+    const [resumeData, setResumeData] = useState(SAMPLE_DATA);
+
+    const markAsEdited = () => {
+        localStorage.setItem('hyrego_resume_edited', 'true');
+    };
 
     useEffect(() => { 
         let hasSavedProgress = false;
         const savedDataStr = localStorage.getItem('hyrego_resume_progress');
-        if (savedDataStr) {
+        const wasEdited = localStorage.getItem('hyrego_resume_edited') === 'true';
+
+        if (wasEdited && savedDataStr) {
             try {
                 const saved = JSON.parse(savedDataStr);
-                if (saved.resumeData) {
+                if (saved.resumeData && saved.resumeData.personal?.name && saved.resumeData.summary) {
                     setResumeData(saved.resumeData);
                     hasSavedProgress = true;
                 }
@@ -391,12 +464,12 @@ const AiResumeBuilder = () => {
         }
         
         if (!hasSavedProgress) {
-            fetchInitialData(); 
-        } else {
-            setLoading(false);
+            // Show sample data by default!
+            setResumeData(SAMPLE_DATA);
         }
+        setLoading(false);
     }, []);
-
+ 
     useEffect(() => {
         // Save progress whenever these states change, unless it's still loading
         if (!loading) {
@@ -409,21 +482,33 @@ const AiResumeBuilder = () => {
             localStorage.setItem('hyrego_resume_progress', JSON.stringify(saveData));
         }
     }, [resumeData, selectedTemplate, fontSizeOffset, fontFamily, loading]);
-
+ 
     const fetchInitialData = async () => {
         try {
             const res = await axios.get('/student/me');
             if (res.data.status === 'success' && res.data.data.profile) {
                 const p = res.data.data.profile;
-                setResumeData(prev => ({
-                    ...prev,
-                    personal: { name: `${p.firstName || ''} ${p.lastName || ''}`.trim(), email: p.email || '', phone: p.phoneNumber || '', location: p.address || '', linkedin: '', github: '', leetcode: '', gfg: '' },
-                    summary: p.summary || '',
-                    education: p.education?.length > 0 ? p.education : prev.education,
-                    experience: p.experience?.length > 0 ? p.experience : prev.experience,
-                    projects: p.projects?.length > 0 ? p.projects : prev.projects,
-                    skills: p.skills?.length > 0 ? [{ category: 'Skills', items: p.skills.join(', ') }] : prev.skills
-                }));
+                setResumeData(prev => {
+                    const profileName = `${p.firstName || ''} ${p.lastName || ''}`.trim();
+                    return {
+                        ...prev,
+                        personal: {
+                            name: profileName || prev.personal.name,
+                            email: p.email || prev.personal.email,
+                            phone: p.phoneNumber || prev.personal.phone,
+                            location: p.address || prev.personal.location,
+                            linkedin: p.linkedin || prev.personal.linkedin,
+                            github: p.github || prev.personal.github,
+                            leetcode: p.leetcode || prev.personal.leetcode,
+                            gfg: p.gfg || prev.personal.gfg,
+                        },
+                        summary: p.summary || prev.summary,
+                        education: (p.education && p.education.length > 0 && p.education.some(e => e.institution)) ? p.education : prev.education,
+                        experience: (p.experience && p.experience.length > 0 && p.experience.some(e => e.company)) ? p.experience : prev.experience,
+                        projects: (p.projects && p.projects.length > 0 && p.projects.some(proj => proj.name)) ? p.projects : prev.projects,
+                        skills: (p.skills && p.skills.length > 0) ? [{ category: 'Skills', items: p.skills.join(', ') }] : prev.skills
+                    };
+                });
             }
         } catch (err) { console.error("Failed to fetch profile for resume", err); }
         finally { setLoading(false); }
@@ -439,24 +524,45 @@ const AiResumeBuilder = () => {
         }
     };
 
+    const loadSampleData = async () => {
+        const confirmed = await customConfirm(
+            "Loading sample data will replace your current edits. Are you sure you want to proceed?",
+            "Load Sample Data?"
+        );
+        if (confirmed) {
+            setResumeData(SAMPLE_DATA);
+            localStorage.setItem('hyrego_resume_edited', 'false');
+        }
+    };
+
     const printRef = useRef(null);
     const handlePersonalChange = useCallback((e) => {
         setResumeData(prev => ({ ...prev, personal: { ...prev.personal, [e.target.name]: e.target.value } }));
+        markAsEdited();
     }, []);
     const handleArrayChange = useCallback((group, index, field, value) => {
         setResumeData(prev => { const a = [...prev[group]]; a[index] = { ...a[index], [field]: value }; return { ...prev, [group]: a }; });
+        markAsEdited();
     }, []);
     const removeArrayItem = useCallback((group, index) => {
         setResumeData(prev => ({ ...prev, [group]: prev[group].filter((_, i) => i !== index) }));
+        markAsEdited();
     }, []);
     const addArrayItem = useCallback((group, template) => {
         setResumeData(prev => ({ ...prev, [group]: [...prev[group], template] }));
+        markAsEdited();
     }, []);
 
     const handleOptimizeSummary = async () => {
         if (!resumeData.summary || resumeData.summary.trim().length < 10) { alert('Please write a rough career objective first.'); return; }
         setLoadingSummary(true);
-        try { const res = await axios.post('/resume/optimize-summary', { text: resumeData.summary }); if (res.data.success) setResumeData(prev => ({ ...prev, summary: res.data.optimizedText })); }
+        try { 
+            const res = await axios.post('/resume/optimize-summary', { text: resumeData.summary }); 
+            if (res.data.success) {
+                setResumeData(prev => ({ ...prev, summary: res.data.optimizedText })); 
+                markAsEdited();
+            }
+        }
         catch { alert('Failed to connect to AI for summary optimization.'); }
         finally { setLoadingSummary(false); }
     };
@@ -465,7 +571,13 @@ const AiResumeBuilder = () => {
         const item = resumeData[type][index];
         if (!item.description || item.description.trim().length < 10) { alert(`Please write a rough ${type} description first.`); return; }
         setLoadingExp(`${type}-${index}`);
-        try { const res = await axios.post('/resume/optimize-experience', { text: item.description, type }); if (res.data.success) handleArrayChange(type, index, 'description', res.data.optimizedText); }
+        try { 
+            const res = await axios.post('/resume/optimize-experience', { text: item.description, type }); 
+            if (res.data.success) {
+                handleArrayChange(type, index, 'description', res.data.optimizedText); 
+                markAsEdited();
+            }
+        }
         catch { alert(`Failed to connect to AI for ${type} optimization.`); }
         finally { setLoadingExp(null); }
     };
@@ -547,6 +659,13 @@ const AiResumeBuilder = () => {
                                 <span>Download PDF</span>
                             </div>
                         </div>
+                        <button
+                            type="button"
+                            onClick={loadSampleData}
+                            className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-xl transition-all border border-indigo-100 shadow-sm shrink-0 active:scale-95"
+                        >
+                            <Sparkles className="w-3.5 h-3.5" /> Load Sample
+                        </button>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -665,7 +784,7 @@ const AiResumeBuilder = () => {
 
                     {/* 2. Summary */}
                     <Section icon={Sparkles} title="Career Objective" number="2" color="text-indigo-500" accent="bg-indigo-500">
-                        <textarea value={resumeData.summary} onChange={(e) => setResumeData(prev => ({ ...prev, summary: e.target.value }))} className={`${inputCls} h-24 resize-none pb-2`} placeholder="Write a rough summary — AI will polish it..." />
+                        <textarea value={resumeData.summary} onChange={(e) => { setResumeData(prev => ({ ...prev, summary: e.target.value })); markAsEdited(); }} className={`${inputCls} h-24 resize-none pb-2`} placeholder="Write a rough summary — AI will polish it..." />
                         <div className="flex justify-end mt-2"><AiBtn onClick={handleOptimizeSummary} loading={loadingSummary} /></div>
                     </Section>
 

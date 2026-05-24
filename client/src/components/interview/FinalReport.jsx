@@ -237,18 +237,18 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
                                                     {ans.ideal_answer || (ans.evaluation && ans.evaluation.model_answer)}
                                                 </p>
                                             </div>
-                                        )}
+                                         )}
 
-                                        {!ans.skipped && ans.evaluation && (
-                                            <div className="mt-2.5 sm:mt-3 space-y-2">
-                                                <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
-                                                    <div className="flex items-center justify-center xs:justify-start gap-2 text-indigo-600 bg-indigo-50/50 px-2.5 sm:px-3 py-1.5 rounded-lg border border-indigo-100/50">
-                                                        <span>Content: <span className="text-indigo-700">{ans.evaluation.answer_score}</span>/100</span>
-                                                    </div>
-                                                    <div className="flex items-center justify-center xs:justify-start gap-2 text-emerald-600 bg-emerald-50/50 px-2.5 sm:px-3 py-1.5 rounded-lg border border-emerald-100/50">
-                                                        <span>Delivery: <span className="text-emerald-700">{ans.evaluation.communication_score}</span>/100</span>
-                                                    </div>
-                                                </div>
+                                         {!ans.skipped && ans.evaluation && (
+                                             <div className="mt-2.5 sm:mt-3 space-y-2">
+                                                 <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
+                                                     <div className="flex items-center justify-center xs:justify-start gap-2 text-indigo-600 bg-indigo-50/50 px-2.5 sm:px-3 py-1.5 rounded-lg border border-indigo-100/50">
+                                                         <span>Content: <span className="text-indigo-700">{ans.evaluation.answer_score !== undefined ? ans.evaluation.answer_score : (ans.evaluation.answerScore !== undefined ? ans.evaluation.answerScore : (ans.evaluation.content_score !== undefined ? ans.evaluation.content_score : 0))}</span>/100</span>
+                                                     </div>
+                                                     <div className="flex items-center justify-center xs:justify-start gap-2 text-emerald-600 bg-emerald-50/50 px-2.5 sm:px-3 py-1.5 rounded-lg border border-emerald-100/50">
+                                                         <span>Delivery: <span className="text-emerald-700">{ans.evaluation.communication_score !== undefined ? ans.evaluation.communication_score : (ans.evaluation.communicationScore !== undefined ? ans.evaluation.communicationScore : (ans.evaluation.delivery_score !== undefined ? ans.evaluation.delivery_score : 0))}</span>/100</span>
+                                                     </div>
+                                                 </div>
 
                                                 {ans.evaluation.technical_pointers && ans.evaluation.technical_pointers.length > 0 && (
                                                     <div className="p-3 sm:p-4 bg-sky-50/40 rounded-xl border border-sky-100/50">

@@ -4,7 +4,7 @@ const staticLessons = require('../data/staticLessons');
 
 // ─── Fireworks AI Configuration ──────────────────────────────────────────────
 const FIREWORKS_API_URL = 'https://api.fireworks.ai/inference/v1/chat/completions';
-const FIREWORKS_MODEL = 'accounts/fireworks/models/deepseek-v4-pro';
+const FIREWORKS_MODEL = 'accounts/fireworks/models/gpt-oss-120b';
 
 const callFireworks = async (systemPrompt, userPrompt, maxTokens = 4096) => {
     const apiKey = process.env.FIREWORKS_API_KEY;
@@ -166,45 +166,91 @@ const estimateAudioMetrics = (transcript, durationMs = 0) => {
 
 // ─── STT: Transcription via Fireworks Whisper ────────────────────────────────
 const transcribeAudio = async (audioBuffer, filename = 'audio.wav') => {
-    const apiKey = process.env.FIREWORKS_API_KEY;
-    if (!apiKey) throw new Error('FIREWORKS_API_KEY is not configured');
-
     if (!audioBuffer || audioBuffer.length < 500) {
         console.warn('Audio buffer very small or empty, skipping STT.');
         return { text: '', segments: [], duration: 0, confidence: 0 };
     }
 
-    const FormData = require('form-data');
-    const form = new FormData();
-    form.append('file', audioBuffer, { filename, contentType: 'audio/webm' });
-    form.append('model', 'whisper-v3');
-    form.append('response_format', 'verbose_json');
+    // 1. Try Groq if GROQ_API_KEY is configured (Generous free tier, OpenAI-compatible)
+    if (process.env.GROQ_API_KEY) {
+        try {
+            console.log('Using Groq API for audio transcription...');
+            const FormData = require('form-data');
+            const form = new FormData();
+            form.append('file', audioBuffer, { filename, contentType: 'audio/webm' });
+            form.append('model', 'whisper-large-v3');
+            form.append('response_format', 'verbose_json');
 
-    try {
-        const response = await axios.post(
-            'https://api.fireworks.ai/inference/v1/audio/transcriptions',
-            form,
-            {
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    ...form.getHeaders()
-                },
-                timeout: 60000,
-                maxContentLength: 50 * 1024 * 1024,
-                maxBodyLength: 50 * 1024 * 1024
-            }
-        );
-        const data = response.data;
-        return {
-            text: data.text || '',
-            segments: data.segments || [],
-            duration: data.duration || 0,
-            confidence: 80
-        };
-    } catch (err) {
-        console.error('Fireworks STT Error:', err.response?.data || err.message);
-        return { text: '', segments: [], duration: 0, confidence: 0 };
+            const response = await axios.post(
+                'https://api.groq.com/openai/v1/audio/transcriptions',
+                form,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+                        ...form.getHeaders()
+                    },
+                    timeout: 45000
+                }
+            );
+            const data = response.data;
+            return {
+                text: data.text || '',
+                segments: data.segments || [],
+                duration: data.duration || 0,
+                confidence: 85
+            };
+        } catch (err) {
+            console.error('Groq STT Error:', err.response?.data || err.message);
+        }
     }
+
+    // 2. Try Deepgram if DEEPGRAM_API_KEY is configured (Best performance, low-latency)
+    if (process.env.DEEPGRAM_API_KEY) {
+        try {
+            console.log('Using Deepgram API for audio transcription...');
+            const response = await axios.post(
+                'https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true',
+                audioBuffer,
+                {
+                    headers: {
+                        'Authorization': `Token ${process.env.DEEPGRAM_API_KEY}`,
+                        'Content-Type': 'audio/webm'
+                    },
+                    timeout: 45000
+                }
+            );
+            const data = response.data;
+            const alternative = data?.results?.channels?.[0]?.alternatives?.[0];
+            if (alternative) {
+                const text = alternative.transcript || '';
+                const words = alternative.words || [];
+                const segments = [];
+                let currentSegmentWords = [];
+                for (let i = 0; i < words.length; i++) {
+                    const w = words[i];
+                    currentSegmentWords.push(w);
+                    const nextWord = words[i + 1];
+                    const hasGap = nextWord ? (nextWord.start - w.end > 1.0) : false;
+                    const hasPunctuation = /[.!?]$/.test(w.word);
+                    if (i === words.length - 1 || hasGap || hasPunctuation || currentSegmentWords.length >= 10) {
+                        segments.push({
+                            start: currentSegmentWords[0].start,
+                            end: currentSegmentWords[currentSegmentWords.length - 1].end,
+                            text: currentSegmentWords.map(sw => sw.word).join(' ')
+                        });
+                        currentSegmentWords = [];
+                    }
+                }
+                const duration = words.length > 0 ? words[words.length - 1].end : 0;
+                return { text, segments, duration, confidence: 90 };
+            }
+        } catch (err) {
+            console.error('Deepgram STT Error:', err.response?.data || err.message);
+        }
+    }
+
+    console.error('No audio transcription API key (Groq or Deepgram) configured or active.');
+    return { text: '', segments: [], duration: 0, confidence: 0 };
 };
 
 // ─── Full Audio Analysis Pipeline ────────────────────────────────────────────
@@ -326,7 +372,33 @@ const evaluateAnswer = async (question, transcript, metrics, jobRole) => {
       "weaknesses": ["...", "..."],
       "suggestions": ["..."]
     }`;
-    return await callFireworks(systemPrompt, `Question: ${question}\nCandidate's Answer Transcript: ${transcript}`);
+    const evaluation = await callFireworks(systemPrompt, `Question: ${question}\nCandidate's Answer Transcript: ${transcript}`);
+    
+    if (evaluation) {
+        // Map any camelCase or naming variations back to snake_case schema
+        if (evaluation.answerScore !== undefined && evaluation.answer_score === undefined) {
+            evaluation.answer_score = evaluation.answerScore;
+        }
+        if (evaluation.communicationScore !== undefined && evaluation.communication_score === undefined) {
+            evaluation.communication_score = evaluation.communicationScore;
+        }
+        if (evaluation.content_score !== undefined && evaluation.answer_score === undefined) {
+            evaluation.answer_score = evaluation.content_score;
+        }
+        if (evaluation.contentScore !== undefined && evaluation.answer_score === undefined) {
+            evaluation.answer_score = evaluation.contentScore;
+        }
+        if (evaluation.delivery_score !== undefined && evaluation.communication_score === undefined) {
+            evaluation.communication_score = evaluation.delivery_score;
+        }
+        if (evaluation.deliveryScore !== undefined && evaluation.communication_score === undefined) {
+            evaluation.communication_score = evaluation.deliveryScore;
+        }
+        // Fallbacks if missing
+        if (evaluation.answer_score === undefined) evaluation.answer_score = 0;
+        if (evaluation.communication_score === undefined) evaluation.communication_score = 0;
+    }
+    return evaluation;
 };
 
 // ─── Interview: Generate Final Report ────────────────────────────────────────

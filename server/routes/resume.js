@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 
 const FIREWORKS_API_KEY = process.env.FIREWORKS_API_KEY;
-const FIREWORKS_MODEL = 'accounts/fireworks/models/llama-v3p1-70b-instruct';
+const FIREWORKS_MODEL = 'accounts/fireworks/models/gpt-oss-120b';
 
 // Helper to call Fireworks AI
 const callFireworks = async (prompt) => {
@@ -21,7 +21,9 @@ const callFireworks = async (prompt) => {
             },
             timeout: 15000,
         });
-        return response.data.choices[0].message.content.trim();
+        let content = response.data.choices[0].message.content;
+        content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        return content;
     } catch (err) {
         console.error('Fireworks API Error:', err.response?.data || err.message);
         return null;

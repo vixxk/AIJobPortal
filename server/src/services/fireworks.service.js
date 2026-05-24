@@ -5,7 +5,7 @@ const callFireworks = async (systemPrompt, userPrompt) => {
         const response = await axios.post(
             FIREWORKS_API_URL,
             {
-                model: 'accounts/fireworks/models/glm-5',
+                model: 'accounts/fireworks/models/gpt-oss-120b',
                 max_tokens: 2048,
                 temperature: 0.7,
                 response_format: { type: 'json_object' },
@@ -22,6 +22,7 @@ const callFireworks = async (systemPrompt, userPrompt) => {
             }
         );
         let content = response.data.choices[0].message.content;
+        content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
         
         // Extract JSON if model wrapped it in markdown or text
         const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
