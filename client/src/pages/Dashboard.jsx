@@ -9,7 +9,7 @@ import {
     MessageSquare, FileText, CheckCircle, Orbit,
     Search, MapPin, Bookmark, ChevronRight,
     Sparkles, ArrowRight, SlidersHorizontal, Menu,
-    MonitorPlay, Rocket, Headphones
+    MonitorPlay, Rocket, Headphones, Crown
 } from 'lucide-react';
 import JobDetailsModal from '../components/JobDetailsModal';
 import SkeletonJobCard from '../components/SkeletonJobCard';
@@ -513,10 +513,33 @@ const Dashboard = () => {
                             <h2 className="text-xl font-black text-slate-900 leading-none tracking-tight">{firstName}</h2>
                         </div>
                     </div>
-                    <NotificationsDropdown 
-                        className="w-12 h-12 rounded-[18px] border border-slate-100 bg-white shadow-sm active:scale-90"
-                        iconClassName="w-6 h-6 text-slate-800"
-                    />
+                    <div className="flex items-center gap-3">
+                        {user?.role === 'STUDENT' && (
+                            <div className="hover:scale-[1.03] transition-transform">
+                                {user?.subscription?.plan === 'FREE' || !user?.subscription?.plan ? (
+                                    <button 
+                                        onClick={() => navigate('/app/subscriptions')}
+                                        className="flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-black text-xs shadow-sm shadow-amber-400/20 active:scale-95 transition-all border border-amber-300/40"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5 fill-amber-950 text-amber-950" />
+                                        <span>Premium</span>
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => navigate('/app/subscriptions')}
+                                        className="flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-xs shadow-sm shadow-emerald-500/20 active:scale-95 transition-all border border-emerald-400/35"
+                                    >
+                                        <Crown className="w-3.5 h-3.5 fill-emerald-100 text-emerald-100" />
+                                        <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO PLUS' : 'PRO'}</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                        <NotificationsDropdown 
+                            className="w-12 h-12 rounded-[18px] border border-slate-100 bg-white shadow-sm active:scale-90"
+                            iconClassName="w-6 h-6 text-slate-800"
+                        />
+                    </div>
                 </div>
                 <div className="px-5 mb-7">
                     <div className="w-full bg-gradient-to-br from-[#3872FA] to-[#1e40af] rounded-[32px] p-6 text-white relative overflow-hidden flex flex-col justify-center min-h-[180px] shadow-xl shadow-blue-500/20">

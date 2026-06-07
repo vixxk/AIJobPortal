@@ -110,72 +110,74 @@ const Topbar = ({ toggleSidebar, isMobile }) => {
                 </div>
             )}
             {}
-            {(!customTitle || !isMobile) && (
-                <div className="flex items-center gap-4 md:gap-6">
-                    {isStudent && (
-                        <div className="hover:scale-[1.03] transition-transform">
-                            {user?.subscription?.plan === 'FREE' || !user?.subscription?.plan ? (
-                                <button 
-                                    onClick={() => navigate('/app/subscriptions')}
-                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-black text-xs shadow-md shadow-amber-400/20 hover:shadow-lg active:scale-95 transition-all border border-amber-300/40"
-                                >
-                                    <Sparkles className="w-3.5 h-3.5 fill-amber-950 text-amber-950" />
-                                    <span>Premium</span>
-                                </button>
-                            ) : (
-                                <button 
-                                    onClick={() => navigate('/app/subscriptions')}
-                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-xs shadow-md shadow-emerald-500/20 hover:shadow-lg active:scale-95 transition-all border border-emerald-400/35"
-                                >
-                                    <Crown className="w-3.5 h-3.5 fill-emerald-100 text-emerald-100" />
-                                    <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO PLUS' : 'PRO'}</span>
-                                </button>
-                            )}
-                        </div>
-                    )}
-                    {!customTitle && user && user.role !== 'RECRUITER' && (
-                        <div className="hover:scale-110 transition-transform">
-                            <NotificationsDropdown />
-                        </div>
-                    )}
-                    {user ? (
-                        (!customTitle && location.pathname === '/app/profile') ? (
-                            <div 
-                                className="p-3 rounded-2xl bg-white border border-slate-100 shadow-sm cursor-pointer hover:shadow-md hover:border-blue-200 transition-all text-slate-700 hover:text-blue-600 active:scale-95"
-                                onClick={() => window.dispatchEvent(new CustomEvent('open-settings'))}
+            <div className="flex items-center gap-2 md:gap-6">
+                {isStudent && (
+                    <div className="hover:scale-[1.03] transition-transform">
+                        {user?.subscription?.plan === 'FREE' || !user?.subscription?.plan ? (
+                            <button 
+                                onClick={() => navigate('/app/subscriptions')}
+                                className="flex items-center gap-1 px-3 py-2 md:gap-1.5 md:px-4 md:py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-black text-[11px] md:text-xs shadow-md shadow-amber-400/20 hover:shadow-lg active:scale-95 transition-all border border-amber-300/40"
                             >
-                                <SettingsIcon className="w-6 h-6" />
-                            </div>
-                        ) : !customTitle ? (
-                            <div 
-                                className="w-10 h-10 md:w-12 md:h-12 rounded-2xl border-2 border-white bg-white shadow-md flex items-center justify-center overflow-hidden cursor-pointer hover:border-blue-500 hover:shadow-blue-500/20 transition-all relative z-10 active:scale-95"
-                                onClick={() => navigate('/app/profile')}
+                                <Sparkles className="w-3 h-3 md:w-3.5 md:h-3.5 fill-amber-950 text-amber-950" />
+                                <span>Premium</span>
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={() => navigate('/app/subscriptions')}
+                                className="flex items-center gap-1 px-3 py-2 md:gap-1.5 md:px-4 md:py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-[11px] md:text-xs shadow-md shadow-emerald-500/20 hover:shadow-lg active:scale-95 transition-all border border-emerald-400/35"
                             >
-                                <SmartImage 
-                                    src={user?.avatar} 
-                                    alt={user?.name || "User"}
-                                    containerClassName="w-full h-full"
-                                    fallbackIcon={() => (
-                                        <div className={clsx(
-                                            "w-full h-full flex items-center justify-center text-white font-black text-lg uppercase",
-                                            user?.role === 'RECRUITER' ? "bg-indigo-500" : "bg-blue-600"
-                                        )}>
-                                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                                        </div>
-                                    )}
-                                />
+                                <Crown className="w-3 h-3 md:w-3.5 md:h-3.5 fill-emerald-100 text-emerald-100" />
+                                <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO PLUS' : 'PRO'}</span>
+                            </button>
+                        )}
+                    </div>
+                )}
+                {(!customTitle || !isMobile) && (
+                    <>
+                        {!customTitle && user && user.role !== 'RECRUITER' && (
+                            <div className="hover:scale-110 transition-transform">
+                                <NotificationsDropdown />
                             </div>
-                        ) : null
-                    ) : (
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-700 hover:to-indigo-750 text-white font-extrabold text-xs shadow-md shadow-blue-500/15 hover:shadow-lg active:scale-95 transition-all"
-                        >
-                            Log In
-                        </button>
-                    )}
-                </div>
-            )}
+                        )}
+                        {user ? (
+                            (!customTitle && location.pathname === '/app/profile') ? (
+                                <div 
+                                    className="p-3 rounded-2xl bg-white border border-slate-100 shadow-sm cursor-pointer hover:shadow-md hover:border-blue-200 transition-all text-slate-700 hover:text-blue-600 active:scale-95"
+                                    onClick={() => window.dispatchEvent(new CustomEvent('open-settings'))}
+                                >
+                                    <SettingsIcon className="w-6 h-6" />
+                                </div>
+                            ) : !customTitle ? (
+                                <div 
+                                    className="w-10 h-10 md:w-12 md:h-12 rounded-2xl border-2 border-white bg-white shadow-md flex items-center justify-center overflow-hidden cursor-pointer hover:border-blue-500 hover:shadow-blue-500/20 transition-all relative z-10 active:scale-95"
+                                    onClick={() => navigate('/app/profile')}
+                                >
+                                    <SmartImage 
+                                        src={user?.avatar} 
+                                        alt={user?.name || "User"}
+                                        containerClassName="w-full h-full"
+                                        fallbackIcon={() => (
+                                            <div className={clsx(
+                                                "w-full h-full flex items-center justify-center text-white font-black text-lg uppercase",
+                                                user?.role === 'RECRUITER' ? "bg-indigo-500" : "bg-blue-600"
+                                            )}>
+                                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+                            ) : null
+                        ) : (
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-700 hover:to-indigo-750 text-white font-extrabold text-xs shadow-md shadow-blue-500/15 hover:shadow-lg active:scale-95 transition-all"
+                            >
+                                Log In
+                            </button>
+                        )}
+                    </>
+                )}
+            </div>
         </div>
     );
 };
