@@ -16,6 +16,12 @@ const STATUS_COLORS = {
     CANCELLED: 'bg-slate-100 text-slate-700 border-slate-200'
 };
 
+const PLAN_ORDER = {
+    FREE: 0,
+    PRO: 1,
+    PRO_PLUS: 2
+};
+
 const AdminPayments = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -97,23 +103,46 @@ const AdminPayments = () => {
     };
 
     const handleUpdatePlan = async (planKey) => {
-        const payload = editingPlans[planKey];
+        const payload = editingPlans[planKey] || {};
+        
+        const price = Number(payload.price);
+        const spokenEnglishLimit = Number(payload.spokenEnglishLimit);
+        const resumesLimit = Number(payload.resumesLimit);
+        const interviewsLimit = Number(payload.interviewsLimit);
+
+        if (isNaN(price) || price < 0) {
+            toast.error('Monthly price cannot be negative.');
+            return;
+        }
+        if (isNaN(interviewsLimit) || interviewsLimit < 0 || !Number.isInteger(interviewsLimit)) {
+            toast.error('Mock Interviews quota must be a non-negative integer.');
+            return;
+        }
+        if (isNaN(resumesLimit) || resumesLimit < 0 || !Number.isInteger(resumesLimit)) {
+            toast.error('Resume quota must be a non-negative integer.');
+            return;
+        }
+        if (isNaN(spokenEnglishLimit) || spokenEnglishLimit < 0 || !Number.isInteger(spokenEnglishLimit)) {
+            toast.error('Spoken English quota must be a non-negative integer.');
+            return;
+        }
+
         const previousPlans = [...plans];
         setPlans(prev => prev.map(p => p.planKey === planKey ? { 
             ...p, 
-            price: Number(payload.price),
-            spokenEnglishLimit: Number(payload.spokenEnglishLimit),
-            resumesLimit: Number(payload.resumesLimit),
-            interviewsLimit: Number(payload.interviewsLimit)
+            price,
+            spokenEnglishLimit,
+            resumesLimit,
+            interviewsLimit
         } : p));
         toast.success(`Successfully updated ${planKey} plan configuration!`);
         try {
             await axios.patch('/payment/plans', {
                 planKey,
-                price: Number(payload.price),
-                spokenEnglishLimit: Number(payload.spokenEnglishLimit),
-                resumesLimit: Number(payload.resumesLimit),
-                interviewsLimit: Number(payload.interviewsLimit)
+                price,
+                spokenEnglishLimit,
+                resumesLimit,
+                interviewsLimit
             });
             await fetchPlans();
         } catch (err) {
@@ -221,94 +250,116 @@ const AdminPayments = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {plans.map(plan => {
-                            const edits = editingPlans[plan.planKey] || {};
-                            return (
-                                <div key={plan.planKey} className="bg-white p-8 rounded-[28px] border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-bl-full" />
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <span className="text-2xl">
-                                                {plan.planKey === 'FREE' && '🌱'}
-                                                {plan.planKey === 'PRO' && '💎'}
-                                                {plan.planKey === 'PRO_PLUS' && '🔥'}
-                                            </span>
-                                            <div>
-                                                <h4 className="text-base font-black text-slate-900">{plan.name}</h4>
-                                                <span className="text-[10px] font-black tracking-wider text-indigo-500 uppercase">{plan.planKey} TIER</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">Monthly Price (₹)</label>
-                                                <div className="relative">
-                                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₹</span>
-                                                    <input
-                                                        type="number"
-                                                        value={edits.price || 0}
-                                                        disabled={plan.planKey === 'FREE'}
-                                                        onChange={e => setEditingPlans({
-                                                            ...editingPlans,
-                                                            [plan.planKey]: { ...edits, price: e.target.value }
-                                                        })}
-                                                        className="w-full h-11 pl-8 pr-3 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all disabled:opacity-60"
-                                                    />
+                        {[...plans]
+                            .sort((a, b) => (PLAN_ORDER[a.planKey] ?? 99) - (PLAN_ORDER[b.planKey] ?? 99))
+                            .map(plan => {
+                                const edits = editingPlans[plan.planKey] || {};
+                                return (
+                                    <div key={plan.planKey} className="bg-white p-8 rounded-[28px] border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-bl-full" />
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <span className="text-2xl">
+                                                    {plan.planKey === 'FREE' && '🌱'}
+                                                    {plan.planKey === 'PRO' && '💎'}
+                                                    {plan.planKey === 'PRO_PLUS' && '🔥'}
+                                                </span>
+                                                <div>
+                                                    <h4 className="text-base font-black text-slate-900">{plan.name}</h4>
+                                                    <span className="text-[10px] font-black tracking-wider text-indigo-500 uppercase">{plan.planKey} TIER</span>
                                                 </div>
                                             </div>
 
-                                            <div>
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
-                                                    Mock Interviews Quota ({plan.planKey === 'FREE' ? 'Weekly' : 'Monthly'})
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    value={edits.interviewsLimit || 0}
-                                                    onChange={e => setEditingPlans({
-                                                        ...editingPlans,
-                                                        [plan.planKey]: { ...edits, interviewsLimit: e.target.value }
-                                                    })}
-                                                    className="w-full h-11 px-4 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all"
-                                                />
-                                            </div>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">Monthly Price (₹)</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₹</span>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={edits.price ?? 0}
+                                                            disabled={plan.planKey === 'FREE'}
+                                                            onChange={e => {
+                                                                const val = e.target.value;
+                                                                if (val !== '' && Number(val) < 0) return;
+                                                                setEditingPlans({
+                                                                    ...editingPlans,
+                                                                    [plan.planKey]: { ...edits, price: val }
+                                                                });
+                                                            }}
+                                                            className="w-full h-11 pl-8 pr-3 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all disabled:opacity-60"
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                            <div>
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">Resume AI Optimization Quota</label>
-                                                <input
-                                                    type="number"
-                                                    value={edits.resumesLimit || 0}
-                                                    onChange={e => setEditingPlans({
-                                                        ...editingPlans,
-                                                        [plan.planKey]: { ...edits, resumesLimit: e.target.value }
-                                                    })}
-                                                    className="w-full h-11 px-4 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all"
-                                                />
-                                            </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">
+                                                        Mock Interviews Quota ({plan.planKey === 'FREE' ? 'Weekly' : 'Monthly'})
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={edits.interviewsLimit ?? 0}
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (val !== '' && Number(val) < 0) return;
+                                                            setEditingPlans({
+                                                                ...editingPlans,
+                                                                [plan.planKey]: { ...edits, interviewsLimit: val }
+                                                            });
+                                                        }}
+                                                        className="w-full h-11 px-4 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all"
+                                                    />
+                                                </div>
 
-                                            <div>
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">Spoken English Evaluation Quota (Monthly)</label>
-                                                <input
-                                                    type="number"
-                                                    value={edits.spokenEnglishLimit || 0}
-                                                    onChange={e => setEditingPlans({
-                                                        ...editingPlans,
-                                                        [plan.planKey]: { ...edits, spokenEnglishLimit: e.target.value }
-                                                    })}
-                                                    className="w-full h-11 px-4 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all"
-                                                />
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">Resume AI Optimization Quota</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={edits.resumesLimit ?? 0}
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (val !== '' && Number(val) < 0) return;
+                                                            setEditingPlans({
+                                                                ...editingPlans,
+                                                                [plan.planKey]: { ...edits, resumesLimit: val }
+                                                            });
+                                                        }}
+                                                        className="w-full h-11 px-4 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5 font-bold">Spoken English Evaluation Quota (Monthly)</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={edits.spokenEnglishLimit ?? 0}
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            if (val !== '' && Number(val) < 0) return;
+                                                            setEditingPlans({
+                                                                ...editingPlans,
+                                                                [plan.planKey]: { ...edits, spokenEnglishLimit: val }
+                                                            });
+                                                        }}
+                                                        className="w-full h-11 px-4 bg-slate-50/50 border border-slate-200 focus:border-indigo-400 rounded-xl text-sm font-black outline-none transition-all"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <button
-                                        onClick={() => handleUpdatePlan(plan.planKey)}
-                                        className="w-full h-12 mt-8 text-xs font-black uppercase tracking-wider rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
-                                    >
-                                        Save Plan Configuration
-                                    </button>
-                                </div>
-                            );
-                        })}
+                                        <button
+                                            onClick={() => handleUpdatePlan(plan.planKey)}
+                                            className="w-full h-12 mt-8 text-xs font-black uppercase tracking-wider rounded-xl bg-indigo-600 hover:bg-indigo-750 text-white shadow-md hover:shadow-lg transition-all"
+                                        >
+                                            Save Plan Configuration
+                                        </button>
+                                    </div>
+                                );
+                            })}
                     </div>
                 </div>
             )}
