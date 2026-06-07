@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
@@ -211,7 +212,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
             )}
             
             <AnimatePresence>
-                {showLogoutConfirm && (
+                {showLogoutConfirm && createPortal(
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -250,7 +251,8 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                                 </div>
                             </div>
                         </motion.div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </AnimatePresence>
         </div>
