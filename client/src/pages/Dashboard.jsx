@@ -495,12 +495,13 @@ const Dashboard = () => {
                     )}
                 </div>
             </div>
-            <div className="md:hidden w-full min-h-screen bg-white pb-24 pt-2 animate-in fade-in duration-500 font-sans">
-                <div className="flex items-center justify-between mb-8 px-5 mt-6">
-                    <div className="flex items-center gap-4">
+            <div className="md:hidden w-full min-h-screen bg-slate-50/50 pb-24 pt-2 animate-in fade-in duration-500 font-sans">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5 px-4 mt-4">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={() => navigate('/app/profile')}
-                            className="w-14 h-14 rounded-[20px] overflow-hidden border-2 border-white shadow-lg active:scale-90 transition-all bg-white"
+                            className="w-11 h-11 rounded-[16px] overflow-hidden border border-slate-100 shadow-md active:scale-90 transition-all bg-white shrink-0"
                         >
                             <img
                                 src={profile?.profileImage || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f1f5f9&color=0f172a&bold=true`}
@@ -509,94 +510,98 @@ const Dashboard = () => {
                             />
                         </button>
                         <div className="flex flex-col">
-                            <p className="text-[12px] text-slate-500 font-bold mb-0.5 opacity-70 uppercase tracking-wider">{greeting} 👋</p>
-                            <h2 className="text-xl font-black text-slate-900 leading-none tracking-tight">{firstName}</h2>
+                            <p className="text-[10px] text-slate-400 font-extrabold mb-0.5 uppercase tracking-wider">{greeting} 👋</p>
+                            <h2 className="text-[17px] font-black text-slate-800 leading-none tracking-tight">{firstName}</h2>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {user?.role === 'STUDENT' && (
-                            <div className="hover:scale-[1.03] transition-transform">
-                                {user?.subscription?.plan === 'FREE' || !user?.subscription?.plan ? (
-                                    <button 
-                                        onClick={() => navigate('/app/subscriptions')}
-                                        className="flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-black text-xs shadow-sm shadow-amber-400/20 active:scale-95 transition-all border border-amber-300/40"
-                                    >
-                                        <Sparkles className="w-3.5 h-3.5 fill-amber-950 text-amber-950" />
-                                        <span>Premium</span>
-                                    </button>
-                                ) : (
-                                    <button 
-                                        onClick={() => navigate('/app/subscriptions')}
-                                        className="flex items-center gap-1 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-xs shadow-sm shadow-emerald-500/20 active:scale-95 transition-all border border-emerald-400/35"
-                                    >
-                                        <Crown className="w-3.5 h-3.5 fill-emerald-100 text-emerald-100" />
-                                        <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO PLUS' : 'PRO'}</span>
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                    <div className="flex items-center gap-2">
+                        <div className="hover:scale-[1.03] transition-transform">
+                            {user?.subscription?.plan === 'FREE' || !user?.subscription?.plan ? (
+                                <button 
+                                    onClick={() => navigate('/app/subscriptions')}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-black text-[11px] shadow-sm shadow-amber-400/20 active:scale-95 transition-all border border-amber-300/40"
+                                >
+                                    <Sparkles className="w-3.5 h-3.5 fill-amber-950 text-amber-950" />
+                                    <span>Premium</span>
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => navigate('/app/subscriptions')}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-[11px] shadow-sm shadow-emerald-500/20 active:scale-95 transition-all border border-emerald-400/35"
+                                >
+                                    <Crown className="w-3.5 h-3.5 fill-emerald-100 text-emerald-100" />
+                                    <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO PLUS' : 'PRO'}</span>
+                                </button>
+                            )}
+                        </div>
                         <NotificationsDropdown 
-                            className="w-12 h-12 rounded-[18px] border border-slate-100 bg-white shadow-sm active:scale-90"
-                            iconClassName="w-6 h-6 text-slate-800"
+                            className="w-10 h-10 rounded-[14px] border border-slate-100 bg-white shadow-sm active:scale-90"
+                            iconClassName="w-5 h-5 text-slate-700"
                         />
                     </div>
                 </div>
-                <div className="px-5 mb-7">
-                    <div className="w-full bg-gradient-to-br from-[#3872FA] to-[#1e40af] rounded-[32px] p-6 text-white relative overflow-hidden flex flex-col justify-center min-h-[180px] shadow-xl shadow-blue-500/20">
+
+                {/* Banner / Explore tutorial card */}
+                <div className="px-4 mb-6">
+                    <div className="w-full bg-gradient-to-br from-[#2D68FE] via-[#1E40AF] to-[#172554] rounded-[24px] p-5 text-white relative overflow-hidden flex flex-col justify-center min-h-[140px] shadow-lg shadow-blue-500/10">
                         <div className="absolute inset-0 pointer-events-none opacity-30">
                             <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/20 rotate-45 transform rounded-xl blur-lg"></div>
                             <div className="absolute top-10 right-0 w-40 h-40 bg-blue-300/20 transform rounded-full blur-xl"></div>
                         </div>
-                        <div className="relative z-10 w-[65%] pl-1">
-                            <h3 className="text-[20px] font-black leading-[1.2] mb-5 tracking-tight text-white drop-shadow-sm">
+                        <div className="relative z-10 w-[60%] pl-0.5">
+                            <h3 className="text-[17px] font-black leading-[1.25] mb-3.5 tracking-tight text-white drop-shadow-sm">
                                 See how you can<br />find a job <span className="text-blue-200">quickly!</span>
                             </h3>
                              <button 
                                 onClick={() => setIsTutorialOpen(true)}
-                                className="bg-white text-blue-600 text-[13px] font-extrabold py-3 px-6 rounded-[14px] shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
+                                className="bg-white text-blue-600 text-[11.5px] font-extrabold py-2 px-4 rounded-[12px] shadow-md shadow-blue-900/10 active:scale-95 transition-all flex items-center gap-1.5"
                             >
                                 Explore Now
                             </button>
                         </div>
-                        <div className="absolute bottom-0 right-0 w-[55%] h-full pointer-events-none flex items-end justify-end z-10">
+                        <div className="absolute bottom-0 right-0 w-[50%] h-[110%] pointer-events-none flex items-end justify-end z-10">
                             <img
                                 src="/db2.png"
                                 alt="Character"
-                                className="h-full w-auto object-contain object-bottom drop-shadow-2xl translate-y-[0%]"
+                                className="h-full w-auto object-contain object-bottom drop-shadow-2xl translate-y-[5%]"
                             />
                         </div>
                     </div>
                 </div>
-                <div className="mb-8 px-5">
-                    <div className="flex items-center mb-4">
-                        <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">AI-Powered Career Tools</h3>
+
+                {/* AI Tools Grid */}
+                <div className="mb-6 px-4">
+                    <div className="flex items-center mb-3">
+                        <h3 className="text-[15px] font-extrabold text-slate-800 tracking-tight">AI-Powered Career Tools</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 md:gap-4">
+                    <div className="grid grid-cols-2 gap-2.5">
                         {features.map((feature, i) => (
                              <Link
                                 key={i}
                                 to={feature.link}
                                 data-tutorial-id={`feature-${i}`}
-                                className="group bg-white p-5 rounded-[24px] border border-slate-100 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.05)] active:scale-95 transition-all duration-300 flex flex-col items-center text-center"
+                                className="group bg-white p-3.5 rounded-[18px] border border-slate-100 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.03)] active:scale-95 transition-all duration-300 flex flex-col items-center text-center"
                             >
-                                <div className={`w-12 h-12 rounded-2xl ${feature.bg} flex items-center justify-center mb-3.5 shadow-sm`}>
-                                    <feature.icon className={`w-6 h-6 ${feature.color}`} strokeWidth={2.5} />
+                                <div className={`w-10 h-10 rounded-xl ${feature.bg} flex items-center justify-center mb-2.5 shadow-sm`}>
+                                    <feature.icon className={`w-5 h-5 ${feature.color}`} strokeWidth={2.5} />
                                 </div>
-                                <h4 className="font-bold text-slate-900 text-[13px] leading-tight mb-1 whitespace-pre-line">{feature.title}</h4>
-                                <p className="text-[10px] text-slate-500 font-medium leading-normal">{feature.desc}</p>
-                            </Link>
+                                <h4 className="font-extrabold text-slate-800 text-[11.5px] leading-tight mb-0.5 whitespace-pre-line">{feature.title}</h4>
+                                <p className="text-[9px] text-slate-400 font-semibold leading-normal">{feature.desc}</p>
+                             </Link>
                         ))}
                     </div>
                 </div>
-                <div className="mb-8 px-5">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Hyrego Job Postings</h3>
-                        <Link to="/app/hyrego-jobs" className="text-[13px] font-bold text-rose-600">See All</Link>
+
+                {/* Hyrego Job Postings */}
+                <div className="mb-6 px-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-[15px] font-extrabold text-slate-800 tracking-tight">Hyrego Job Postings</h3>
+                        <Link to="/app/hyrego-jobs" className="text-[11.5px] font-bold text-rose-500 hover:text-rose-600">See All</Link>
                     </div>
                     {loadingSpecial ? (
-                        <div className="flex overflow-x-auto gap-4 snap-x no-scrollbar pb-10 px-5 -mx-5">
+                        <div className="flex overflow-x-auto gap-3 snap-x no-scrollbar pb-6 px-4 -mx-4">
                             {[1, 2, 3].map((i) => (
-                                <SkeletonJobCard key={i} className="mb-0 w-[280px] shrink-0 snap-center" />
+                                <SkeletonJobCard key={i} className="mb-0 w-[260px] shrink-0 snap-center" />
                             ))}
                         </div>
                     ) : specialJobs.length > 0 ? (
@@ -617,7 +622,7 @@ const Dashboard = () => {
                                         key={job._id}
                                         job={internalJob}
                                         onClick={() => navigate(`/hyrego/${job._id}`)}
-                                        className="mb-0 w-[280px] shrink-0 snap-center"
+                                        className="mb-0 w-[260px] shrink-0 snap-center p-3.5 bg-white border border-slate-100 rounded-[20px] shadow-[0_4px_15px_-8px_rgba(0,0,0,0.05)] hover:border-blue-100/50"
                                         initiallySaved={savedJobsIds.has(job._id)}
                                         onToggleSave={(id, isSaved) => {
                                             const newIds = new Set(savedJobsIds);
@@ -630,41 +635,42 @@ const Dashboard = () => {
                             }}
                         />
                     ) : (
-                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center">
-                            <Sparkles className="w-8 h-8 text-rose-300 mx-auto mb-2" />
-                            <p className="text-slate-500 text-xs font-medium">No special postings at the moment.</p>
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 text-center">
+                            <Sparkles className="w-6 h-6 text-rose-355 mx-auto mb-1.5" />
+                            <p className="text-slate-400 text-[11px] font-medium">No special postings at the moment.</p>
                         </div>
                     )}
                 </div>
 
-                <div className="pl-5 pb-8">
-                    <div className="flex items-center justify-between mb-4 pr-5">
-                        <h3 className="text-[17px] font-bold text-slate-900 tracking-tight">Recent Jobs</h3>
-                        <Link to="/app/jobs" className="text-[13px] font-bold text-blue-600">See All</Link>
+                {/* Recent Jobs */}
+                <div className="pl-4 pb-4">
+                    <div className="flex items-center justify-between mb-3 pr-4">
+                        <h3 className="text-[15px] font-extrabold text-slate-800 tracking-tight">Recent Jobs</h3>
+                        <Link to="/app/jobs" className="text-[11.5px] font-bold text-blue-500 hover:text-blue-600">See All</Link>
                     </div>
-                    <div className="flex overflow-x-auto gap-2.5 no-scrollbar pb-2 snap-x pr-5">
+                    <div className="flex overflow-x-auto gap-2 no-scrollbar pb-2 snap-x pr-4">
                         {['All', 'Design', 'Technology', 'Finance'].map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
                                 disabled={loadingJobs}
-                                className={`px-5 py-2 rounded-full text-[12px] font-medium flex-shrink-0 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${activeCategory === cat ? 'bg-[#1855f4] text-white shadow-blue-500/20' : 'border border-blue-500/30 text-[#1855f4] hover:bg-blue-50'}`}
+                                className={`px-4 py-1.5 rounded-full text-[11px] font-bold flex-shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${activeCategory === cat ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10' : 'bg-slate-50 border border-slate-100 text-slate-500 hover:bg-slate-100/50'}`}
                             >
                                 {cat}
                             </button>
                         ))}
                     </div>
                 </div>
-                <div className="mt-4 pb-8 overflow-hidden">
+                <div className="mt-2 pb-6 overflow-hidden">
                     {loadingJobs ? (
-                        <div className="flex overflow-x-auto gap-4 snap-x no-scrollbar pb-10 px-5 -mx-5">
+                        <div className="flex overflow-x-auto gap-3 snap-x no-scrollbar pb-6 px-4 -mx-4">
                             {[1, 2, 3].map((i) => (
-                                <SkeletonJobCard key={i} className="mb-0 w-[280px] shrink-0 snap-center" />
+                                <SkeletonJobCard key={i} className="mb-0 w-[260px] shrink-0 snap-center" />
                             ))}
                         </div>
                     ) : error ? (
-                        <div className="px-5">
-                            <div className="text-red-500 bg-red-50 p-4 rounded-2xl font-semibold text-center mt-2 border border-red-100 text-[13px]">
+                        <div className="px-4">
+                            <div className="text-red-500 bg-red-50 p-3.5 rounded-2xl font-semibold text-center mt-1 border border-red-100 text-[12px]">
                                 {error}
                             </div>
                         </div>
@@ -679,7 +685,7 @@ const Dashboard = () => {
                                         key={jobId}
                                         job={job}
                                         onClick={setSelectedJob}
-                                        className="mb-0 w-[280px] shrink-0 snap-center"
+                                        className="mb-0 w-[260px] shrink-0 snap-center p-3.5 bg-white border border-slate-100 rounded-[20px] shadow-[0_4px_15px_-8px_rgba(0,0,0,0.05)] hover:border-blue-100/50"
                                         initiallySaved={savedJobsIds.has(jobId)}
                                         onToggleSave={(id, isSaved) => {
                                             const newIds = new Set(savedJobsIds);

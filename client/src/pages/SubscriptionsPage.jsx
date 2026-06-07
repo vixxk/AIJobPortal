@@ -4,6 +4,83 @@ import { getSubscriptionStatus, createSubscriptionOrder, getPlans } from '../ser
 import { useAuth } from '../context/AuthContext';
 import { Sparkles, Check, Zap, Crown, Mail, Loader2, BarChart2 } from 'lucide-react';
 
+const SubscriptionsSkeleton = () => {
+    return (
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-12 animate-pulse font-sans">
+            {/* Header section skeleton */}
+            <div className="text-center max-w-3xl mx-auto space-y-4 flex flex-col items-center">
+                <div className="h-6 w-48 bg-slate-200/80 rounded-full" />
+                <div className="h-10 w-3/4 md:w-full bg-slate-200/80 rounded-xl mt-2" />
+                <div className="h-10 w-1/2 bg-slate-200/80 rounded-xl" />
+                <div className="h-4 w-5/6 bg-slate-100 rounded-md mt-4" />
+                <div className="h-4 w-2/3 bg-slate-100 rounded-md" />
+            </div>
+
+            {/* Quota Usage card skeleton */}
+            <div className="bg-white rounded-[2.5rem] border border-slate-100 p-6 md:p-8 space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-slate-200/80 shrink-0" />
+                        <div className="space-y-2">
+                            <div className="h-5 w-32 bg-slate-200/80 rounded-md" />
+                            <div className="h-3.5 w-44 bg-slate-200/50 rounded-md" />
+                        </div>
+                    </div>
+                    <div className="h-10 w-48 bg-slate-100 rounded-2xl" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="space-y-4 p-5 bg-slate-50/50 rounded-[2rem] border border-slate-100">
+                            <div className="flex justify-between items-center">
+                                <div className="h-4 w-24 bg-slate-200/80 rounded-md" />
+                                <div className="h-5 w-12 bg-slate-200/80 rounded-md" />
+                            </div>
+                            <div className="w-full bg-slate-200/20 h-2 rounded-full" />
+                            <div className="flex justify-between items-center">
+                                <div className="h-3 w-16 bg-slate-200/50 rounded-md" />
+                                <div className="h-3 w-20 bg-slate-200/50 rounded-md" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Pricing cards grid skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
+                {[1, 2, 3].map((i) => (
+                    <div 
+                        key={i} 
+                        className="flex flex-col bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-md space-y-6 min-h-[450px]"
+                    >
+                        <div className="space-y-3 pb-6 border-b border-slate-100">
+                            <div className="flex items-center justify-between">
+                                <div className="h-7 w-24 bg-slate-200/80 rounded-md" />
+                                <div className="w-11 h-11 rounded-2xl bg-slate-200/80 shrink-0" />
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                                <div className="h-10 w-20 bg-slate-200/80 rounded-md" />
+                                <div className="h-4 w-12 bg-slate-200/50 rounded-md" />
+                            </div>
+                        </div>
+
+                        <div className="flex-1 py-4 space-y-4">
+                            {[1, 2, 3, 4, 5].map((itemIdx) => (
+                                <div key={itemIdx} className="flex items-center gap-3">
+                                    <div className="w-5 h-5 rounded-full bg-slate-200/50 shrink-0" />
+                                    <div className="h-4 w-4/5 bg-slate-100 rounded-md" />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="h-12 w-full bg-slate-200/80 rounded-2xl" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const SubscriptionsPage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -120,14 +197,7 @@ const SubscriptionsPage = () => {
     };
 
     if (loadingStatus || loadingPlans) {
-        return (
-            <div className="min-h-[70vh] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-                    <p className="text-slate-500 font-bold text-sm">Loading plans & usage status...</p>
-                </div>
-            </div>
-        );
+        return <SubscriptionsSkeleton />;
     }
 
     const currentPlan = statusData?.subscription?.plan || 'FREE';
