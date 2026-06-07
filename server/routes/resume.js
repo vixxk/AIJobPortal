@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const { protect } = require('../src/middleware/auth');
+const subscriptionHelper = require('../src/utils/subscriptionHelper');
 
 const FIREWORKS_API_KEY = process.env.FIREWORKS_API_KEY;
 const FIREWORKS_MODEL = 'accounts/fireworks/models/gpt-oss-120b';
@@ -30,12 +32,46 @@ const callFireworks = async (prompt) => {
     }
 };
 
+// All resume routes are protected by auth
+router.use(protect);
+
+// ─── Verify Resume Download ────────────────────────────────────────────────
+router.post('/download', async (req, res) => {
+    try {
+        const quota = await subscriptionHelper.checkQuota(req.user.id, 'resumes');
+        if (!quota.allowed) {
+            if (quota.payPerUseRequired) {
+                return res.status(403).json({
+                    success: false,
+                    payPerUseRequired: true,
+                    amount: quota.amount,
+                    featureType: 'RESUME',
+                    message: 'Your monthly resume download quota has been exhausted. Please pay to continue.'
+                });
+            } else {
+                return res.status(400).json({ success: false, message: quota.reason || 'Quota exceeded' });
+            }
+        }
+        
+        await subscriptionHelper.incrementUsage(req.user.id, 'resumes');
+        res.json({ success: true, message: 'Resume download quota verified and decremented.' });
+    } catch (error) {
+        console.error('Verify Resume Download Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error verifying resume download' });
+    }
+});
+
 // ─── Optimize career summary / objective ───────────────────────────────────
 router.post('/optimize-summary', async (req, res) => {
     try {
         const { text } = req.body;
         if (!text || text.trim().length < 10) return res.status(400).json({ success: false, message: 'Text too short' });
-        
+
+        const quota = await subscriptionHelper.checkQuota(req.user.id, 'resumesRewrites');
+        if (!quota.allowed) {
+            return res.status(403).json({ success: false, message: quota.reason || 'AI Rewrite quota exhausted' });
+        }
+
         const prompt = `You are an expert ATS resume writer. Rewrite the following career objective into a highly professional, ATS-optimized 1-2 sentence paragraph.
 
 Rules:
@@ -50,6 +86,7 @@ Raw Summary:
 "${text}"`;
 
         const optimizedText = await callFireworks(prompt);
+        await subscriptionHelper.incrementUsage(req.user.id, 'resumesRewrites');
         res.json({ success: true, optimizedText: optimizedText || text });
     } catch (error) {
         console.error('Optimize Summary Error:', error);
@@ -62,6 +99,11 @@ router.post('/optimize-experience', async (req, res) => {
     try {
         const { text, type } = req.body;
         if (!text || text.trim().length < 10) return res.status(400).json({ success: false, message: 'Text too short' });
+
+        const quota = await subscriptionHelper.checkQuota(req.user.id, 'resumesRewrites');
+        if (!quota.allowed) {
+            return res.status(403).json({ success: false, message: quota.reason || 'AI Rewrite quota exhausted' });
+        }
 
         const isProject = type === 'projects';
         const prompt = `You are an expert ATS resume writer specializing in technical resumes.
@@ -81,6 +123,7 @@ Raw ${isProject ? 'Project' : 'Experience'} Description:
 "${text}"`;
 
         const optimizedText = await callFireworks(prompt);
+        await subscriptionHelper.incrementUsage(req.user.id, 'resumesRewrites');
         res.json({ success: true, optimizedText: optimizedText || text });
     } catch (error) {
         console.error('Optimize Experience Error:', error);
@@ -94,6 +137,11 @@ router.post('/optimize', async (req, res) => {
     const { experiences, projects } = req.body;
     if (!experiences && !projects) {
       return res.status(400).json({ success: false, message: 'Experiences or Projects array is required' });
+    }
+
+    const quota = await subscriptionHelper.checkQuota(req.user.id, 'resumesRewrites');
+    if (!quota.allowed) {
+        return res.status(403).json({ success: false, message: quota.reason || 'AI Rewrite quota exhausted' });
     }
 
     let optimizedExperiences = null;
@@ -137,6 +185,7 @@ Raw Project:
         }));
     }
 
+    await subscriptionHelper.incrementUsage(req.user.id, 'resumesRewrites');
     res.json({ success: true, optimizedExperiences, optimizedProjects });
   } catch (error) {
     console.error('Resume Optimization Error:', error);

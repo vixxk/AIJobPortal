@@ -25,9 +25,8 @@ exports.getDashboard = catchAsync(async (req, res, next) => {
   await tutorData.save();
 
   const dashboardData = tutorData.toObject();
-  const currentLevel = tutorData.currentLevel || 1;
-  dashboardData.lessonsInCurrentLevel = (tutorData.lessonsProgress || []).filter(l => l.level === currentLevel).length;
-  dashboardData.lessonsNeededForUpgrade = 5;
+  dashboardData.lessonsInCurrentLevel = 0;
+  dashboardData.lessonsNeededForUpgrade = 1;
 
   // Add hours until reset (midnight)
   const now = new Date();
@@ -120,7 +119,25 @@ exports.submitSpeakingTest = catchAsync(async (req, res, next) => {
   });
 });
 
+const subscriptionHelper = require('../../utils/subscriptionHelper');
+
 exports.getLesson = catchAsync(async (req, res, next) => {
+  // Check quota
+  const quota = await subscriptionHelper.checkQuota(req.user.id, 'spokenEnglish');
+  if (!quota.allowed) {
+    if (quota.payPerUseRequired) {
+      return res.status(403).json({
+        status: 'quota_exhausted',
+        payPerUseRequired: true,
+        amount: quota.amount,
+        featureType: 'ENGLISH_TUTOR',
+        message: 'Your monthly Spoken English session quota has been exhausted. Please pay to continue.'
+      });
+    } else {
+      return next(new AppError(quota.reason || 'Quota exceeded', 400));
+    }
+  }
+
   const tutorData = await EnglishTutor.findOne({ user: req.user.id });
 
   if (tutorData) {
@@ -132,6 +149,9 @@ exports.getLesson = catchAsync(async (req, res, next) => {
   const lessonIndex = (tutorData && tutorData.lessonsProgress ? tutorData.lessonsProgress.filter(l => l.level === level).length : 0);
 
   const lesson = await aiService.generateLessonContent(level, lessonIndex);
+
+  // Successfully generated lesson content - increment usage
+  await subscriptionHelper.incrementUsage(req.user.id, 'spokenEnglish');
 
   res.status(200).json(lesson);
 });
@@ -287,10 +307,7 @@ exports.completeLesson = catchAsync(async (req, res, next) => {
     }
     tutorData.lastActivityDate = now;
 
-    const lessonsInCurLevel = tutorData.lessonsProgress.filter(l => l.level === tutorData.currentLevel).length;
-    if (lessonsInCurLevel >= 5 && tutorData.currentLevel < 10) {
-        tutorData.currentLevel += 1;
-    }
+    tutorData.currentLevel += 1;
 
     await tutorData.save();
 

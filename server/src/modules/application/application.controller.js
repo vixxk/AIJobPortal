@@ -6,6 +6,7 @@ const Job = require('../job/job.model');
 const sendEmail = require('../../config/mailer');
 const User = require('../user/user.model');
 const { getSignedUrl } = require('../../config/aws');
+const { applicationStatusEmail, interviewScheduledEmail, recruiterMessageEmail } = require('../../config/emailTemplates');
 
 exports.applyToJob = catchAsync(async (req, res, next) => {
   const job = await Job.findById(req.body.jobId);
@@ -90,6 +91,9 @@ exports.applyToJob = catchAsync(async (req, res, next) => {
   });
 });
 exports.getJobApplicants = catchAsync(async (req, res, next) => {
+  if (req.user.role === 'RECRUITER' && req.user.approvalStatus !== 'APPROVED') {
+    return next(new AppError('Only verified recruiters can view applicants. Please complete your company verification.', 403));
+  }
   const job = await Job.findOne({ _id: req.params.jobId, recruiterId: req.user._id });
   if (!job) {
     return next(new AppError('Job not found or permission denied', 404));
@@ -153,6 +157,9 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
   if (!application) {
     return next(new AppError('Application not found', 404));
   }
+  if (req.user.role === 'RECRUITER' && req.user.approvalStatus !== 'APPROVED') {
+    return next(new AppError('Only verified recruiters can update applications. Please complete your company verification.', 403));
+  }
   const job = await Job.findOne({ _id: application.jobId, recruiterId: req.user._id });
   if (!job) {
        return next(new AppError('Permission denied', 403));
@@ -176,41 +183,14 @@ exports.updateApplicationStatus = catchAsync(async (req, res, next) => {
       const studentUser = await User.findById(application.studentId._id || application.studentId);
       if (studentUser && studentUser.email) {
           let subject = `Application Update: ${job.title}`;
-          let bannerColor = '#4f46e5';
-          let customMessage = `Your application for '${job.title}' has been moved to: ${status}.`;
-
-          if (status === 'HIRED') {
-              subject = `Congratulations! You are Hired for ${job.title}`;
-              bannerColor = '#10b981';
-              customMessage = `We are thrilled to inform you that you have been <b>Hired</b> for the <b>${job.title}</b> position! Our team was highly impressed with your profile.`;
-          } else if (status === 'REJECTED') {
-              subject = `Update regarding your application for ${job.title}`;
-              bannerColor = '#ef4444';
-              customMessage = `Thank you for your interest in the ${job.title} position. After careful review, we have decided to move forward with other candidates at this time.`;
-          } else if (status === 'SHORTLISTED') {
-              bannerColor = '#f59e0b';
-              customMessage = `Great news! You have been <b>Shortlisted</b> for the <b>${job.title}</b> role. We will reach out soon for next steps.`;
-          }
+          if (status === 'HIRED') subject = `Congratulations! You are Hired for ${job.title}`;
+          else if (status === 'REJECTED') subject = `Update regarding your application for ${job.title}`;
 
           await sendEmail({
               email: studentUser.email,
-              subject: subject,
-              message: customMessage.replace(/<[^>]*>/g, ''),
-              html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #e5e7eb; border-top: 5px solid ${bannerColor}; padding: 20px;">
-                  <h2 style="color: ${bannerColor};">Application Status Update</h2>
-                  <p>Hi <b>${studentUser.name}</b>,</p>
-                  <p>${customMessage}</p>
-                  <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0; color: #6b7280; font-size: 12px; font-weight: bold; text-transform: uppercase;">Current Status</p>
-                    <p style="margin: 5px 0 0; font-size: 18px; font-weight: 800; color: ${bannerColor};">${status}</p>
-                  </div>
-                  ${feedback ? `<p><b>Message from Recruiter:</b><br/>${feedback}</p>` : ''}
-                  <p>Please log in to your dashboard to view full details and any action items.</p>
-                  <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0 20px;"/>
-                  <p style="font-size: 13px; color: #9ca3af;">Sent by ${job.companyName || 'Recruitment Team'} via Hyrego AI</p>
-                </div>
-              `
+              subject,
+              message: `Your application for ${job.title} has been updated to: ${status}.`,
+              html: applicationStatusEmail(studentUser.name, job.title, status, feedback, job.companyName)
           });
       }
   } catch (err) {
@@ -391,32 +371,9 @@ exports.sendNotificationToApplicant = catchAsync(async (req, res, next) => {
         const meetingInfo = `Meeting scheduled for ${scheduledDate} at ${scheduledTime}. Link: ${meetingLink}`;
         notificationMessage = message || `A meeting has been scheduled for your application. ${meetingInfo}`;
         emailSubject = `Interview Scheduled: ${job.title}`;
-        emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #1e293b;">Interview Scheduled</h2>
-                <p>Hi ${application.studentId.name},</p>
-                <p>Great news! An interview has been scheduled for the <strong>${job.title}</strong> position.</p>
-                <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                    <p><strong>Date:</strong> ${scheduledDate}</p>
-                    <p><strong>Time:</strong> ${scheduledTime}</p>
-                    <p><strong>Meeting Link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
-                </div>
-                ${message ? `<p><strong>Recruiter's Message:</strong><br>${message}</p>` : ''}
-                <p>Good luck!</p>
-            </div>
-        `;
+        emailHtml = interviewScheduledEmail(application.studentId.name, job.title, scheduledDate, scheduledTime, meetingLink, message, job.companyName);
     } else {
-        emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #1e293b;">Message from ${job.companyName || 'Recruiter'}</h2>
-                <p>Hi ${application.studentId.name},</p>
-                <p>You have received a new message regarding your application for <strong>${job.title}</strong>:</p>
-                <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                    <p>${message}</p>
-                </div>
-                <p>Please check the candidate portal for more details.</p>
-            </div>
-        `;
+        emailHtml = recruiterMessageEmail(application.studentId.name, job.title, message, job.companyName);
     }
 
     // 1. Create Platform Notification

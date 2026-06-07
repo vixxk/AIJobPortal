@@ -8,11 +8,13 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const Notification = require('../notification/notification.model');
 const sendEmail = require('../../config/mailer');
+const { accountApprovedEmail, accountRejectedEmail } = require('../../config/emailTemplates');
 const RecruiterProfile = require('../recruiter/recruiter.model');
 const { CollegeProfile } = require('../college/college.model');
 const Issue = require('../issue/issue.model');
 const StudentProfile = require('../student/student.model');
 const { uploadFile } = require('../../utils/fileUpload');
+const Order = require('../payment/order.model');
 
 
 exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
@@ -45,7 +47,7 @@ exports.getAnalyticsSummary = catchAsync(async (req, res, next) => {
 });
 exports.getPendingUsers = catchAsync(async (req, res, next) => {
   const pendingUsers = await User.find({ approvalStatus: 'PENDING' })
-    .select('name email role approvalStatus avatar createdAt')
+    .select('name email role approvalStatus avatar createdAt phoneNumber')
     .sort({ createdAt: -1 });
   res.status(200).json({
     status: 'success',
@@ -86,19 +88,12 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
       });
     } catch (e) {  }
     try {
+      const loginUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/login`;
       await sendEmail({
         email: user.email,
         subject: 'Your Hyrego Account Has Been Approved!',
         message: `Hi ${user.name}, your account has been approved. You can now log in and start using Hyrego.`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 16px;">
-            <h2 style="color: #1e293b;">Account Approved! 🎉</h2>
-            <p style="color: #475569;">Hi ${user.name},</p>
-            <p style="color: #475569;">Your <strong>${user.role === 'RECRUITER' ? 'Recruiter' : 'College'}</strong> account on Hyrego has been approved by our admin team.</p>
-            <p style="color: #475569;">You can now log in and access all features available to you.</p>
-            <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Login Now</a>
-          </div>
-        `
+        html: accountApprovedEmail(user.name, user.role, loginUrl)
       });
     } catch (e) {  }
     res.status(200).json({
@@ -107,21 +102,30 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
       data: { user: { id: user._id, name: user.name, role: user.role, approvalStatus: user.approvalStatus } }
     });
   } else {
+    const { rejectionReason } = req.body;
     user.approvalStatus = 'REJECTED';
     await user.save({ validateBeforeSave: false });
+
+    if (user.role === 'RECRUITER') {
+      await RecruiterProfile.findOneAndUpdate(
+        { userId: user._id },
+        { 
+          approved: false, 
+          verificationSubmitted: false, 
+          rejectionReason: rejectionReason || 'Information provided was insufficient or invalid.'
+        }
+      );
+    } else if (user.role === 'COLLEGE_ADMIN') {
+      await CollegeProfile.findOneAndUpdate({ userId: user._id }, { approved: false });
+    }
+
     try {
+      const reason = rejectionReason || 'Information provided was insufficient or invalid.';
       await sendEmail({
         email: user.email,
         subject: 'Hyrego Account Application Update',
-        message: `Hi ${user.name}, unfortunately your account application was not approved at this time. Please contact support for more information.`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 16px;">
-            <h2 style="color: #1e293b;">Account Application Update</h2>
-            <p style="color: #475569;">Hi ${user.name},</p>
-            <p style="color: #475569;">Unfortunately, your <strong>${user.role === 'RECRUITER' ? 'Recruiter' : 'College'}</strong> account application was not approved at this time.</p>
-            <p style="color: #475569;">Please contact our support team for more information.</p>
-          </div>
-        `
+        message: `Hi ${user.name}, unfortunately your account application was not approved at this time. Reason: ${reason}`,
+        html: accountRejectedEmail(user.name, user.role, reason)
       });
     } catch (e) {  }
     res.status(200).json({
@@ -131,13 +135,41 @@ exports.updateUserApproval = catchAsync(async (req, res, next) => {
     });
   }
 });
+exports.getRecruiterProfile = catchAsync(async (req, res, next) => {
+  const { userId } = req.params;
+  const profile = await RecruiterProfile.findOne({ userId });
+  if (!profile) {
+    return next(new AppError('Recruiter profile not found', 404));
+  }
+
+  // Sign verification docs so that admin can download them
+  const { getSignedUrl } = require('../../config/aws');
+  const docFields = ['gstCertificate', 'panCard', 'companyRegistrationCertificate', 'startupIndiaCertificate'];
+  for (const field of docFields) {
+    if (profile[field]) {
+      if (!profile[field].startsWith('http')) {
+        profile[field] = await getSignedUrl(profile[field]);
+      } else if (profile[field].includes('s3')) {
+        const key = profile[field].split('.amazonaws.com/')[1]?.split('?')[0];
+        if (key) profile[field] = await getSignedUrl(key);
+      }
+    }
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      profile
+    }
+  });
+});
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const { role, status, page = 1, limit = 20 } = req.query;
   const filter = {};
   if (role) filter.role = role;
   if (status) filter.approvalStatus = status;
   const users = await User.find(filter)
-    .select('name email role approvalStatus isVerified isActive avatar createdAt')
+    .select('name email role approvalStatus isVerified isActive avatar createdAt phoneNumber')
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
@@ -242,7 +274,7 @@ exports.createTeacher = catchAsync(async (req, res, next) => {
 });
 
 exports.getAllJobs = catchAsync(async (req, res, next) => {
-  const jobs = await Job.find()
+  const jobs = await Job.find({ status: { $ne: 'DRAFT' } })
     .sort('-createdAt')
     .populate('recruiterId', 'name email')
     .populate('courseId', 'title');
@@ -306,6 +338,25 @@ exports.createJob = catchAsync(async (req, res, next) => {
 const notifyStudentsOfJob = async (job, isNewlyApproved) => {
   if (!job || job.status !== 'APPROVED') return;
 
+  // Resolve company name properly
+  let company = job.companyName;
+  if (!company || company === 'Organization') {
+    if (job.recruiterId) {
+      const recProfile = await RecruiterProfile.findOne({ userId: job.recruiterId });
+      if (recProfile && recProfile.companyName && recProfile.companyName !== 'Organization') {
+        company = recProfile.companyName;
+      } else {
+        const recUser = await User.findById(job.recruiterId);
+        if (recUser && recUser.name) {
+          company = recUser.name;
+        }
+      }
+    }
+  }
+  if (!company || company === 'Organization') {
+    company = 'Hyrego Partner';
+  }
+
   // 1. Handle Special Jobs
   if (job.isSpecial) {
     if (job.courseId) {
@@ -328,7 +379,7 @@ const notifyStudentsOfJob = async (job, isNewlyApproved) => {
         const notifications = allStudents.map(student => ({
           userId: student._id,
           title: 'Hyrego Exclusive Job! ✨',
-          message: `A new verified job "${job.title}" at ${job.companyName || 'Hyrego Partner'} is now live. Apply now!`,
+          message: `A new verified job "${job.title}" at ${company} is now live. Apply now!`,
           type: 'JOB_POSTING',
           metadata: { jobId: job._id }
         }));
@@ -359,7 +410,7 @@ const notifyStudentsOfJob = async (job, isNewlyApproved) => {
       const notifications = studentUserIds.map(studentId => ({
         userId: studentId,
         title: 'New Job Match! 🎯',
-        message: `A new job "${job.title}" matches your skills. Check it out!`,
+        message: `A new job "${job.title}" at ${company} matches your skills. Check it out!`,
         type: 'JOB_MATCH',
         metadata: { jobId: job._id }
       }));
@@ -625,4 +676,31 @@ exports.downloadCompetitionParticipants = catchAsync(async (req, res, next) => {
     res.header('Content-Type', 'text/csv');
     res.attachment(`${competition.title.replace(/\s+/g, '_')}_Participants.csv`);
     res.status(200).send(csvContent);
+});
+
+exports.getPendingCounts = catchAsync(async (req, res, next) => {
+  const recruiters = await User.countDocuments({ role: 'RECRUITER', approvalStatus: 'PENDING' });
+  const colleges = await User.countDocuments({ role: 'COLLEGE_ADMIN', approvalStatus: 'PENDING' });
+  const students = await User.countDocuments({ role: 'STUDENT', approvalStatus: 'PENDING' });
+  const teachers = await User.countDocuments({ role: 'TEACHER', approvalStatus: 'PENDING' });
+  const jobs = await Job.countDocuments({ status: 'PENDING' });
+  const courses = await Course.countDocuments({ approvalStatus: 'PENDING' });
+  const competitions = await Competition.countDocuments({ status: 'PENDING' });
+  const issues = await Issue.countDocuments({ status: 'pending' });
+  const payments = await Order.countDocuments({ status: 'PENDING' });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      recruiters,
+      colleges,
+      students,
+      teachers,
+      jobs,
+      courses,
+      competitions,
+      issues,
+      payments
+    }
+  });
 });

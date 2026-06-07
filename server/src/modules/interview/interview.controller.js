@@ -1,9 +1,26 @@
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
 const aiService = require('../../services/ai.service');
+const subscriptionHelper = require('../../utils/subscriptionHelper');
 
 exports.startInterview = catchAsync(async (req, res, next) => {
     const { job_role, interview_type, difficulty } = req.body;
+
+    // Check quota
+    const quota = await subscriptionHelper.checkQuota(req.user.id, 'interviews');
+    if (!quota.allowed) {
+        if (quota.payPerUseRequired) {
+            return res.status(403).json({
+                status: 'quota_exhausted',
+                payPerUseRequired: true,
+                amount: quota.amount,
+                featureType: 'INTERVIEW',
+                message: 'Your monthly interview quota has been exhausted. Please pay to continue.'
+            });
+        } else {
+            return next(new AppError(quota.reason || 'Quota exceeded', 400));
+        }
+    }
 
     let resumeText = '';
     if (req.file) {
@@ -40,6 +57,9 @@ exports.startInterview = catchAsync(async (req, res, next) => {
             }
         });
     }
+
+    // Increment usage since session successfully generated questions
+    await subscriptionHelper.incrementUsage(req.user.id, 'interviews');
 
     console.log(`[Interview] Started: role=${job_role}, 5 questions generated`);
     res.status(200).json({

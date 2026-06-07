@@ -72,6 +72,49 @@ const userSchema = new mongoose.Schema({
   notificationSettings: {
     platform: { type: Boolean, default: true },
     email: { type: Boolean, default: true }
+  },
+  subscription: {
+    plan: {
+      type: String,
+      enum: ['FREE', 'PRO', 'PRO_PLUS'],
+      default: 'FREE'
+    },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'PAUSED', 'CANCELLED', 'EXPIRED', 'PENDING_AUTH'],
+      default: 'ACTIVE'
+    },
+    cashfreeSubscriptionId: String,
+    currentPeriodEnd: {
+      type: Date,
+      default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    }
+  },
+  usageLimits: {
+    spokenEnglish: {
+      used: { type: Number, default: 0 },
+      limit: { type: Number, default: 30 },
+      lastSpokenEnglishDate: { type: Date, default: null },
+      dailyUsed: { type: Number, default: 0 }
+    },
+    resumes: {
+      used: { type: Number, default: 0 },
+      limit: { type: Number, default: 1 }
+    },
+    resumesRewrites: {
+      used: { type: Number, default: 0 },
+      limit: { type: Number, default: 20 } // 1 * 20 for Free
+    },
+    interviews: {
+      used: { type: Number, default: 0 },
+      limit: { type: Number, default: 4 }, // 4 per month
+      lastInterviewDate: { type: Date, default: null },
+      dates: { type: [Date], default: [] }
+    },
+    lastResetDate: {
+      type: Date,
+      default: Date.now
+    }
   }
 }, { timestamps: true });
 

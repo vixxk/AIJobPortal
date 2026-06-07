@@ -136,7 +136,7 @@ api.interceptors.response.use(
       showSessionExpiredModal(displayMessage);
 
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/login';
       }, 3000);
     }
 

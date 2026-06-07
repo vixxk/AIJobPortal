@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, Briefcase, GraduationCap, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, GraduationCap, Eye, EyeOff, Loader2, Phone } from 'lucide-react';
 import Logo from '../components/Logo';
 import registerIllustration from '../assets/register_illustration.png';
 const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [role, setRole] = useState('STUDENT');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
@@ -23,7 +24,15 @@ const Register = () => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
-        const result = await register(name, email, password, role);
+        if (role === 'RECRUITER') {
+            const cleanPhone = phoneNumber.replace(/\D/g, '');
+            if (cleanPhone.length !== 10) {
+                setError('Mobile number must be exactly 10 digits.');
+                setIsLoading(false);
+                return;
+            }
+        }
+        const result = await register(name, email, password, role, role === 'RECRUITER' ? phoneNumber : undefined);
         setIsLoading(false);
         if (result.success) {
             navigate('/login', { state: { view: 'otp-verify', email, name, fromRegister: true } });
@@ -69,9 +78,22 @@ const Register = () => {
                         type="email" required value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full pl-11 px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white text-[15px] font-medium transition-all"
-                        placeholder="Email Address"
+                        placeholder={role === 'RECRUITER' ? 'Work Email' : 'Email Address'}
                     />
                 </div>
+                {role === 'RECRUITER' && (
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Phone className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                            type="tel" required value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                            className="w-full pl-11 px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white text-[15px] font-medium transition-all"
+                            placeholder="Mobile Number"
+                        />
+                    </div>
+                )}
                 <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Lock className="h-4 w-4 text-slate-400" />

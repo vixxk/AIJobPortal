@@ -14,7 +14,19 @@ const orderSchema = new mongoose.Schema({
   course: {
     type: mongoose.Schema.ObjectId,
     ref: 'Course',
-    required: true
+    required: false
+  },
+  orderType: {
+    type: String,
+    enum: ['COURSE', 'SUBSCRIPTION', 'PAY_PER_USE'],
+    default: 'COURSE'
+  },
+  subscriptionPlanKey: {
+    type: String
+  },
+  payPerUseType: {
+    type: String,
+    enum: ['INTERVIEW', 'RESUME', 'ENGLISH_TUTOR']
   },
   amount: {
     type: Number,

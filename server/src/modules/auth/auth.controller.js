@@ -14,37 +14,22 @@ const buildUserPayload = (user) => ({
   profileCompleted: user.profileCompleted || false,
   needsRole: !user.role,
   pendingApproval:
-    (user.role === 'RECRUITER' || user.role === 'COLLEGE_ADMIN') &&
+    user.role === 'COLLEGE_ADMIN' &&
     user.approvalStatus === 'PENDING',
   notificationSettings: user.notificationSettings || { platform: true, email: true }
 });
 const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  console.log("=== GENERATED OTP IS ===", otp);
+  return otp;
 };
+const { otpEmail } = require('../../config/emailTemplates');
 const sendOTPEmail = async (email, otp, name) => {
-  const html = `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #f8fafc; padding: 32px 0;">
-      <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-        <div style="text-align: center; margin-bottom: 28px;">
-          <div style="display: inline-flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 800; color: #1e293b;">
-            <span style="background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 6px 10px; border-radius: 8px; font-size: 18px;">JP</span>
-            Hyrego
-          </div>
-        </div>
-        <h2 style="color: #1e293b; font-size: 22px; font-weight: 700; margin: 0 0 8px;">Your Login OTP</h2>
-        <p style="color: #64748b; font-size: 15px; margin: 0 0 28px;">Hi ${name || 'there'}, use the code below to sign in. It expires in 10 minutes.</p>
-        <div style="background: linear-gradient(135deg, #eff6ff, #f0fdf4); border: 2px solid #bfdbfe; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-          <span style="font-size: 44px; font-weight: 900; letter-spacing: 10px; color: #2563eb; font-family: 'Courier New', monospace;">${otp}</span>
-        </div>
-        <p style="color: #94a3b8; font-size: 13px; text-align: center; margin: 0;">If you didn't request this, please ignore this email.</p>
-      </div>
-    </div>
-  `;
   await sendEmail({
     email,
     subject: `${otp} – Your Hyrego Login Code`,
     message: `Your OTP for Hyrego login is: ${otp}. It expires in 10 minutes.`,
-    html
+    html: otpEmail(otp, name)
   });
 };
 exports.googleAuth = catchAsync(async (req, res, next) => {
@@ -193,9 +178,18 @@ exports.assignRole = catchAsync(async (req, res, next) => {
   });
 });
 exports.register = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, phoneNumber } = req.body;
   if (role === 'SUPER_ADMIN' || role === 'TEACHER') {
     return next(new AppError('Cannot register with this role publicly.', 400));
+  }
+  if (role === 'RECRUITER') {
+    if (!phoneNumber) {
+      return next(new AppError('Mobile number is required for recruiters.', 400));
+    }
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      return next(new AppError('Mobile number must be exactly 10 digits.', 400));
+    }
   }
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -205,6 +199,7 @@ exports.register = catchAsync(async (req, res, next) => {
     existingUser.password = password;
     existingUser.name = name;
     existingUser.role = role;
+    if (phoneNumber) existingUser.phoneNumber = phoneNumber;
     existingUser.approvalStatus = role === 'RECRUITER' || role === 'COLLEGE_ADMIN' ? 'PENDING' : 'NOT_REQUIRED';
     const otp = generateOTP();
     existingUser.otpCode = crypto.createHash('sha256').update(otp).digest('hex');
@@ -230,7 +225,8 @@ exports.register = catchAsync(async (req, res, next) => {
     email,
     password,
     role,
-    approvalStatus
+    approvalStatus,
+    phoneNumber
   });
   const otp = generateOTP();
   newUser.otpCode = crypto.createHash('sha256').update(otp).digest('hex');

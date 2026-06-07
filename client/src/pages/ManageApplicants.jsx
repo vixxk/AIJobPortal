@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from '../utils/axios';
 import { User, Mail, Link as LinkIcon, CheckCircle, XCircle, ArrowLeft, Download, Users, Briefcase, Building, Award, FileText, Globe, Calendar, MapPin, Phone, ShieldCheck, Layers, Sparkles, Filter, ArrowUpDown, SlidersHorizontal, Zap, HelpCircle, Github, IndianRupee } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 import AIInterviewSetupModal from '../components/interview/AIInterviewSetupModal';
 
@@ -24,6 +25,36 @@ const ManageApplicants = () => {
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [showMatchInfo, setShowMatchInfo] = useState(false);
     const [setupModalApp, setSetupModalApp] = useState(null);
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: null,
+        confirmText: "Confirm",
+        cancelText: "Cancel",
+        isDestructive: false
+    });
+
+    const showConfirm = (options) => {
+        return new Promise((resolve) => {
+            setConfirmModal({
+                isOpen: true,
+                title: options.title || "Are you sure?",
+                message: options.message || "",
+                confirmText: options.confirmText || "Confirm",
+                cancelText: options.cancelText || "Cancel",
+                isDestructive: !!options.isDestructive,
+                onConfirm: () => {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    resolve(true);
+                },
+                onCancel: () => {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    resolve(false);
+                }
+            });
+        });
+    };
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -87,9 +118,48 @@ const ManageApplicants = () => {
             }
         } catch (error) {
             console.error("Failed to update status", error);
-            alert("Error updating application status");
+            toast.error("Error updating application status");
         } finally {
             setStatusUpdating(null);
+        }
+    };
+
+    const handleCloseJob = async () => {
+        const confirmed = await showConfirm({
+            title: "Close Job Opening",
+            message: "Are you sure you want to close this job opening? New applications will no longer be accepted, and it will be hidden from students.",
+            confirmText: "Close Opening",
+            isDestructive: true
+        });
+        if (!confirmed) return;
+        try {
+            const res = await axios.patch(`/jobs/${jobId}`, { status: 'CLOSED' });
+            if (res.data.status === 'success') {
+                setJob(res.data.data.job);
+                toast.success("Job opening closed successfully!");
+            }
+        } catch (error) {
+            console.error("Failed to close job", error);
+            toast.error(error.response?.data?.message || "Failed to close job opening.");
+        }
+    };
+
+    const handleReopenJob = async () => {
+        const confirmed = await showConfirm({
+            title: "Reopen Job Opening",
+            message: "Are you sure you want to reopen this job opening? If you are a verified recruiter, it will be sent to the admin for approval.",
+            confirmText: "Reopen",
+        });
+        if (!confirmed) return;
+        try {
+            const res = await axios.patch(`/jobs/${jobId}`, { status: 'PENDING' });
+            if (res.data.status === 'success') {
+                setJob(res.data.data.job);
+                toast.success("Job opening sent for approval!");
+            }
+        } catch (error) {
+            console.error("Failed to reopen job", error);
+            toast.error(error.response?.data?.message || "Failed to reopen job opening.");
         }
     };
 
@@ -121,7 +191,12 @@ const ManageApplicants = () => {
 
         if (aboveThreshold.length === 0 && topCandidates.length > 0) {
             const bestCandidate = topCandidates[0];
-            const confirmBest = window.confirm(`No eligible candidates found above 60% match. Would you like to shortlist the best matching candidate: ${bestCandidate.studentId?.name} (${bestCandidate.currentScore}%)?`);
+            const confirmBest = await showConfirm({
+                title: "No Match Above 60%",
+                message: `No eligible candidates found above 60% match. Would you like to shortlist the best matching candidate: ${bestCandidate.studentId?.name} (${bestCandidate.currentScore}%)?`,
+                confirmText: "Shortlist Best",
+                cancelText: "Cancel"
+            });
             
             if (confirmBest) {
                 toShortlist = [bestCandidate];
@@ -129,11 +204,16 @@ const ManageApplicants = () => {
                 return;
             }
         } else if (toShortlist.length === 0) {
-            alert("No candidates available for shortlisting.");
+            toast.error("No candidates available for shortlisting.");
             return;
         }
 
-        if (!window.confirm(`Auto-shortlist ${toShortlist.length} candidate(s)?`)) return;
+        const confirmAuto = await showConfirm({
+            title: "Confirm Auto-Shortlist",
+            message: `Are you sure you want to auto-shortlist ${toShortlist.length} candidate(s)?`,
+            confirmText: "Auto-Shortlist",
+        });
+        if (!confirmAuto) return;
 
         setBulkUpdating(true);
         try {
@@ -146,10 +226,10 @@ const ManageApplicants = () => {
                 return isSelected ? { ...app, status: 'SHORTLISTED' } : app;
             }));
             
-            alert(`Successfully shortlisted ${toShortlist.length} candidate(s)!`);
+            toast.success(`Successfully shortlisted ${toShortlist.length} candidate(s)!`);
         } catch (error) {
             console.error("Bulk update failed", error);
-            alert("Failed to shortlist some candidates.");
+            toast.error("Failed to shortlist some candidates.");
         } finally {
             setBulkUpdating(false);
         }
@@ -172,7 +252,7 @@ const ManageApplicants = () => {
             }
         } catch (error) {
             console.error("Smart match failed", error);
-            alert("Failed to perform smart matching.");
+            toast.error("Failed to perform smart matching.");
         } finally {
             setIsSmartMatching(false);
         }
@@ -212,6 +292,48 @@ const ManageApplicants = () => {
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+            {/* Job Header Banner */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{job.title}</h1>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            job.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                            job.status === 'CLOSED' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                            job.status === 'PENDING' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                            'bg-slate-50 text-slate-500 border border-slate-200'
+                        }`}>
+                            {job.status}
+                        </span>
+                    </div>
+                    <p className="text-slate-500 text-sm font-semibold mt-1 flex items-center gap-1.5">
+                        <Building className="w-4 h-4 text-slate-400" />
+                        {job.companyName || 'Organization'}
+                        <span className="text-slate-300">•</span>
+                        <MapPin className="w-4 h-4 text-slate-400" />
+                        {job.location}
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    {job.status === 'APPROVED' ? (
+                        <button
+                            onClick={handleCloseJob}
+                            className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-rose-100 uppercase tracking-wider flex items-center gap-2"
+                        >
+                            <XCircle className="w-4 h-4" /> Close Opening
+                        </button>
+                    ) : job.status === 'CLOSED' ? (
+                        <button
+                            onClick={handleReopenJob}
+                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-emerald-100 uppercase tracking-wider flex items-center gap-2"
+                        >
+                            <CheckCircle className="w-4 h-4" /> Reopen Opening
+                        </button>
+                    ) : null}
+                </div>
+            </div>
+
             {/* Control Bar */}
             <div className="bg-white p-3 md:p-4 rounded-[24px] md:rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center justify-between">
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
@@ -593,6 +715,47 @@ const ManageApplicants = () => {
                 application={setupModalApp}
                 job={job}
             />
+
+            <ConfirmationModal 
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                cancelText={confirmModal.cancelText}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={confirmModal.onCancel}
+                isDestructive={confirmModal.isDestructive}
+            />
+        </div>
+    );
+};
+
+const ConfirmationModal = ({ isOpen, title, message, confirmText, cancelText, onConfirm, onCancel, isDestructive }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-md rounded-[24px] overflow-hidden shadow-2xl p-6 border border-slate-100 animate-in zoom-in-95 duration-200">
+                <h3 className="text-lg font-black text-slate-900 tracking-tight mb-2 uppercase">{title}</h3>
+                <p className="text-slate-500 text-sm font-semibold leading-relaxed mb-6">{message}</p>
+                <div className="flex gap-3 justify-end">
+                    <button
+                        onClick={onCancel}
+                        className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black rounded-xl transition-all uppercase tracking-wider"
+                    >
+                        {cancelText}
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className={`px-5 py-2.5 text-white text-xs font-black rounded-xl transition-all uppercase tracking-wider shadow-lg ${
+                            isDestructive 
+                                ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-100' 
+                                : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
+                        }`}
+                    >
+                        {confirmText}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
@@ -983,12 +1146,12 @@ const NotificationModal = ({ applicationId, onClose }) => {
                 scheduledTime
             });
             if (res.data.status === 'success') {
-                alert('Notification sent successfully!');
+                toast.success('Notification sent successfully!');
                 onClose();
             }
         } catch (error) {
             console.error("Failed to send notification", error);
-            alert(error.response?.data?.message || "Failed to send notification");
+            toast.error(error.response?.data?.message || "Failed to send notification");
         } finally {
             setSending(false);
         }

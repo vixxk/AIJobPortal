@@ -231,21 +231,51 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                         </div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+                        {job.opportunityType && (
+                            <div className="bg-indigo-50 p-3 rounded-2xl border border-indigo-100">
+                                <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mb-1">Type</p>
+                                <p className="text-sm font-bold text-indigo-700">{job.opportunityType}</p>
+                            </div>
+                        )}
                         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Job Type</p>
                             <p className="text-sm font-bold text-slate-800 capitalize">{job.type || job.jobType || 'Full Time'}</p>
                         </div>
                         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Experience</p>
-                            <p className="text-sm font-bold text-slate-800">{job.experienceRange || 'Entry Level'}</p>
+                            <p className="text-sm font-bold text-slate-800">{job.experienceRange || job.experienceRequired || 'Entry Level'}</p>
                         </div>
-                        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 hidden sm:block">
+                        {job.workMode && (
+                            <div className="bg-violet-50 p-3 rounded-2xl border border-violet-100">
+                                <p className="text-[10px] text-violet-400 font-bold uppercase tracking-wider mb-1">Work Mode</p>
+                                <p className="text-sm font-bold text-violet-700">{job.workMode}</p>
+                            </div>
+                        )}
+                        {job.workSchedule && (
+                            <div className="bg-sky-50 p-3 rounded-2xl border border-sky-100">
+                                <p className="text-[10px] text-sky-400 font-bold uppercase tracking-wider mb-1">Schedule</p>
+                                <p className="text-sm font-bold text-sky-700">{job.workSchedule}</p>
+                            </div>
+                        )}
+                        {job.numberOfOpenings > 1 && (
+                            <div className="bg-purple-50 p-3 rounded-2xl border border-purple-100">
+                                <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider mb-1">Openings</p>
+                                <p className="text-sm font-bold text-purple-700">{job.numberOfOpenings} positions</p>
+                            </div>
+                        )}
+                        {job.ppoOffered && (
+                            <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100">
+                                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mb-1">PPO</p>
+                                <p className="text-sm font-bold text-emerald-700">Available ✓</p>
+                            </div>
+                        )}
+                        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Posted</p>
                             <p className="text-sm font-bold text-slate-800">{timeSince(job.createdAt)}</p>
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <h3 className="text-lg font-bold text-slate-900">Job Description</h3>
+                        <h3 className="text-lg font-bold text-slate-900">{job.opportunityType === 'Internship' ? 'Internship Details' : 'Job Description'}</h3>
                         <div className="text-slate-600 leading-relaxed space-y-4 text-sm md:text-base">
                             <div className="whitespace-pre-line">
                                 {job.description || job.snippet || "No additional description provided for this position."}
@@ -259,6 +289,18 @@ const JobDetailsModal = ({ job, onClose, initiallySaved, onToggleSave, hideActio
                                             <li key={i}>{res}</li>
                                         ))}
                                     </ul>
+                                </>
+                            )}
+
+                            {/* Benefits / Perks */}
+                            {((job.benefits && job.benefits.length > 0) || (job.perks && job.perks.length > 0)) && (
+                                <>
+                                    <h4 className="font-bold text-slate-800 pt-2">{job.opportunityType === 'Internship' ? 'Perks' : 'Benefits'}:</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(job.benefits || []).concat(job.perks || []).map((item, i) => (
+                                            <span key={i} className="px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-lg text-xs font-semibold text-amber-700">{item}</span>
+                                        ))}
+                                    </div>
                                 </>
                             )}
                         </div>

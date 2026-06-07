@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     FileText, Sparkles, Download, Loader2, Briefcase, Code,
     User, BookOpen, Layers, Award, ChevronDown, ChevronUp, ChevronRight,
@@ -428,9 +429,11 @@ const SAMPLE_DATA = {
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 const AiResumeBuilder = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [loadingSummary, setLoadingSummary] = useState(false);
     const [loadingExp, setLoadingExp] = useState(null);
+    const [sessionRewriteCount, setSessionRewriteCount] = useState(0);
     const [zoom, setZoom] = useState(75);
     const [mobileTab, setMobileTab] = useState('edit');
     const [selectedTemplate, setSelectedTemplate] = useState('classic');
@@ -555,38 +558,113 @@ const AiResumeBuilder = () => {
 
     const handleOptimizeSummary = async () => {
         if (!resumeData.summary || resumeData.summary.trim().length < 10) { alert('Please write a rough career objective first.'); return; }
+        if (sessionRewriteCount >= 10) {
+            alert('You have reached the limit of 10 AI rewrites per resume builder session. Please download your resume or start a new session.');
+            return;
+        }
         setLoadingSummary(true);
         try { 
             const res = await axios.post('/resume/optimize-summary', { text: resumeData.summary }); 
             if (res.data.success) {
                 setResumeData(prev => ({ ...prev, summary: res.data.optimizedText })); 
                 markAsEdited();
+                setSessionRewriteCount(prev => prev + 1);
             }
         }
-        catch { alert('Failed to connect to AI for summary optimization.'); }
+        catch (err) {
+            console.error(err);
+            const errMsg = err.response?.data?.message || '';
+            if (err.response?.status === 403 || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('limit')) {
+                const upgrade = await customConfirm(
+                    'Your monthly AI rewrite limit has been exhausted. Would you like to view our subscription plans to upgrade?',
+                    'Monthly Limit Exhausted'
+                );
+                if (upgrade) navigate('/app/subscriptions');
+            } else {
+                alert(err.response?.data?.message || 'Failed to connect to AI for summary optimization.');
+            }
+        }
         finally { setLoadingSummary(false); }
     };
 
     const handleOptimizeExp = async (index, type = 'experience') => {
         const item = resumeData[type][index];
         if (!item.description || item.description.trim().length < 10) { alert(`Please write a rough ${type} description first.`); return; }
+        if (sessionRewriteCount >= 10) {
+            alert('You have reached the limit of 10 AI rewrites per resume builder session. Please download your resume or start a new session.');
+            return;
+        }
         setLoadingExp(`${type}-${index}`);
         try { 
             const res = await axios.post('/resume/optimize-experience', { text: item.description, type }); 
             if (res.data.success) {
                 handleArrayChange(type, index, 'description', res.data.optimizedText); 
                 markAsEdited();
+                setSessionRewriteCount(prev => prev + 1);
             }
         }
-        catch { alert(`Failed to connect to AI for ${type} optimization.`); }
+        catch (err) {
+            console.error(err);
+            const errMsg = err.response?.data?.message || '';
+            if (err.response?.status === 403 || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('limit')) {
+                const upgrade = await customConfirm(
+                    'Your monthly AI rewrite limit has been exhausted. Would you like to view our subscription plans to upgrade?',
+                    'Monthly Limit Exhausted'
+                );
+                if (upgrade) navigate('/app/subscriptions');
+            } else {
+                alert(err.response?.data?.message || `Failed to connect to AI for ${type} optimization.`);
+            }
+        }
         finally { setLoadingExp(null); }
     };
 
-    const handleDownload = () => {
-        const t = document.title;
-        document.title = `${resumeData.personal.name || 'Resume'}_Resume`;
-        window.print();
-        document.title = t;
+    const handleDownload = async () => {
+        try {
+            // First check/decrement download quota on backend
+            const res = await axios.post('/resume/download');
+            if (res.data.success) {
+                const t = document.title;
+                document.title = `${resumeData.personal.name || 'Resume'}_Resume`;
+                window.print();
+                document.title = t;
+            }
+        } catch (err) {
+            console.error('Download verification error:', err);
+            const errData = err.response?.data;
+            if (errData && errData.payPerUseRequired) {
+                const choice = await customConfirm(
+                    'You have exhausted your free monthly resume downloads. Would you like to pay ₹10 for a one-time download?',
+                    'Download Limit Exhausted'
+                );
+                if (choice) {
+                    try {
+                        const { createPayPerUseOrder } = await import('../services/paymentApi');
+                        const payRes = await createPayPerUseOrder('RESUME');
+                        if (payRes.status === 'success' && payRes.data.payment_session_id) {
+                            const isProd = payRes.data.payment_session_id.includes('prod') || import.meta.env.MODE === 'production';
+                            const cashfree = window.Cashfree({
+                                mode: isProd ? 'production' : 'sandbox'
+                            });
+                            cashfree.checkout({
+                                paymentSessionId: payRes.data.payment_session_id,
+                                redirectTarget: '_self'
+                            });
+                        }
+                    } catch (payErr) {
+                        alert(payErr.response?.data?.message || 'Error initiating payment.');
+                    }
+                } else {
+                    const upgrade = await customConfirm(
+                        'Would you like to view our subscription plans to get unlimited/higher monthly downloads?',
+                        'Upgrade Subscription'
+                    );
+                    if (upgrade) navigate('/app/subscriptions');
+                }
+            } else {
+                alert(err.response?.data?.message || 'Failed to verify download limit. Please try again.');
+            }
+        }
     };
 
     // Progress

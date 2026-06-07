@@ -585,17 +585,73 @@ const DIFFICULTY_LEVELS = {
 };
 
 const generateLessonContent = async (level, lessonIndex) => {
-    // Ensure level is between 1 and 10
-    const safeLevel = Math.max(1, Math.min(10, level || 1));
+    const safeLevel = Math.max(1, level || 1);
     
-    // Fetch the array of lessons for this level
-    const levelLessons = staticLessons[safeLevel];
-    
-    // Use modulo so we don't crash if lessonIndex exceeds available static lessons
-    const selectedLesson = levelLessons[lessonIndex % levelLessons.length];
+    let difficultyDesc = "";
+    if (safeLevel <= 1) {
+        difficultyDesc = "Absolute Beginner (A1) - Simple greetings, personal info, basic nouns.";
+    } else if (safeLevel === 2) {
+        difficultyDesc = "Beginner (A1) - Daily routines, family, basic food.";
+    } else if (safeLevel === 3) {
+        difficultyDesc = "Elementary (A2) - Travel, hobbies, simple past events, describing people.";
+    } else if (safeLevel === 4) {
+        difficultyDesc = "Pre-Intermediate (A2+) - Work, health, future plans, basic comparisons.";
+    } else if (safeLevel === 5) {
+        difficultyDesc = "Intermediate (B1) - Opinions, life experiences, environmental issues, news.";
+    } else if (safeLevel === 6) {
+        difficultyDesc = "Upper-Intermediate (B1+) - Cultural differences, technology, complex social issues.";
+    } else if (safeLevel === 7) {
+        difficultyDesc = "Advanced (B2) - Professional debates, abstract concepts, storytelling with nuances.";
+    } else if (safeLevel === 8) {
+        difficultyDesc = "Upper-Advanced (B2+) - Idiomatic expressions, sarcasm, formal presentation skills.";
+    } else if (safeLevel === 9) {
+        difficultyDesc = "Expert (C1) - Academic lectures, complex literature analysis, legal/professional English.";
+    } else {
+        difficultyDesc = `Master (C2 or higher, Level ${safeLevel}) - Near-native fluency, specialized philosophy, high-level scientific and academic discourse. Make it extremely challenging.`;
+    }
 
-    // Return it in the same payload shape the frontend/controller expects
-    return { status: 'success', data: selectedLesson };
+    const systemPrompt = `You are an expert AI English Tutor. Generate a unique, interactive English learning lesson.
+    The lesson difficulty must correspond to: ${difficultyDesc}.
+    The lesson index is ${lessonIndex}. Provide a topic suitable for this level.
+    
+    You must output ONLY a JSON object matching this schema:
+    {
+      "title": "A short, engaging title for the lesson",
+      "content": "A short passage, dialogue, or description (1-4 sentences/lines) representing the core text of this lesson.",
+      "vocabulary": [
+        { "word": "A key word from the content", "definition": "A clear, simple explanation of the word" }
+      ],
+      "tasks": [
+        {
+          "id": 1,
+          "type": "repeat", // or "question", "describe_image", "roleplay", "idiom_usage", "debate", "free_speech"
+          "prompt": "An instruction for the student to speak their response",
+          "text_to_repeat": "For repeat tasks, the exact text to repeat. Omit for other tasks.",
+          "correct_answer_hint": "For question tasks, a short answer hint. Omit for other tasks.",
+          "image_url": "For describe_image tasks, a valid image URL. Omit for other tasks.",
+          "roleplay_scenario": "For roleplay tasks, a short context or instruction. Omit for other tasks.",
+          "target_idiom": "For idiom_usage tasks, the idiom to use. Omit for other tasks.",
+          "debate_stance": "For debate tasks, the stance to argue. Omit for other tasks."
+        }
+      ]
+    }
+    
+    Guidelines:
+    - Include 3 to 4 tasks in the "tasks" array.
+    - Vary the task types based on what is appropriate for the level (lower levels should have repeat, question, describe_image; higher levels should have roleplay, debate, idiom_usage, free_speech).
+    - Ensure all output is grammatically correct and appropriate.
+    - Output ONLY the raw JSON object. No explanation, no markdown wrap.`;
+
+    try {
+        const result = await callFireworks(systemPrompt, `Generate a level ${safeLevel} lesson content`);
+        return { status: 'success', data: result };
+    } catch (err) {
+        console.error('Dynamic lesson generation failed, falling back to static lessons:', err.message);
+        const fallbackLevel = Math.max(1, Math.min(10, safeLevel));
+        const levelLessons = staticLessons[fallbackLevel];
+        const selectedLesson = levelLessons[lessonIndex % levelLessons.length];
+        return { status: 'success', data: selectedLesson };
+    }
 };
 
 // ─── English Tutor: Evaluate Lesson Task ─────────────────────────────────────

@@ -40,7 +40,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     if (user.needsRole) {
         return <Navigate to="/select-role" replace />;
     }
-    if (user.pendingApproval || user.approvalStatus === 'PENDING') {
+    if ((user.pendingApproval || user.approvalStatus === 'PENDING') && user.role !== 'RECRUITER') {
         return <Navigate to="/pending-approval" replace />;
     }
     if (allowedRoles && !allowedRoles.includes(user.role)) {

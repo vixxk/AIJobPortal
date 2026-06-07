@@ -4,6 +4,8 @@ import InterviewRoom from '../components/interview/InterviewRoom';
 import { startInterview } from '../services/interviewApi';
 import Skeleton from '../components/ui/Skeleton';
 import FinalReport from '../components/interview/FinalReport';
+import { customConfirm } from '../components/layout/ConfirmDialog';
+import axios from '../utils/axios';
 
 const ROLE_LIST = {
     "Software / Tech": [
@@ -99,7 +101,62 @@ const SuggestionModal = ({ isOpen, onClose, roleSuggestions, onSelect }) => {
         </div>
     );
 };
+
+const LimitModal = ({ isOpen, onClose, title, message, onUpgrade, payPerUseRequired, amount, onPayPerUse, userPlan }) => {
+    if (!isOpen) return null;
+    const showUpgrade = userPlan !== 'PRO_PLUS';
+    return (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden p-8 text-center animate-in zoom-in-95 duration-200 border border-slate-100">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-100">
+                    <span className="text-3xl">🔒</span>
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 mb-3">{title || 'Limit Reached'}</h3>
+                <p className="text-slate-500 font-semibold text-sm leading-relaxed mb-8 px-2">
+                    {message}
+                </p>
+                <div className="space-y-3">
+                    {payPerUseRequired ? (
+                        <>
+                            <button
+                                onClick={onPayPerUse}
+                                className="w-full py-4 text-xs font-black uppercase tracking-wider rounded-2xl bg-indigo-600 hover:bg-indigo-755 text-white shadow-lg shadow-indigo-150 hover:shadow-xl transition-all"
+                            >
+                                Pay ₹{amount} to Start Session
+                            </button>
+                            {showUpgrade && (
+                                <button
+                                    onClick={onUpgrade}
+                                    className="w-full py-4 text-xs font-black uppercase tracking-wider rounded-2xl bg-white hover:bg-slate-50 text-indigo-650 border border-slate-205 shadow-sm transition-all"
+                                >
+                                    Upgrade Plan
+                                </button>
+                            )}
+                        </>
+                    ) : (
+                        showUpgrade && (
+                            <button
+                                onClick={onUpgrade}
+                                className="w-full py-4 text-xs font-black uppercase tracking-wider rounded-2xl bg-indigo-600 hover:bg-indigo-755 text-white shadow-lg shadow-indigo-150 hover:shadow-xl transition-all"
+                            >
+                                Upgrade Plan
+                            </button>
+                        )
+                    )}
+                    <button
+                        onClick={onClose}
+                        className="w-full py-3.5 text-xs font-black uppercase tracking-wider rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-all"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const InterviewPage = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [jobRole, setJobRole] = useState('');
     const [interviewType, setInterviewType] = useState('behavioral');
@@ -111,12 +168,24 @@ const InterviewPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [difficulty, setDifficulty] = useState('medium');
+    const [limitModal, setLimitModal] = useState({ open: false, title: '', message: '', payPerUseRequired: false, amount: 7 });
+    const [userPlan, setUserPlan] = useState('FREE');
 
 
     useEffect(() => {
-        // Simulate initial check
-        const timer = setTimeout(() => setLoading(false), 800);
-        return () => clearTimeout(timer);
+        const fetchUserPlan = async () => {
+            try {
+                const res = await axios.get('/payment/subscription-status');
+                if (res.data?.data?.subscription?.plan) {
+                    setUserPlan(res.data.data.subscription.plan);
+                }
+            } catch (err) {
+                console.error('Failed to fetch user subscription plan:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUserPlan();
     }, []);
     const handleStart = async (e) => {
         if (e) e.preventDefault();
@@ -138,8 +207,35 @@ const InterviewPage = () => {
             }
             setQuestions(questions || []);
         } catch (error) {
-            const errMsg = error.response?.data?.message || error.message || 'Unknown error occurred.';
-            alert(`Interview service error: ${errMsg}`);
+            console.error('Interview start error:', error);
+            const errData = error.response?.data;
+            const isFree = userPlan === 'FREE';
+            if (errData && errData.payPerUseRequired) {
+                setLimitModal({
+                    open: true,
+                    title: 'Mock Interview Limit Exhausted',
+                    message: isFree 
+                        ? 'Your weekly interview quota has been exhausted. Please pay to continue.'
+                        : 'Your monthly interview quota has been exhausted. Please pay to continue.',
+                    payPerUseRequired: true,
+                    amount: errData.amount || 7
+                });
+            } else {
+                const errMsg = errData?.message || error.message || 'Unknown error occurred.';
+                if (errMsg.toLowerCase().includes('limit') || errMsg.toLowerCase().includes('cooldown') || errMsg.toLowerCase().includes('week') || errMsg.toLowerCase().includes('quota')) {
+                    setLimitModal({
+                        open: true,
+                        title: 'Mock Interview Limit Exhausted',
+                        message: isFree 
+                            ? 'Your weekly interview quota has been exhausted. Please pay to continue.'
+                            : 'Your monthly interview quota has been exhausted. Please pay to continue.',
+                        payPerUseRequired: false,
+                        amount: 7
+                    });
+                } else {
+                    alert(`Interview service error: ${errMsg}`);
+                }
+            }
         } finally {
             setIsStarting(false);
         }
@@ -430,6 +526,38 @@ const InterviewPage = () => {
                 onClose={() => setSuggestionData({ ...suggestionData, open: false })}
                 roleSuggestions={suggestionData.roles}
                 onSelect={handleSelectSuggestion}
+            />
+            <LimitModal
+                isOpen={limitModal.open}
+                onClose={() => setLimitModal({ ...limitModal, open: false })}
+                title={limitModal.title}
+                message={limitModal.message}
+                payPerUseRequired={limitModal.payPerUseRequired}
+                amount={limitModal.amount}
+                userPlan={userPlan}
+                onUpgrade={() => {
+                    setLimitModal({ ...limitModal, open: false });
+                    navigate('/app/subscriptions');
+                }}
+                onPayPerUse={async () => {
+                    setLimitModal({ ...limitModal, open: false });
+                    try {
+                        const { createPayPerUseOrder } = await import('../services/paymentApi');
+                        const payRes = await createPayPerUseOrder('INTERVIEW');
+                        if (payRes.status === 'success' && payRes.data.payment_session_id) {
+                            const isProd = payRes.data.payment_session_id.includes('prod') || import.meta.env.MODE === 'production';
+                            const cashfree = window.Cashfree({
+                                mode: isProd ? 'production' : 'sandbox'
+                            });
+                            cashfree.checkout({
+                                paymentSessionId: payRes.data.payment_session_id,
+                                redirectTarget: '_self'
+                            });
+                        }
+                    } catch (payErr) {
+                        alert(payErr.response?.data?.message || 'Error initiating payment.');
+                    }
+                }}
             />
         </div>
     );

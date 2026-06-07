@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axios';
 import { MapPin, IndianRupee, Trash2, Users, Eye, Plus, X, Briefcase, List, Building2, CheckCircle2, Clock, Sparkles, BookOpen, Globe, Monitor, Calendar, Timer, Image, Link2, Lock, Unlock, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 import JobDetailsModal from '../../components/JobDetailsModal';
@@ -57,29 +58,44 @@ const AdminJobs = () => {
 
     const handleDeleteJob = async (id) => {
         if (!confirm('Delete this job listing?')) return;
+        const previousJobs = [...jobs];
+        setJobs(prev => prev.filter(job => job._id !== id));
+        toast.success('Job listing deleted successfully');
         try {
             await axios.delete(`/admin/jobs/${id}`);
-            fetchJobs();
+            const res = await axios.get('/admin/jobs');
+            setJobs(res.data.data.jobs || []);
         } catch (err) {
-            alert('Delete failed');
+            setJobs(previousJobs);
+            toast.error('Delete failed');
         }
     };
 
     const handleApproveJob = async (id) => {
+        const previousJobs = [...jobs];
+        setJobs(prev => prev.map(job => job._id === id ? { ...job, status: 'APPROVED' } : job));
+        toast.success('Job listing approved successfully');
         try {
             await axios.patch(`/admin/jobs/${id}`, { status: 'APPROVED' });
-            fetchJobs();
+            const res = await axios.get('/admin/jobs');
+            setJobs(res.data.data.jobs || []);
         } catch (err) {
-            alert('Approval failed');
+            setJobs(previousJobs);
+            toast.error('Approval failed');
         }
     };
 
     const handleToggleSpecial = async (id, currentStatus) => {
+        const previousJobs = [...jobs];
+        setJobs(prev => prev.map(job => job._id === id ? { ...job, isSpecial: !currentStatus } : job));
+        toast.success(currentStatus ? 'Marked as regular listing' : 'Featured status enabled');
         try {
             await axios.patch(`/admin/jobs/${id}`, { isSpecial: !currentStatus });
-            fetchJobs();
+            const res = await axios.get('/admin/jobs');
+            setJobs(res.data.data.jobs || []);
         } catch (err) {
-            alert('Status update failed');
+            setJobs(previousJobs);
+            toast.error('Status update failed');
         }
     };
 
@@ -191,10 +207,11 @@ const AdminJobs = () => {
             }
             setShowModal(false);
             resetForm();
+            toast.success(editingJob ? 'Job listing updated!' : 'Job listing created successfully!');
             fetchJobs();
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.message || (editingJob ? 'Update failed' : 'Creation failed'));
+            toast.error(err.response?.data?.message || (editingJob ? 'Update failed' : 'Creation failed'));
         } finally {
             setSubmitting(false);
         }
@@ -286,12 +303,12 @@ const AdminJobs = () => {
                                 <div>
                                     <h4 className="font-black text-slate-900 text-lg lg:text-xl leading-tight uppercase line-clamp-1">{job.title}</h4>
                                     <p className="text-indigo-500 text-[9px] lg:text-[10px] font-black uppercase tracking-[0.1em]">{job.companyName || job.recruiterId?.companyName || 'Organization'}</p>
-                                    <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase ${(job.status === 'APPROVED' && (job.isSpecial || job.courseId)) ? 'bg-emerald-50 text-emerald-600' :
+                                    <div className={`mt-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase ${job.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600' :
                                             job.status === 'CLOSED' ? 'bg-slate-50 text-slate-600' :
                                                 'bg-amber-50 text-amber-600 animate-pulse'
                                         }`}>
                                         {job.status === 'CLOSED' ? 'CLOSED' : (
-                                            (job.status === 'APPROVED' && (job.isSpecial || job.courseId)) ? 'APPROVED' : 'PENDING'
+                                            job.status === 'APPROVED' ? 'APPROVED' : 'PENDING'
                                         )}
                                     </div>
                                     {job.applyLinkVisibility && (
@@ -304,15 +321,30 @@ const AdminJobs = () => {
                             </div>
 
                             <div className="flex flex-wrap gap-2 mb-6">
+                                {job.opportunityType && (
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-wider uppercase ${job.opportunityType === 'Internship' ? 'bg-teal-50 text-teal-600' : 'bg-blue-50 text-blue-600'}`}>
+                                        {job.opportunityType === 'Internship' ? '🎓' : '💼'} {job.opportunityType}
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-xl text-[10px] font-black text-slate-500 tracking-wider">
                                     <MapPin className="w-3 h-3" /> {job.location}
                                 </div>
                                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-xl text-[10px] font-black text-emerald-600 tracking-wider">
-                                    <IndianRupee className="w-3 h-3" /> {job.salaryRange || 'TBD'}
+                                    <IndianRupee className="w-3 h-3" /> {job.salaryRange || (job.stipendType === 'Paid' && job.stipendMin ? `₹${job.stipendMin}-${job.stipendMax}/mo` : 'TBD')}
                                 </div>
-                                {job.jobType && (
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-xl text-[10px] font-black text-indigo-600 tracking-wider uppercase">
-                                        <Briefcase className="w-3 h-3" /> {job.jobType}
+                                {job.workMode && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 rounded-xl text-[10px] font-black text-violet-600 tracking-wider uppercase">
+                                        <Monitor className="w-3 h-3" /> {job.workMode}
+                                    </div>
+                                )}
+                                {job.workSchedule && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 rounded-xl text-[10px] font-black text-sky-600 tracking-wider uppercase">
+                                        <Clock className="w-3 h-3" /> {job.workSchedule}
+                                    </div>
+                                )}
+                                {job.numberOfOpenings > 1 && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 rounded-xl text-[10px] font-black text-purple-600 tracking-wider uppercase">
+                                        <Users className="w-3 h-3" /> {job.numberOfOpenings} openings
                                     </div>
                                 )}
                                 {job.experienceRange && (
@@ -320,9 +352,9 @@ const AdminJobs = () => {
                                         <Clock className="w-3 h-3" /> {job.experienceRange}
                                     </div>
                                 )}
-                                {job.workMode && (
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 rounded-xl text-[10px] font-black text-violet-600 tracking-wider uppercase">
-                                        <Monitor className="w-3 h-3" /> {job.workMode}
+                                {job.ppoOffered && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-xl text-[10px] font-black text-emerald-600 tracking-wider uppercase">
+                                        <Sparkles className="w-3 h-3" /> PPO
                                     </div>
                                 )}
                                 {job.courseId && (

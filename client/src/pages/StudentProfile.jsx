@@ -48,6 +48,7 @@ const icons = {
     SETTINGS: <Settings className="w-5 h-5 text-blue-500" />,
     STATUS: <User className="w-5 h-5 text-blue-500" />,
     NOTIFICATIONS: <Bell className="w-5 h-5 text-blue-500" />,
+    SUBSCRIPTION: <Award className="w-5 h-5 text-blue-500" />,
 };
 const Input = ({ label, type = 'text', value, onChange, placeholder, disabled, icon, onKeyDown }) => (
     <div className="mb-3">
@@ -70,14 +71,19 @@ const Input = ({ label, type = 'text', value, onChange, placeholder, disabled, i
         </div>
     </div>
 );
-const Select = ({ label, value, onChange, options }) => (
+const Select = ({ label, value, onChange, options, disabled }) => (
     <div className="mb-3 relative">
         {label && <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">{label}</label>}
         <div className="relative">
             <select
                 value={value || ''}
                 onChange={onChange}
-                className="w-full py-2 px-3 pr-10 bg-white border border-slate-200 rounded-2xl text-[13px] font-medium text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] appearance-none"
+                disabled={disabled}
+                className={`w-full py-2 px-3 pr-10 border rounded-2xl text-[13px] font-medium transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] appearance-none ${
+                    disabled 
+                        ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed' 
+                        : 'bg-white border-slate-200 text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500'
+                }`}
             >
                 <option value="" disabled>Select options...</option>
                 {options.map((opt, i) => (
@@ -135,6 +141,7 @@ const StudentProfile = () => {
     const [localItem, setLocalItem] = useState({});
     const [showIssueModal, setShowIssueModal] = useState(false);
     const [notificationSettings, setNotificationSettings] = useState(user?.notificationSettings || { platform: true, email: true });
+    const [subStatus, setSubStatus] = useState(null);
 
     useEffect(() => {
         if (user?.notificationSettings) {
@@ -196,7 +203,8 @@ const StudentProfile = () => {
                 'PROJECTS': 'Projects',
                 'STATUS': 'Job Seeking Status',
                 'RESUME': 'CV/Resume',
-                'SETTINGS': 'Settings'
+                'SETTINGS': 'Settings',
+                'SUBSCRIPTION': 'Subscription & Quotas'
             };
             title = titles[currentView];
             if (editIndex !== -1 && title !== 'Settings' && title !== 'Edit Profile') {
@@ -224,6 +232,17 @@ const StudentProfile = () => {
             if (res.data.success || res.data.status === 'success') {
                 if (res.data.data && res.data.data.profile) {
                     setProfile(res.data.data.profile);
+                }
+            }
+
+            if (user?.role === 'STUDENT') {
+                try {
+                    const subRes = await axios.get('/payment/subscription-status');
+                    if (subRes.data.status === 'success') {
+                        setSubStatus(subRes.data.data);
+                    }
+                } catch (subErr) {
+                    console.error('Failed to fetch subscription status', subErr);
                 }
             }
         } catch (error) {
@@ -346,86 +365,157 @@ const StudentProfile = () => {
                             )
                         )}
                     />
-                    <label className="absolute bottom-0 right-0 z-20 bg-blue-500 hover:bg-blue-600 active:scale-95 cursor-pointer p-1.5 rounded-xl border-2 border-white shadow-sm transition-all">
-                        <input type="file" accept="image/*" className="hidden" disabled={saving} onChange={async (e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                                const fm = new FormData();
-                                const fieldName = user?.role === 'RECRUITER' ? 'logo' : 'image';
-                                fm.append(fieldName, file);
-                                setSaving(true);
-                                try {
-                                    const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/logo' : 
-                                                   user?.role === 'COLLEGE_ADMIN' ? '/college/profile/logo' : 
-                                                   '/student/profile/image';
-                                    const res = await axios.patch(endpoint, fm);
-                                    if (res.data.status === 'success') {
-                                        if (user?.role === 'RECRUITER') {
-                                            setProfile({ ...profile, logo: res.data.data.logo });
-                                        } else {
-                                            setProfile({ ...profile, profileImage: res.data.data.profileImage });
+                    {!(user?.role === 'RECRUITER' && profile.verificationSubmitted) && (
+                        <label className="absolute bottom-0 right-0 z-20 bg-blue-500 hover:bg-blue-600 active:scale-95 cursor-pointer p-1.5 rounded-xl border-2 border-white shadow-sm transition-all">
+                            <input type="file" accept="image/*" className="hidden" disabled={saving} onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const fm = new FormData();
+                                    const fieldName = user?.role === 'RECRUITER' ? 'logo' : 'image';
+                                    fm.append(fieldName, file);
+                                    setSaving(true);
+                                    try {
+                                        const endpoint = user?.role === 'RECRUITER' ? '/recruiter/profile/logo' : 
+                                                       user?.role === 'COLLEGE_ADMIN' ? '/college/profile/logo' : 
+                                                       '/student/profile/image';
+                                        const res = await axios.patch(endpoint, fm);
+                                        if (res.data.status === 'success') {
+                                            if (user?.role === 'RECRUITER') {
+                                                setProfile({ ...profile, logo: res.data.data.logo });
+                                            } else {
+                                                setProfile({ ...profile, profileImage: res.data.data.profileImage });
+                                            }
+                                            if (refreshUser) await refreshUser();
                                         }
-                                        if (refreshUser) await refreshUser();
-                                    }
-                                } catch (error) {
-                                    console.error("Image upload error", error);
-                                } finally { setSaving(false); }
-                            }
-                        }} />
-                        <Edit2 className="w-4 h-4 text-white" />
-                    </label>
+                                    } catch (error) {
+                                        console.error("Image upload error", error);
+                                    } finally { setSaving(false); }
+                                }
+                            }} />
+                            <Edit2 className="w-4 h-4 text-white" />
+                        </label>
+                    )}
                 </div>
             </div>
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
                 {user?.role === 'RECRUITER' ? (
-                    <>
-                        <Input label="Company Name" value={profile.companyName} onChange={e => handleUpdateField('companyName', e.target.value)} />
-                        <Input label="Company Website" value={profile.website} onChange={e => handleUpdateField('website', e.target.value)} />
-                        
-                        {/* Company Banner */}
-                        <div className="mb-3">
-                            <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">Company Banner</label>
-                            <div className="relative">
-                                {profile.companyBanner ? (
-                                    <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm mb-2">
-                                        <img src={profile.companyBanner} alt="Company Banner" className="w-full h-24 object-cover" />
-                                        <button
-                                            onClick={async () => {
-                                                await saveProfile({ companyBanner: '' });
-                                            }}
-                                            className="absolute top-2 right-2 w-7 h-7 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-white transition-all shadow-sm"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
+                    profile.verificationSubmitted ? (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-amber-50 text-amber-800 text-xs font-semibold rounded-2xl border border-amber-200 flex items-center gap-2 mb-4">
+                                <span>🔒</span><span>Verification details have been submitted and are locked for editing.</span>
+                            </div>
+                            
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2">Company Information</h3>
+                            <Input label="Company Legal Name" value={profile.companyName} disabled={true} />
+                            <Input label="Company Type" value={profile.companyType} disabled={true} />
+                            <Input label="Company Website" value={profile.website} disabled={true} />
+                            <Input label="LinkedIn Page" value={profile.companyLinkedinPage} disabled={true} />
+                            
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-6 mb-2">Tax Registration</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Input label="PAN Card Number" value={profile.panNumber} disabled={true} />
+                                <Input label="GST Number" value={profile.gstNumber || 'N/A'} disabled={true} />
+                            </div>
+
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-6 mb-2">Uploaded Documents</h3>
+                            <div className="space-y-2 pb-6">
+                                {profile.panCard && (
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                                        <span className="text-xs font-bold text-slate-700">PAN Card Document</span>
+                                        <a href={profile.panCard} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">View Document</a>
                                     </div>
-                                ) : null}
-                                <label className="block cursor-pointer">
-                                    <div className={`px-4 py-3 bg-white border border-dashed border-slate-300 rounded-2xl text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all ${saving ? 'opacity-50 pointer-events-none' : ''}`}>
-                                        <UploadCloud className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                                        <p className="text-xs font-semibold text-slate-500">{profile.companyBanner ? 'Replace banner' : 'Upload company banner'}</p>
+                                )}
+                                {profile.companyRegistrationCertificate && (
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                                        <span className="text-xs font-bold text-slate-700">Company Registration Certificate</span>
+                                        <a href={profile.companyRegistrationCertificate} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">View Document</a>
                                     </div>
-                                    <input type="file" accept="image/*" className="hidden" disabled={saving} onChange={async (e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            const fm = new FormData();
-                                            fm.append('logo', file);
-                                            setSaving(true);
-                                            try {
-                                                const res = await axios.patch('/recruiter/profile/banner', fm);
-                                                if (res.data.status === 'success') {
-                                                    setProfile({ ...profile, companyBanner: res.data.data.companyBanner });
-                                                    toast.success('Banner uploaded');
-                                                }
-                                            } catch (error) {
-                                                console.error("Banner upload error", error);
-                                                toast.error('Failed to upload banner');
-                                            } finally { setSaving(false); }
-                                        }
-                                    }} />
-                                </label>
+                                )}
+                                {profile.gstCertificate && (
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                                        <span className="text-xs font-bold text-slate-700">GST Certificate</span>
+                                        <a href={profile.gstCertificate} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">View Document</a>
+                                    </div>
+                                )}
+                                {profile.startupIndiaCertificate && (
+                                    <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                                        <span className="text-xs font-bold text-slate-700">Startup India Certificate</span>
+                                        <a href={profile.startupIndiaCertificate} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">View Document</a>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </>
+                    ) : (
+                        <>
+                            <Input label="Company Legal Name" value={profile.companyName} onChange={e => handleUpdateField('companyName', e.target.value)} />
+                            <Select 
+                                label="Company Type" 
+                                value={profile.companyType || 'Private Limited'} 
+                                options={[
+                                    'Private Limited',
+                                    'Limited Company',
+                                    'LLP',
+                                    'Proprietorship',
+                                    'Partnership Firm',
+                                    'Startup',
+                                    'NGO',
+                                    'Educational Institution',
+                                    'Government Organization',
+                                    'Other'
+                                ]} 
+                                onChange={e => handleUpdateField('companyType', e.target.value)} 
+                            />
+                            <Input label="Company Website" value={profile.website} onChange={e => handleUpdateField('website', e.target.value)} />
+                            <Input label="LinkedIn Page" value={profile.companyLinkedinPage} onChange={e => handleUpdateField('companyLinkedinPage', e.target.value)} />
+                            
+                            <Input label="PAN Card Number" value={profile.panNumber} onChange={e => handleUpdateField('panNumber', e.target.value)} maxLength={10} placeholder="e.g. ABCDE1234F" />
+                            <Input label="GST Number" value={profile.gstNumber} onChange={e => handleUpdateField('gstNumber', e.target.value)} maxLength={15} placeholder="e.g. 27ABCDE1234F1Z5" />
+                            
+                            {/* Company Banner */}
+                            <div className="mb-3">
+                                <label className="block text-[13px] font-semibold text-slate-600 mb-1 ml-1">Company Banner</label>
+                                <div className="relative">
+                                    {profile.companyBanner ? (
+                                        <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm mb-2">
+                                            <img src={profile.companyBanner} alt="Company Banner" className="w-full h-24 object-cover" />
+                                            <button
+                                                onClick={async () => {
+                                                    await saveProfile({ companyBanner: '' });
+                                                }}
+                                                className="absolute top-2 right-2 w-7 h-7 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-white transition-all shadow-sm"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ) : null}
+                                    <label className="block cursor-pointer">
+                                        <div className={`px-4 py-3 bg-white border border-dashed border-slate-300 rounded-2xl text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all ${saving ? 'opacity-50 pointer-events-none' : ''}`}>
+                                            <UploadCloud className="w-5 h-5 text-slate-400 mx-auto mb-1" />
+                                            <p className="text-xs font-semibold text-slate-500">{profile.companyBanner ? 'Replace banner' : 'Upload company banner'}</p>
+                                        </div>
+                                        <input type="file" accept="image/*" className="hidden" disabled={saving} onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const fm = new FormData();
+                                                fm.append('logo', file);
+                                                setSaving(true);
+                                                try {
+                                                    const res = await axios.patch('/recruiter/profile/banner', fm);
+                                                    if (res.data.status === 'success') {
+                                                        setProfile({ ...profile, companyBanner: res.data.data.companyBanner });
+                                                        toast.success('Banner uploaded');
+                                                    }
+                                                } catch (error) {
+                                                    console.error("Banner upload error", error);
+                                                    toast.error('Failed to upload banner');
+                                                } finally { setSaving(false); }
+                                            }
+                                        }} />
+                                    </label>
+                                </div>
+                            </div>
+                        </>
+                    )
                 ) : user?.role === 'COLLEGE_ADMIN' ? (
                     <>
                         <Input label="College Name" value={profile.collegeName} onChange={e => handleUpdateField('collegeName', e.target.value)} />
@@ -440,29 +530,139 @@ const StudentProfile = () => {
                     </>
                 )}
             </div>
-            <button onClick={() => {
-                let payload = {};
-                if (user?.role === 'RECRUITER') {
-                    payload = { companyName: profile.companyName, website: profile.website };
-                } else if (user?.role === 'COLLEGE_ADMIN') {
-                    payload = { collegeName: profile.collegeName, location: profile.location };
-                } else {
-                    payload = { firstName: profile.firstName, middleName: profile.middleName, lastName: profile.lastName, currentPosition: profile.currentPosition };
-                }
-                saveProfile(payload);
-            }} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
+            {!(user?.role === 'RECRUITER' && profile.verificationSubmitted) && (
+                <button onClick={() => {
+                    let payload = {};
+                    if (user?.role === 'RECRUITER') {
+                        payload = { 
+                            companyName: profile.companyName, 
+                            website: profile.website,
+                            companyType: profile.companyType,
+                            companyLinkedinPage: profile.companyLinkedinPage,
+                            panNumber: profile.panNumber,
+                            gstNumber: profile.gstNumber
+                        };
+                    } else if (user?.role === 'COLLEGE_ADMIN') {
+                        payload = { collegeName: profile.collegeName, location: profile.location };
+                    } else {
+                        payload = { firstName: profile.firstName, middleName: profile.middleName, lastName: profile.lastName, currentPosition: profile.currentPosition };
+                    }
+                    saveProfile(payload);
+                }} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
+            )}
         </div>
     );
-    const renderContact = () => (
-        <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
-            <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
-                <Input label="Address" value={profile.address} onChange={e => handleUpdateField('address', e.target.value)} icon={<Globe className="w-4 h-4" />} />
-                <Input label="Phone Number" value={profile.phoneNumber || user?.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
-                <Input label="Email" value={user?.email} disabled={true} icon={<Mail className="w-4 h-4" />} />
+    const renderContact = () => {
+        const isRecruiter = user?.role === 'RECRUITER';
+        const isLocked = isRecruiter && profile.verificationSubmitted;
+
+        return (
+            <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
+                <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
+                    {isLocked && (
+                        <div className="p-4 bg-amber-50 text-amber-800 text-xs font-semibold rounded-2xl border border-amber-200 flex items-center gap-2 mb-4">
+                            <span>🔒</span><span>Verification details have been submitted and are locked for editing.</span>
+                        </div>
+                    )}
+                    
+                    {isRecruiter ? (
+                        <>
+                            <Input 
+                                label="Head Office Address" 
+                                value={profile.address} 
+                                disabled={isLocked} 
+                                onChange={e => handleUpdateField('address', e.target.value)} 
+                                icon={<Globe className="w-4 h-4" />} 
+                            />
+                            <div className="grid grid-cols-3 gap-2">
+                                <Input 
+                                    label="City" 
+                                    value={profile.city} 
+                                    disabled={isLocked} 
+                                    onChange={e => handleUpdateField('city', e.target.value)} 
+                                />
+                                <Input 
+                                    label="State" 
+                                    value={profile.state} 
+                                    disabled={isLocked} 
+                                    onChange={e => handleUpdateField('state', e.target.value)} 
+                                />
+                                <Input 
+                                    label="Country" 
+                                    value={profile.country} 
+                                    disabled={isLocked} 
+                                    onChange={e => handleUpdateField('country', e.target.value)} 
+                                />
+                            </div>
+
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-6 mb-2">Authorized Representative</h3>
+                            <Input 
+                                label="Representative Name" 
+                                value={profile.authorizedPersonName} 
+                                disabled={isLocked} 
+                                onChange={e => handleUpdateField('authorizedPersonName', e.target.value)} 
+                                icon={<User className="w-4 h-4" />}
+                            />
+                            <Input 
+                                label="Designation / Role" 
+                                value={profile.designation} 
+                                disabled={isLocked} 
+                                onChange={e => handleUpdateField('designation', e.target.value)} 
+                            />
+                            <Input 
+                                label="Official Work Email" 
+                                value={profile.officialEmail} 
+                                disabled={isLocked} 
+                                onChange={e => handleUpdateField('officialEmail', e.target.value)} 
+                                icon={<Mail className="w-4 h-4" />}
+                            />
+                            <Input 
+                                label="Contact Number" 
+                                value={profile.contactNumber} 
+                                disabled={isLocked} 
+                                onChange={e => handleUpdateField('contactNumber', e.target.value)} 
+                                icon={<Phone className="w-4 h-4" />}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <Input label="Address" value={profile.address} onChange={e => handleUpdateField('address', e.target.value)} icon={<Globe className="w-4 h-4" />} />
+                            <Input label="Phone Number" value={profile.phoneNumber || user?.phoneNumber} onChange={e => handleUpdateField('phoneNumber', e.target.value)} icon={<Phone className="w-4 h-4" />} />
+                            <Input label="Email" value={user?.email} disabled={true} icon={<Mail className="w-4 h-4" />} />
+                        </>
+                    )}
+                </div>
+                {!isLocked && (
+                    <button 
+                        onClick={() => {
+                            let payload = {};
+                            if (isRecruiter) {
+                                payload = {
+                                    address: profile.address,
+                                    city: profile.city,
+                                    state: profile.state,
+                                    country: profile.country,
+                                    authorizedPersonName: profile.authorizedPersonName,
+                                    designation: profile.designation,
+                                    officialEmail: profile.officialEmail,
+                                    contactNumber: profile.contactNumber,
+                                    phoneNumber: profile.contactNumber || profile.phoneNumber
+                                };
+                            } else {
+                                payload = { address: profile.address, phoneNumber: profile.phoneNumber };
+                            }
+                            saveProfile(payload);
+                        }} 
+                        disabled={saving} 
+                        className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {saving ? 'Saving...' : 'Save'}
+                    </button>
+                )}
             </div>
-            <button onClick={() => saveProfile({ address: profile.address, phoneNumber: profile.phoneNumber })} disabled={saving} className="w-full py-2.5 shrink-0 mt-2 bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-2xl text-white font-bold shadow-md shadow-blue-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2">{saving && <Loader2 className="w-4 h-4 animate-spin" />}{saving ? 'Saving...' : 'Save'}</button>
-        </div>
-    );
+        );
+    };
     const renderSummary = () => (
         <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
             <div className="flex-1 space-y-1 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
@@ -853,6 +1053,85 @@ const StudentProfile = () => {
                     </div>
                 );
 
+            case 'SUBSCRIPTION':
+                return (
+                    <div className="p-4 md:px-8 md:py-4 lg:p-[1.8vw] flex flex-col h-[calc(100dvh-150px)] lg:h-full bg-slate-50 lg:bg-transparent md:max-w-2xl lg:max-w-[46vw] lg:w-[46vw] md:mx-auto lg:mx-auto w-full overflow-hidden">
+                        <div className="flex-1 space-y-6 overflow-y-auto hide-scrollbar pr-2 pb-4 lg:pb-2">
+                            {/* Subscription Card */}
+                            <div className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                                <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+                                <div className="relative z-10">
+                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-xs font-bold rounded-full uppercase tracking-wider">
+                                        {subStatus?.subscription?.plan || 'FREE'} PLAN
+                                    </span>
+                                    <h3 className="text-2xl font-black mt-3 mb-1">
+                                        {subStatus?.subscription?.plan === 'PRO_PLUS' ? 'Pro Plus' : subStatus?.subscription?.plan === 'PRO' ? 'Pro' : 'Free Trial'}
+                                    </h3>
+                                    <p className="text-white/80 text-xs mt-1">
+                                        {subStatus?.subscription?.validUntil 
+                                            ? `Subscription period ends: ${new Date(subStatus.subscription.validUntil).toLocaleDateString()}` 
+                                            : 'Upgrade your subscription to unlock premium features and higher limits.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Quotas & Usage details */}
+                            <div>
+                                <h4 className="font-semibold text-slate-400 mb-3 pl-2 text-sm uppercase tracking-wider">Feature Consumption</h4>
+                                <div className="space-y-4">
+                                    {[
+                                        {
+                                            name: 'Mock Interviews',
+                                            used: subStatus?.usageLimits?.interviews?.used || 0,
+                                            limit: subStatus?.usageLimits?.interviews?.limit || 0,
+                                            color: 'from-blue-500 to-cyan-500'
+                                        },
+                                        {
+                                            name: 'Resume Downloads',
+                                            used: subStatus?.usageLimits?.resumes?.used || 0,
+                                            limit: subStatus?.usageLimits?.resumes?.limit || 0,
+                                            color: 'from-emerald-500 to-teal-500'
+                                        },
+                                        {
+                                            name: 'Spoken English Sessions',
+                                            used: subStatus?.usageLimits?.spokenEnglish?.used || 0,
+                                            limit: subStatus?.usageLimits?.spokenEnglish?.limit || 0,
+                                            color: 'from-purple-500 to-pink-500'
+                                        }
+                                    ].map((item, idx) => {
+                                        const pct = item.limit > 0 ? Math.min(100, Math.round((item.used / item.limit) * 100)) : 0;
+                                        return (
+                                            <div key={idx} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="font-bold text-slate-800 text-[14px]">{item.name}</span>
+                                                    <span className="text-slate-500 text-xs font-semibold">
+                                                        {item.used} / {item.limit} Used
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                                    <div className={`h-full bg-gradient-to-r ${item.color} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                                                </div>
+                                                <div className="flex justify-between items-center mt-2">
+                                                    <span className="text-[10px] text-slate-400 font-semibold">{pct}% Consumed</span>
+                                                    {pct >= 100 && (
+                                                        <span className="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-md">Limit Reached</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => navigate('/app/subscriptions')}
+                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-2xl transition-all shadow-md shadow-indigo-500/20 text-sm flex items-center justify-center gap-2 mt-4"
+                        >
+                            Manage Subscriptions & Plans
+                        </button>
+                    </div>
+                );
+
             default:
                 break;
         }
@@ -928,6 +1207,28 @@ const StudentProfile = () => {
 
                                     {user?.role !== 'RECRUITER' && (
                                         <>
+                                            {subStatus && (
+                                                <div className="mb-6">
+                                                    <div className="flex items-center justify-between px-2 mb-3">
+                                                        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Subscription & Quotas</h3>
+                                                        <button onClick={() => navigate('/app/profile/subscription')} className="text-[12px] font-bold text-blue-600">View Details</button>
+                                                    </div>
+                                                    <div className="bg-white rounded-[28px] border border-slate-100 p-4 shadow-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => navigate('/app/profile/subscription')}>
+                                                        <div className="flex items-center gap-4 min-w-0 flex-1">
+                                                            <div className="w-12 h-12 rounded-[20px] bg-indigo-50 flex items-center justify-center shrink-0 border border-indigo-50">
+                                                                <Award className="w-5 h-5 text-indigo-600" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <h4 className="text-[15px] font-bold text-slate-800 truncate">Active Plan: {subStatus.subscription?.plan || 'FREE'}</h4>
+                                                                <p className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">
+                                                                    {subStatus.subscription?.validUntil ? `Renews on ${new Date(subStatus.subscription.validUntil).toLocaleDateString()}` : 'Free Tier'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="mb-6">
                                                 <div className="flex items-center justify-between px-2 mb-3">
                                                     <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Work Experience</h3>
@@ -1289,6 +1590,7 @@ const StudentProfile = () => {
                                     <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[1.2vw] px-[0.6vw]">System</h4>
                                     <NavButtonDesktop sectionKey="RESUME" label="CV/Resume" />
                                     <NavButtonDesktop sectionKey="STATUS" label="Job Seeking Status" />
+                                    <NavButtonDesktop sectionKey="SUBSCRIPTION" label="Subscription & Quotas" />
                                 </>
                             )}
                             {user?.role === 'RECRUITER' && <h4 className="text-[0.75vw] min-text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-[0.6vw] mt-[1.2vw] px-[0.6vw]">System</h4>}

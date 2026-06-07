@@ -46,6 +46,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
         mainLinks = [
             { name: 'Dashboard', path: '/app/recruiter', icon: Home, exact: true },
             { name: 'Post a Job', path: '/app/recruiter/post-job', icon: PlusCircle },
+            { name: 'My Drafts', path: '/app/recruiter/drafts', icon: FileText },
         ];
         toolLinks = [];
     } else if (role === 'COLLEGE_ADMIN') {
@@ -74,6 +75,7 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     }
     const bottomLinks = [
         { name: 'My Account', path: role === 'COLLEGE_ADMIN' ? '/app/college/profile' : '/app/profile', icon: User },
+        ...(role === 'STUDENT' ? [{ name: 'Subscription Plans', path: '/app/subscriptions', icon: Rocket }] : []),
         { name: 'Help Center', path: role === 'COLLEGE_ADMIN' ? '/app/college/help' : '/app/help', icon: HelpCircle },
     ];
     return (
@@ -155,46 +157,58 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                     </ul>
                 </div>
             </div>
-            <div className={clsx("p-4 border-t border-[#1E293B]", isCollapsed ? "flex flex-col items-center justify-center gap-2" : "")}>
-                <Link
-                    to={role === 'COLLEGE_ADMIN' ? '/app/college/profile' : '/app/profile'}
-                    className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30 hover:bg-[#1E293B]/50 transition-colors group", isCollapsed ? "p-2" : "p-3")}
-                >
-                    <div className="w-10 h-10 rounded-full border-2 border-blue-500 flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative z-10">
-                        <SmartImage
-                            src={getImageUrl(user?.avatar)}
-                            alt={user?.name || "User"}
-                            containerClassName="w-full h-full"
-                            fallbackIcon={() => (
-                                <div className={clsx(
-                                    "w-full h-full flex items-center justify-center text-white font-black",
-                                    user?.role === 'SUPER_ADMIN' ? "bg-rose-500 text-[10px]" :
-                                        user?.role === 'RECRUITER' ? "bg-indigo-500 text-lg" :
-                                            user?.role === 'COLLEGE_ADMIN' ? "bg-emerald-500 text-lg" :
-                                                "bg-blue-600 text-lg"
-                                )}>
-                                    {user?.role === 'SUPER_ADMIN' ? 'SA' : (user?.name ? user.name.charAt(0).toUpperCase() : 'U')}
-                                </div>
-                            )}
-                        />
-                    </div>
-                    {!isCollapsed && (
-                        <div className="flex-1 overflow-hidden">
-                            <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
-                            <p className="text-xs text-slate-400 truncate">{user?.role}</p>
+            {user ? (
+                <div className={clsx("p-4 border-t border-[#1E293B]", isCollapsed ? "flex flex-col items-center justify-center gap-2" : "")}>
+                    <Link
+                        to={role === 'COLLEGE_ADMIN' ? '/app/college/profile' : '/app/profile'}
+                        className={clsx("flex items-center gap-3 rounded-2xl border border-[#334155]/50 bg-[#1E293B]/30 hover:bg-[#1E293B]/50 transition-colors group", isCollapsed ? "p-2" : "p-3")}
+                    >
+                        <div className="w-10 h-10 rounded-full border-2 border-blue-500 flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative z-10">
+                            <SmartImage
+                                src={getImageUrl(user?.avatar)}
+                                alt={user?.name || "User"}
+                                containerClassName="w-full h-full"
+                                fallbackIcon={() => (
+                                    <div className={clsx(
+                                        "w-full h-full flex items-center justify-center text-white font-black",
+                                        user?.role === 'SUPER_ADMIN' ? "bg-rose-500 text-[10px]" :
+                                            user?.role === 'RECRUITER' ? "bg-indigo-500 text-lg" :
+                                                user?.role === 'COLLEGE_ADMIN' ? "bg-emerald-500 text-lg" :
+                                                    "bg-blue-600 text-lg"
+                                    )}>
+                                        {user?.role === 'SUPER_ADMIN' ? 'SA' : (user?.name ? user.name.charAt(0).toUpperCase() : 'U')}
+                                    </div>
+                                )}
+                            />
                         </div>
+                        {!isCollapsed && (
+                            <div className="flex-1 overflow-hidden">
+                                <p className="text-sm font-semibold text-white truncate">{user?.name}</p>
+                                <p className="text-xs text-slate-400 truncate">{user?.role}</p>
+                            </div>
+                        )}
+                    </Link>
+                    {isCollapsed ? (
+                        <button onClick={() => setShowLogoutConfirm(true)} className="p-3 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white transition-colors" title="Sign Out">
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    ) : (
+                        <button onClick={() => setShowLogoutConfirm(true)} className="w-full mt-3 flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white font-medium">
+                            <LogOut className="w-4 h-4 mt-0.5" /> Sign Out
+                        </button>
                     )}
-                </Link>
-                {isCollapsed ? (
-                    <button onClick={() => setShowLogoutConfirm(true)} className="p-3 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white transition-colors" title="Sign Out">
-                        <LogOut className="w-5 h-5" />
-                    </button>
-                ) : (
-                    <button onClick={() => setShowLogoutConfirm(true)} className="w-full mt-3 flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white font-medium">
-                        <LogOut className="w-4 h-4 mt-0.5" /> Sign Out
-                    </button>
-                )}
-            </div>
+                </div>
+            ) : (
+                <div className="p-4 border-t border-[#1E293B]">
+                    <Link
+                        to="/login"
+                        className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-550 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/10 transition-all flex items-center justify-center gap-2"
+                    >
+                        <User className="w-4 h-4" />
+                        {!isCollapsed && "Log In"}
+                    </Link>
+                </div>
+            )}
             
             <AnimatePresence>
                 {showLogoutConfirm && (

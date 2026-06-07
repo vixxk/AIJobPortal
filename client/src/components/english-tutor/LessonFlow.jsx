@@ -45,7 +45,45 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
             setLoading(false);
         } catch (err) {
             console.error('Failed to fetch lesson', err);
-            onCancel();
+            const errData = err.response?.data;
+            if (errData && errData.payPerUseRequired) {
+                const choice = await customConfirm(
+                    'You have exhausted your free monthly Spoken English sessions. Would you like to pay ₹7 to start a single practice session?',
+                    'Spoken English Limit Exhausted'
+                );
+                if (choice) {
+                    try {
+                        const { createPayPerUseOrder } = await import('../../services/paymentApi');
+                        const payRes = await createPayPerUseOrder('ENGLISH_TUTOR');
+                        if (payRes.status === 'success' && payRes.data.payment_session_id) {
+                            const isProd = payRes.data.payment_session_id.includes('prod') || import.meta.env.MODE === 'production';
+                            const cashfree = window.Cashfree({
+                                mode: isProd ? 'production' : 'sandbox'
+                            });
+                            cashfree.checkout({
+                                paymentSessionId: payRes.data.payment_session_id,
+                                redirectTarget: '_self'
+                            });
+                        }
+                    } catch (payErr) {
+                        alert(payErr.response?.data?.message || 'Error initiating payment.');
+                        onCancel();
+                    }
+                } else {
+                    const upgrade = await customConfirm(
+                        'Would you like to view our subscription plans to get unlimited/higher monthly practice sessions?',
+                        'Upgrade Subscription'
+                    );
+                    if (upgrade) {
+                        window.location.href = '/app/subscriptions';
+                    } else {
+                        onCancel();
+                    }
+                }
+            } else {
+                alert(err.response?.data?.message || 'Failed to start practice session. Please try again.');
+                onCancel();
+            }
         }
     };
 

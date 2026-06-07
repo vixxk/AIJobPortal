@@ -25,6 +25,8 @@ import ManageApplicants from './pages/ManageApplicants';
 import RecruiterJobs from './pages/recruiter/RecruiterJobs';
 import RecruiterCompetitions from './pages/recruiter/RecruiterCompetitions';
 import RecruiterColleges from './pages/recruiter/RecruiterColleges';
+import RecruiterDrafts from './pages/recruiter/RecruiterDrafts';
+import CompanyVerification from './pages/recruiter/CompanyVerification';
 import CollegeLayout from './pages/college/CollegeLayout';
 import CollegeOverview from './pages/college/CollegeOverview';
 import CollegeProfile from './pages/college/CollegeProfile';
@@ -54,6 +56,8 @@ import SpecialJobs from './pages/SpecialJobs';
 import HyregoJobDetail from './pages/HyregoJobDetail';
 import StudentCompetitions from './pages/StudentCompetitions';
 import StudentCompetitionDetail from './pages/StudentCompetitionDetail';
+import SubscriptionsPage from './pages/SubscriptionsPage';
+import GeneralPaymentVerify from './pages/GeneralPaymentVerify';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster, toast } from 'react-hot-toast';
@@ -153,7 +157,7 @@ function App() {
             <Route path="/pending-approval" element={<PendingApproval />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/hyrego/:id" element={<HyregoJobDetail />} />
-            <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route path="/app" element={<MainLayout />}>
               <Route index element={<RoleRedirect />} />
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['STUDENT']}><Dashboard /></ProtectedRoute>} />
               <Route path="jobs" element={<ProtectedRoute allowedRoles={['STUDENT']}><AiJobSearch /></ProtectedRoute>} />
@@ -167,6 +171,8 @@ function App() {
               <Route path="recruiter" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterDashboard /></ProtectedRoute>} />
               <Route path="recruiter/listings" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterJobs /></ProtectedRoute>} />
               <Route path="recruiter/post-job" element={<ProtectedRoute allowedRoles={['RECRUITER']}><PostJob /></ProtectedRoute>} />
+              <Route path="recruiter/drafts" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterDrafts /></ProtectedRoute>} />
+              <Route path="recruiter/verify" element={<ProtectedRoute allowedRoles={['RECRUITER']}><CompanyVerification /></ProtectedRoute>} />
               <Route path="recruiter/manage/:jobId" element={<ProtectedRoute allowedRoles={['RECRUITER']}><ManageApplicants /></ProtectedRoute>} />
               <Route path="recruiter/competitions" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterCompetitions /></ProtectedRoute>} />
               <Route path="recruiter/colleges" element={<ProtectedRoute allowedRoles={['RECRUITER']}><RecruiterColleges /></ProtectedRoute>} />
@@ -214,6 +220,8 @@ function App() {
               <Route path="competitions/:id" element={<ProtectedRoute allowedRoles={['STUDENT']}><StudentCompetitionDetail /></ProtectedRoute>} />
               <Route path="notifications" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Notifications" /></ProtectedRoute>} />
               <Route path="messages" element={<ProtectedRoute allowedRoles={['STUDENT']}><ComingSoon feature="Messages" /></ProtectedRoute>} />
+              <Route path="subscriptions" element={<SubscriptionsPage />} />
+              <Route path="payment-verify" element={<GeneralPaymentVerify />} />
               <Route path="help" element={<HelpCenter />} />
               <Route path="contact" element={<CustomerService />} />
               <Route path="settings" element={<ProtectedRoute allowedRoles={['STUDENT', 'RECRUITER', 'TEACHER', 'SUPER_ADMIN']}><ComingSoon feature="Settings" /></ProtectedRoute>} />

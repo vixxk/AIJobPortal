@@ -19,6 +19,25 @@ const ROADMAP_LEVELS = [
     { level: 10, name: 'Professional', desc: 'Complete executive fluency', icon: '💎' },
 ];
 
+const getRoadmapLevels = (currentLevel) => {
+    const levels = [];
+    const maxView = Math.max(10, currentLevel + 2);
+    for (let i = 1; i <= maxView; i++) {
+        const staticLvl = ROADMAP_LEVELS.find(l => l.level === i);
+        if (staticLvl) {
+            levels.push(staticLvl);
+        } else {
+            levels.push({
+                level: i,
+                name: `Grandmaster Lvl ${i}`,
+                desc: `Advanced executive discussions (Level ${i} difficulty)`,
+                icon: '👑'
+            });
+        }
+    }
+    return levels;
+};
+
 const GoalItem = ({ label, target, isCompleted }) => (
     <div className="flex items-center justify-between group">
         <div className="flex items-center gap-3">
@@ -62,9 +81,10 @@ const TutorDashboard = () => {
 
     if (!tutorData || !tutorData.isInitialTestCompleted) return null;
 
-    const currentLevelInfo = ROADMAP_LEVELS.find(l => l.level === tutorData?.currentLevel) || ROADMAP_LEVELS[0];
+    const levels = getRoadmapLevels(tutorData?.currentLevel || 1);
+    const currentLevelInfo = levels.find(l => l.level === tutorData?.currentLevel) || levels[0];
     const lessonsInLevel = tutorData?.lessonsInCurrentLevel || 0;
-    const lessonsNeeded = tutorData?.lessonsNeededForUpgrade || 5;
+    const lessonsNeeded = tutorData?.lessonsNeededForUpgrade || 1;
 
     return (
         <div className="min-h-screen pb-12">
@@ -204,7 +224,7 @@ const TutorDashboard = () => {
                         <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm overflow-hidden">
                             <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest leading-none mb-8">Level Roadmap</h2>
                             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                                {ROADMAP_LEVELS.map((item) => {
+                                {levels.map((item) => {
                                     const isCurrent = item.level === tutorData.currentLevel;
 
                                     return (

@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { genericEmail } = require('./emailTemplates');
 
 const sendEmail = async (options) => {
   const mailConfig = {
@@ -19,12 +20,17 @@ const sendEmail = async (options) => {
 
   const transporter = nodemailer.createTransport(mailConfig);
 
+  let htmlBody = options.html;
+  if (!htmlBody && options.message) {
+    htmlBody = genericEmail(options.subject, options.message, options.name);
+  }
+
   const mailOptions = {
-    from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
+    from: `${process.env.FROM_NAME || 'Hyrego'} <${process.env.FROM_EMAIL}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
-    html: options.html
+    html: htmlBody
   };
 
   try {
@@ -36,3 +42,4 @@ const sendEmail = async (options) => {
 };
 
 module.exports = sendEmail;
+

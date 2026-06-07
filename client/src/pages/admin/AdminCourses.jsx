@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
 import { Plus, Trash2, Users, XCircle, UploadCloud, Check } from 'lucide-react';
 import Skeleton from '../../components/ui/Skeleton';
+import { toast } from 'react-hot-toast';
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -40,20 +41,30 @@ const AdminCourses = () => {
 
     const handleDeleteCourse = async (id) => {
         if (!confirm('Delete this course?')) return;
+        const previousCourses = [...courses];
+        setCourses(prev => prev.filter(c => c._id !== id));
+        toast.success('Course deleted successfully');
         try {
             await axios.delete(`/admin/courses/${id}`);
-            fetchData();
+            const res = await axios.get('/admin/courses');
+            setCourses(res.data.data.courses || []);
         } catch (err) {
-            alert('Delete failed');
+            setCourses(previousCourses);
+            toast.error('Delete failed');
         }
     };
 
     const handleApproval = async (id, status) => {
+        const previousCourses = [...courses];
+        setCourses(prev => prev.map(c => c._id === id ? { ...c, approvalStatus: status } : c));
+        toast.success(`Course ${status.toLowerCase()} successfully`);
         try {
             await axios.patch(`/admin/courses/${id}`, { approvalStatus: status });
-            fetchData();
+            const res = await axios.get('/admin/courses');
+            setCourses(res.data.data.courses || []);
         } catch (err) {
-            alert('Approval action failed');
+            setCourses(previousCourses);
+            toast.error('Approval action failed');
         }
     };
 
@@ -81,10 +92,10 @@ const AdminCourses = () => {
                 }
             });
             setCourseForm({ show: false, title: '', description: '', category: '', coverImageFile: null, coverImagePreview: '', teacherId: '' });
+            toast.success('Course created successfully!');
             fetchData();
-            alert('Course created!');
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to create course');
+            toast.error(err.response?.data?.message || 'Failed to create course');
         }
     };
 

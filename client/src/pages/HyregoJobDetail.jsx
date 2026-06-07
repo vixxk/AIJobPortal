@@ -472,6 +472,11 @@ const HyregoJobDetail = () => {
 
                             {/* Quick Info Chips */}
                             <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
+                                {job.opportunityType && (
+                                    <span className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs md:text-[13px] font-bold ${job.opportunityType === 'Internship' ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-indigo-50 border-indigo-200 text-indigo-700'}`}>
+                                        {job.opportunityType === 'Internship' ? '🎓' : '💼'} {job.opportunityType}
+                                    </span>
+                                )}
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs md:text-[13px] font-semibold text-slate-600">
                                     <MapPin className="w-3.5 h-3.5 text-rose-500" />
                                     {job.location}
@@ -480,6 +485,12 @@ const HyregoJobDetail = () => {
                                     <Briefcase className="w-3.5 h-3.5 text-blue-500" />
                                     {job.jobType || 'Full-time'}
                                 </span>
+                                {job.workSchedule && (
+                                    <span className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-xl text-xs md:text-[13px] font-semibold text-sky-700">
+                                        <Clock className="w-3.5 h-3.5" />
+                                        {job.workSchedule}
+                                    </span>
+                                )}
                                 {(job.salaryRange) && (
                                     <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs md:text-[13px] font-bold text-emerald-700">
                                         <IndianRupee className="w-3.5 h-3.5" />
@@ -604,6 +615,22 @@ const HyregoJobDetail = () => {
                             </div>
                         )}
 
+                        {/* Benefits / Perks */}
+                        {((job.benefits && job.benefits.length > 0) || (job.perks && job.perks.length > 0)) && (
+                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 md:p-8 mb-6">
+                                <h2 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
+                                    <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
+                                    {job.opportunityType === 'Internship' ? 'Perks' : 'Benefits'}
+                                </h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {(job.benefits || []).concat(job.perks || []).map((item, i) => (
+                                        <span key={i} className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl text-sm font-semibold text-amber-700">
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* About the Company */}
                         {(job.aboutCompany || job.companyWebsite) && (
                             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 md:p-8 mb-6">
@@ -773,11 +800,21 @@ const HyregoJobDetail = () => {
                                 <div className="space-y-3">
                                     <InfoRow icon={Building2} label="Company" value={companyName} />
                                     <InfoRow icon={MapPin} label="Location" value={job.location} />
-                                    <InfoRow icon={Briefcase} label="Job Type" value={job.jobType || 'Full-time'} />
+                                    <InfoRow icon={Briefcase} label="Type" value={job.opportunityType === 'Internship' ? 'Internship' : (job.jobType || 'Full-time')} />
+                                    {job.workSchedule && <InfoRow icon={Clock} label="Schedule" value={job.workSchedule} />}
                                     {job.salaryRange && <InfoRow icon={IndianRupee} label="Salary" value={job.salaryRange} />}
+                                    {job.opportunityType === 'Internship' && job.stipendType === 'Paid' && (job.stipendMin || job.stipendMax) && (
+                                        <InfoRow icon={IndianRupee} label="Stipend" value={`₹${job.stipendMin || 0} - ₹${job.stipendMax || 0}/mo`} />
+                                    )}
+                                    {job.opportunityType === 'Internship' && job.stipendType === 'Unpaid' && (
+                                        <InfoRow icon={IndianRupee} label="Stipend" value="Unpaid" />
+                                    )}
                                     {job.experienceRange && <InfoRow icon={Clock} label="Experience" value={job.experienceRange} />}
                                     {job.workMode && <InfoRow icon={Monitor} label="Work Mode" value={job.workMode} />}
+                                    {job.numberOfOpenings > 1 && <InfoRow icon={Users} label="Openings" value={`${job.numberOfOpenings} positions`} />}
+                                    {job.internshipDuration && job.opportunityType === 'Internship' && <InfoRow icon={Timer} label="Duration" value={`${job.internshipDuration} Month${job.internshipDuration > 1 ? 's' : ''}`} />}
                                     {job.duration && <InfoRow icon={Timer} label="Duration" value={job.duration} />}
+                                    {job.ppoOffered && <InfoRow icon={Sparkles} label="PPO" value="Pre-Placement Offer Available" />}
                                     <InfoRow icon={Calendar} label="Posted" value={timeSince(job.createdAt)} />
                                 </div>
                             </div>

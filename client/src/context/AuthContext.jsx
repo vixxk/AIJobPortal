@@ -9,6 +9,29 @@ export const AuthProvider = ({ children }) => {
         const initAuth = async () => {
             const storedToken = localStorage.getItem('token');
             const storedUser = localStorage.getItem('user');
+
+            const isTokenExpired = (token) => {
+                if (!token) return true;
+                try {
+                    const parts = token.split('.');
+                    if (parts.length !== 3) return true;
+                    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    if (!payload.exp) return false;
+                    return payload.exp < Math.floor(Date.now() / 1000);
+                } catch (e) {
+                    return true;
+                }
+            };
+
+            if (storedToken && isTokenExpired(storedToken)) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                setUser(null);
+                setLoading(false);
+                window.location.href = '/login';
+                return;
+            }
+
             if (storedToken && storedUser) {
                 try {
                     setUser(JSON.parse(storedUser));
@@ -21,6 +44,7 @@ export const AuthProvider = ({ children }) => {
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
                         setUser(null);
+                        window.location.href = '/login';
                     }
                 }
             } else {
@@ -86,9 +110,9 @@ export const AuthProvider = ({ children }) => {
             };
         }
     }, [persistUser]);
-    const register = useCallback(async (name, email, password, role) => {
+    const register = useCallback(async (name, email, password, role, phoneNumber) => {
         try {
-            const response = await api.post('/auth/register', { name, email, password, role });
+            const response = await api.post('/auth/register', { name, email, password, role, phoneNumber });
             return { success: true, message: response.data.message };
         } catch (error) {
             return {

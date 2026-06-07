@@ -71,4 +71,10 @@ exports.uploadJobImages  = uploadImageOnly.fields([
   { name: 'companyLogo', maxCount: 1 },
   { name: 'companyBanner', maxCount: 1 }
 ]);
+exports.uploadVerificationDocs = uploadMemory.fields([
+  { name: 'gstCertificate', maxCount: 1 },
+  { name: 'panCard', maxCount: 1 },
+  { name: 'companyRegistrationCertificate', maxCount: 1 },
+  { name: 'startupIndiaCertificate', maxCount: 1 }
+]);
 

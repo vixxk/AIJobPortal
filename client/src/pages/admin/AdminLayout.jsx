@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { customConfirm } from '../../components/layout/ConfirmDialog';
+import axios from '../../utils/axios';
 
-const SidebarItem = ({ to, label, icon: Icon }) => {
+const SidebarItem = ({ to, label, icon: Icon, count }) => {
     const location = useLocation();
     const active = location.pathname === to;
 
@@ -16,14 +17,26 @@ const SidebarItem = ({ to, label, icon: Icon }) => {
         <Link
             to={to}
             className={clsx(
-                "w-full flex items-center gap-4 px-5 py-4 rounded-[20px] font-black transition-all text-[13px] tracking-wide",
+                "w-full flex items-center justify-between px-5 py-4 rounded-[20px] font-black transition-all text-[13px] tracking-wide",
                 active
                     ? "bg-indigo-600 text-white shadow-xl shadow-indigo-200 scale-[1.02]"
                     : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
             )}
         >
-            <Icon className={clsx("w-5 h-5", active ? "text-white" : "text-slate-400")} />
-            {label}
+            <div className="flex items-center gap-4">
+                <Icon className={clsx("w-5 h-5", active ? "text-white" : "text-slate-400")} />
+                {label}
+            </div>
+            {count > 0 && (
+                <span className={clsx(
+                    "px-2 py-0.5 text-[10px] font-black rounded-full shrink-0 select-none shadow-sm transition-all",
+                    active
+                        ? "bg-white text-indigo-600 font-extrabold"
+                        : "bg-rose-500 text-white font-extrabold"
+                )}>
+                    {count}
+                </span>
+            )}
         </Link>
     );
 };
@@ -32,10 +45,38 @@ const AdminLayout = () => {
     const { logout } = useAuth();
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [counts, setCounts] = useState({
+        recruiters: 0,
+        colleges: 0,
+        students: 0,
+        teachers: 0,
+        jobs: 0,
+        courses: 0,
+        competitions: 0,
+        issues: 0,
+        payments: 0
+    });
+
+    const fetchPendingCounts = async () => {
+        try {
+            const res = await axios.get('/admin/pending-counts');
+            if (res.data?.status === 'success' && res.data?.data) {
+                setCounts(res.data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching pending counts:', err);
+        }
+    };
 
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [location.pathname]);
+
+    useEffect(() => {
+        fetchPendingCounts();
+        const interval = setInterval(fetchPendingCounts, 15000);
+        return () => clearInterval(interval);
+    }, []);
 
     const getPageTitle = () => {
         const path = location.pathname;
@@ -91,19 +132,19 @@ const AdminLayout = () => {
                     <SidebarItem to="/app/admin" label="DASHBOARD" icon={LayoutDashboard} />
                     <div className="h-px bg-slate-100 my-4 mx-2" />
                     <div className="px-5 mb-2"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">User Management</span></div>
-                    <SidebarItem to="/app/admin/students" label="STUDENTS" icon={Users} />
-                    <SidebarItem to="/app/admin/recruiters" label="RECRUITERS" icon={Building2} />
-                    <SidebarItem to="/app/admin/colleges" label="COLLEGES" icon={Building2} />
-                    <SidebarItem to="/app/admin/teachers" label="TEACHERS" icon={GraduationCap} />
+                    <SidebarItem to="/app/admin/students" label="STUDENTS" icon={Users} count={counts.students} />
+                    <SidebarItem to="/app/admin/recruiters" label="RECRUITERS" icon={Building2} count={counts.recruiters} />
+                    <SidebarItem to="/app/admin/colleges" label="COLLEGES" icon={Building2} count={counts.colleges} />
+                    <SidebarItem to="/app/admin/teachers" label="TEACHERS" icon={GraduationCap} count={counts.teachers} />
 
                     <div className="h-px bg-slate-100 my-4 mx-2" />
                     <div className="px-5 mb-2"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resources</span></div>
-                    <SidebarItem to="/app/admin/jobs" label="JOB LISTINGS" icon={Briefcase} />
-                    <SidebarItem to="/app/admin/courses" label="ACADEMY CONTENT" icon={BookOpen} />
+                    <SidebarItem to="/app/admin/jobs" label="JOB LISTINGS" icon={Briefcase} count={counts.jobs} />
+                    <SidebarItem to="/app/admin/courses" label="ACADEMY CONTENT" icon={BookOpen} count={counts.courses} />
                     <SidebarItem to="/app/admin/applications" label="APPLICATIONS" icon={FileText} />
-                    <SidebarItem to="/app/admin/competitions" label="COMPETITIONS" icon={Globe} />
-                    <SidebarItem to="/app/admin/issues" label="APP ISSUES" icon={AlertCircle} />
-                    <SidebarItem to="/app/admin/payments" label="PAYMENTS" icon={CreditCard} />
+                    <SidebarItem to="/app/admin/competitions" label="COMPETITIONS" icon={Globe} count={counts.competitions} />
+                    <SidebarItem to="/app/admin/issues" label="APP ISSUES" icon={AlertCircle} count={counts.issues} />
+                    <SidebarItem to="/app/admin/payments" label="PAYMENTS" icon={CreditCard} count={counts.payments} />
                 </div>
 
                 <div className="mt-auto pt-10">

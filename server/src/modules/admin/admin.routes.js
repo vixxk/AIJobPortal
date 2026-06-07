@@ -9,8 +9,10 @@ router.use(authMiddleware.protect);
 router.use(roleMiddleware.restrictTo('SUPER_ADMIN'));
 
 router.get('/analytics', adminController.getAnalyticsSummary);
+router.get('/pending-counts', adminController.getPendingCounts);
 router.get('/users/pending', adminController.getPendingUsers);
 router.get('/users', adminController.getAllUsers);
+router.get('/users/:userId/recruiter-profile', adminController.getRecruiterProfile);
 router.patch('/users/:userId/approval', adminController.updateUserApproval);
 router.patch('/users/:userId/ban', adminController.banUser);
 router.delete('/users/:userId', adminController.deleteUser);

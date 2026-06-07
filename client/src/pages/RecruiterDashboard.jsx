@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import { Briefcase, Users, PlusCircle, Calendar, Eye, MapPin, Trophy, GraduationCap, XCircle } from 'lucide-react';
@@ -27,20 +27,23 @@ const StatCard = ({ title, value, icon: Icon, color, loading, showEye }) => (
 );
 
 const RecruiterDashboard = () => {
-    const { user } = useAuth();
+    const navigate = useNavigate();
+    const { user, refreshUser } = useAuth();
     const [stats, setStats] = useState({ activeJobs: 0, totalApplicants: 0 });
     const [recentJobs, setRecentJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
+    const [profile, setProfile] = useState(null);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             setLoading(true);
             try {
-                const [statsRes, jobsRes] = await Promise.all([
+                const [statsRes, jobsRes, profileRes] = await Promise.all([
                     axios.get('/jobs/stats'),
-                    axios.get('/jobs/me')
+                    axios.get('/jobs/me'),
+                    axios.get('/recruiter/me')
                 ]);
 
                 if (statsRes.data.status === 'success') {
@@ -48,9 +51,12 @@ const RecruiterDashboard = () => {
                 }
 
                 if (jobsRes.data.status === 'success') {
-                    // Normalize data structure if needed
                     const jobsData = jobsRes.data.data;
                     setRecentJobs(Array.isArray(jobsData) ? jobsData : (jobsData.jobs || []));
+                }
+
+                if (profileRes.data.status === 'success') {
+                    setProfile(profileRes.data.data.profile || {});
                 }
             } catch (error) {
                 console.error("Failed to fetch recruiter data", error);
@@ -74,11 +80,70 @@ const RecruiterDashboard = () => {
         }
     };
 
+    const isSubmitted = profile?.verificationSubmitted;
+    const isApproved = user?.approvalStatus === 'APPROVED';
+    const isRejected = user?.approvalStatus === 'REJECTED';
+    const isPendingReview = isSubmitted && user?.approvalStatus === 'PENDING';
+    const needsSubmission = !isSubmitted && !isApproved && !isRejected;
+
     const firstName = (user?.name || "Recruiter").split(' ')[0];
     const allJobsList = [...recentJobs];
 
     return (
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 px-4 sm:px-6 lg:px-8">
+            {/* Verification Alert Banners */}
+            {needsSubmission && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
+                            <span className="text-xl">🟡</span>
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-800">Company Verification Pending</h4>
+                            <p className="text-xs text-slate-500 font-semibold mt-0.5">Complete verification to publish jobs and internships publicly.</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => navigate('/app/recruiter/verify')}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-amber-100"
+                    >
+                        Complete Verification
+                    </button>
+                </div>
+            )}
+
+            {isPendingReview && (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
+                        <span className="text-xl">🟡</span>
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-slate-800">Verification Under Review</h4>
+                        <p className="text-xs text-slate-500 font-semibold mt-0.5">Your company details are under review. Your jobs can be created as drafts but require admin approval before public listing.</p>
+                    </div>
+                </div>
+            )}
+
+            {isRejected && (
+                <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600 shrink-0">
+                            <span className="text-xl">🔴</span>
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-800">Company Verification Rejected</h4>
+                            <p className="text-xs text-slate-500 font-semibold mt-0.5">Your verification application was rejected. Please update your details and documents to resubmit.</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setShowVerificationForm(true)}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-rose-100"
+                    >
+                        Resubmit Verification
+                    </button>
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 pt-2 sm:pt-4">
                 <div>

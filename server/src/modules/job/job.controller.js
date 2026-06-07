@@ -13,26 +13,25 @@ const fallbackCache = new Map();
 exports.createJob = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
   const profile = await RecruiterProfile.findOne({ userId });
-  
-  // Use either the profile boolean or the User's approvalStatus from middleware
-  // Also allow SUPER_ADMIN to bypass this check
-  const isApproved = 
-    req.user.role === 'SUPER_ADMIN' || 
-    profile?.approved === true || 
-    req.user.approvalStatus === 'APPROVED';
-  
-  if (!isApproved) {
-    return next(new AppError('Only approved recruiters can post jobs. Your account may be pending approval.', 403));
+
+  const isVerified = req.user.approvalStatus === 'APPROVED';
+  let status = req.body.status || 'PENDING';
+  let unverifiedDraft = false;
+
+  if (!isVerified) {
+    status = 'DRAFT';
+    unverifiedDraft = true;
   }
 
   const newJob = await Job.create({
     ...req.body,
     companyName: req.body.companyName || profile?.companyName || 'Organization',
     recruiterId: userId,
-    status: 'PENDING'
+    status
   });
   res.status(201).json({
     status: 'success',
+    unverifiedDraft,
     data: {
       job: newJob
     }
@@ -40,17 +39,22 @@ exports.createJob = catchAsync(async (req, res, next) => {
 });
 exports.updateJob = catchAsync(async (req, res, next) => {
   const userId = req.user._id || req.user.id;
-  
-  // Check if recruiter is still approved
   const profile = await RecruiterProfile.findOne({ userId });
-  const isApproved = req.user.role === 'SUPER_ADMIN' || profile?.approved === true || req.user.approvalStatus === 'APPROVED';
-  
-  if (!isApproved) {
-    return next(new AppError('Your account approval is required to update jobs.', 403));
-  }
 
   const updateData = { ...req.body };
-  updateData.status = 'PENDING';
+  const isVerified = req.user.approvalStatus === 'APPROVED';
+  let unverifiedDraft = false;
+
+  if (!isVerified) {
+    if (updateData.status && updateData.status !== 'DRAFT') {
+      updateData.status = 'DRAFT';
+      unverifiedDraft = true;
+    }
+  } else {
+    if (!updateData.status) {
+      updateData.status = 'PENDING';
+    }
+  }
   
   const job = await Job.findOneAndUpdate(
     { _id: req.params.id, recruiterId: userId },
@@ -62,6 +66,7 @@ exports.updateJob = catchAsync(async (req, res, next) => {
   }
   res.status(200).json({
     status: 'success',
+    unverifiedDraft,
     data: {
       job
     }

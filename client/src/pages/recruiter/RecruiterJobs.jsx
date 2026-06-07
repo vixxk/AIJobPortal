@@ -47,6 +47,7 @@ const RecruiterJobs = () => {
     };
 
     const filteredJobs = jobs.filter(job => {
+        if (job.status === 'DRAFT') return false;
         const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                              job.location.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = filterStatus === 'ALL' || job.status === filterStatus;
@@ -130,6 +131,11 @@ const RecruiterJobs = () => {
                                 <div key={job._id} className="group p-6 lg:p-8 hover:bg-slate-50/50 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-3 mb-2">
+                                            {job.opportunityType && (
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${job.opportunityType === 'Internship' ? 'bg-teal-50 text-teal-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                    {job.opportunityType}
+                                                </span>
+                                            )}
                                             <h4 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{job.title}</h4>
                                             <span className={clsx(
                                                 "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shrink-0",
@@ -145,6 +151,16 @@ const RecruiterJobs = () => {
                                                 <MapPin className="w-3.5 h-3.5" />
                                                 {job.location}
                                             </div>
+                                            {job.workMode && (
+                                                <div className="flex items-center gap-1.5 text-violet-500">
+                                                    {job.workMode}
+                                                </div>
+                                            )}
+                                            {job.workSchedule && (
+                                                <div className="flex items-center gap-1.5 text-sky-500">
+                                                    {job.workSchedule}
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-1.5">
                                                 <Clock className="w-3.5 h-3.5" />
                                                 {new Date(job.createdAt).toLocaleDateString()}
@@ -155,16 +171,14 @@ const RecruiterJobs = () => {
                                                     {job.salaryRange}
                                                 </div>
                                             )}
-                                            {job.jobType && (
-                                                <div className="flex items-center gap-1.5 text-emerald-600">
-                                                    <Briefcase className="w-3.5 h-3.5" />
-                                                    {job.jobType}
+                                            {job.numberOfOpenings > 1 && (
+                                                <div className="flex items-center gap-1.5 text-purple-500">
+                                                    {job.numberOfOpenings} openings
                                                 </div>
                                             )}
-                                            {job.experienceRange && (
-                                                <div className="flex items-center gap-1.5 text-amber-600">
-                                                    <Clock className="w-3.5 h-3.5" />
-                                                    {job.experienceRange}
+                                            {job.ppoOffered && (
+                                                <div className="flex items-center gap-1.5 text-emerald-600">
+                                                    PPO ✓
                                                 </div>
                                             )}
                                         </div>

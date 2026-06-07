@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import axios from '../../utils/axios';
 import { Globe, Trash2, Calendar, Users, Plus, Pencil, XCircle, MapPin, Award, BookOpen, Layers, Building2, BarChart3, ChevronRight, ExternalLink, Loader2, CheckCircle2, Download } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import clsx from 'clsx';
 import Skeleton from '../../components/ui/Skeleton';
 
@@ -131,9 +132,9 @@ const AdminCompetitions = () => {
                 avatar: null, preview: null, rounds: [{ title: '', description: '', date: '' }]
             });
             fetchCompetitions();
-            alert(editingId ? 'Competition updated!' : 'Competition created successfully!');
+            toast.success(editingId ? 'Competition updated successfully!' : 'Competition created successfully!');
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to process competition');
+            toast.error(err.response?.data?.message || 'Failed to process competition');
         }
     };
 
@@ -188,30 +189,40 @@ const AdminCompetitions = () => {
             document.body.appendChild(link);
             link.click();
             link.remove();
+            toast.success('Participant data download started');
         } catch (err) {
-            alert('Failed to download participant data.');
+            toast.error('Failed to download participant data.');
         } finally {
             setDownloadingCsv(false);
         }
     };
 
     const handleApproveCompetition = async (id) => {
+        const previousCompetitions = [...competitions];
+        setCompetitions(prev => prev.map(c => c._id === id ? { ...c, status: 'APPROVED' } : c));
+        toast.success('Competition approved successfully');
         try {
             await axios.patch(`/admin/competitions/${id}`, { status: 'APPROVED' });
-            fetchCompetitions();
-            alert('Competition approved!');
+            const res = await axios.get('/admin/competitions');
+            setCompetitions(res.data.data.competitions || []);
         } catch (err) {
-            alert('Approval failed');
+            setCompetitions(previousCompetitions);
+            toast.error('Approval failed');
         }
     };
 
     const handleDeleteCompetition = async (id) => {
         if (!confirm('Delete this competition?')) return;
+        const previousCompetitions = [...competitions];
+        setCompetitions(prev => prev.filter(c => c._id !== id));
+        toast.success('Competition deleted successfully');
         try {
             await axios.delete(`/admin/competitions/${id}`);
-            fetchCompetitions();
+            const res = await axios.get('/admin/competitions');
+            setCompetitions(res.data.data.competitions || []);
         } catch (err) {
-            alert('Delete failed');
+            setCompetitions(previousCompetitions);
+            toast.error('Delete failed');
         }
     };
 
