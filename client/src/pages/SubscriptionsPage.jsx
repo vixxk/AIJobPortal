@@ -2,11 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSubscriptionStatus, createSubscriptionOrder, getPlans } from '../services/paymentApi';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Check, Zap, Crown, Mail, Loader2, BarChart2 } from 'lucide-react';
+import { Sparkles, Check, Zap, Crown, Mail, Loader2, BarChart2, ArrowLeft } from 'lucide-react';
 
 const SubscriptionsSkeleton = () => {
     return (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-12 animate-pulse font-sans">
+            {/* Back Button Skeleton */}
+            <div className="flex items-center">
+                <div className="h-8 w-20 bg-slate-200/85 rounded-xl" />
+            </div>
+
             {/* Header section skeleton */}
             <div className="text-center max-w-3xl mx-auto space-y-4 flex flex-col items-center">
                 <div className="h-6 w-48 bg-slate-200/80 rounded-full" />
@@ -204,36 +209,47 @@ const SubscriptionsPage = () => {
     const usage = statusData?.usageLimits;
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-12 custom-scrollbar">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 space-y-8 md:space-y-12 custom-scrollbar">
+            {/* Navigation Bar */}
+            <div className="flex items-center">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-100 hover:border-slate-200 transition-all text-xs font-bold shadow-sm active:scale-95 duration-200"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back</span>
+                </button>
+            </div>
+
             {/* Header section */}
-            <div className="text-center max-w-3xl mx-auto space-y-4">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-black tracking-wider uppercase shadow-sm">
-                    <Sparkles className="w-3.5 h-3.5" />
+            <div className="text-center max-w-3xl mx-auto space-y-2.5 md:space-y-4">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] md:text-xs font-black tracking-wider uppercase shadow-sm">
+                    <Sparkles className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     Subscription Control Center
                 </div>
-                <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                <h1 className="text-2xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight px-2">
                     Power Up Your Career with <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">Advanced AI Tools</span>
                 </h1>
-                <p className="text-slate-500 text-sm md:text-base font-semibold leading-relaxed">
+                <p className="text-slate-500 text-[12px] md:text-base font-semibold leading-relaxed px-4">
                     Choose the plan that fits your career preparation needs. Upgrade anytime, or use pay-per-use options.
                 </p>
             </div>
 
             {/* Guest mode banner */}
             {!user && (
-                <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 rounded-2xl md:rounded-[2rem] p-4 md:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
                     <div className="space-y-1 text-center sm:text-left">
-                        <h4 className="text-sm font-black text-amber-900 uppercase tracking-tight flex items-center gap-1.5 justify-center sm:justify-start">
-                            <Sparkles className="w-4 h-4 text-amber-600" />
+                        <h4 className="text-xs md:text-sm font-black text-amber-900 uppercase tracking-tight flex items-center gap-1.5 justify-center sm:justify-start">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                             Guest Mode
                         </h4>
-                        <p className="text-xs text-slate-500 font-bold">
+                        <p className="text-[11px] md:text-xs text-slate-500 font-bold">
                             You are browsing our subscription tiers. Log in to upgrade your limits and unlock AI tools.
                         </p>
                     </div>
                     <button
                         onClick={() => navigate('/login')}
-                        className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-xs rounded-xl shadow-md shadow-amber-500/10 transition-all hover:scale-[1.02] active:scale-95 shrink-0"
+                        className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black text-[11px] md:text-xs rounded-xl shadow-md shadow-amber-500/10 transition-all hover:scale-[1.02] active:scale-95 shrink-0"
                     >
                         Log In Now
                     </button>
@@ -242,89 +258,89 @@ const SubscriptionsPage = () => {
 
             {/* User Current Quotas Meter Card */}
             {usage && (
-                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/50 p-6 md:p-8 space-y-6 transition-all hover:shadow-indigo-900/5 duration-500">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                <div className="bg-white rounded-3xl md:rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 p-5 md:p-8 space-y-5 md:space-y-6 transition-all hover:shadow-indigo-900/5 duration-500">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 md:pb-5">
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                                    <BarChart2 className="w-5 h-5" />
+                                <div className="w-9 h-9 md:w-10 md:h-10 rounded-[14px] md:rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                                    <BarChart2 className="w-4 h-4 md:w-5 md:h-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-black text-slate-900 leading-none">Your Quota Usage</h2>
-                                    <p className="text-xs text-slate-400 font-bold mt-1">
+                                    <h2 className="text-[16px] md:text-xl font-black text-slate-900 leading-none">Your Quota Usage</h2>
+                                    <p className="text-[10px] md:text-xs text-slate-400 font-bold mt-1">
                                         Active Plan: <span className="text-indigo-600 uppercase font-black">{currentPlan}</span>
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
-                            <div className="text-xs font-bold text-slate-500 pl-2">
-                                Next Reset: <span className="text-slate-950 font-black">{new Date(usage.lastResetDate).toLocaleDateString()}</span>
+                        <div className="flex items-center justify-between md:justify-start gap-3 bg-slate-50 p-2 rounded-xl md:rounded-2xl border border-slate-100">
+                            <div className="text-[10px] md:text-xs font-bold text-slate-500 pl-1.5">
+                                Reset: <span className="text-slate-950 font-black">{new Date(usage.lastResetDate).toLocaleDateString()}</span>
                             </div>
                             <a 
                                 href="mailto:sampletestingwork@gmail.com" 
-                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 transition-all text-xs font-bold shadow-sm"
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg md:rounded-xl bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 transition-all text-[10px] md:text-xs font-bold shadow-sm"
                             >
-                                <Mail className="w-3.5 h-3.5" />
+                                <Mail className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                 Support
                             </a>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 md:gap-6">
                         {/* Spoken English */}
-                        <div className="space-y-3 p-5 bg-gradient-to-br from-slate-50 to-blue-50/20 rounded-[2rem] border border-slate-100 hover:border-blue-200 transition-all hover:shadow-lg hover:shadow-blue-500/5 duration-300">
-                            <div className="flex justify-between text-xs font-bold">
-                                <span className="text-slate-600 flex items-center gap-1.5">🗣️ English Tutor</span>
+                        <div className="space-y-2.5 md:space-y-3 p-4 md:p-5 bg-gradient-to-br from-slate-50 to-blue-50/20 rounded-2xl md:rounded-[2rem] border border-slate-100 hover:border-blue-200 transition-all hover:shadow-md hover:shadow-blue-500/5 duration-300">
+                            <div className="flex justify-between text-[11px] md:text-xs font-bold">
+                                <span className="text-slate-600 flex items-center gap-1">🗣️ English Tutor</span>
                                 <span className="text-slate-900 font-black bg-white px-2 py-0.5 rounded-md border border-slate-100 shadow-sm">{usage.spokenEnglish.used} / {usage.spokenEnglish.limit}</span>
                             </div>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-slate-100 h-1.5 md:h-2 rounded-full overflow-hidden">
                                 <div 
                                     className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-500" 
                                     style={{ width: `${Math.min(100, (usage.spokenEnglish.used / usage.spokenEnglish.limit) * 100)}%` }}
                                 />
                             </div>
-                            <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
+                            <div className="flex items-center justify-between text-[9px] md:text-[10px] text-slate-400 font-bold">
                                 <span>Refreshed Monthly</span>
-                                <span className="text-indigo-600">₹{statusData?.payPerUsePrices?.englishTutor || 7}/session next</span>
+                                <span className="text-indigo-600">₹{statusData?.payPerUsePrices?.englishTutor || 7}/session</span>
                             </div>
                         </div>
 
                         {/* Resume Downloads */}
-                        <div className="space-y-3 p-5 bg-gradient-to-br from-slate-50 to-indigo-50/20 rounded-[2rem] border border-slate-100 hover:border-indigo-200 transition-all hover:shadow-lg hover:shadow-indigo-500/5 duration-300">
-                            <div className="flex justify-between text-xs font-bold">
-                                <span className="text-slate-600 flex items-center gap-1.5">📄 Resume Downloads</span>
+                        <div className="space-y-2.5 md:space-y-3 p-4 md:p-5 bg-gradient-to-br from-slate-50 to-indigo-50/20 rounded-2xl md:rounded-[2rem] border border-slate-100 hover:border-indigo-200 transition-all hover:shadow-md hover:shadow-indigo-500/5 duration-300">
+                            <div className="flex justify-between text-[11px] md:text-xs font-bold">
+                                <span className="text-slate-600 flex items-center gap-1">📄 Resume Downloads</span>
                                 <span className="text-slate-900 font-black bg-white px-2 py-0.5 rounded-md border border-slate-100 shadow-sm">{usage.resumes.used} / {usage.resumes.limit}</span>
                             </div>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-slate-100 h-1.5 md:h-2 rounded-full overflow-hidden">
                                 <div 
                                     className="bg-gradient-to-r from-indigo-500 to-violet-600 h-full rounded-full transition-all duration-500" 
                                     style={{ width: `${Math.min(100, (usage.resumes.used / usage.resumes.limit) * 100)}%` }}
                                 />
                             </div>
-                            <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
+                            <div className="flex items-center justify-between text-[9px] md:text-[10px] text-slate-400 font-bold">
                                 <span>Refreshed Monthly</span>
-                                <span className="text-violet-600">₹{statusData?.payPerUsePrices?.resume || 10}/download next</span>
+                                <span className="text-violet-600">₹{statusData?.payPerUsePrices?.resume || 10}/download</span>
                             </div>
                         </div>
 
                         {/* Mock Interviews */}
-                        <div className="space-y-3 p-5 bg-gradient-to-br from-slate-50 to-emerald-50/20 rounded-[2rem] border border-slate-100 hover:border-emerald-200 transition-all hover:shadow-lg hover:shadow-emerald-500/5 duration-300">
-                            <div className="flex justify-between text-xs font-bold">
-                                <span className="text-slate-600 flex items-center gap-1.5">🤖 Mock Interviews</span>
+                        <div className="space-y-2.5 md:space-y-3 p-4 md:p-5 bg-gradient-to-br from-slate-50 to-emerald-50/20 rounded-2xl md:rounded-[2rem] border border-slate-100 hover:border-emerald-200 transition-all hover:shadow-md hover:shadow-emerald-500/5 duration-300">
+                            <div className="flex justify-between text-[11px] md:text-xs font-bold">
+                                <span className="text-slate-600 flex items-center gap-1">🤖 Mock Interviews</span>
                                 <span className="text-slate-900 font-black bg-white px-2 py-0.5 rounded-md border border-slate-100 shadow-sm">{usage.interviews.used} / {usage.interviews.limit}</span>
                             </div>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-slate-100 h-1.5 md:h-2 rounded-full overflow-hidden">
                                 <div 
                                     className="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-500" 
                                     style={{ width: `${Math.min(100, (usage.interviews.used / usage.interviews.limit) * 100)}%` }}
                                 />
                             </div>
-                            <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
-                                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px]">
-                                    {currentPlan === 'FREE' ? `${usage.interviews.limit} Interview${usage.interviews.limit > 1 ? 's' : ''}/week` : 'No weekly limit'}
+                            <div className="flex items-center justify-between text-[9px] md:text-[10px] text-slate-400 font-bold">
+                                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[8.5px]">
+                                    {currentPlan === 'FREE' ? `${usage.interviews.limit}/week` : 'Unlimited'}
                                 </span>
-                                <span className="text-emerald-600">₹{statusData?.payPerUsePrices?.interview || 7}/interview next</span>
+                                <span className="text-emerald-600">₹{statusData?.payPerUsePrices?.interview || 7}/interview</span>
                             </div>
                         </div>
                     </div>
@@ -332,7 +348,7 @@ const SubscriptionsPage = () => {
             )}
 
             {/* Pricing cards grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 items-stretch pt-2 md:pt-4">
                 {plans.map((p) => {
                     const isFree = p.planKey === 'FREE';
                     const isProPlus = p.planKey === 'PRO_PLUS';
@@ -341,84 +357,84 @@ const SubscriptionsPage = () => {
                     return (
                         <div 
                             key={p.planKey} 
-                            className={`flex flex-col bg-white rounded-[2.5rem] p-6 md:p-8 border transition-all duration-300 relative ${
+                            className={`flex flex-col bg-white rounded-3xl md:rounded-[2.5rem] p-5 md:p-8 border transition-all duration-300 relative ${
                                 isActive 
-                                ? 'border-emerald-500 shadow-2xl shadow-emerald-500/10 md:scale-[1.02] ring-2 ring-emerald-500/20' 
+                                ? 'border-emerald-500 shadow-xl shadow-emerald-500/5 md:scale-[1.02] ring-2 ring-emerald-500/20' 
                                 : isProPlus 
-                                ? 'border-blue-500 shadow-2xl shadow-blue-500/10 md:scale-105 hover:border-blue-600' 
-                                : 'border-slate-150 shadow-lg shadow-slate-100/60 hover:border-slate-300'
+                                ? 'border-blue-500 shadow-xl shadow-blue-500/5 md:scale-105 hover:border-blue-600' 
+                                : 'border-slate-100 shadow-md shadow-slate-100/40 hover:border-slate-300'
                             }`}
                         >
                             {isProPlus && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md">
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black uppercase tracking-widest shadow-md">
                                     Most Popular
                                 </div>
                             )}
 
                             {isActive && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md">
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest shadow-md">
                                     Active Plan
                                 </div>
                             )}
 
                             {/* Plan icon & header */}
-                            <div className="space-y-3 pb-6 border-b border-slate-100">
+                            <div className="space-y-2.5 pb-5 border-b border-slate-100">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-2xl font-black text-slate-900">{p.name}</h3>
-                                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${
+                                    <h3 className="text-xl md:text-2xl font-black text-slate-900">{p.name}</h3>
+                                    <div className={`w-9 h-9 md:w-11 md:h-11 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 ${
                                         isFree 
                                         ? 'bg-slate-100 text-slate-600' 
                                         : isProPlus 
                                         ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white' 
                                         : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
                                     }`}>
-                                        {isFree ? <Zap className="w-5 h-5" /> : isProPlus ? <Crown className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+                                        {isFree ? <Zap className="w-4 h-4 md:w-5 md:h-5" /> : isProPlus ? <Crown className="w-4 h-4 md:w-5 md:h-5" /> : <Sparkles className="w-4 h-4 md:w-5 md:h-5" />}
                                     </div>
                                 </div>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-black text-slate-900">₹{p.price}</span>
-                                    <span className="text-slate-400 font-bold text-sm">/month</span>
+                                    <span className="text-3xl md:text-4xl font-black text-slate-900">₹{p.price}</span>
+                                    <span className="text-slate-400 font-bold text-xs md:text-sm">/month</span>
                                 </div>
                             </div>
 
                             {/* Features offerings */}
-                            <ul className="flex-1 py-6 space-y-4">
+                            <ul className="flex-1 py-5 space-y-3.5">
                                 {p.offerings.map((offering, idx) => (
-                                    <li key={idx} className="flex items-start gap-3">
-                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                                    <li key={idx} className="flex items-start gap-2.5">
+                                        <div className={`w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                                             isActive 
                                             ? 'bg-emerald-50 text-emerald-600' 
                                             : isProPlus 
                                             ? 'bg-blue-50 text-blue-600' 
                                             : 'bg-slate-50 text-slate-600'
                                         }`}>
-                                            <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                                            <Check className="w-3 h-3 stroke-[3px]" />
                                         </div>
-                                        <span className="text-sm font-semibold text-slate-600">{offering}</span>
+                                        <span className="text-[12.5px] md:text-sm font-semibold text-slate-600">{offering}</span>
                                     </li>
                                 ))}
                             </ul>
 
                             {/* Subscribe button */}
-                            <div className="pt-6">
+                            <div className="pt-5">
                                 {isFree ? (
                                     <button 
                                         disabled 
-                                        className="w-full py-4 text-xs font-black text-slate-400 bg-slate-100 rounded-2xl uppercase tracking-widest cursor-not-allowed"
+                                        className="w-full py-3 md:py-4 text-[10px] md:text-xs font-black text-slate-400 bg-slate-100 rounded-xl md:rounded-2xl uppercase tracking-widest cursor-not-allowed"
                                     >
                                         {isActive ? 'Current Plan' : 'Free Default'}
                                     </button>
                                 ) : !user ? (
-                                    <div className="space-y-3">
+                                    <div className="space-y-2.5">
                                         <button 
                                             disabled 
-                                            className="w-full py-4 text-xs font-black text-slate-400 bg-slate-100 rounded-2xl uppercase tracking-widest cursor-not-allowed"
+                                            className="w-full py-3 md:py-4 text-[10px] md:text-xs font-black text-slate-400 bg-slate-100 rounded-xl md:rounded-2xl uppercase tracking-widest cursor-not-allowed"
                                         >
                                             Buy Disabled
                                         </button>
                                         <button
                                             onClick={() => navigate('/login')}
-                                            className="w-full py-3.5 text-xs font-black rounded-2xl uppercase tracking-widest transition-all bg-indigo-600 hover:bg-indigo-750 text-white hover:shadow-lg text-center flex items-center justify-center gap-2 shadow-md shadow-indigo-200"
+                                            className="w-full py-3 text-[10px] md:text-xs font-black rounded-xl md:rounded-2xl uppercase tracking-widest transition-all bg-indigo-600 hover:bg-indigo-750 text-white hover:shadow-lg text-center flex items-center justify-center gap-2 shadow-md shadow-indigo-200"
                                         >
                                             Login to Buy
                                         </button>
@@ -427,7 +443,7 @@ const SubscriptionsPage = () => {
                                     <button
                                         onClick={() => handleSubscribe(p.planKey)}
                                         disabled={checkoutLoading !== null || isActive}
-                                        className={`w-full py-4 text-xs font-black rounded-2xl uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 ${
+                                        className={`w-full py-3 md:py-4 text-[10px] md:text-xs font-black rounded-xl md:rounded-2xl uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 ${
                                             isActive 
                                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-not-allowed shadow-none' 
                                             : isProPlus 
@@ -437,7 +453,7 @@ const SubscriptionsPage = () => {
                                     >
                                         {checkoutLoading === p.planKey ? (
                                             <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                                 Processing...
                                             </>
                                         ) : isActive ? (
