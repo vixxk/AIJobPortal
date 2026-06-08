@@ -16,7 +16,8 @@ const buildUserPayload = (user) => ({
   pendingApproval:
     user.role === 'COLLEGE_ADMIN' &&
     user.approvalStatus === 'PENDING',
-  notificationSettings: user.notificationSettings || { platform: true, email: true }
+  notificationSettings: user.notificationSettings || { platform: true, email: true },
+  subscription: user.subscription || { plan: 'FREE', status: 'INACTIVE' }
 });
 const generateOTP = () => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
