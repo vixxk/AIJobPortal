@@ -47,8 +47,9 @@ const LessonFlow = ({ level, onComplete, onCancel }) => {
             console.error('Failed to fetch lesson', err);
             const errData = err.response?.data;
             if (errData && errData.payPerUseRequired) {
+                const amount = errData.amount || 7;
                 const choice = await customConfirm(
-                    'You have exhausted your free monthly Spoken English sessions. Would you like to pay ₹7 to start a single practice session?',
+                    `You have exhausted your free monthly Spoken English sessions. Would you like to pay ₹${amount} to start a single practice session?`,
                     'Spoken English Limit Exhausted'
                 );
                 if (choice) {

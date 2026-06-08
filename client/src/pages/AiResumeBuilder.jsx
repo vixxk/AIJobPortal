@@ -633,8 +633,9 @@ const AiResumeBuilder = () => {
             console.error('Download verification error:', err);
             const errData = err.response?.data;
             if (errData && errData.payPerUseRequired) {
+                const amount = errData.amount || 10;
                 const choice = await customConfirm(
-                    'You have exhausted your free monthly resume downloads. Would you like to pay ₹10 for a one-time download?',
+                    `You have exhausted your free monthly resume downloads. Would you like to pay ₹${amount} for a one-time download?`,
                     'Download Limit Exhausted'
                 );
                 if (choice) {

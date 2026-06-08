@@ -170,6 +170,7 @@ const InterviewPage = () => {
     const [difficulty, setDifficulty] = useState('medium');
     const [limitModal, setLimitModal] = useState({ open: false, title: '', message: '', payPerUseRequired: false, amount: 7 });
     const [userPlan, setUserPlan] = useState('FREE');
+    const [prices, setPrices] = useState({ interview: 7, resume: 10, englishTutor: 7 });
 
 
     useEffect(() => {
@@ -178,6 +179,14 @@ const InterviewPage = () => {
                 const res = await axios.get('/payment/subscription-status');
                 if (res.data?.data?.subscription?.plan) {
                     setUserPlan(res.data.data.subscription.plan);
+                }
+                if (res.data?.data?.payPerUsePrices) {
+                    const payPerUsePrices = res.data.data.payPerUsePrices;
+                    setPrices(payPerUsePrices);
+                    setLimitModal(prev => ({
+                        ...prev,
+                        amount: payPerUsePrices.interview || 7
+                    }));
                 }
             } catch (err) {
                 console.error('Failed to fetch user subscription plan:', err);
@@ -218,7 +227,7 @@ const InterviewPage = () => {
                         ? 'Your weekly interview quota has been exhausted. Please pay to continue.'
                         : 'Your monthly interview quota has been exhausted. Please pay to continue.',
                     payPerUseRequired: true,
-                    amount: errData.amount || 7
+                    amount: errData.amount || prices.interview || 7
                 });
             } else {
                 const errMsg = errData?.message || error.message || 'Unknown error occurred.';
@@ -230,7 +239,7 @@ const InterviewPage = () => {
                             ? 'Your weekly interview quota has been exhausted. Please pay to continue.'
                             : 'Your monthly interview quota has been exhausted. Please pay to continue.',
                         payPerUseRequired: false,
-                        amount: 7
+                        amount: prices.interview || 7
                     });
                 } else {
                     alert(`Interview service error: ${errMsg}`);
