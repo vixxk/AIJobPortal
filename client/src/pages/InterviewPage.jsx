@@ -6,6 +6,8 @@ import Skeleton from '../components/ui/Skeleton';
 import FinalReport from '../components/interview/FinalReport';
 import { customConfirm } from '../components/layout/ConfirmDialog';
 import axios from '../utils/axios';
+import { ArrowLeft } from 'lucide-react';
+
 
 const ROLE_LIST = {
     "Software / Tech": [
@@ -305,8 +307,20 @@ const InterviewPage = () => {
         );
     }
     return (
-        <div className="min-h-full min-h-[500px] w-full bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-3 sm:p-4">
-            <div className="bg-white/80 backdrop-blur-xl p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-white/60">
+        <div className="min-h-full w-full bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col p-4 sm:p-8">
+            <div className="flex items-center mb-6">
+                <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-100 hover:border-slate-200 transition-all text-xs font-bold shadow-sm active:scale-95 duration-200"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back</span>
+                </button>
+            </div>
+
+            <div className="flex-1 flex items-center justify-center">
+                <div className="bg-white/80 backdrop-blur-xl p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl max-w-lg w-full border border-white/60">
                 { }
                 <div className="text-center mb-6 sm:mb-8">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg shadow-blue-200">
@@ -568,6 +582,7 @@ const InterviewPage = () => {
                     }
                 }}
             />
+            </div>
         </div>
     );
 };

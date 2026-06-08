@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 const ScoreRing = ({ score, label, color }) => {
     const r = 36;
@@ -28,8 +29,17 @@ const ScoreRing = ({ score, label, color }) => {
     );
 };
 
-const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
+const FinalReport = ({ report, jobRole, onRestart, readonly = false, onBack }) => {
     const navigate = useNavigate();
+    const handleBack = () => {
+        if (onBack) {
+            onBack();
+        } else if (onRestart) {
+            onRestart();
+        } else {
+            navigate(-1);
+        }
+    };
     const { overall_score = 0, confidence_score = 0, fluency_score = 0, technical_accuracy = 0, suggestions = [] } = report;
     const grade = overall_score >= 85 ? { label: 'Excellent', emoji: '🌟', color: 'text-green-600', bg: 'from-green-50 to-emerald-50', border: 'border-green-200' }
         : overall_score >= 70 ? { label: 'Good', emoji: '👍', color: 'text-blue-600', bg: 'from-blue-50 to-indigo-50', border: 'border-blue-200' }
@@ -39,6 +49,15 @@ const FinalReport = ({ report, jobRole, onRestart, readonly = false }) => {
     return (
         <div className="w-full bg-gradient-to-br from-slate-50 via-white to-blue-50 flex flex-col items-center justify-start p-2 sm:p-8">
             <div className="w-full max-w-3xl space-y-3 sm:space-y-6 pb-20 sm:pb-0">
+                <div className="flex justify-start print:hidden">
+                    <button
+                        onClick={handleBack}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-100 hover:border-slate-200 transition-all text-xs font-bold shadow-sm active:scale-95 duration-200"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Back</span>
+                    </button>
+                </div>
 
                 <div className={`bg-gradient-to-br ${grade.bg} border ${grade.border} rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center shadow-lg relative overflow-hidden`}>
                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">

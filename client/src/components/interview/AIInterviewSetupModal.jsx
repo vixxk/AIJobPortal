@@ -125,7 +125,7 @@ const AIInterviewSetupModal = ({ isOpen, onClose, application, job }) => {
                     <button onClick={onClose} className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
                         <XCircle className="w-6 h-6" />
                     </button>
-                    <FinalReport report={existingSession.report} jobRole={job.title} readonly={true} />
+                    <FinalReport report={existingSession.report} jobRole={job.title} readonly={true} onBack={() => setViewingReport(false)} />
                  </div>
              </div>
          );
