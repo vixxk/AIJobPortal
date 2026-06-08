@@ -527,9 +527,9 @@ const Dashboard = () => {
                             ) : (
                                 <button 
                                     onClick={() => navigate('/app/subscriptions')}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-black text-[11px] shadow-sm shadow-emerald-500/20 active:scale-95 transition-all border border-emerald-400/35"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 hover:from-emerald-600 hover:via-teal-600 hover:to-blue-700 text-white font-black text-[11px] shadow-sm shadow-emerald-500/20 active:scale-95 transition-all border border-emerald-400/35"
                                 >
-                                    <Crown className="w-3.5 h-3.5 fill-emerald-100 text-emerald-100" />
+                                    <Crown className="w-3.5 h-3.5 fill-white/80 text-white" />
                                     <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO PLUS' : 'PRO'}</span>
                                 </button>
                             )}

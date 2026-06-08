@@ -4,6 +4,12 @@ import { getSubscriptionStatus, createSubscriptionOrder, getPlans } from '../ser
 import { useAuth } from '../context/AuthContext';
 import { Sparkles, Check, Zap, Crown, Mail, Loader2, BarChart2, ArrowLeft } from 'lucide-react';
 
+const planRank = {
+    'FREE': 0,
+    'PRO': 1,
+    'PRO_PLUS': 2
+};
+
 const SubscriptionsSkeleton = () => {
     return (
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-12 animate-pulse font-sans">
@@ -213,6 +219,10 @@ const SubscriptionsPage = () => {
         const isProPlus = p.planKey === 'PRO_PLUS';
         const isActive = currentPlan === p.planKey;
         
+        const currentRank = planRank[currentPlan] || 0;
+        const cardRank = planRank[p.planKey] || 0;
+        const isDowngrade = currentRank > cardRank;
+        
         return (
             <div 
                 key={p.planKey} 
@@ -231,7 +241,7 @@ const SubscriptionsPage = () => {
                 } ${!isMobile && (isActive ? 'md:scale-[1.02]' : isProPlus ? 'md:scale-105' : '')}`}
             >
                 {isProPlus && (
-                    <div className={`absolute left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black uppercase tracking-widest shadow-md rounded-full ${
+                    <div className={`absolute left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black uppercase tracking-widest shadow-md rounded-full z-10 whitespace-nowrap ${
                         isMobile ? 'text-[7.5px] px-2.5 py-0.5 -top-2' : 'text-[9px] px-3.5 py-0.5 -top-3'
                     }`}>
                         Most Popular
@@ -239,7 +249,7 @@ const SubscriptionsPage = () => {
                 )}
 
                 {isActive && (
-                    <div className={`absolute left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-black uppercase tracking-widest shadow-md rounded-full ${
+                    <div className={`absolute left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-black uppercase tracking-widest shadow-md rounded-full z-10 whitespace-nowrap ${
                         isMobile ? 'text-[7.5px] px-2.5 py-0.5 -top-2' : 'text-[9px] px-3.5 py-0.5 -top-3'
                     }`}>
                         Active Plan
@@ -306,6 +316,15 @@ const SubscriptionsPage = () => {
                             }`}
                         >
                             {isActive ? 'Current Plan' : 'Free Default'}
+                        </button>
+                    ) : isDowngrade ? (
+                        <button 
+                            disabled 
+                            className={`w-full font-black text-slate-400 bg-slate-100 border border-slate-200/60 uppercase tracking-widest cursor-not-allowed ${
+                                isMobile ? 'py-2.5 text-[9px] rounded-lg' : 'py-3 md:py-4 text-[10px] md:text-xs rounded-xl md:rounded-2xl'
+                            }`}
+                        >
+                            Downgrade Disabled
                         </button>
                     ) : !user ? (
                         <div className={isMobile ? 'space-y-2' : 'space-y-2.5'}>
@@ -512,7 +531,7 @@ const SubscriptionsPage = () => {
                 ))}
                 
                 {/* Paid plans (Side-by-Side) */}
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-2.5 pt-3">
                     {plans.filter(p => p.planKey !== 'FREE').map(p => (
                         renderPlanCard(p, true, false)
                     ))}

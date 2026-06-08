@@ -143,17 +143,46 @@ const fulfillOrder = async (order, cfOrderDetails) => {
     await Course.findByIdAndUpdate(order.course, {
       $addToSet: { enrolledStudents: order.user }
     });
+    // Notify user of course purchase
+    try {
+      const course = await Course.findById(order.course);
+      const courseTitle = course ? course.title : 'Course';
+      await Notification.create({
+        userId: order.user,
+        title: 'Course Purchased! 📚',
+        message: `Successfully enrolled in "${courseTitle}". You can now access all lectures.`,
+        type: 'PAYMENT_SUCCESS'
+      });
+    } catch (nErr) {
+      console.error('Failed to create course purchase notification:', nErr);
+    }
   } else if (order.orderType === 'PAY_PER_USE') {
     const user = await User.findById(order.user);
     if (user) {
+      let featureName = '';
       if (order.payPerUseType === 'INTERVIEW') {
         user.usageLimits.interviews.limit += 1;
+        featureName = 'Mock Interview session';
       } else if (order.payPerUseType === 'RESUME') {
         user.usageLimits.resumes.limit += 1;
+        featureName = 'Resume Download';
       } else if (order.payPerUseType === 'ENGLISH_TUTOR') {
         user.usageLimits.spokenEnglish.limit += 1;
+        featureName = 'Spoken English session';
       }
       await user.save();
+
+      // Notify user of pay-per-use purchase success
+      try {
+        await Notification.create({
+          userId: user._id,
+          title: 'Payment Successful! 💳',
+          message: `Successfully purchased 1 ${featureName || 'pay-per-use item'}. Your limit has been updated.`,
+          type: 'PAYMENT_SUCCESS'
+        });
+      } catch (nErr) {
+        console.error('Failed to create pay-per-use notification:', nErr);
+      }
     }
   } else if (order.orderType === 'SUBSCRIPTION') {
     const user = await User.findById(order.user);
@@ -354,6 +383,10 @@ exports.createSubscriptionOrder = catchAsync(async (req, res, next) => {
 
   if (!['PRO', 'PRO_PLUS'].includes(planKey)) {
     return next(new AppError('Invalid subscription plan key', 400));
+  }
+
+  if (user.subscription?.plan === 'PRO_PLUS' && planKey === 'PRO') {
+    return next(new AppError('You are already subscribed to PRO PLUS. Downgrades are disabled.', 400));
   }
 
   const planConfig = await SubscriptionPlanConfig.findOne({ planKey });
