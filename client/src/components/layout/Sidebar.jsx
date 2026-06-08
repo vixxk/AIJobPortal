@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { customConfirm } from './ConfirmDialog';
 import {
     Home, Briefcase, BookOpen, Trophy,
     Users, Settings, LogOut, Bell,
@@ -24,8 +23,19 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
     const location = useLocation();
     const { user, logout } = useAuth();
     const isCollapsed = !isMobile && !isOpen;
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const role = user?.role || 'STUDENT';
+
+    const handleLogout = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const confirmed = await customConfirm(
+            'Are you sure you want to log out of your session?',
+            'Confirm Sign Out'
+        );
+        if (confirmed) {
+            logout();
+        }
+    };
     let mainLinks = [];
     let toolLinks = [];
     if (role === 'STUDENT') {
@@ -190,11 +200,11 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                         )}
                     </Link>
                     {isCollapsed ? (
-                        <button onClick={() => setShowLogoutConfirm(true)} className="p-3 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white transition-colors" title="Sign Out">
+                        <button onClick={handleLogout} className="p-3 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white transition-colors" title="Sign Out">
                             <LogOut className="w-5 h-5" />
                         </button>
                     ) : (
-                        <button onClick={() => setShowLogoutConfirm(true)} className="w-full mt-3 flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white font-medium">
+                        <button onClick={handleLogout} className="w-full mt-3 flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 text-red-400 hover:text-white font-medium">
                             <LogOut className="w-4 h-4 mt-0.5" /> Sign Out
                         </button>
                     )}
@@ -210,51 +220,6 @@ const Sidebar = ({ isOpen, setIsOpen, isMobile = false }) => {
                     </Link>
                 </div>
             )}
-            
-            <AnimatePresence>
-                {showLogoutConfirm && createPortal(
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            transition={{ type: 'spring', duration: 0.4 }}
-                            className="w-full max-w-sm overflow-hidden bg-white rounded-[32px] shadow-2xl p-6 relative group border border-slate-100"
-                        >
-                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 to-indigo-700" />
-                            
-                            <div className="flex flex-col items-center text-center mt-2">
-                                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-4 shadow-sm">
-                                    <LogOut className="w-6 h-6" />
-                                </div>
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">Confirm Sign Out</h3>
-                                <p className="text-slate-500 text-sm font-semibold mb-6 leading-relaxed">
-                                    Are you sure you want to log out of your session?
-                                </p>
-                                
-                                <div className="flex gap-3 w-full">
-                                    <button
-                                        onClick={() => setShowLogoutConfirm(false)}
-                                        className="flex-1 py-3 px-4 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-sm"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setShowLogoutConfirm(false);
-                                            logout();
-                                        }}
-                                        className="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95"
-                                    >
-                                        Yes, Log Out
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>,
-                    document.body
-                )}
-            </AnimatePresence>
         </div>
     );
 };

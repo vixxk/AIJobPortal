@@ -521,21 +521,21 @@ const SubscriptionsPage = () => {
                 {plans.map((p) => renderPlanCard(p, false))}
             </div>
 
-            {/* Mobile View: Free on full row, paid plans side-by-side */}
+            {/* Mobile View: Free and Pro side-by-side, Pro Plus on full row */}
             <div className="flex flex-col gap-4 md:hidden pt-2">
-                {/* Free plan (Full Row) */}
-                {plans.filter(p => p.planKey === 'FREE').map(p => (
-                    <div key={p.planKey} className="w-full">
-                        {renderPlanCard(p, true, true)}
-                    </div>
-                ))}
-                
-                {/* Paid plans (Side-by-Side) */}
-                <div className="grid grid-cols-2 gap-2.5 pt-3">
-                    {plans.filter(p => p.planKey !== 'FREE').map(p => (
+                {/* Free and Pro plans (Side-by-Side) */}
+                <div className="grid grid-cols-2 gap-2.5">
+                    {plans.filter(p => p.planKey === 'FREE' || p.planKey === 'PRO').map(p => (
                         renderPlanCard(p, true, false)
                     ))}
                 </div>
+                
+                {/* Pro Plus plan (Full Row) */}
+                {plans.filter(p => p.planKey === 'PRO_PLUS').map(p => (
+                    <div key={p.planKey} className="w-full pt-1">
+                        {renderPlanCard(p, true, true)}
+                    </div>
+                ))}
             </div>
 
             {/* Customer support section */}

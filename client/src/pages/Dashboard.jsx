@@ -498,7 +498,7 @@ const Dashboard = () => {
             <div className="md:hidden w-full min-h-screen bg-slate-50/50 pb-24 pt-2 animate-in fade-in duration-500 font-sans">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-5 px-4 mt-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                         <button
                             onClick={() => navigate('/app/profile')}
                             className="w-11 h-11 rounded-[16px] overflow-hidden border border-slate-100 shadow-md active:scale-90 transition-all bg-white shrink-0"
@@ -509,17 +509,17 @@ const Dashboard = () => {
                                 className="w-full h-full object-cover"
                             />
                         </button>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0 flex-1">
                             <p className="text-[10px] text-slate-400 font-extrabold mb-0.5 uppercase tracking-wider">{greeting} 👋</p>
-                            <h2 className="text-[17px] font-black text-slate-800 leading-none tracking-tight">{firstName}</h2>
+                            <h2 className="text-[17px] font-black text-slate-800 leading-none tracking-tight truncate">{firstName}</h2>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="hover:scale-[1.03] transition-transform">
+                    <div className="flex items-center gap-2 shrink-0 ml-4">
+                        <div className="hover:scale-[1.03] transition-transform shrink-0">
                             {user?.subscription?.plan === 'FREE' || !user?.subscription?.plan ? (
                                 <button 
                                     onClick={() => navigate('/app/subscriptions')}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-black text-[11px] shadow-sm shadow-amber-400/20 active:scale-95 transition-all border border-amber-300/40"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-black text-[11px] shadow-sm shadow-amber-400/20 active:scale-95 transition-all border border-amber-300/40 shrink-0"
                                 >
                                     <Sparkles className="w-3.5 h-3.5 fill-amber-950 text-amber-950" />
                                     <span>Premium</span>
@@ -527,15 +527,15 @@ const Dashboard = () => {
                             ) : (
                                 <button 
                                     onClick={() => navigate('/app/subscriptions')}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 hover:from-emerald-600 hover:via-teal-600 hover:to-blue-700 text-white font-black text-[11px] shadow-sm shadow-emerald-500/20 active:scale-95 transition-all border border-emerald-400/35"
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600 hover:from-emerald-600 hover:via-teal-600 hover:to-blue-700 text-white font-black text-[11px] shadow-sm shadow-emerald-500/20 active:scale-95 transition-all border border-emerald-400/35 shrink-0"
                                 >
                                     <Crown className="w-3.5 h-3.5 fill-white/80 text-white" />
-                                    <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO PLUS' : 'PRO'}</span>
+                                    <span>{user.subscription.plan === 'PRO_PLUS' ? 'PRO+' : 'PRO'}</span>
                                 </button>
                             )}
                         </div>
                         <NotificationsDropdown 
-                            className="w-10 h-10 rounded-[14px] border border-slate-100 bg-white shadow-sm active:scale-90"
+                            className="w-10 h-10 rounded-[14px] border border-slate-100 bg-white shadow-sm active:scale-90 shrink-0"
                             iconClassName="w-5 h-5 text-slate-700"
                         />
                     </div>
