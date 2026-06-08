@@ -316,7 +316,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
                     location: item.job_city ? `${item.job_city}, ${item.job_country}` : 'Remote',
                     type: item.job_employment_type || 'Full-time',
                     salary: item.job_min_salary ? `₹${(item.job_min_salary * 83).toLocaleString('en-IN')} – ₹${(item.job_max_salary * 83).toLocaleString('en-IN')}` : 'Not specified',
-                    link: item.job_apply_link || item.job_google_link || item.employer_website,
+                    link: item.job_apply_link || item.employer_website || item.job_google_link || '#',
                     snippet: snippet(item.job_description),
                     source: 'JSearch', logo: item.employer_logo || null,
                 }));
@@ -367,6 +367,8 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
         }),
     });
 
+    // Google Jobs SerpApi is disabled because it returns Google Search/Jobs links instead of direct application URLs.
+    /*
     if (SERPAPI_KEY) {
         pool.push({
             name: 'Google Jobs', region: 'IN',
@@ -393,6 +395,7 @@ exports.searchExternalJobs = async (role = '', location = '', type = '', salaryR
             }),
         });
     }
+    */
 
     pool.push({
         name: 'RemoteOK', region: 'GLB',
