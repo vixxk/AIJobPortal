@@ -448,9 +448,19 @@ const PostJob = () => {
           )}
 
           {/* Actions */}
-          <div className="pt-4 flex items-center justify-end gap-3">
-            <button type="button" onClick={() => navigate('/app/recruiter')} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={loading} className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm transition-colors disabled:opacity-50">
+          <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-end gap-3">
+            <button type="button" onClick={() => navigate('/app/recruiter')} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors w-full sm:w-auto text-center">Cancel</button>
+            {!isUnverified && (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={(e) => handleSubmit(e, true)}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-colors disabled:opacity-50 w-full sm:w-auto text-center"
+              >
+                {loading ? 'Saving...' : 'Save as Draft'}
+              </button>
+            )}
+            <button type="submit" disabled={loading} className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm transition-colors disabled:opacity-50 w-full sm:w-auto text-center">
               {loading ? 'Posting...' : isUnverified ? 'Save as Draft' : 'Publish'}
             </button>
           </div>
