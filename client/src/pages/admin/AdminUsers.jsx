@@ -223,7 +223,10 @@ const AdminUsers = ({ role }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
+                            {users.filter(u => 
+                                u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase()))
+                            ).map(u => (
                                 <tr key={u._id} className="hover:bg-slate-50/80 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">

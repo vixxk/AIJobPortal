@@ -48,7 +48,7 @@ const baseWrapper = (content, { preheader = '' } = {}) => `
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="vertical-align: middle;">
-                    <img src="${CLIENT_URL}/hyrego-logo-favicon.png" alt="Hyrego Logo" width="36" height="36" style="display: block; border-radius: 10px;" />
+                    <img src="cid:hyrego_logo" alt="Hyrego Logo" width="36" height="36" style="display: block; border-radius: 10px;" />
                   </td>
                   <td style="padding-left: 12px; vertical-align: middle;">
                     <span style="font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">Hyrego</span>

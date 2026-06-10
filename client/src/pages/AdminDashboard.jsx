@@ -374,7 +374,10 @@ const AdminDashboard = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {(data[activeTab] || []).filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
+                                            {(data[activeTab] || []).filter(u => 
+                                                u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                                (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase()))
+                                            ).map(u => (
                                                 <tr key={u._id} className="group hover:bg-slate-50/50 transition-colors">
                                                     <td className="p-8">
                                                         <div className="flex items-center gap-4">
