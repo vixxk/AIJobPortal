@@ -179,6 +179,9 @@ jobSchema.index({ location: 1 });
 jobSchema.index({ recruiterId: 1 });
 jobSchema.index({ status: 1 });
 jobSchema.index({ opportunityType: 1 });
+const registerPendingCountsHook = require('../../utils/pendingCountsHook');
+registerPendingCountsHook(jobSchema);
+
 const Job = mongoose.model('Job', jobSchema);
 module.exports = Job;
 

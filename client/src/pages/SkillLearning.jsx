@@ -581,6 +581,9 @@ const CourseDetailPage = () => {
     const [showSidebar, setShowSidebar] = useState(true);
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
     const navigate = useNavigate();
+    const queryParams = new URLSearchParams(window.location.search);
+    const isLiveParam = queryParams.get('live') === 'true';
+    const [liveEndedDismissed, setLiveEndedDismissed] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
@@ -1045,6 +1048,48 @@ const CourseDetailPage = () => {
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[60%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
 
                     <div className="max-w-6xl mx-auto px-4 lg:px-6 py-4 lg:py-12 space-y-4 lg:space-y-10 relative z-10">
+                        {course?.liveClassLink ? (
+                            <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-5 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border border-red-500/20 animate-pulse">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center shrink-0">
+                                        <MonitorPlay className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-sm uppercase tracking-wider">Live Class is Active!</h4>
+                                        <p className="text-xs text-white/95 font-semibold mt-0.5">Your teacher is conducting a live session right now. Click join to attend.</p>
+                                    </div>
+                                </div>
+                                <a 
+                                    href={course.liveClassLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-6 py-3 bg-white text-rose-600 hover:bg-rose-50 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-md active:scale-95 shrink-0"
+                                >
+                                    Join Class <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                            </div>
+                        ) : (
+                            isLiveParam && !liveEndedDismissed && (
+                                <div className="bg-slate-900/90 border border-white/10 text-white p-5 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center shrink-0">
+                                            <CheckCircle className="w-6 h-6 text-indigo-400" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-black text-sm uppercase tracking-wider text-indigo-400">Class Session Completed</h4>
+                                            <p className="text-xs text-slate-300 font-semibold mt-0.5">The live session for this class has ended. You can continue learning with the lectures below.</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setLiveEndedDismissed(true)}
+                                        className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shrink-0 border border-white/5"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            )
+                        )}
+
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}

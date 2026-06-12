@@ -26,6 +26,9 @@ const issueSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
+const registerPendingCountsHook = require('../../utils/pendingCountsHook');
+registerPendingCountsHook(issueSchema);
+
 const Issue = mongoose.model('Issue', issueSchema);
 
 module.exports = Issue;

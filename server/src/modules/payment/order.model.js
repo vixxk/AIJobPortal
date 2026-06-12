@@ -58,6 +58,9 @@ orderSchema.pre('save', function() {
   this.updatedAt = Date.now();
 });
 
+const registerPendingCountsHook = require('../../utils/pendingCountsHook');
+registerPendingCountsHook(orderSchema);
+
 const Order = mongoose.model('Order', orderSchema);
 
 module.exports = Order;

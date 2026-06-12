@@ -1,12 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
-import { Bell, Check, Trash2, X } from 'lucide-react';
+import { Bell, Check, Trash2, X, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
 const NotificationsDropdown = ({ className, iconClassName }) => {
+    const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [toastMessage, setToastMessage] = useState('');
+    
+    const showToastMsg = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => {
+            setToastMessage('');
+        }, 4000);
+    };
     const dropdownRef = useRef(null);
     const panelRef = useRef(null);
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
@@ -16,34 +26,46 @@ const NotificationsDropdown = ({ className, iconClassName }) => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-    const fetchNotifications = async () => {
-        try {
-            const res = await axios.get('/notifications');
-            if (res.data.status === 'success') {
-                const fetchedNotifications = res.data.data.notifications || [];
-                setNotifications(fetchedNotifications);
-                setUnreadCount(res.data.unreadCount || fetchedNotifications.filter(n => !n.read).length);
-            }
-        } catch (error) {
-            console.error('Failed to fetch notifications', error);
+    const getBaseUrl = () => {
+        let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        if (url.startsWith('/')) {
+            url = window.location.origin + url;
         }
+        return url;
     };
+
     useEffect(() => {
-        const load = async () => {
-            await fetchNotifications();
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const baseUrl = getBaseUrl();
+        const eventSource = new EventSource(`${baseUrl}/notifications/stream?token=${token}`);
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                const fetchedNotifications = data.notifications || [];
+                setNotifications(fetchedNotifications);
+                setUnreadCount(data.unreadCount || 0);
+            } catch (err) {
+                console.error('Failed to parse notifications SSE message:', err);
+            }
         };
-        load();
-        const interval = setInterval(fetchNotifications, 60000);
+
+        eventSource.onerror = (err) => {
+            console.error('Notifications SSE Connection Error:', err);
+        };
+
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                // If the panel is portaled, it's not a child of dropdownRef
                 if (panelRef.current && panelRef.current.contains(event.target)) return;
                 setIsOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
+
         return () => {
-            clearInterval(interval);
+            eventSource.close();
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
@@ -102,11 +124,13 @@ const NotificationsDropdown = ({ className, iconClassName }) => {
                                     unreadCount={unreadCount} 
                                     markAsRead={markAsRead} 
                                     markAllAsRead={markAllAsRead}
+                                    navigate={navigate}
+                                    showToastMsg={showToastMsg}
                                 />
                             </div>
                         </div>,
                         document.body
-                    )
+                     )
                 ) : (
                     <div 
                         ref={panelRef}
@@ -120,16 +144,32 @@ const NotificationsDropdown = ({ className, iconClassName }) => {
                             unreadCount={unreadCount} 
                             markAsRead={markAsRead} 
                             markAllAsRead={markAllAsRead}
+                            navigate={navigate}
+                            showToastMsg={showToastMsg}
                         />
                     </div>
                 )
+            )}
+            {toastMessage && (
+                <div className="fixed top-6 left-4 right-4 md:left-auto md:right-6 md:w-80 bg-slate-950/95 backdrop-blur-md border border-slate-800 text-white px-4 py-3.5 rounded-2xl shadow-2xl flex items-center justify-between gap-3 z-[99999] transition-all duration-300">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                        <span className="text-xs font-semibold text-slate-200 truncate">{toastMessage}</span>
+                    </div>
+                    <button 
+                        onClick={() => setToastMessage('')} 
+                        className="p-1.5 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition-colors shrink-0"
+                    >
+                        <X className="w-3.5 h-3.5" />
+                    </button>
+                </div>
             )}
         </div>
     );
 };
 
 // Extracted internal content to avoid duplication
-const NotificationPanelBody = ({ notifications, unreadCount, markAsRead, markAllAsRead }) => (
+const NotificationPanelBody = ({ notifications, unreadCount, markAsRead, markAllAsRead, navigate, showToastMsg }) => (
     <>
         <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white">
             <div className="flex flex-col">
@@ -159,7 +199,35 @@ const NotificationPanelBody = ({ notifications, unreadCount, markAsRead, markAll
                     {notifications.map(notification => (
                         <div
                             key={notification._id}
-                            onClick={() => !notification.read && markAsRead(notification._id)}
+                            onClick={async () => {
+                                if (!notification.read) {
+                                    markAsRead(notification._id);
+                                }
+                                if (notification.link) {
+                                    if (notification.link.includes('live=true')) {
+                                        const match = notification.link.match(/\/course\/([a-f\d]{24})/i);
+                                        if (match) {
+                                            const courseId = match[1];
+                                            try {
+                                                const res = await axios.get(`/courses/${courseId}`);
+                                                const liveLink = res.data.data.course?.liveClassLink;
+                                                if (!liveLink) {
+                                                    showToastMsg("This live class session has ended.");
+                                                    return;
+                                                }
+                                            } catch (err) {
+                                                console.error("Failed to verify live class status", err);
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (notification.link.startsWith('http://') || notification.link.startsWith('https://')) {
+                                        window.open(notification.link, '_blank');
+                                    } else {
+                                        navigate(notification.link);
+                                    }
+                                }
+                            }}
                             className={clsx(
                                 "p-4 hover:bg-slate-50 transition-all cursor-pointer group flex gap-4",
                                 !notification.read ? 'bg-indigo-50/40' : 'opacity-80'

@@ -134,5 +134,8 @@ userSchema.virtual('studentProfile', {
   justOne: true
 });
 
+const registerPendingCountsHook = require('../../utils/pendingCountsHook');
+registerPendingCountsHook(userSchema);
+
 const User = mongoose.model('User', userSchema);
 module.exports = User;

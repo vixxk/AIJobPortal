@@ -68,8 +68,11 @@ exports.updateCourse = catchAsync(async (req, res, next) => {
         status: 'PENDING'
       };
       delete updateData.price;
-    } else if (!course.createdByAdmin) {
-      updateData.approvalStatus = 'PENDING';
+    } else {
+      const updatedKeys = Object.keys(updateData).filter(key => key !== 'liveClassLink');
+      if (updatedKeys.length > 0 && !course.createdByAdmin) {
+        updateData.approvalStatus = 'PENDING';
+      }
     }
   }
 
@@ -131,6 +134,24 @@ exports.updateCourse = catchAsync(async (req, res, next) => {
             await Notification.insertMany(notifications);
         }
     } catch (err) { }
+  }
+
+  // If live class link is added or updated (not cleared)
+  if (updateData.liveClassLink && updateData.liveClassLink !== course.liveClassLink) {
+    try {
+      if (course.enrolledStudents && course.enrolledStudents.length > 0) {
+        const notifications = course.enrolledStudents.map(studentId => ({
+          userId: studentId,
+          title: 'Live Class Started! 🎥',
+          message: `The live class for "${updatedCourse.title}" is now active. Click to join the lecture!`,
+          type: 'COURSE_UPDATE',
+          link: `/app/learning/course/${course._id}?live=true`
+        }));
+        await Notification.insertMany(notifications);
+      }
+    } catch (err) {
+      console.error('Failed to notify students of live class link:', err);
+    }
   }
 });
 

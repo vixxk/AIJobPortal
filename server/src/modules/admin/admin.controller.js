@@ -678,7 +678,9 @@ exports.downloadCompetitionParticipants = catchAsync(async (req, res, next) => {
     res.status(200).send(csvContent);
 });
 
-exports.getPendingCounts = catchAsync(async (req, res, next) => {
+const sseEmitter = require('../../utils/sseManager');
+
+const getPendingCountsData = async () => {
   const recruiters = await User.countDocuments({ role: 'RECRUITER', approvalStatus: 'PENDING' });
   const colleges = await User.countDocuments({ role: 'COLLEGE_ADMIN', approvalStatus: 'PENDING' });
   const students = await User.countDocuments({ role: 'STUDENT', approvalStatus: 'PENDING' });
@@ -688,19 +690,46 @@ exports.getPendingCounts = catchAsync(async (req, res, next) => {
   const competitions = await Competition.countDocuments({ status: 'PENDING' });
   const issues = await Issue.countDocuments({ status: 'pending' });
   const payments = await Order.countDocuments({ status: 'PENDING' });
+  return { recruiters, colleges, students, teachers, jobs, courses, competitions, issues, payments };
+};
 
+exports.getPendingCountsStream = catchAsync(async (req, res, next) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+
+  // Send initial counts
+  const initialCounts = await getPendingCountsData();
+  res.write(`data: ${JSON.stringify(initialCounts)}\n\n`);
+
+  const listener = async () => {
+    try {
+      const counts = await getPendingCountsData();
+      res.write(`data: ${JSON.stringify(counts)}\n\n`);
+    } catch (err) {
+      console.error('SSE pending counts send error:', err);
+    }
+  };
+
+  sseEmitter.on('pending-counts', listener);
+
+  const keepAlive = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    sseEmitter.off('pending-counts', listener);
+  });
+});
+
+exports.getPendingCounts = catchAsync(async (req, res, next) => {
+  const counts = await getPendingCountsData();
   res.status(200).json({
     status: 'success',
-    data: {
-      recruiters,
-      colleges,
-      students,
-      teachers,
-      jobs,
-      courses,
-      competitions,
-      issues,
-      payments
-    }
+    data: counts
   });
 });

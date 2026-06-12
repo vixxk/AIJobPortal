@@ -73,6 +73,11 @@ const courseSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  liveClassLink: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -87,6 +92,9 @@ courseSchema.virtual('lectures', {
   foreignField: 'course',
   localField: '_id'
 });
+
+const registerPendingCountsHook = require('../../utils/pendingCountsHook');
+registerPendingCountsHook(courseSchema);
 
 const Course = mongoose.model('Course', courseSchema);
 

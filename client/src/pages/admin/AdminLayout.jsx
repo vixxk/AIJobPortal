@@ -57,15 +57,12 @@ const AdminLayout = () => {
         payments: 0
     });
 
-    const fetchPendingCounts = async () => {
-        try {
-            const res = await axios.get('/admin/pending-counts');
-            if (res.data?.status === 'success' && res.data?.data) {
-                setCounts(res.data.data);
-            }
-        } catch (err) {
-            console.error('Error fetching pending counts:', err);
+    const getBaseUrl = () => {
+        let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+        if (url.startsWith('/')) {
+            url = window.location.origin + url;
         }
+        return url;
     };
 
     useEffect(() => {
@@ -73,9 +70,28 @@ const AdminLayout = () => {
     }, [location.pathname]);
 
     useEffect(() => {
-        fetchPendingCounts();
-        const interval = setInterval(fetchPendingCounts, 15000);
-        return () => clearInterval(interval);
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const baseUrl = getBaseUrl();
+        const eventSource = new EventSource(`${baseUrl}/admin/pending-counts/stream?token=${token}`);
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                setCounts(data);
+            } catch (err) {
+                console.error('Failed to parse pending counts SSE message:', err);
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error('Pending counts SSE Connection Error:', err);
+        };
+
+        return () => {
+            eventSource.close();
+        };
     }, []);
 
     const getPageTitle = () => {

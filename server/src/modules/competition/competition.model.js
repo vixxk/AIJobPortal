@@ -60,5 +60,8 @@ const competitionSchema = new mongoose.Schema({
     default: 'PENDING'
   }
 }, { timestamps: true });
+const registerPendingCountsHook = require('../../utils/pendingCountsHook');
+registerPendingCountsHook(competitionSchema);
+
 const Competition = mongoose.model('Competition', competitionSchema);
 module.exports = Competition;

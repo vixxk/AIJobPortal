@@ -6,7 +6,8 @@ import {
     ArrowLeft, Edit3, Save, X, Plus, Trash2, BookOpen, Users, Settings,
     Clock, Tag, Globe, BarChart2, Video, ChevronDown, ChevronRight,
     GripVertical, Calendar, Eye, EyeOff, Star, Award, Target, CheckCircle,
-    UploadCloud, AlertCircle, Check, Play, FileQuestion, Loader2, Image as ImageIcon
+    UploadCloud, AlertCircle, Check, Play, FileQuestion, Loader2, Image as ImageIcon,
+    MonitorPlay
 } from 'lucide-react';
 import Skeleton from '../../components/ui/Skeleton';
 import VideoPlayer from '../../components/ui/VideoPlayer';
@@ -701,6 +702,53 @@ const CourseManagement = () => {
                 {activeTab === 'overview' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-6">
+                            {/* Live Class Link (For Teachers / Admins to manage) */}
+                            {canEdit && (
+                                <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-shadow">
+                                    <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs flex items-center gap-2">
+                                        <MonitorPlay className="w-4 h-4 text-rose-500 animate-pulse" /> Live Class Configuration
+                                    </h3>
+                                    <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                                        Conduct a live class for enrolled students. When you add a live class link, enrolled students will receive a platform notification to join. Clear the link once the session is completed.
+                                    </p>
+                                    
+                                    <div className="flex flex-col sm:flex-row gap-3 items-end">
+                                        <div className="flex-1 w-full space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Live Lecture URL (e.g. Zoom, Google Meet)</label>
+                                            <input 
+                                                type="url"
+                                                placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                                                value={course.liveClassLink || ''}
+                                                onChange={(e) => {
+                                                    setCourse({ ...course, liveClassLink: e.target.value });
+                                                }}
+                                                className="w-full h-12 px-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 outline-none focus:border-indigo-400 placeholder:text-slate-300 transition-colors"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                                            <button 
+                                                onClick={() => saveField('liveClassLink', course.liveClassLink)}
+                                                className="flex-1 sm:flex-initial h-12 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 transition-all active:scale-[0.98]"
+                                            >
+                                                Update Link
+                                            </button>
+                                            {course.liveClassLink && (
+                                                <button 
+                                                    onClick={() => {
+                                                        saveField('liveClassLink', '');
+                                                        setCourse({ ...course, liveClassLink: '' });
+                                                    }}
+                                                    className="h-12 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all border border-rose-100"
+                                                    title="Remove live class link"
+                                                >
+                                                    <Trash2 className="w-4 h-4" /> Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Description */}
                             <div className="bg-white rounded-[24px] lg:rounded-[28px] p-6 lg:p-8 border border-slate-100">
                                 <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px] lg:text-xs mb-6 flex items-center gap-2">

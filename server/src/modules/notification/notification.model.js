@@ -27,5 +27,26 @@ const notificationSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 notificationSchema.index({ userId: 1, read: 1 });
+
+notificationSchema.post('save', function(doc) {
+  try {
+    const sseEmitter = require('../../utils/sseManager');
+    sseEmitter.emit(`notification:${doc.userId}`);
+  } catch (err) {
+    console.error('SSE notification post-save emit error:', err);
+  }
+});
+
+notificationSchema.post('insertMany', function(docs) {
+  try {
+    const sseEmitter = require('../../utils/sseManager');
+    docs.forEach(doc => {
+      sseEmitter.emit(`notification:${doc.userId}`);
+    });
+  } catch (err) {
+    console.error('SSE notification post-insertMany emit error:', err);
+  }
+});
+
 const Notification = mongoose.model('Notification', notificationSchema);
 module.exports = Notification;

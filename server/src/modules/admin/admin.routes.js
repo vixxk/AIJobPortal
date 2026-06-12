@@ -9,6 +9,7 @@ router.use(authMiddleware.protect);
 router.use(roleMiddleware.restrictTo('SUPER_ADMIN'));
 
 router.get('/analytics', adminController.getAnalyticsSummary);
+router.get('/pending-counts/stream', adminController.getPendingCountsStream);
 router.get('/pending-counts', adminController.getPendingCounts);
 router.get('/users/pending', adminController.getPendingUsers);
 router.get('/users', adminController.getAllUsers);
