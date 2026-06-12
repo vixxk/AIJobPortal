@@ -446,7 +446,7 @@ const SubscriptionsPage = () => {
                                 Reset: <span className="text-slate-950 font-black">{new Date(usage.lastResetDate).toLocaleDateString()}</span>
                             </div>
                             <a 
-                                href="mailto:sampletestingwork@gmail.com" 
+                                href="mailto:Support@hyergo.com" 
                                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg md:rounded-xl bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 transition-all text-[10px] md:text-xs font-bold shadow-sm"
                             >
                                 <Mail className="w-3 h-3 md:w-3.5 md:h-3.5" />
@@ -541,8 +541,8 @@ const SubscriptionsPage = () => {
             {/* Customer support section */}
             <div className="text-center py-8 text-xs text-blue-500 font-bold">
                 Have questions or need team customizations? Contact support at{' '}
-                <a href="mailto:sampletestingwork@gmail.com" className="text-blue-600 hover:text-blue-800 transition-colors underline">
-                    sampletestingwork@gmail.com
+                <a href="mailto:Support@hyergo.com" className="text-blue-600 hover:text-blue-800 transition-colors underline">
+                    Support@hyergo.com
                 </a>
             </div>
         </div>

@@ -1,6 +1,7 @@
 const Issue = require('./issue.model');
 const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
+const sendEmail = require('../../config/mailer');
 
 exports.createIssue = catchAsync(async (req, res, next) => {
   const { title, description } = req.body;
@@ -14,6 +15,32 @@ exports.createIssue = catchAsync(async (req, res, next) => {
     title,
     description
   });
+
+  // Notify support email
+  try {
+    await sendEmail({
+      email: process.env.SUPPORT_EMAIL || 'Support@hyergo.com',
+      subject: `[User Report/Issue] ${title}`,
+      message: `A new user report/issue has been submitted.
+
+Reporter Details:
+Name: ${req.user.name || 'N/A'}
+Email: ${req.user.email || 'N/A'}
+Role: ${req.user.role || 'N/A'}
+User ID: ${req.user.id}
+
+Issue Details:
+Title: ${title}
+Description:
+${description}
+
+---
+Sent automatically by Hyergo Platform.`,
+      name: 'Hyergo Support'
+    });
+  } catch (err) {
+    console.error(`Failed to send email to ${process.env.SUPPORT_EMAIL || 'Support@hyergo.com'}:`, err);
+  }
 
   res.status(201).json({
     status: 'success',
